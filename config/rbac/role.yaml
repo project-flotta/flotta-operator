@@ -1,0 +1,60 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedeployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedeployments/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedevices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedevices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedevices/status
+  verbs:
+  - get
+  - patch
+  - update

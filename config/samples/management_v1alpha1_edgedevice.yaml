@@ -1,0 +1,7 @@
+apiVersion: management.k4e.io/v1alpha1
+kind: EdgeDevice
+metadata:
+  name: edgedevice-sample
+spec:
+  # Add fields here
+  foo: bar

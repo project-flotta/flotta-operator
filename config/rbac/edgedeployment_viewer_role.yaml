@@ -1,0 +1,20 @@
+# permissions for end users to view edgedeployments.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edgedeployment-viewer-role
+rules:
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedeployments
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - management.k4e.io
+  resources:
+  - edgedeployments/status
+  verbs:
+  - get
