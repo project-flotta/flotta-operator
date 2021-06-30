@@ -11,7 +11,6 @@ tags:
   - name: devices
     description: Device management
 
-
 schemes:
   - http
   - https
@@ -109,6 +108,8 @@ definitions:
   registration-info:
     type: object
     properties:
+      os_image_id:
+        type: string
       hardware:
         description: Hardware information
         $ref:  '#/definitions/hardware-info'

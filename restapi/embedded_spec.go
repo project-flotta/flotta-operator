@@ -203,6 +203,9 @@ func init() {
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
+        },
+        "os_image_id": {
+          "type": "string"
         }
       }
     },
@@ -422,6 +425,9 @@ func init() {
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
+        },
+        "os_image_id": {
+          "type": "string"
         }
       }
     },
