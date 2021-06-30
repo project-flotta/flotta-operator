@@ -44,7 +44,7 @@ paths:
         "200":
           description: Success.
           schema:
-            $ref: '#/definitions/workload-list'
+            $ref: '#/definitions/device-configuration'
         "401":
           description: Unauthorized
         "403":
@@ -56,10 +56,24 @@ paths:
 
 
 definitions:
-  workload-list:
+  device-configuration:
     type: object
     properties:
       device_id:
         type: string
         description: Device identifier
+      workloads:
+        $ref: '#/definitions/workload-list'
+        description: List of workloads deployed to the device
 
+  workload-list:
+    type: array
+    items:
+      $ref: '#/definitions/workload'
+
+  workload:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Name of the workload

@@ -64,7 +64,7 @@ func init() {
           "200": {
             "description": "Success.",
             "schema": {
-              "$ref": "#/definitions/workload-list"
+              "$ref": "#/definitions/device-configuration"
             }
           },
           "401": {
@@ -84,13 +84,32 @@ func init() {
     }
   },
   "definitions": {
-    "workload-list": {
+    "device-configuration": {
       "type": "object",
       "properties": {
         "device_id": {
           "description": "Device identifier",
           "type": "string"
+        },
+        "workloads": {
+          "description": "List of workloads deployed to the device",
+          "$ref": "#/definitions/workload-list"
         }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of the workload",
+          "type": "string"
+        }
+      }
+    },
+    "workload-list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/workload"
       }
     }
   },
@@ -155,7 +174,7 @@ func init() {
           "200": {
             "description": "Success.",
             "schema": {
-              "$ref": "#/definitions/workload-list"
+              "$ref": "#/definitions/device-configuration"
             }
           },
           "401": {
@@ -175,13 +194,32 @@ func init() {
     }
   },
   "definitions": {
-    "workload-list": {
+    "device-configuration": {
       "type": "object",
       "properties": {
         "device_id": {
           "description": "Device identifier",
           "type": "string"
+        },
+        "workloads": {
+          "description": "List of workloads deployed to the device",
+          "$ref": "#/definitions/workload-list"
         }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of the workload",
+          "type": "string"
+        }
+      }
+    },
+    "workload-list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/workload"
       }
     }
   },

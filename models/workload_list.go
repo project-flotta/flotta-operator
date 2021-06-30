@@ -6,6 +6,9 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"strconv"
+
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
@@ -13,31 +16,30 @@ import (
 // WorkloadList workload list
 //
 // swagger:model workload-list
-type WorkloadList struct {
-
-	// Device identifier
-	DeviceID string `json:"device_id,omitempty"`
-}
+type WorkloadList []*Workload
 
 // Validate validates this workload list
-func (m *WorkloadList) Validate(formats strfmt.Registry) error {
-	return nil
-}
+func (m WorkloadList) Validate(formats strfmt.Registry) error {
+	var res []error
 
-// MarshalBinary interface implementation
-func (m *WorkloadList) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
+	for i := 0; i < len(m); i++ {
+		if swag.IsZero(m[i]) { // not required
+			continue
+		}
 
-// UnmarshalBinary interface implementation
-func (m *WorkloadList) UnmarshalBinary(b []byte) error {
-	var res WorkloadList
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
+		if m[i] != nil {
+			if err := m[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName(strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
-	*m = res
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }

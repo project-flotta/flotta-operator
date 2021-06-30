@@ -19,6 +19,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/devices"
 	"github.com/jakub-dzon/k4e-operator/restapi"
 	"log"
 	"net/http"
@@ -112,7 +113,9 @@ func main() {
 	}
 
 	go func() {
-		h, err := restapi.Handler(restapi.Config{})
+		h, err := restapi.Handler(restapi.Config{
+			DevicesAPI: devices.NewDeviceHandler(),
+		})
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
 		}

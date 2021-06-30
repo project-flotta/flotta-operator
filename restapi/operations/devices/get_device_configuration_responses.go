@@ -25,7 +25,7 @@ type GetDeviceConfigurationOK struct {
 	/*
 	  In: Body
 	*/
-	Payload *models.WorkloadList `json:"body,omitempty"`
+	Payload *models.DeviceConfiguration `json:"body,omitempty"`
 }
 
 // NewGetDeviceConfigurationOK creates GetDeviceConfigurationOK with default headers values
@@ -35,13 +35,13 @@ func NewGetDeviceConfigurationOK() *GetDeviceConfigurationOK {
 }
 
 // WithPayload adds the payload to the get device configuration o k response
-func (o *GetDeviceConfigurationOK) WithPayload(payload *models.WorkloadList) *GetDeviceConfigurationOK {
+func (o *GetDeviceConfigurationOK) WithPayload(payload *models.DeviceConfiguration) *GetDeviceConfigurationOK {
 	o.Payload = payload
 	return o
 }
 
 // SetPayload sets the payload to the get device configuration o k response
-func (o *GetDeviceConfigurationOK) SetPayload(payload *models.WorkloadList) {
+func (o *GetDeviceConfigurationOK) SetPayload(payload *models.DeviceConfiguration) {
 	o.Payload = payload
 }
 
