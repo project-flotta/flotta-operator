@@ -66,7 +66,7 @@ func NewGetDeviceConfigurationOK() *GetDeviceConfigurationOK {
 
 /*GetDeviceConfigurationOK handles this case with default header values.
 
-Success.
+Success
 */
 type GetDeviceConfigurationOK struct {
 	Payload *models.DeviceConfiguration
@@ -120,7 +120,7 @@ func NewGetDeviceConfigurationForbidden() *GetDeviceConfigurationForbidden {
 
 /*GetDeviceConfigurationForbidden handles this case with default header values.
 
-Forbidden.
+Forbidden
 */
 type GetDeviceConfigurationForbidden struct {
 }
@@ -141,7 +141,7 @@ func NewGetDeviceConfigurationNotFound() *GetDeviceConfigurationNotFound {
 
 /*GetDeviceConfigurationNotFound handles this case with default header values.
 
-Error.
+Error
 */
 type GetDeviceConfigurationNotFound struct {
 }
@@ -162,7 +162,7 @@ func NewGetDeviceConfigurationInternalServerError() *GetDeviceConfigurationInter
 
 /*GetDeviceConfigurationInternalServerError handles this case with default header values.
 
-Error.
+Error
 */
 type GetDeviceConfigurationInternalServerError struct {
 }

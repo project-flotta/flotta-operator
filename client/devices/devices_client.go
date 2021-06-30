@@ -20,6 +20,9 @@ type API interface {
 	/*
 	   GetDeviceConfiguration get device configuration API*/
 	GetDeviceConfiguration(ctx context.Context, params *GetDeviceConfigurationParams) (*GetDeviceConfigurationOK, error)
+	/*
+	   RegisterDevice register device API*/
+	RegisterDevice(ctx context.Context, params *RegisterDeviceParams) (*RegisterDeviceOK, error)
 }
 
 // New creates a new devices API client.
@@ -62,5 +65,30 @@ func (a *Client) GetDeviceConfiguration(ctx context.Context, params *GetDeviceCo
 		return nil, err
 	}
 	return result.(*GetDeviceConfigurationOK), nil
+
+}
+
+/*
+RegisterDevice register device API
+*/
+func (a *Client) RegisterDevice(ctx context.Context, params *RegisterDeviceParams) (*RegisterDeviceOK, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "RegisterDevice",
+		Method:             "POST",
+		PathPattern:        "/device/register",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &RegisterDeviceReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*RegisterDeviceOK), nil
 
 }

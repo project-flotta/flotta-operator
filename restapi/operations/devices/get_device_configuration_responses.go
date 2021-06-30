@@ -16,7 +16,7 @@ import (
 // GetDeviceConfigurationOKCode is the HTTP code returned for type GetDeviceConfigurationOK
 const GetDeviceConfigurationOKCode int = 200
 
-/*GetDeviceConfigurationOK Success.
+/*GetDeviceConfigurationOK Success
 
 swagger:response getDeviceConfigurationOK
 */
@@ -84,7 +84,7 @@ func (o *GetDeviceConfigurationUnauthorized) WriteResponse(rw http.ResponseWrite
 // GetDeviceConfigurationForbiddenCode is the HTTP code returned for type GetDeviceConfigurationForbidden
 const GetDeviceConfigurationForbiddenCode int = 403
 
-/*GetDeviceConfigurationForbidden Forbidden.
+/*GetDeviceConfigurationForbidden Forbidden
 
 swagger:response getDeviceConfigurationForbidden
 */
@@ -108,7 +108,7 @@ func (o *GetDeviceConfigurationForbidden) WriteResponse(rw http.ResponseWriter, 
 // GetDeviceConfigurationNotFoundCode is the HTTP code returned for type GetDeviceConfigurationNotFound
 const GetDeviceConfigurationNotFoundCode int = 404
 
-/*GetDeviceConfigurationNotFound Error.
+/*GetDeviceConfigurationNotFound Error
 
 swagger:response getDeviceConfigurationNotFound
 */
@@ -132,7 +132,7 @@ func (o *GetDeviceConfigurationNotFound) WriteResponse(rw http.ResponseWriter, p
 // GetDeviceConfigurationInternalServerErrorCode is the HTTP code returned for type GetDeviceConfigurationInternalServerError
 const GetDeviceConfigurationInternalServerErrorCode int = 500
 
-/*GetDeviceConfigurationInternalServerError Error.
+/*GetDeviceConfigurationInternalServerError Error
 
 swagger:response getDeviceConfigurationInternalServerError
 */

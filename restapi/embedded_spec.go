@@ -40,6 +40,50 @@ func init() {
   },
   "basePath": "/api/k4e-management/v1",
   "paths": {
+    "/device/register": {
+      "post": {
+        "security": [
+          {
+            "agentAuth": []
+          }
+        ],
+        "tags": [
+          "devices"
+        ],
+        "operationId": "RegisterDevice",
+        "parameters": [
+          {
+            "description": "Device registration information",
+            "name": "registration-info",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/registration-info"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "schema": {
+              "$ref": "#/definitions/registration-confirmation"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          }
+        }
+      }
+    },
     "/device/{device_id}": {
       "get": {
         "security": [
@@ -62,7 +106,7 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "Success.",
+            "description": "Success",
             "schema": {
               "$ref": "#/definitions/device-configuration"
             }
@@ -71,19 +115,42 @@ func init() {
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden."
+            "description": "Forbidden"
           },
           "404": {
-            "description": "Error."
+            "description": "Error"
           },
           "500": {
-            "description": "Error."
+            "description": "Error"
           }
         }
       }
     }
   },
   "definitions": {
+    "cpu": {
+      "type": "object",
+      "properties": {
+        "architecture": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "frequency": {
+          "type": "number"
+        },
+        "model_name": {
+          "type": "string"
+        }
+      }
+    },
     "device-configuration": {
       "type": "object",
       "properties": {
@@ -94,6 +161,48 @@ func init() {
         "workloads": {
           "description": "List of workloads deployed to the device",
           "$ref": "#/definitions/workload-list"
+        }
+      }
+    },
+    "hardware-info": {
+      "type": "object",
+      "properties": {
+        "cpu": {
+          "$ref": "#/definitions/cpu"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "memory": {
+          "$ref": "#/definitions/memory"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "properties": {
+        "physical_bytes": {
+          "type": "integer"
+        },
+        "usable_bytes": {
+          "type": "integer"
+        }
+      }
+    },
+    "registration-confirmation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "registration-info": {
+      "type": "object",
+      "properties": {
+        "hardware": {
+          "description": "Hardware information",
+          "$ref": "#/definitions/hardware-info"
         }
       }
     },
@@ -150,6 +259,50 @@ func init() {
   },
   "basePath": "/api/k4e-management/v1",
   "paths": {
+    "/device/register": {
+      "post": {
+        "security": [
+          {
+            "agentAuth": []
+          }
+        ],
+        "tags": [
+          "devices"
+        ],
+        "operationId": "RegisterDevice",
+        "parameters": [
+          {
+            "description": "Device registration information",
+            "name": "registration-info",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/registration-info"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success.",
+            "schema": {
+              "$ref": "#/definitions/registration-confirmation"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          }
+        }
+      }
+    },
     "/device/{device_id}": {
       "get": {
         "security": [
@@ -172,7 +325,7 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "Success.",
+            "description": "Success",
             "schema": {
               "$ref": "#/definitions/device-configuration"
             }
@@ -181,19 +334,42 @@ func init() {
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Forbidden."
+            "description": "Forbidden"
           },
           "404": {
-            "description": "Error."
+            "description": "Error"
           },
           "500": {
-            "description": "Error."
+            "description": "Error"
           }
         }
       }
     }
   },
   "definitions": {
+    "cpu": {
+      "type": "object",
+      "properties": {
+        "architecture": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "frequency": {
+          "type": "number"
+        },
+        "model_name": {
+          "type": "string"
+        }
+      }
+    },
     "device-configuration": {
       "type": "object",
       "properties": {
@@ -204,6 +380,48 @@ func init() {
         "workloads": {
           "description": "List of workloads deployed to the device",
           "$ref": "#/definitions/workload-list"
+        }
+      }
+    },
+    "hardware-info": {
+      "type": "object",
+      "properties": {
+        "cpu": {
+          "$ref": "#/definitions/cpu"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "memory": {
+          "$ref": "#/definitions/memory"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "properties": {
+        "physical_bytes": {
+          "type": "integer"
+        },
+        "usable_bytes": {
+          "type": "integer"
+        }
+      }
+    },
+    "registration-confirmation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "registration-info": {
+      "type": "object",
+      "properties": {
+        "hardware": {
+          "description": "Hardware information",
+          "$ref": "#/definitions/hardware-info"
         }
       }
     },

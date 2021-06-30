@@ -47,6 +47,9 @@ func NewKube4EdgeManagementAPI(spec *loads.Document) *Kube4EdgeManagementAPI {
 		DevicesGetDeviceConfigurationHandler: devices.GetDeviceConfigurationHandlerFunc(func(params devices.GetDeviceConfigurationParams, principal interface{}) middleware.Responder {
 			return middleware.NotImplemented("operation devices.GetDeviceConfiguration has not yet been implemented")
 		}),
+		DevicesRegisterDeviceHandler: devices.RegisterDeviceHandlerFunc(func(params devices.RegisterDeviceParams, principal interface{}) middleware.Responder {
+			return middleware.NotImplemented("operation devices.RegisterDevice has not yet been implemented")
+		}),
 
 		// Applies when the "X-Secret-Key" header is set
 		AgentAuthAuth: func(token string) (interface{}, error) {
@@ -97,6 +100,8 @@ type Kube4EdgeManagementAPI struct {
 
 	// DevicesGetDeviceConfigurationHandler sets the operation handler for the get device configuration operation
 	DevicesGetDeviceConfigurationHandler devices.GetDeviceConfigurationHandler
+	// DevicesRegisterDeviceHandler sets the operation handler for the register device operation
+	DevicesRegisterDeviceHandler devices.RegisterDeviceHandler
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -179,6 +184,9 @@ func (o *Kube4EdgeManagementAPI) Validate() error {
 
 	if o.DevicesGetDeviceConfigurationHandler == nil {
 		unregistered = append(unregistered, "devices.GetDeviceConfigurationHandler")
+	}
+	if o.DevicesRegisterDeviceHandler == nil {
+		unregistered = append(unregistered, "devices.RegisterDeviceHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -281,6 +289,10 @@ func (o *Kube4EdgeManagementAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/device/{device_id}"] = devices.NewGetDeviceConfiguration(o.context, o.DevicesGetDeviceConfigurationHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/device/register"] = devices.NewRegisterDevice(o.context, o.DevicesRegisterDeviceHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

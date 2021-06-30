@@ -27,6 +27,8 @@ const AuthKey contextKey = "Auth"
 /* DevicesAPI  */
 type DevicesAPI interface {
 	GetDeviceConfiguration(ctx context.Context, params devices.GetDeviceConfigurationParams) middleware.Responder
+
+	RegisterDevice(ctx context.Context, params devices.RegisterDeviceParams) middleware.Responder
 }
 
 // Config is configuration for Handler
@@ -95,6 +97,11 @@ func HandlerAPI(c Config) (http.Handler, *operations.Kube4EdgeManagementAPI, err
 		ctx := params.HTTPRequest.Context()
 		ctx = storeAuth(ctx, principal)
 		return c.DevicesAPI.GetDeviceConfiguration(ctx, params)
+	})
+	api.DevicesRegisterDeviceHandler = devices.RegisterDeviceHandlerFunc(func(params devices.RegisterDeviceParams, principal interface{}) middleware.Responder {
+		ctx := params.HTTPRequest.Context()
+		ctx = storeAuth(ctx, principal)
+		return c.DevicesAPI.RegisterDevice(ctx, params)
 	})
 	api.ServerShutdown = func() {}
 	return api.Serve(c.InnerMiddleware), api, nil
