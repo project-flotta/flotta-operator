@@ -18,6 +18,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"github.com/jakub-dzon/k4e-operator/restapi"
+	"log"
+	"net/http"
 	"os"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -34,6 +38,10 @@ import (
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/controllers"
 	//+kubebuilder:scaffold:imports
+)
+
+const (
+	Port = 8888
 )
 
 var (
@@ -103,9 +111,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	go func() {
+		h, err := restapi.Handler(restapi.Config{})
+		if err != nil {
+			setupLog.Error(err, "cannot start http server")
+		}
+		address := fmt.Sprintf(":%v", Port)
+		setupLog.Info("starting http server", "address", address)
+		log.Fatal(http.ListenAndServe(address, h))
+	}()
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+
 }
