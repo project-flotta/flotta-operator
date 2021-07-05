@@ -19,7 +19,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/jakub-dzon/k4e-operator/restapi/operations/devices"
+	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
 )
 
 // NewKube4EdgeManagementAPI creates a new Kube4EdgeManagement instance
@@ -44,19 +44,18 @@ func NewKube4EdgeManagementAPI(spec *loads.Document) *Kube4EdgeManagementAPI {
 
 		JSONProducer: runtime.JSONProducer(),
 
-		DevicesGetDeviceConfigurationHandler: devices.GetDeviceConfigurationHandlerFunc(func(params devices.GetDeviceConfigurationParams, principal interface{}) middleware.Responder {
-			return middleware.NotImplemented("operation devices.GetDeviceConfiguration has not yet been implemented")
+		YggdrasilGetControlMessageForDeviceHandler: yggdrasil.GetControlMessageForDeviceHandlerFunc(func(params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
+			return middleware.NotImplemented("operation yggdrasil.GetControlMessageForDevice has not yet been implemented")
 		}),
-		DevicesRegisterDeviceHandler: devices.RegisterDeviceHandlerFunc(func(params devices.RegisterDeviceParams, principal interface{}) middleware.Responder {
-			return middleware.NotImplemented("operation devices.RegisterDevice has not yet been implemented")
+		YggdrasilGetDataMessageForDeviceHandler: yggdrasil.GetDataMessageForDeviceHandlerFunc(func(params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder {
+			return middleware.NotImplemented("operation yggdrasil.GetDataMessageForDevice has not yet been implemented")
 		}),
-
-		// Applies when the "X-Secret-Key" header is set
-		AgentAuthAuth: func(token string) (interface{}, error) {
-			return nil, errors.NotImplemented("api key auth (agentAuth) X-Secret-Key from header param [X-Secret-Key] has not yet been implemented")
-		},
-		// default authorizer is authorized meaning no requests are blocked
-		APIAuthorizer: security.Authorized(),
+		YggdrasilPostControlMessageForDeviceHandler: yggdrasil.PostControlMessageForDeviceHandlerFunc(func(params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {
+			return middleware.NotImplemented("operation yggdrasil.PostControlMessageForDevice has not yet been implemented")
+		}),
+		YggdrasilPostDataMessageForDeviceHandler: yggdrasil.PostDataMessageForDeviceHandlerFunc(func(params yggdrasil.PostDataMessageForDeviceParams) middleware.Responder {
+			return middleware.NotImplemented("operation yggdrasil.PostDataMessageForDevice has not yet been implemented")
+		}),
 	}
 }
 
@@ -91,17 +90,14 @@ type Kube4EdgeManagementAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
-	// AgentAuthAuth registers a function that takes a token and returns a principal
-	// it performs authentication based on an api key X-Secret-Key provided in the header
-	AgentAuthAuth func(string) (interface{}, error)
-
-	// APIAuthorizer provides access control (ACL/RBAC/ABAC) by providing access to the request and authenticated principal
-	APIAuthorizer runtime.Authorizer
-
-	// DevicesGetDeviceConfigurationHandler sets the operation handler for the get device configuration operation
-	DevicesGetDeviceConfigurationHandler devices.GetDeviceConfigurationHandler
-	// DevicesRegisterDeviceHandler sets the operation handler for the register device operation
-	DevicesRegisterDeviceHandler devices.RegisterDeviceHandler
+	// YggdrasilGetControlMessageForDeviceHandler sets the operation handler for the get control message for device operation
+	YggdrasilGetControlMessageForDeviceHandler yggdrasil.GetControlMessageForDeviceHandler
+	// YggdrasilGetDataMessageForDeviceHandler sets the operation handler for the get data message for device operation
+	YggdrasilGetDataMessageForDeviceHandler yggdrasil.GetDataMessageForDeviceHandler
+	// YggdrasilPostControlMessageForDeviceHandler sets the operation handler for the post control message for device operation
+	YggdrasilPostControlMessageForDeviceHandler yggdrasil.PostControlMessageForDeviceHandler
+	// YggdrasilPostDataMessageForDeviceHandler sets the operation handler for the post data message for device operation
+	YggdrasilPostDataMessageForDeviceHandler yggdrasil.PostDataMessageForDeviceHandler
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
 	ServeError func(http.ResponseWriter, *http.Request, error)
@@ -178,15 +174,17 @@ func (o *Kube4EdgeManagementAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.AgentAuthAuth == nil {
-		unregistered = append(unregistered, "XSecretKeyAuth")
+	if o.YggdrasilGetControlMessageForDeviceHandler == nil {
+		unregistered = append(unregistered, "yggdrasil.GetControlMessageForDeviceHandler")
 	}
-
-	if o.DevicesGetDeviceConfigurationHandler == nil {
-		unregistered = append(unregistered, "devices.GetDeviceConfigurationHandler")
+	if o.YggdrasilGetDataMessageForDeviceHandler == nil {
+		unregistered = append(unregistered, "yggdrasil.GetDataMessageForDeviceHandler")
 	}
-	if o.DevicesRegisterDeviceHandler == nil {
-		unregistered = append(unregistered, "devices.RegisterDeviceHandler")
+	if o.YggdrasilPostControlMessageForDeviceHandler == nil {
+		unregistered = append(unregistered, "yggdrasil.PostControlMessageForDeviceHandler")
+	}
+	if o.YggdrasilPostDataMessageForDeviceHandler == nil {
+		unregistered = append(unregistered, "yggdrasil.PostDataMessageForDeviceHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -203,21 +201,12 @@ func (o *Kube4EdgeManagementAPI) ServeErrorFor(operationID string) func(http.Res
 
 // AuthenticatorsFor gets the authenticators for the specified security schemes
 func (o *Kube4EdgeManagementAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) map[string]runtime.Authenticator {
-	result := make(map[string]runtime.Authenticator)
-	for name := range schemes {
-		switch name {
-		case "agentAuth":
-			scheme := schemes[name]
-			result[name] = o.APIKeyAuthenticator(scheme.Name, scheme.In, o.AgentAuthAuth)
-
-		}
-	}
-	return result
+	return nil
 }
 
 // Authorizer returns the registered authorizer
 func (o *Kube4EdgeManagementAPI) Authorizer() runtime.Authorizer {
-	return o.APIAuthorizer
+	return nil
 }
 
 // ConsumersFor gets the consumers for the specified media types.
@@ -288,11 +277,19 @@ func (o *Kube4EdgeManagementAPI) initHandlerCache() {
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/device/{device_id}"] = devices.NewGetDeviceConfiguration(o.context, o.DevicesGetDeviceConfigurationHandler)
+	o.handlers["GET"]["/control/{device_id}/in"] = yggdrasil.NewGetControlMessageForDevice(o.context, o.YggdrasilGetControlMessageForDeviceHandler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
+	}
+	o.handlers["GET"]["/data/{device_id}/in"] = yggdrasil.NewGetDataMessageForDevice(o.context, o.YggdrasilGetDataMessageForDeviceHandler)
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/device/register"] = devices.NewRegisterDevice(o.context, o.DevicesRegisterDeviceHandler)
+	o.handlers["POST"]["/control/{device_id}/out"] = yggdrasil.NewPostControlMessageForDevice(o.context, o.YggdrasilPostControlMessageForDeviceHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/data/{device_id}/out"] = yggdrasil.NewPostDataMessageForDevice(o.context, o.YggdrasilPostDataMessageForDeviceHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

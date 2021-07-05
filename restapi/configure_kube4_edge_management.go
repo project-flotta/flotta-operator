@@ -15,25 +15,29 @@ import (
 	"github.com/go-openapi/runtime/security"
 
 	"github.com/jakub-dzon/k4e-operator/restapi/operations"
-	"github.com/jakub-dzon/k4e-operator/restapi/operations/devices"
+	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
 )
 
 type contextKey string
 
 const AuthKey contextKey = "Auth"
 
-//go:generate mockery -name DevicesAPI -inpkg
+//go:generate mockery -name YggdrasilAPI -inpkg
 
-/* DevicesAPI  */
-type DevicesAPI interface {
-	GetDeviceConfiguration(ctx context.Context, params devices.GetDeviceConfigurationParams) middleware.Responder
+/* YggdrasilAPI  */
+type YggdrasilAPI interface {
+	GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder
 
-	RegisterDevice(ctx context.Context, params devices.RegisterDeviceParams) middleware.Responder
+	GetDataMessageForDevice(ctx context.Context, params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder
+
+	PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder
+
+	PostDataMessageForDevice(ctx context.Context, params yggdrasil.PostDataMessageForDeviceParams) middleware.Responder
 }
 
 // Config is configuration for Handler
 type Config struct {
-	DevicesAPI
+	YggdrasilAPI
 	Logger func(string, ...interface{})
 	// InnerMiddleware is for the handler executors. These do not apply to the swagger.json document.
 	// The middleware executes after routing but before authentication, binding and validation
@@ -42,9 +46,6 @@ type Config struct {
 	// Authorizer is used to authorize a request after the Auth function was called using the "Auth*" functions
 	// and the principal was stored in the context in the "AuthKey" context value.
 	Authorizer func(*http.Request) error
-
-	// AuthAgentAuth Applies when the "X-Secret-Key" header is set
-	AuthAgentAuth func(token string) (interface{}, error)
 
 	// Authenticator to use for all APIKey authentication
 	APIKeyAuthenticator func(string, string, security.TokenAuthentication) runtime.Authenticator
@@ -85,23 +86,21 @@ func HandlerAPI(c Config) (http.Handler, *operations.Kube4EdgeManagementAPI, err
 
 	api.JSONConsumer = runtime.JSONConsumer()
 	api.JSONProducer = runtime.JSONProducer()
-	api.AgentAuthAuth = func(token string) (interface{}, error) {
-		if c.AuthAgentAuth == nil {
-			return token, nil
-		}
-		return c.AuthAgentAuth(token)
-	}
-
-	api.APIAuthorizer = authorizer(c.Authorizer)
-	api.DevicesGetDeviceConfigurationHandler = devices.GetDeviceConfigurationHandlerFunc(func(params devices.GetDeviceConfigurationParams, principal interface{}) middleware.Responder {
+	api.YggdrasilGetControlMessageForDeviceHandler = yggdrasil.GetControlMessageForDeviceHandlerFunc(func(params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
-		ctx = storeAuth(ctx, principal)
-		return c.DevicesAPI.GetDeviceConfiguration(ctx, params)
+		return c.YggdrasilAPI.GetControlMessageForDevice(ctx, params)
 	})
-	api.DevicesRegisterDeviceHandler = devices.RegisterDeviceHandlerFunc(func(params devices.RegisterDeviceParams, principal interface{}) middleware.Responder {
+	api.YggdrasilGetDataMessageForDeviceHandler = yggdrasil.GetDataMessageForDeviceHandlerFunc(func(params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
-		ctx = storeAuth(ctx, principal)
-		return c.DevicesAPI.RegisterDevice(ctx, params)
+		return c.YggdrasilAPI.GetDataMessageForDevice(ctx, params)
+	})
+	api.YggdrasilPostControlMessageForDeviceHandler = yggdrasil.PostControlMessageForDeviceHandlerFunc(func(params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {
+		ctx := params.HTTPRequest.Context()
+		return c.YggdrasilAPI.PostControlMessageForDevice(ctx, params)
+	})
+	api.YggdrasilPostDataMessageForDeviceHandler = yggdrasil.PostDataMessageForDeviceHandlerFunc(func(params yggdrasil.PostDataMessageForDeviceParams) middleware.Responder {
+		ctx := params.HTTPRequest.Context()
+		return c.YggdrasilAPI.PostDataMessageForDevice(ctx, params)
 	})
 	api.ServerShutdown = func() {}
 	return api.Serve(c.InnerMiddleware), api, nil

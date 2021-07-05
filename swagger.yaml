@@ -26,26 +26,22 @@ securityDefinitions:
     name: X-Secret-Key
 
 paths:
-  /device/register:
-    post:
-      operationId: RegisterDevice
-      security:
-        - agentAuth: []
-
+  /data/{device_id}/in:
+    get:
+      operationId: GetDataMessageForDevice
       tags:
-        - devices
+        - yggdrasil
       parameters:
-        - name: registration-info
-          in: body
-          description: Device registration information
+        - in: path
+          name: device_id
+          description: Device ID
+          type: string
           required: true
-          schema:
-           $ref: '#/definitions/registration-info'
       responses:
         "200":
-          description: Success.
+          description: Success
           schema:
-            $ref: '#/definitions/registration-confirmation'
+            $ref: '#/definitions/message'
         "401":
           description: Unauthorized
         "403":
@@ -55,24 +51,78 @@ paths:
         "500":
           description: Error
 
-  /device/{device_id}:
-    get:
-      operationId: GetDeviceConfiguration
-      security:
-        - agentAuth: []
+  /data/{device_id}/out:
+    post:
+      operationId: PostDataMessageForDevice
       tags:
-        - devices
+        - yggdrasil
       parameters:
         - in: path
           name: device_id
-          description: Device to get configuration for
+          description: Device ID
+          type: string
+          required: true
+        - in: body
+          name: message
+          required: true
+          schema:
+            $ref: '#/definitions/message'
+      responses:
+        "200":
+          description: Success
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Error
+        "500":
+          description: Error
+
+  /control/{device_id}/in:
+    get:
+      operationId: GetControlMessageForDevice
+      tags:
+        - yggdrasil
+      parameters:
+        - in: path
+          name: device_id
+          description: Device ID
           type: string
           required: true
       responses:
         "200":
           description: Success
           schema:
-            $ref: '#/definitions/device-configuration'
+            $ref: '#/definitions/message'
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Error
+        "500":
+          description: Error
+
+  /control/{device_id}/out:
+    post:
+      operationId: PostControlMessageForDevice
+      tags:
+        - yggdrasil
+      parameters:
+        - in: path
+          name: device_id
+          description: Device ID
+          type: string
+          required: true
+        - in: body
+          name: message
+          required: true
+          schema:
+            $ref: '#/definitions/message'
+      responses:
+        "200":
+          description: Success
         "401":
           description: Unauthorized
         "403":
@@ -153,4 +203,29 @@ definitions:
     properties:
       id:
         type: string
-        
+
+  message:
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - connection-status
+          - command
+          - event
+          - data
+      message_id:
+        type: string
+      response_to:
+        type: string
+      version:
+        type: integer
+      sent:
+        type: string
+        format: date-time
+      directive:
+        type: string
+      metadata:
+        type: object
+      content:
+        description: Content

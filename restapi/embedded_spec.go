@@ -40,33 +40,26 @@ func init() {
   },
   "basePath": "/api/k4e-management/v1",
   "paths": {
-    "/device/register": {
-      "post": {
-        "security": [
-          {
-            "agentAuth": []
-          }
-        ],
+    "/control/{device_id}/in": {
+      "get": {
         "tags": [
-          "devices"
+          "yggdrasil"
         ],
-        "operationId": "RegisterDevice",
+        "operationId": "GetControlMessageForDevice",
         "parameters": [
           {
-            "description": "Device registration information",
-            "name": "registration-info",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/registration-info"
-            }
+            "type": "string",
+            "description": "Device ID",
+            "name": "device_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "Success.",
+            "description": "Success",
             "schema": {
-              "$ref": "#/definitions/registration-confirmation"
+              "$ref": "#/definitions/message"
             }
           },
           "401": {
@@ -84,21 +77,58 @@ func init() {
         }
       }
     },
-    "/device/{device_id}": {
-      "get": {
-        "security": [
-          {
-            "agentAuth": []
-          }
-        ],
+    "/control/{device_id}/out": {
+      "post": {
         "tags": [
-          "devices"
+          "yggdrasil"
         ],
-        "operationId": "GetDeviceConfiguration",
+        "operationId": "PostControlMessageForDevice",
         "parameters": [
           {
             "type": "string",
-            "description": "Device to get configuration for",
+            "description": "Device ID",
+            "name": "device_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "message",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          }
+        }
+      }
+    },
+    "/data/{device_id}/in": {
+      "get": {
+        "tags": [
+          "yggdrasil"
+        ],
+        "operationId": "GetDataMessageForDevice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Device ID",
             "name": "device_id",
             "in": "path",
             "required": true
@@ -108,8 +138,50 @@ func init() {
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/device-configuration"
+              "$ref": "#/definitions/message"
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          }
+        }
+      }
+    },
+    "/data/{device_id}/out": {
+      "post": {
+        "tags": [
+          "yggdrasil"
+        ],
+        "operationId": "PostDataMessageForDevice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Device ID",
+            "name": "device_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "message",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
           },
           "401": {
             "description": "Unauthorized"
@@ -185,6 +257,42 @@ func init() {
           "type": "integer"
         },
         "usable_bytes": {
+          "type": "integer"
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "description": "Content"
+        },
+        "directive": {
+          "type": "string"
+        },
+        "message_id": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "response_to": {
+          "type": "string"
+        },
+        "sent": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "connection-status",
+            "command",
+            "event",
+            "data"
+          ]
+        },
+        "version": {
           "type": "integer"
         }
       }
@@ -262,33 +370,26 @@ func init() {
   },
   "basePath": "/api/k4e-management/v1",
   "paths": {
-    "/device/register": {
-      "post": {
-        "security": [
-          {
-            "agentAuth": []
-          }
-        ],
+    "/control/{device_id}/in": {
+      "get": {
         "tags": [
-          "devices"
+          "yggdrasil"
         ],
-        "operationId": "RegisterDevice",
+        "operationId": "GetControlMessageForDevice",
         "parameters": [
           {
-            "description": "Device registration information",
-            "name": "registration-info",
-            "in": "body",
-            "required": true,
-            "schema": {
-              "$ref": "#/definitions/registration-info"
-            }
+            "type": "string",
+            "description": "Device ID",
+            "name": "device_id",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
           "200": {
-            "description": "Success.",
+            "description": "Success",
             "schema": {
-              "$ref": "#/definitions/registration-confirmation"
+              "$ref": "#/definitions/message"
             }
           },
           "401": {
@@ -306,21 +407,58 @@ func init() {
         }
       }
     },
-    "/device/{device_id}": {
-      "get": {
-        "security": [
-          {
-            "agentAuth": []
-          }
-        ],
+    "/control/{device_id}/out": {
+      "post": {
         "tags": [
-          "devices"
+          "yggdrasil"
         ],
-        "operationId": "GetDeviceConfiguration",
+        "operationId": "PostControlMessageForDevice",
         "parameters": [
           {
             "type": "string",
-            "description": "Device to get configuration for",
+            "description": "Device ID",
+            "name": "device_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "message",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          }
+        }
+      }
+    },
+    "/data/{device_id}/in": {
+      "get": {
+        "tags": [
+          "yggdrasil"
+        ],
+        "operationId": "GetDataMessageForDevice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Device ID",
             "name": "device_id",
             "in": "path",
             "required": true
@@ -330,8 +468,50 @@ func init() {
           "200": {
             "description": "Success",
             "schema": {
-              "$ref": "#/definitions/device-configuration"
+              "$ref": "#/definitions/message"
             }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          }
+        }
+      }
+    },
+    "/data/{device_id}/out": {
+      "post": {
+        "tags": [
+          "yggdrasil"
+        ],
+        "operationId": "PostDataMessageForDevice",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Device ID",
+            "name": "device_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "message",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/message"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
           },
           "401": {
             "description": "Unauthorized"
@@ -407,6 +587,42 @@ func init() {
           "type": "integer"
         },
         "usable_bytes": {
+          "type": "integer"
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "description": "Content"
+        },
+        "directive": {
+          "type": "string"
+        },
+        "message_id": {
+          "type": "string"
+        },
+        "metadata": {
+          "type": "object"
+        },
+        "response_to": {
+          "type": "string"
+        },
+        "sent": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "connection-status",
+            "command",
+            "event",
+            "data"
+          ]
+        },
+        "version": {
           "type": "integer"
         }
       }

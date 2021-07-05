@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,12 +26,21 @@ import (
 
 // EdgeDeploymentSpec defines the desired state of EdgeDeployment
 type EdgeDeploymentSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of EdgeDeployment. Edit edgedeployment_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Device NamespacedName     `json:"device"`
+	Type   EdgeDeploymentType `json:"type"`
+	Pod    v1.PodSpec         `json:"pod,omitempty"`
 }
+
+type NamespacedName struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type EdgeDeploymentType string
+
+const (
+	Pod EdgeDeploymentType = "pod"
+)
 
 // EdgeDeploymentStatus defines the observed state of EdgeDeployment
 type EdgeDeploymentStatus struct {

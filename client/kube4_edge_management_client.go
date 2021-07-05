@@ -13,7 +13,7 @@ import (
 	rtclient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/jakub-dzon/k4e-operator/client/devices"
+	"github.com/jakub-dzon/k4e-operator/client/yggdrasil"
 )
 
 const (
@@ -58,12 +58,12 @@ func New(c Config) *Kube4EdgeManagement {
 
 	cli := new(Kube4EdgeManagement)
 	cli.Transport = transport
-	cli.Devices = devices.New(transport, strfmt.Default, c.AuthInfo)
+	cli.Yggdrasil = yggdrasil.New(transport, strfmt.Default, c.AuthInfo)
 	return cli
 }
 
 // Kube4EdgeManagement is a client for kube4 edge management
 type Kube4EdgeManagement struct {
-	Devices   *devices.Client
+	Yggdrasil *yggdrasil.Client
 	Transport runtime.ClientTransport
 }

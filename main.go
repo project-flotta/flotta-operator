@@ -19,8 +19,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/jakub-dzon/k4e-operator/internal/devices"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
 	"github.com/jakub-dzon/k4e-operator/restapi"
 	"log"
 	"net/http"
@@ -119,7 +119,7 @@ func main() {
 
 	go func() {
 		h, err := restapi.Handler(restapi.Config{
-			DevicesAPI: devices.NewDeviceHandler(edgeDeviceRepository, initialDeviceNamespace),
+			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, initialDeviceNamespace),
 		})
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
