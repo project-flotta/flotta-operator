@@ -21,8 +21,11 @@ func (r *Repository) Read(ctx context.Context, name string, namespace string) (*
 }
 
 func (r *Repository) Create(ctx context.Context, edgeDevice v1alpha1.EdgeDevice) (*v1alpha1.EdgeDevice, error) {
-	edgeDevice.GenerateName = "ed-"
-	edgeDevice.Name = ""
 	err := r.client.Create(ctx, &edgeDevice)
+	return &edgeDevice, err
+}
+
+func (r *Repository) UpdateStatus(ctx context.Context, edgeDevice v1alpha1.EdgeDevice) (*v1alpha1.EdgeDevice, error) {
+	err := r.client.Status().Update(ctx, &edgeDevice)
 	return &edgeDevice, err
 }

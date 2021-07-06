@@ -17,6 +17,9 @@ type Workload struct {
 
 	// Name of the workload
 	Name string `json:"name,omitempty"`
+
+	// version
+	Version string `json:"version,omitempty"`
 }
 
 // Validate validates this workload

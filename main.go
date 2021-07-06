@@ -45,7 +45,7 @@ import (
 const (
 	Port = 8888
 
-	initialDeviceNamespace = "origin"
+	initialDeviceNamespace = "default"
 )
 
 var (
@@ -89,10 +89,12 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
 
 	if err = (&controllers.EdgeDeviceReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:               mgr.GetClient(),
+		Scheme:               mgr.GetScheme(),
+		EdgeDeviceRepository: edgeDeviceRepository,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)
@@ -114,8 +116,6 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
-
-	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
 
 	go func() {
 		h, err := restapi.Handler(restapi.Config{

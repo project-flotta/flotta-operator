@@ -133,15 +133,44 @@ paths:
           description: Error
 
 definitions:
-  device-configuration:
+  device-configuration-message:
     type: object
     properties:
       device_id:
         type: string
         description: Device identifier
+      version:
+        type: string
+      configuration:
+        $ref: '#/definitions/device-configuration'
       workloads:
         $ref: '#/definitions/workload-list'
         description: List of workloads deployed to the device
+
+  device-configuration:
+    type: object
+    properties:
+      heartbeat:
+        $ref: '#/definitions/heartbeat-configuration'
+
+  heartbeat-configuration:
+    type: object
+    properties:
+      period_seconds:
+        type: integer
+      hardware_profile:
+        $ref: '#/definitions/hardware-profile-configuration'
+
+  hardware-profile-configuration:
+    type: object
+    properties:
+      include:
+        type: boolean
+      scope:
+        type: string
+        enum:
+          - full
+          - delta
 
   workload-list:
     type: array
@@ -154,6 +183,8 @@ definitions:
       name:
         type: string
         description: Name of the workload
+      version:
+        type: string
         
   registration-info:
     type: object
@@ -198,11 +229,38 @@ definitions:
       architecture:
         type: string
 
-  registration-confirmation:
+  heartbeat:
     type: object
     properties:
-      id:
+      device_id:
         type: string
+      time:
+        type: string
+        format: date-time
+      status:
+        type: string
+        enum:
+          - up
+          - degraded
+      version:
+        type: string
+      workloads:
+        type: array
+        items:
+          $ref: '#/definitions/workload-status'
+
+  workload-status:
+    type: object
+    properties:
+      name:
+        type: string
+      status:
+        type: string
+        enum:
+          - deploying
+          - running
+          - crashed
+          - stopped
 
   message:
     type: object

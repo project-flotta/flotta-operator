@@ -16,18 +16,15 @@ import (
 // swagger:model device-configuration
 type DeviceConfiguration struct {
 
-	// Device identifier
-	DeviceID string `json:"device_id,omitempty"`
-
-	// List of workloads deployed to the device
-	Workloads WorkloadList `json:"workloads,omitempty"`
+	// heartbeat
+	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
 }
 
 // Validate validates this device configuration
 func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateWorkloads(formats); err != nil {
+	if err := m.validateHeartbeat(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -37,17 +34,19 @@ func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *DeviceConfiguration) validateWorkloads(formats strfmt.Registry) error {
+func (m *DeviceConfiguration) validateHeartbeat(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Workloads) { // not required
+	if swag.IsZero(m.Heartbeat) { // not required
 		return nil
 	}
 
-	if err := m.Workloads.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
-			return ve.ValidateName("workloads")
+	if m.Heartbeat != nil {
+		if err := m.Heartbeat.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("heartbeat")
+			}
+			return err
 		}
-		return err
 	}
 
 	return nil

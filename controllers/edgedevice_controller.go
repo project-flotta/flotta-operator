@@ -18,7 +18,8 @@ package controllers
 
 import (
 	"context"
-
+	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,7 +31,8 @@ import (
 // EdgeDeviceReconciler reconciles a EdgeDevice object
 type EdgeDeviceReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme               *runtime.Scheme
+	EdgeDeviceRepository *edgedevice.Repository
 }
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
@@ -47,9 +49,17 @@ type EdgeDeviceReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling", "request", req)
 
-	// your logic here
+	edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, req.Name, req.Namespace)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{Requeue: true}, err
+	}
+	logger.Info("Reconciling", "edgeDevice", edgeDevice)
 
 	return ctrl.Result{}, nil
 }

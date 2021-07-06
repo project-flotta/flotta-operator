@@ -33,12 +33,38 @@ type EdgeDeviceSpec struct {
 
 	// RequestTime is the time of device registration request
 	RequestTime *metav1.Time `json:"requestTime,omitempty"`
+
+	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
+}
+
+type DeviceConfiguration struct {
+
+	// heartbeat
+	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
+}
+
+type HeartbeatConfiguration struct {
+
+	// hardware profile
+	HardwareProfile *HardwareProfileConfiguration `json:"hardware_profile,omitempty"`
+
+	// period seconds
+	PeriodSeconds int64 `json:"period_seconds,omitempty"`
+}
+
+type HardwareProfileConfiguration struct {
+
+	// include
+	Include bool `json:"include,omitempty"`
+
+	// scope
+	// Enum: [full delta]
+	Scope string `json:"scope,omitempty"`
 }
 
 // EdgeDeviceStatus defines the observed state of EdgeDevice
 type EdgeDeviceStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	LastSyncedResourceVersion string `json:"lastSyncedResourceVersion,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -36,6 +36,23 @@ spec:
           spec:
             description: EdgeDeviceSpec defines the desired state of EdgeDevice
             properties:
+              heartbeat:
+                properties:
+                  hardware_profile:
+                    description: hardware profile
+                    properties:
+                      include:
+                        description: include
+                        type: boolean
+                      scope:
+                        description: 'scope Enum: [full delta]'
+                        type: string
+                    type: object
+                  period_seconds:
+                    description: period seconds
+                    format: int64
+                    type: integer
+                type: object
               osImageId:
                 description: OsImageId carries information about ID of the OS Image
                   deployed to the device
@@ -47,6 +64,9 @@ spec:
             type: object
           status:
             description: EdgeDeviceStatus defines the observed state of EdgeDevice
+            properties:
+              lastSyncedResourceVersion:
+                type: string
             type: object
         type: object
     served: true

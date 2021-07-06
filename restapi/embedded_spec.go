@@ -226,8 +226,22 @@ func init() {
     "device-configuration": {
       "type": "object",
       "properties": {
+        "heartbeat": {
+          "$ref": "#/definitions/heartbeat-configuration"
+        }
+      }
+    },
+    "device-configuration-message": {
+      "type": "object",
+      "properties": {
+        "configuration": {
+          "$ref": "#/definitions/device-configuration"
+        },
         "device_id": {
           "description": "Device identifier",
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "workloads": {
@@ -247,6 +261,32 @@ func init() {
         },
         "memory": {
           "$ref": "#/definitions/memory"
+        }
+      }
+    },
+    "hardware-profile-configuration": {
+      "type": "object",
+      "properties": {
+        "include": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "full",
+            "delta"
+          ]
+        }
+      }
+    },
+    "heartbeat-configuration": {
+      "type": "object",
+      "properties": {
+        "hardware_profile": {
+          "$ref": "#/definitions/hardware-profile-configuration"
+        },
+        "period_seconds": {
+          "type": "integer"
         }
       }
     },
@@ -322,6 +362,9 @@ func init() {
       "properties": {
         "name": {
           "description": "Name of the workload",
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
@@ -556,8 +599,22 @@ func init() {
     "device-configuration": {
       "type": "object",
       "properties": {
+        "heartbeat": {
+          "$ref": "#/definitions/heartbeat-configuration"
+        }
+      }
+    },
+    "device-configuration-message": {
+      "type": "object",
+      "properties": {
+        "configuration": {
+          "$ref": "#/definitions/device-configuration"
+        },
         "device_id": {
           "description": "Device identifier",
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         },
         "workloads": {
@@ -577,6 +634,32 @@ func init() {
         },
         "memory": {
           "$ref": "#/definitions/memory"
+        }
+      }
+    },
+    "hardware-profile-configuration": {
+      "type": "object",
+      "properties": {
+        "include": {
+          "type": "boolean"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "full",
+            "delta"
+          ]
+        }
+      }
+    },
+    "heartbeat-configuration": {
+      "type": "object",
+      "properties": {
+        "hardware_profile": {
+          "$ref": "#/definitions/hardware-profile-configuration"
+        },
+        "period_seconds": {
+          "type": "integer"
         }
       }
     },
@@ -652,6 +735,9 @@ func init() {
       "properties": {
         "name": {
           "description": "Name of the workload",
+          "type": "string"
+        },
+        "version": {
           "type": "string"
         }
       }
