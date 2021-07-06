@@ -65,7 +65,12 @@ spec:
           status:
             description: EdgeDeviceStatus defines the observed state of EdgeDevice
             properties:
+              lastSeenTime:
+                format: date-time
+                type: string
               lastSyncedResourceVersion:
+                type: string
+              phase:
                 type: string
             type: object
         type: object

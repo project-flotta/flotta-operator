@@ -64,7 +64,9 @@ type HardwareProfileConfiguration struct {
 
 // EdgeDeviceStatus defines the observed state of EdgeDevice
 type EdgeDeviceStatus struct {
-	LastSyncedResourceVersion string `json:"lastSyncedResourceVersion,omitempty"`
+	Phase                     string      `json:"phase,omitempty"`
+	LastSeenTime              metav1.Time `json:"lastSeenTime,omitempty"`
+	LastSyncedResourceVersion string      `json:"lastSyncedResourceVersion,omitempty"`
 }
 
 //+kubebuilder:object:root=true

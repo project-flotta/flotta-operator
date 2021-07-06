@@ -2,6 +2,7 @@ package yggdrasil
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
@@ -19,7 +20,7 @@ import (
 var (
 	defaultHeartbeatConfiguration = models.HeartbeatConfiguration{
 		HardwareProfile: &models.HardwareProfileConfiguration{},
-		PeriodSeconds:   5,
+		PeriodSeconds:   60,
 	}
 )
 
@@ -78,6 +79,8 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 	} else {
 		dc.Configuration.Heartbeat = &defaultHeartbeatConfiguration
 	}
+
+	// TODO: Network optimization: Decide whether there is a need to return any payload based on difference between last applied configuration and current state in the cluster.
 	message := models.Message{
 		Type:      models.MessageTypeData,
 		Directive: "device",
@@ -126,7 +129,24 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 	msg := params.Message
 	switch msg.Directive {
 	case "heartbeat":
-		logger.Info("Received heartbeat", "content", msg.Content)
+		heartbeat := models.Heartbeat{}
+		contentJson, _ := json.Marshal(msg.Content)
+		json.Unmarshal(contentJson, &heartbeat)
+		logger.Info("Received heartbeat", "content", heartbeat)
+		edgeDevice, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return operations.NewPostDataMessageForDeviceNotFound()
+			}
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
+		edgeDevice.Status.LastSyncedResourceVersion = heartbeat.Version
+		edgeDevice.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
+		edgeDevice.Status.Phase = heartbeat.Status
+		edgeDevice, err = h.deviceRepository.UpdateStatus(ctx, *edgeDevice)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
 	default:
 		logger.Info("Received unknown message", "message", msg)
 	}

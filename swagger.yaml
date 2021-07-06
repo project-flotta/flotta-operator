@@ -232,8 +232,6 @@ definitions:
   heartbeat:
     type: object
     properties:
-      device_id:
-        type: string
       time:
         type: string
         format: date-time

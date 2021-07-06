@@ -282,9 +282,6 @@ func init() {
     "heartbeat": {
       "type": "object",
       "properties": {
-        "device_id": {
-          "type": "string"
-        },
         "status": {
           "type": "string",
           "enum": [
@@ -692,9 +689,6 @@ func init() {
     "heartbeat": {
       "type": "object",
       "properties": {
-        "device_id": {
-          "type": "string"
-        },
         "status": {
           "type": "string",
           "enum": [

@@ -20,9 +20,6 @@ import (
 // swagger:model heartbeat
 type Heartbeat struct {
 
-	// device id
-	DeviceID string `json:"device_id,omitempty"`
-
 	// status
 	// Enum: [up degraded]
 	Status string `json:"status,omitempty"`
