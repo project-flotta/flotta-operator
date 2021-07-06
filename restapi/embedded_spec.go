@@ -279,6 +279,34 @@ func init() {
         }
       }
     },
+    "heartbeat": {
+      "type": "object",
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "up",
+            "degraded"
+          ]
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "string"
+        },
+        "workloads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workload-status"
+          }
+        }
+      }
+    },
     "heartbeat-configuration": {
       "type": "object",
       "properties": {
@@ -337,14 +365,6 @@ func init() {
         }
       }
     },
-    "registration-confirmation": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        }
-      }
-    },
     "registration-info": {
       "type": "object",
       "properties": {
@@ -373,6 +393,23 @@ func init() {
       "type": "array",
       "items": {
         "$ref": "#/definitions/workload"
+      }
+    },
+    "workload-status": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "deploying",
+            "running",
+            "crashed",
+            "stopped"
+          ]
+        }
       }
     }
   },
@@ -652,6 +689,34 @@ func init() {
         }
       }
     },
+    "heartbeat": {
+      "type": "object",
+      "properties": {
+        "device_id": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "up",
+            "degraded"
+          ]
+        },
+        "time": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "string"
+        },
+        "workloads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workload-status"
+          }
+        }
+      }
+    },
     "heartbeat-configuration": {
       "type": "object",
       "properties": {
@@ -710,14 +775,6 @@ func init() {
         }
       }
     },
-    "registration-confirmation": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        }
-      }
-    },
     "registration-info": {
       "type": "object",
       "properties": {
@@ -746,6 +803,23 @@ func init() {
       "type": "array",
       "items": {
         "$ref": "#/definitions/workload"
+      }
+    },
+    "workload-status": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "deploying",
+            "running",
+            "crashed",
+            "stopped"
+          ]
+        }
       }
     }
   },
