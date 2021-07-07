@@ -37,15 +37,11 @@ func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, initialNamespa
 }
 
 func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
-	logger := log.FromContext(ctx).WithValues("DeviceID", params.DeviceID)
-	logger.Info("Requested control message for device")
 	return operations.NewGetControlMessageForDeviceOK()
 }
 
 func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
-	logger := log.FromContext(ctx).WithValues("DeviceID", deviceID)
-	logger.Info("Requested data for device")
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -94,32 +90,6 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 }
 
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {
-	logger := log.FromContext(ctx).WithValues("DeviceID", params.DeviceID)
-	logger.Info("Received control message for device", "Message", params.Message)
-	switch params.Message.Type {
-	case models.MessageTypeConnectionStatus:
-		_, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				now := metav1.Now()
-				device := v1alpha1.EdgeDevice{
-					Spec: v1alpha1.EdgeDeviceSpec{
-						RequestTime: &now,
-					}}
-				device.Name = params.DeviceID
-				device.Namespace = h.initialNamespace
-				edgeDevice, err := h.deviceRepository.Create(ctx, device)
-				if err != nil {
-					logger.Error(err, "Cannot save EdgeDevice")
-					return operations.NewPostControlMessageForDeviceInternalServerError()
-				}
-				logger.Info("Created", "device", edgeDevice)
-			}
-			return operations.NewPostControlMessageForDeviceInternalServerError()
-		}
-	default:
-		logger.Info("Other")
-	}
 	return operations.NewPostControlMessageForDeviceOK()
 }
 
@@ -145,6 +115,31 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		edgeDevice.Status.Phase = heartbeat.Status
 		edgeDevice, err = h.deviceRepository.UpdateStatus(ctx, *edgeDevice)
 		if err != nil {
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
+	case "registration":
+		_, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				contentJson, _ := json.Marshal(msg.Content)
+				registrationInfo := models.RegistrationInfo{}
+				json.Unmarshal(contentJson, &registrationInfo)
+				logger.Info("Received registration info", "content", registrationInfo)
+				now := metav1.Now()
+				device := v1alpha1.EdgeDevice{
+					Spec: v1alpha1.EdgeDeviceSpec{
+						RequestTime: &now,
+					}}
+				device.Name = params.DeviceID
+				device.Namespace = h.initialNamespace
+				device.Spec.OsImageId = registrationInfo.OsImageID
+				edgeDevice, err := h.deviceRepository.Create(ctx, device)
+				if err != nil {
+					logger.Error(err, "Cannot save EdgeDevice")
+					return operations.NewPostDataMessageForDeviceInternalServerError()
+				}
+				logger.Info("Created", "device", edgeDevice)
+			}
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 	default:
