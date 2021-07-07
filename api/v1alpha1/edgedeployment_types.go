@@ -28,7 +28,11 @@ import (
 type EdgeDeploymentSpec struct {
 	Device NamespacedName     `json:"device"`
 	Type   EdgeDeploymentType `json:"type"`
-	Pod    v1.PodSpec         `json:"pod,omitempty"`
+	Pod    Pod                `json:"pod,omitempty"`
+}
+
+type Pod struct {
+	Spec v1.PodSpec `json:"spec"`
 }
 
 type NamespacedName struct {
@@ -39,7 +43,7 @@ type NamespacedName struct {
 type EdgeDeploymentType string
 
 const (
-	Pod EdgeDeploymentType = "pod"
+	PodDeploymentType EdgeDeploymentType = "pod"
 )
 
 // EdgeDeploymentStatus defines the observed state of EdgeDeployment

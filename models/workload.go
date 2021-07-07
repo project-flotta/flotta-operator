@@ -18,6 +18,9 @@ type Workload struct {
 	// Name of the workload
 	Name string `json:"name,omitempty"`
 
+	// specification
+	Specification string `json:"specification,omitempty"`
+
 	// version
 	Version string `json:"version,omitempty"`
 }

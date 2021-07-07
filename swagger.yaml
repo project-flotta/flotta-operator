@@ -185,6 +185,8 @@ definitions:
         description: Name of the workload
       version:
         type: string
+      specification:
+        type: string
         
   registration-info:
     type: object

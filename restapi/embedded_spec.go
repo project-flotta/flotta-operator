@@ -381,6 +381,9 @@ func init() {
           "description": "Name of the workload",
           "type": "string"
         },
+        "specification": {
+          "type": "string"
+        },
         "version": {
           "type": "string"
         }
@@ -786,6 +789,9 @@ func init() {
       "properties": {
         "name": {
           "description": "Name of the workload",
+          "type": "string"
+        },
+        "specification": {
           "type": "string"
         },
         "version": {
