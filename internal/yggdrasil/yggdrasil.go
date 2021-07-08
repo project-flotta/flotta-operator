@@ -199,6 +199,9 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.EdgeDeployment) models.WorkloadList {
 	list := models.WorkloadList{}
 	for _, deployment := range deployments {
+		if deployment.DeletionTimestamp != nil {
+			continue
+		}
 		podSpec, err := yaml.Marshal(deployment.Spec.Pod.Spec)
 		if err != nil {
 			log.FromContext(ctx).Error(err, "Cannot marshal pod specification")

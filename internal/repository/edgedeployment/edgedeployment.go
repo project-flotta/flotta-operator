@@ -43,3 +43,8 @@ func (r *Repository) UpdateStatus(ctx context.Context, edgeDeployment v1alpha1.E
 	err := r.client.Status().Update(ctx, &edgeDeployment)
 	return &edgeDeployment, err
 }
+
+func (r *Repository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error {
+	patch := client.MergeFrom(old)
+	return r.client.Patch(ctx, new, patch)
+}
