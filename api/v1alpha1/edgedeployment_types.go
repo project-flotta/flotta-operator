@@ -41,10 +41,18 @@ const (
 	PodDeploymentType EdgeDeploymentType = "pod"
 )
 
+type EdgeDeploymentPhase string
+
+const (
+	Deploying EdgeDeploymentPhase = "Deploying"
+	Running   EdgeDeploymentPhase = "Running"
+	Exited    EdgeDeploymentPhase = "Exited"
+)
+
 // EdgeDeploymentStatus defines the observed state of EdgeDeployment
 type EdgeDeploymentStatus struct {
-	Phase              string      `json:"phase,omitempty"`
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
+	Phase              EdgeDeploymentPhase `json:"phase,omitempty"`
+	LastTransitionTime metav1.Time         `json:"lastTransitionTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true

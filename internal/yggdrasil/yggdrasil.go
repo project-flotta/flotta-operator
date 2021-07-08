@@ -225,11 +225,11 @@ func (h *Handler) updateEdgeDeployments(ctx context.Context, workloadStatuses []
 			logger.Error(err, "Cannot get Edge Deployment", "name", status.Name)
 			continue
 		}
-		if edgeDeployment.Status.Phase != status.Status {
-			edgeDeployment.Status.Phase = status.Status
+		if string(edgeDeployment.Status.Phase) != status.Status {
+			edgeDeployment.Status.Phase = v1alpha1.EdgeDeploymentPhase(status.Status)
 			edgeDeployment.Status.LastTransitionTime = metav1.Now()
 		}
-		_, err = h.deploymentRepository.UpdateStatus(ctx, *edgeDeployment)
+		err = h.deploymentRepository.UpdateStatus(ctx, edgeDeployment)
 		if err != nil {
 			logger.Error(err, "Cannot update Edge Deployment status")
 			continue

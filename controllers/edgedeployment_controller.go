@@ -74,6 +74,15 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	if edgeDeployment.Status.Phase == "" {
+		edgeDeployment.Status.Phase = managementv1alpha1.Deploying
+		edgeDeployment.Status.LastTransitionTime = metav1.Now()
+	}
+	err = r.EdgeDeploymentRepository.UpdateStatus(ctx, edgeDeployment)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 

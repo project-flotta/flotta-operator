@@ -39,9 +39,9 @@ func (r *Repository) Read(ctx context.Context, name string, namespace string) (*
 	return &edgeDeployment, err
 }
 
-func (r *Repository) UpdateStatus(ctx context.Context, edgeDeployment v1alpha1.EdgeDeployment) (*v1alpha1.EdgeDeployment, error) {
-	err := r.client.Status().Update(ctx, &edgeDeployment)
-	return &edgeDeployment, err
+func (r *Repository) UpdateStatus(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment) error {
+	err := r.client.Status().Update(ctx, edgeDeployment)
+	return err
 }
 
 func (r *Repository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error {
