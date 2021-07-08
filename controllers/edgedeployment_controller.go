@@ -50,7 +50,7 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	_ = log.FromContext(ctx)
 
 	// your logic here
-
+	// TODO: Set linked EdgeDevice as the owner of this EdgeDeployment
 	return ctrl.Result{}, nil
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/jakub-dzon/k4e-operator/internal/utils"
 	"github.com/jakub-dzon/k4e-operator/models"
 	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
 	operations "github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
@@ -18,6 +19,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
 )
+
+const YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
+const YggdrasilWorkloadFinalizer = "yggdrasil-workload-finalizer"
 
 var (
 	defaultHeartbeatConfiguration = models.HeartbeatConfiguration{
@@ -42,6 +46,26 @@ func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, deploymentRepo
 }
 
 func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
+	deviceID := params.DeviceID
+	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return operations.NewGetControlMessageForDeviceNotFound()
+		}
+		return operations.NewGetControlMessageForDeviceInternalServerError()
+	}
+	// Send disconnect only if YggdrasilWorkloadFinalizer was already processed and removed
+	if edgeDevice.DeletionTimestamp != nil && !utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
+		message, err := h.createDisconnectCommand()
+		if err != nil {
+			return operations.NewGetControlMessageForDeviceInternalServerError()
+		}
+		err = h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
+		if err != nil {
+			return operations.NewGetControlMessageForDeviceInternalServerError()
+		}
+		return operations.NewGetControlMessageForDeviceOK().WithPayload(message)
+	}
 	return operations.NewGetControlMessageForDeviceOK()
 }
 
@@ -54,19 +78,31 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		}
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
+	var workloadList models.WorkloadList
 
-	edgeDeployments, err := h.deploymentRepository.ListForEdgeDevice(ctx, edgeDevice.Name, edgeDevice.Namespace)
-	if err != nil {
-		if !errors.IsNotFound(err) {
-			log.FromContext(ctx).Error(err, "Cannot retrieve Edge Deployments")
-			return operations.NewGetDataMessageForDeviceInternalServerError()
+	if edgeDevice.DeletionTimestamp == nil {
+		edgeDeployments, err := h.deploymentRepository.ListForEdgeDevice(ctx, edgeDevice.Name, edgeDevice.Namespace)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				log.FromContext(ctx).Error(err, "Cannot retrieve Edge Deployments")
+				return operations.NewGetDataMessageForDeviceInternalServerError()
+			}
+		}
+		workloadList = h.toWorkloadList(ctx, edgeDeployments)
+	} else {
+		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
+			err := h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilWorkloadFinalizer)
+			if err != nil {
+				return operations.NewGetDataMessageForDeviceInternalServerError()
+			}
 		}
 	}
+
 	dc := models.DeviceConfigurationMessage{
 		DeviceID:      deviceID,
 		Version:       edgeDevice.ResourceVersion,
 		Configuration: &models.DeviceConfiguration{},
-		Workloads:     h.toWorkloadList(ctx, edgeDeployments),
+		Workloads:     workloadList,
 	}
 
 	if edgeDevice.Spec.Heartbeat != nil {
@@ -123,7 +159,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		edgeDevice.Status.LastSyncedResourceVersion = heartbeat.Version
 		edgeDevice.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
 		edgeDevice.Status.Phase = heartbeat.Status
-		edgeDevice, err = h.deviceRepository.UpdateStatus(ctx, *edgeDevice)
+		err = h.deviceRepository.UpdateStatus(ctx, edgeDevice)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
@@ -144,12 +180,13 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				device.Name = params.DeviceID
 				device.Namespace = h.initialNamespace
 				device.Spec.OsImageId = registrationInfo.OsImageID
-				edgeDevice, err := h.deviceRepository.Create(ctx, device)
+				device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
+				err := h.deviceRepository.Create(ctx, &device)
 				if err != nil {
 					logger.Error(err, "Cannot save EdgeDevice")
 					return operations.NewPostDataMessageForDeviceInternalServerError()
 				}
-				logger.Info("Created", "device", edgeDevice)
+				logger.Info("Created", "device", device)
 			}
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
@@ -195,4 +232,21 @@ func (h *Handler) updateEdgeDeployments(ctx context.Context, workloadStatuses []
 			continue
 		}
 	}
+}
+
+func (h *Handler) createDisconnectCommand() (*models.Message, error) {
+	command := struct {
+		Command   string            `json:"command"`
+		Arguments map[string]string `json:"arguments"`
+	}{
+		Command: "disconnect",
+	}
+
+	return &models.Message{
+		Type:      models.MessageTypeCommand,
+		MessageID: uuid.New().String(),
+		Version:   1,
+		Sent:      strfmt.DateTime(time.Now()),
+		Content:   command,
+	}, nil
 }
