@@ -37,15 +37,7 @@ spec:
             description: EdgeDeploymentSpec defines the desired state of EdgeDeployment
             properties:
               device:
-                properties:
-                  name:
-                    type: string
-                  namespace:
-                    type: string
-                required:
-                - name
-                - namespace
-                type: object
+                type: string
               pod:
                 properties:
                   spec:
@@ -6293,6 +6285,12 @@ spec:
             type: object
           status:
             description: EdgeDeploymentStatus defines the observed state of EdgeDeployment
+            properties:
+              lastTransitionTime:
+                format: date-time
+                type: string
+              phase:
+                type: string
             type: object
         type: object
     served: true

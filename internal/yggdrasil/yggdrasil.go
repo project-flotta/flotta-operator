@@ -3,10 +3,12 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
+	"github.com/ghodss/yaml"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/models"
 	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
@@ -25,14 +27,17 @@ var (
 )
 
 type Handler struct {
-	deviceRepository *edgedevice.Repository
-	initialNamespace string
+	deviceRepository     *edgedevice.Repository
+	deploymentRepository *edgedeployment.Repository
+	initialNamespace     string
 }
 
-func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, initialNamespace string) *Handler {
+func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, deploymentRepository *edgedeployment.Repository,
+	initialNamespace string) *Handler {
 	return &Handler{
-		deviceRepository: deviceRepository,
-		initialNamespace: initialNamespace,
+		deviceRepository:     deviceRepository,
+		deploymentRepository: deploymentRepository,
+		initialNamespace:     initialNamespace,
 	}
 }
 
@@ -50,13 +55,18 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
 
-	if edgeDevice.ResourceVersion == edgeDevice.Status.LastSyncedResourceVersion {
-		return operations.NewGetDataMessageForDeviceOK()
+	edgeDeployments, err := h.deploymentRepository.ListForEdgeDevice(ctx, edgeDevice.Name, edgeDevice.Namespace)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			log.FromContext(ctx).Error(err, "Cannot retrieve Edge Deployments")
+			return operations.NewGetDataMessageForDeviceInternalServerError()
+		}
 	}
 	dc := models.DeviceConfigurationMessage{
 		DeviceID:      deviceID,
 		Version:       edgeDevice.ResourceVersion,
 		Configuration: &models.DeviceConfiguration{},
+		Workloads:     h.toWorkloadList(ctx, edgeDeployments),
 	}
 
 	if edgeDevice.Spec.Heartbeat != nil {
@@ -117,6 +127,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
+		h.updateEdgeDeployments(ctx, heartbeat.Workloads)
 	case "registration":
 		_, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
 		if err != nil {
@@ -146,4 +157,42 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		logger.Info("Received unknown message", "message", msg)
 	}
 	return operations.NewPostDataMessageForDeviceOK()
+}
+
+func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.EdgeDeployment) models.WorkloadList {
+	list := models.WorkloadList{}
+	for _, deployment := range deployments {
+		podSpec, err := yaml.Marshal(deployment.Spec.Pod.Spec)
+		if err != nil {
+			log.FromContext(ctx).Error(err, "Cannot marshal pod specification")
+			continue
+		}
+		workload := models.Workload{
+			Name:          deployment.Name,
+			Specification: string(podSpec),
+			Version:       deployment.ResourceVersion,
+		}
+		list = append(list, &workload)
+	}
+	return list
+}
+
+func (h *Handler) updateEdgeDeployments(ctx context.Context, workloadStatuses []*models.WorkloadStatus) {
+	logger := log.FromContext(ctx)
+	for _, status := range workloadStatuses {
+		edgeDeployment, err := h.deploymentRepository.Read(ctx, status.Name, h.initialNamespace)
+		if err != nil {
+			logger.Error(err, "Cannot get Edge Deployment", "name", status.Name)
+			continue
+		}
+		if edgeDeployment.Status.Phase != status.Status {
+			edgeDeployment.Status.Phase = status.Status
+			edgeDeployment.Status.LastTransitionTime = metav1.Now()
+		}
+		_, err = h.deploymentRepository.UpdateStatus(ctx, *edgeDeployment)
+		if err != nil {
+			logger.Error(err, "Cannot update Edge Deployment status")
+			continue
+		}
+	}
 }

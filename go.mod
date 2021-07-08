@@ -3,6 +3,7 @@ module github.com/jakub-dzon/k4e-operator
 go 1.16
 
 require (
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-openapi/errors v0.19.6
 	github.com/go-openapi/loads v0.19.5
 	github.com/go-openapi/runtime v0.19.20

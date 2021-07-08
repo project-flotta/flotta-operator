@@ -17,14 +17,17 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
 	"github.com/jakub-dzon/k4e-operator/restapi"
 	"log"
 	"net/http"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -89,7 +92,19 @@ func main() {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	cache := mgr.GetCache()
+
+	indexFunc := func(obj client.Object) []string {
+		return []string{obj.(*managementv1alpha1.EdgeDeployment).Spec.Device}
+	}
+
+	if err := cache.IndexField(context.Background(), &managementv1alpha1.EdgeDeployment{}, "spec.device", indexFunc); err != nil {
+		panic(err)
+	}
+
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
+	edgeDeploymentRepository := edgedeployment.NewEdgeDeploymentRepository(mgr.GetClient())
 
 	if err = (&controllers.EdgeDeviceReconciler{
 		Client:               mgr.GetClient(),
@@ -119,7 +134,7 @@ func main() {
 
 	go func() {
 		h, err := restapi.Handler(restapi.Config{
-			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, initialDeviceNamespace),
+			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, initialDeviceNamespace),
 		})
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
