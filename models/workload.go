@@ -20,9 +20,6 @@ type Workload struct {
 
 	// specification
 	Specification string `json:"specification,omitempty"`
-
-	// version
-	Version string `json:"version,omitempty"`
 }
 
 // Validate validates this workload

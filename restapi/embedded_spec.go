@@ -383,9 +383,6 @@ func init() {
         },
         "specification": {
           "type": "string"
-        },
-        "version": {
-          "type": "string"
         }
       }
     },
@@ -792,9 +789,6 @@ func init() {
           "type": "string"
         },
         "specification": {
-          "type": "string"
-        },
-        "version": {
           "type": "string"
         }
       }

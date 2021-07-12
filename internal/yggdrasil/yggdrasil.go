@@ -210,7 +210,6 @@ func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.Edg
 		workload := models.Workload{
 			Name:          deployment.Name,
 			Specification: string(podSpec),
-			Version:       deployment.ResourceVersion,
 		}
 		list = append(list, &workload)
 	}
