@@ -200,6 +200,17 @@ func init() {
     }
   },
   "definitions": {
+    "boot": {
+      "type": "object",
+      "properties": {
+        "current_boot_mode": {
+          "type": "string"
+        },
+        "pxe_interface": {
+          "type": "string"
+        }
+      }
+    },
     "cpu": {
       "type": "object",
       "properties": {
@@ -250,17 +261,155 @@ func init() {
         }
       }
     },
+    "disk": {
+      "type": "object",
+      "properties": {
+        "bootable": {
+          "type": "boolean"
+        },
+        "by_id": {
+          "description": "by-id is the World Wide Number of the device which guaranteed to be unique for every storage device",
+          "type": "string"
+        },
+        "by_path": {
+          "description": "by-path is the shortest physical path to the device",
+          "type": "string"
+        },
+        "drive_type": {
+          "type": "string"
+        },
+        "hctl": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise",
+          "type": "string"
+        },
+        "installation_eligibility": {
+          "type": "object",
+          "properties": {
+            "eligible": {
+              "description": "Whether the disk is eligible for installation or not.",
+              "type": "boolean"
+            },
+            "not_eligible_reasons": {
+              "description": "Reasons for why this disk is not eligible for installation.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "x-nullable": false
+        },
+        "io_perf": {
+          "$ref": "#/definitions/io_perf"
+        },
+        "is_installation_media": {
+          "description": "Whether the disk appears to be an installation media or not",
+          "type": "boolean"
+        },
+        "model": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "serial": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        },
+        "smart": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "wwn": {
+          "type": "string"
+        }
+      }
+    },
+    "gpu": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "description": "Device address (for example \"0000:00:02.0\")",
+          "type": "string"
+        },
+        "device_id": {
+          "description": "ID of the device (for example \"3ea0\")",
+          "type": "string"
+        },
+        "name": {
+          "description": "Product name of the device (for example \"UHD Graphics 620 (Whiskey Lake)\")",
+          "type": "string"
+        },
+        "vendor": {
+          "description": "The name of the device vendor (for example \"Intel Corporation\")",
+          "type": "string"
+        },
+        "vendor_id": {
+          "description": "ID of the vendor (for example \"8086\")",
+          "type": "string"
+        }
+      }
+    },
     "hardware-info": {
       "type": "object",
       "properties": {
+        "bmc_address": {
+          "type": "string"
+        },
+        "bmc_v6address": {
+          "type": "string"
+        },
+        "boot": {
+          "$ref": "#/definitions/boot"
+        },
         "cpu": {
           "$ref": "#/definitions/cpu"
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/disk"
+          }
+        },
+        "gpus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/gpu"
+          }
         },
         "hostname": {
           "type": "string"
         },
+        "interfaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/interface"
+          }
+        },
         "memory": {
           "$ref": "#/definitions/memory"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/route"
+          }
+        },
+        "system_vendor": {
+          "$ref": "#/definitions/system_vendor"
+        },
+        "timestamp": {
+          "type": "integer"
         }
       }
     },
@@ -311,6 +460,65 @@ func init() {
           "$ref": "#/definitions/hardware-profile-configuration"
         },
         "period_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "interface": {
+      "type": "object",
+      "properties": {
+        "biosdevname": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "has_carrier": {
+          "type": "boolean"
+        },
+        "ipv4_addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ipv6_addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mac_address": {
+          "type": "string"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "product": {
+          "type": "string"
+        },
+        "speed_mbps": {
+          "type": "integer"
+        },
+        "vendor": {
+          "type": "string"
+        }
+      }
+    },
+    "io_perf": {
+      "type": "object",
+      "properties": {
+        "sync_duration": {
+          "description": "99th percentile of fsync duration in milliseconds",
           "type": "integer"
         }
       }
@@ -371,6 +579,46 @@ func init() {
         },
         "os_image_id": {
           "type": "string"
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "destination": {
+          "description": "The destination network or destination host",
+          "type": "string"
+        },
+        "family": {
+          "description": "Defines whether this is an IPv4 (4) or IPv6 route (6)",
+          "type": "integer",
+          "format": "int32"
+        },
+        "gateway": {
+          "description": "Gateway address where the packets are sent",
+          "type": "string"
+        },
+        "interface": {
+          "description": "Interface to which packets for this route will be sent",
+          "type": "string"
+        }
+      }
+    },
+    "system_vendor": {
+      "type": "object",
+      "properties": {
+        "manufacturer": {
+          "type": "string"
+        },
+        "product_name": {
+          "type": "string"
+        },
+        "serial_number": {
+          "type": "string"
+        },
+        "virtual": {
+          "description": "Whether the machine appears to be a virtual machine or not",
+          "type": "boolean"
         }
       }
     },
@@ -607,6 +855,34 @@ func init() {
     }
   },
   "definitions": {
+    "DiskInstallationEligibility": {
+      "type": "object",
+      "properties": {
+        "eligible": {
+          "description": "Whether the disk is eligible for installation or not.",
+          "type": "boolean"
+        },
+        "not_eligible_reasons": {
+          "description": "Reasons for why this disk is not eligible for installation.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "x-nullable": false
+    },
+    "boot": {
+      "type": "object",
+      "properties": {
+        "current_boot_mode": {
+          "type": "string"
+        },
+        "pxe_interface": {
+          "type": "string"
+        }
+      }
+    },
     "cpu": {
       "type": "object",
       "properties": {
@@ -657,17 +933,155 @@ func init() {
         }
       }
     },
+    "disk": {
+      "type": "object",
+      "properties": {
+        "bootable": {
+          "type": "boolean"
+        },
+        "by_id": {
+          "description": "by-id is the World Wide Number of the device which guaranteed to be unique for every storage device",
+          "type": "string"
+        },
+        "by_path": {
+          "description": "by-path is the shortest physical path to the device",
+          "type": "string"
+        },
+        "drive_type": {
+          "type": "string"
+        },
+        "hctl": {
+          "type": "string"
+        },
+        "id": {
+          "description": "Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise",
+          "type": "string"
+        },
+        "installation_eligibility": {
+          "type": "object",
+          "properties": {
+            "eligible": {
+              "description": "Whether the disk is eligible for installation or not.",
+              "type": "boolean"
+            },
+            "not_eligible_reasons": {
+              "description": "Reasons for why this disk is not eligible for installation.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "x-nullable": false
+        },
+        "io_perf": {
+          "$ref": "#/definitions/io_perf"
+        },
+        "is_installation_media": {
+          "description": "Whether the disk appears to be an installation media or not",
+          "type": "boolean"
+        },
+        "model": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "serial": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer"
+        },
+        "smart": {
+          "type": "string"
+        },
+        "vendor": {
+          "type": "string"
+        },
+        "wwn": {
+          "type": "string"
+        }
+      }
+    },
+    "gpu": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "description": "Device address (for example \"0000:00:02.0\")",
+          "type": "string"
+        },
+        "device_id": {
+          "description": "ID of the device (for example \"3ea0\")",
+          "type": "string"
+        },
+        "name": {
+          "description": "Product name of the device (for example \"UHD Graphics 620 (Whiskey Lake)\")",
+          "type": "string"
+        },
+        "vendor": {
+          "description": "The name of the device vendor (for example \"Intel Corporation\")",
+          "type": "string"
+        },
+        "vendor_id": {
+          "description": "ID of the vendor (for example \"8086\")",
+          "type": "string"
+        }
+      }
+    },
     "hardware-info": {
       "type": "object",
       "properties": {
+        "bmc_address": {
+          "type": "string"
+        },
+        "bmc_v6address": {
+          "type": "string"
+        },
+        "boot": {
+          "$ref": "#/definitions/boot"
+        },
         "cpu": {
           "$ref": "#/definitions/cpu"
+        },
+        "disks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/disk"
+          }
+        },
+        "gpus": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/gpu"
+          }
         },
         "hostname": {
           "type": "string"
         },
+        "interfaces": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/interface"
+          }
+        },
         "memory": {
           "$ref": "#/definitions/memory"
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/route"
+          }
+        },
+        "system_vendor": {
+          "$ref": "#/definitions/system_vendor"
+        },
+        "timestamp": {
+          "type": "integer"
         }
       }
     },
@@ -718,6 +1132,65 @@ func init() {
           "$ref": "#/definitions/hardware-profile-configuration"
         },
         "period_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "interface": {
+      "type": "object",
+      "properties": {
+        "biosdevname": {
+          "type": "string"
+        },
+        "client_id": {
+          "type": "string"
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "has_carrier": {
+          "type": "boolean"
+        },
+        "ipv4_addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ipv6_addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mac_address": {
+          "type": "string"
+        },
+        "mtu": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "product": {
+          "type": "string"
+        },
+        "speed_mbps": {
+          "type": "integer"
+        },
+        "vendor": {
+          "type": "string"
+        }
+      }
+    },
+    "io_perf": {
+      "type": "object",
+      "properties": {
+        "sync_duration": {
+          "description": "99th percentile of fsync duration in milliseconds",
           "type": "integer"
         }
       }
@@ -778,6 +1251,46 @@ func init() {
         },
         "os_image_id": {
           "type": "string"
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "destination": {
+          "description": "The destination network or destination host",
+          "type": "string"
+        },
+        "family": {
+          "description": "Defines whether this is an IPv4 (4) or IPv6 route (6)",
+          "type": "integer",
+          "format": "int32"
+        },
+        "gateway": {
+          "description": "Gateway address where the packets are sent",
+          "type": "string"
+        },
+        "interface": {
+          "description": "Interface to which packets for this route will be sent",
+          "type": "string"
+        }
+      }
+    },
+    "system_vendor": {
+      "type": "object",
+      "properties": {
+        "manufacturer": {
+          "type": "string"
+        },
+        "product_name": {
+          "type": "string"
+        },
+        "serial_number": {
+          "type": "string"
+        },
+        "virtual": {
+          "description": "Whether the machine appears to be a virtual machine or not",
+          "type": "boolean"
         }
       }
     },
