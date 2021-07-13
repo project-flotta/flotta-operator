@@ -185,7 +185,7 @@ definitions:
         description: Name of the workload
       specification:
         type: string
-        
+
   registration-info:
     type: object
     properties:
@@ -193,14 +193,12 @@ definitions:
         type: string
       hardware:
         description: Hardware information
-        $ref:  '#/definitions/hardware-info'
+        $ref: '#/definitions/hardware-info'
 
   hardware-info:
     type: object
     properties:
       hostname:
-        type: string
-      bmc_address:
         type: string
       interfaces:
         type: array
@@ -214,22 +212,14 @@ definitions:
         $ref: '#/definitions/boot'
       system_vendor:
         $ref: '#/definitions/system_vendor'
-      bmc_v6address:
-        type: string
       memory:
         $ref: '#/definitions/memory'
       cpu:
         $ref: '#/definitions/cpu'
-      timestamp:
-        type: integer
       gpus:
         type: array
         items:
           $ref: '#/definitions/gpu'
-      routes:
-        type: array
-        items:
-          $ref: '#/definitions/route'
 
   interface:
     type: object
@@ -300,18 +290,6 @@ definitions:
       is_installation_media:
         type: boolean
         description: Whether the disk appears to be an installation media or not
-      installation_eligibility:
-        x-nullable: false
-        type: object
-        properties:
-          eligible:
-            type: boolean
-            description: Whether the disk is eligible for installation or not.
-          not_eligible_reasons:
-            type: array
-            description: Reasons for why this disk is not eligible for installation.
-            items:
-              type: string
       smart:
         type: string
       io_perf:
@@ -388,23 +366,6 @@ definitions:
         type: string
         description: Device address (for example "0000:00:02.0")
 
-  route:
-    type: object
-    properties:
-      interface:
-        type: string
-        description: Interface to which packets for this route will be sent
-      gateway:
-        type: string
-        description: Gateway address where the packets are sent
-      destination:
-        type: string
-        description: The destination network or destination host
-      family:
-        type: integer
-        format: int32
-        description: Defines whether this is an IPv4 (4) or IPv6 route (6)
-
   heartbeat:
     type: object
     properties:
@@ -422,6 +383,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/workload-status'
+      hardware:
+        description: Hardware information
+        $ref: '#/definitions/hardware-info'
 
   workload-status:
     type: object

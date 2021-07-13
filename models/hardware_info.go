@@ -18,12 +18,6 @@ import (
 // swagger:model hardware-info
 type HardwareInfo struct {
 
-	// bmc address
-	BmcAddress string `json:"bmc_address,omitempty"`
-
-	// bmc v6address
-	BmcV6address string `json:"bmc_v6address,omitempty"`
-
 	// boot
 	Boot *Boot `json:"boot,omitempty"`
 
@@ -45,14 +39,8 @@ type HardwareInfo struct {
 	// memory
 	Memory *Memory `json:"memory,omitempty"`
 
-	// routes
-	Routes []*Route `json:"routes"`
-
 	// system vendor
 	SystemVendor *SystemVendor `json:"system_vendor,omitempty"`
-
-	// timestamp
-	Timestamp int64 `json:"timestamp,omitempty"`
 }
 
 // Validate validates this hardware info
@@ -80,10 +68,6 @@ func (m *HardwareInfo) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMemory(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRoutes(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -221,31 +205,6 @@ func (m *HardwareInfo) validateMemory(formats strfmt.Registry) error {
 			}
 			return err
 		}
-	}
-
-	return nil
-}
-
-func (m *HardwareInfo) validateRoutes(formats strfmt.Registry) error {
-
-	if swag.IsZero(m.Routes) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Routes); i++ {
-		if swag.IsZero(m.Routes[i]) { // not required
-			continue
-		}
-
-		if m.Routes[i] != nil {
-			if err := m.Routes[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("routes" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
 	}
 
 	return nil

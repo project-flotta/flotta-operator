@@ -3,6 +3,7 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/ghodss/yaml"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
@@ -159,6 +160,10 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		edgeDevice.Status.LastSyncedResourceVersion = heartbeat.Version
 		edgeDevice.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
 		edgeDevice.Status.Phase = heartbeat.Status
+		if heartbeat.Hardware != nil {
+			edgeDevice.Status.Hardware = mapHardware(ctx, heartbeat.Hardware)
+		}
+
 		err = h.deviceRepository.UpdateStatus(ctx, edgeDevice)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
@@ -176,7 +181,8 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				device := v1alpha1.EdgeDevice{
 					Spec: v1alpha1.EdgeDeviceSpec{
 						RequestTime: &now,
-					}}
+					},
+				}
 				device.Name = params.DeviceID
 				device.Namespace = h.initialNamespace
 				device.Spec.OsImageId = registrationInfo.OsImageID
@@ -184,6 +190,18 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				err := h.deviceRepository.Create(ctx, &device)
 				if err != nil {
 					logger.Error(err, "Cannot save EdgeDevice")
+					return operations.NewPostDataMessageForDeviceInternalServerError()
+				}
+
+				device.Status = v1alpha1.EdgeDeviceStatus{
+					Hardware: mapHardware(ctx, registrationInfo.Hardware),
+				}
+
+				// TODO: when controller starts updating the EdgeDevice CR the status update below will need to be
+				// executed in a retry loop to overcome potential optimistic locking problems.
+				err = h.deviceRepository.UpdateStatus(ctx, &device)
+				if err != nil {
+					logger.Error(err, "Cannot update EdgeDevice status")
 					return operations.NewPostDataMessageForDeviceInternalServerError()
 				}
 				logger.Info("Created", "device", device)
@@ -194,6 +212,77 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		logger.Info("Received unknown message", "message", msg)
 	}
 	return operations.NewPostDataMessageForDeviceOK()
+}
+
+func mapHardware(ctx context.Context, hardware *models.HardwareInfo) *v1alpha1.Hardware {
+	if hardware == nil {
+		return nil
+	}
+	logger := log.FromContext(ctx)
+
+	var disks []*v1alpha1.Disk
+	err := utils.Copy(hardware.Disks, &disks)
+	if err != nil {
+		logger.Error(err, "Cannot map Disks")
+	}
+	var gpus []*v1alpha1.Gpu
+	err = utils.Copy(hardware.Gpus, &gpus)
+	if err != nil {
+		logger.Error(err, "Cannot map Gpus")
+	}
+
+	var interfaces []*v1alpha1.Interface
+	err = utils.Copy(hardware.Interfaces, &interfaces)
+	if err != nil {
+		logger.Error(err, "Cannot map Interfaces")
+	}
+	hw := v1alpha1.Hardware{
+		Hostname: hardware.Hostname,
+
+		Gpus:       gpus,
+		Disks:      disks,
+		Interfaces: interfaces,
+	}
+	if hardware.Boot != nil {
+		hw.Boot = &v1alpha1.Boot{
+			CurrentBootMode: hardware.Boot.CurrentBootMode,
+			PxeInterface:    hardware.Boot.PxeInterface,
+		}
+	}
+
+	cpu := hardware.CPU
+	if cpu != nil {
+		hw.CPU = &v1alpha1.CPU{
+			Architecture: cpu.Architecture,
+			Count:        cpu.Count,
+			Flags:        cpu.Flags,
+			Frequency:    fmt.Sprintf("%.2f", cpu.Frequency),
+			ModelName:    cpu.ModelName,
+		}
+	}
+
+	memory := hardware.Memory
+	if memory != nil {
+		hw.Memory = &v1alpha1.Memory{
+			PhysicalBytes: memory.PhysicalBytes,
+			UsableBytes:   memory.UsableBytes,
+		}
+	}
+
+	systemVendor := hardware.SystemVendor
+	if systemVendor != nil {
+		hw.SystemVendor = &v1alpha1.SystemVendor{
+			Manufacturer: systemVendor.Manufacturer,
+			ProductName:  systemVendor.ProductName,
+			SerialNumber: systemVendor.SerialNumber,
+			Virtual:      systemVendor.Virtual,
+		}
+	}
+
+	if err != nil {
+		logger.Error(err, "Can't translate")
+	}
+	return &hw
 }
 
 func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.EdgeDeployment) models.WorkloadList {

@@ -3,7 +3,7 @@ kind: EdgeDeployment
 metadata:
   name: edgedeployment-sample
 spec:
-  device: 114c56c6-6620-43e3-a541-dac21dfca36b
+  device: 242e48d0-286b-4170-9b97-95502066e6ae
   type: pod
   pod:
     spec:

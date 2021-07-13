@@ -20,6 +20,9 @@ import (
 // swagger:model heartbeat
 type Heartbeat struct {
 
+	// Hardware information
+	Hardware *HardwareInfo `json:"hardware,omitempty"`
+
 	// status
 	// Enum: [up degraded]
 	Status string `json:"status,omitempty"`
@@ -39,6 +42,10 @@ type Heartbeat struct {
 func (m *Heartbeat) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateHardware(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateStatus(formats); err != nil {
 		res = append(res, err)
 	}
@@ -54,6 +61,24 @@ func (m *Heartbeat) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Heartbeat) validateHardware(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Hardware) { // not required
+		return nil
+	}
+
+	if m.Hardware != nil {
+		if err := m.Hardware.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("hardware")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

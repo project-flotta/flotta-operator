@@ -285,23 +285,6 @@ func init() {
           "description": "Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise",
           "type": "string"
         },
-        "installation_eligibility": {
-          "type": "object",
-          "properties": {
-            "eligible": {
-              "description": "Whether the disk is eligible for installation or not.",
-              "type": "boolean"
-            },
-            "not_eligible_reasons": {
-              "description": "Reasons for why this disk is not eligible for installation.",
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "x-nullable": false
-        },
         "io_perf": {
           "$ref": "#/definitions/io_perf"
         },
@@ -363,12 +346,6 @@ func init() {
     "hardware-info": {
       "type": "object",
       "properties": {
-        "bmc_address": {
-          "type": "string"
-        },
-        "bmc_v6address": {
-          "type": "string"
-        },
         "boot": {
           "$ref": "#/definitions/boot"
         },
@@ -399,17 +376,8 @@ func init() {
         "memory": {
           "$ref": "#/definitions/memory"
         },
-        "routes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/route"
-          }
-        },
         "system_vendor": {
           "$ref": "#/definitions/system_vendor"
-        },
-        "timestamp": {
-          "type": "integer"
         }
       }
     },
@@ -431,6 +399,10 @@ func init() {
     "heartbeat": {
       "type": "object",
       "properties": {
+        "hardware": {
+          "description": "Hardware information",
+          "$ref": "#/definitions/hardware-info"
+        },
         "status": {
           "type": "string",
           "enum": [
@@ -578,28 +550,6 @@ func init() {
           "$ref": "#/definitions/hardware-info"
         },
         "os_image_id": {
-          "type": "string"
-        }
-      }
-    },
-    "route": {
-      "type": "object",
-      "properties": {
-        "destination": {
-          "description": "The destination network or destination host",
-          "type": "string"
-        },
-        "family": {
-          "description": "Defines whether this is an IPv4 (4) or IPv6 route (6)",
-          "type": "integer",
-          "format": "int32"
-        },
-        "gateway": {
-          "description": "Gateway address where the packets are sent",
-          "type": "string"
-        },
-        "interface": {
-          "description": "Interface to which packets for this route will be sent",
           "type": "string"
         }
       }
@@ -855,23 +805,6 @@ func init() {
     }
   },
   "definitions": {
-    "DiskInstallationEligibility": {
-      "type": "object",
-      "properties": {
-        "eligible": {
-          "description": "Whether the disk is eligible for installation or not.",
-          "type": "boolean"
-        },
-        "not_eligible_reasons": {
-          "description": "Reasons for why this disk is not eligible for installation.",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        }
-      },
-      "x-nullable": false
-    },
     "boot": {
       "type": "object",
       "properties": {
@@ -957,23 +890,6 @@ func init() {
           "description": "Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise",
           "type": "string"
         },
-        "installation_eligibility": {
-          "type": "object",
-          "properties": {
-            "eligible": {
-              "description": "Whether the disk is eligible for installation or not.",
-              "type": "boolean"
-            },
-            "not_eligible_reasons": {
-              "description": "Reasons for why this disk is not eligible for installation.",
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "x-nullable": false
-        },
         "io_perf": {
           "$ref": "#/definitions/io_perf"
         },
@@ -1035,12 +951,6 @@ func init() {
     "hardware-info": {
       "type": "object",
       "properties": {
-        "bmc_address": {
-          "type": "string"
-        },
-        "bmc_v6address": {
-          "type": "string"
-        },
         "boot": {
           "$ref": "#/definitions/boot"
         },
@@ -1071,17 +981,8 @@ func init() {
         "memory": {
           "$ref": "#/definitions/memory"
         },
-        "routes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/route"
-          }
-        },
         "system_vendor": {
           "$ref": "#/definitions/system_vendor"
-        },
-        "timestamp": {
-          "type": "integer"
         }
       }
     },
@@ -1103,6 +1004,10 @@ func init() {
     "heartbeat": {
       "type": "object",
       "properties": {
+        "hardware": {
+          "description": "Hardware information",
+          "$ref": "#/definitions/hardware-info"
+        },
         "status": {
           "type": "string",
           "enum": [
@@ -1250,28 +1155,6 @@ func init() {
           "$ref": "#/definitions/hardware-info"
         },
         "os_image_id": {
-          "type": "string"
-        }
-      }
-    },
-    "route": {
-      "type": "object",
-      "properties": {
-        "destination": {
-          "description": "The destination network or destination host",
-          "type": "string"
-        },
-        "family": {
-          "description": "Defines whether this is an IPv4 (4) or IPv6 route (6)",
-          "type": "integer",
-          "format": "int32"
-        },
-        "gateway": {
-          "description": "Gateway address where the packets are sent",
-          "type": "string"
-        },
-        "interface": {
-          "description": "Interface to which packets for this route will be sent",
           "type": "string"
         }
       }

@@ -38,7 +38,7 @@ spec:
             properties:
               heartbeat:
                 properties:
-                  hardware_profile:
+                  hardwareProfile:
                     description: hardware profile
                     properties:
                       include:
@@ -48,7 +48,7 @@ spec:
                         description: 'scope Enum: [full delta]'
                         type: string
                     type: object
-                  period_seconds:
+                  periodSeconds:
                     description: period seconds
                     format: int64
                     type: integer
@@ -65,6 +65,221 @@ spec:
           status:
             description: EdgeDeviceStatus defines the observed state of EdgeDevice
             properties:
+              hardware:
+                properties:
+                  boot:
+                    description: boot
+                    properties:
+                      current_boot_mode:
+                        description: current boot mode
+                        type: string
+                      pxe_interface:
+                        description: pxe interface
+                        type: string
+                    type: object
+                  cpu:
+                    description: cpu
+                    properties:
+                      architecture:
+                        description: architecture
+                        type: string
+                      count:
+                        description: count
+                        format: int64
+                        type: integer
+                      flags:
+                        description: flags
+                        items:
+                          type: string
+                        type: array
+                      frequency:
+                        description: frequency
+                        type: string
+                      model_name:
+                        description: model name
+                        type: string
+                    required:
+                    - flags
+                    type: object
+                  disks:
+                    description: disks
+                    items:
+                      properties:
+                        bootable:
+                          description: bootable
+                          type: boolean
+                        by_id:
+                          description: by-id is the World Wide Number of the device
+                            which guaranteed to be unique for every storage device
+                          type: string
+                        by_path:
+                          description: by-path is the shortest physical path to the
+                            device
+                          type: string
+                        drive_type:
+                          description: drive type
+                          type: string
+                        hctl:
+                          description: hctl
+                          type: string
+                        id:
+                          description: Determine the disk's unique identifier which
+                            is the by-id field if it exists and fallback to the by-path
+                            field otherwise
+                          type: string
+                        io_perf:
+                          description: io perf
+                          properties:
+                            sync_duration:
+                              description: 99th percentile of fsync duration in milliseconds
+                              format: int64
+                              type: integer
+                          type: object
+                        is_installation_media:
+                          description: Whether the disk appears to be an installation
+                            media or not
+                          type: boolean
+                        model:
+                          description: model
+                          type: string
+                        name:
+                          description: name
+                          type: string
+                        path:
+                          description: path
+                          type: string
+                        serial:
+                          description: serial
+                          type: string
+                        size_bytes:
+                          description: size bytes
+                          format: int64
+                          type: integer
+                        smart:
+                          description: smart
+                          type: string
+                        vendor:
+                          description: vendor
+                          type: string
+                        wwn:
+                          description: wwn
+                          type: string
+                      type: object
+                    type: array
+                  gpus:
+                    description: gpus
+                    items:
+                      properties:
+                        address:
+                          description: Device address (for example "0000:00:02.0")
+                          type: string
+                        device_id:
+                          description: ID of the device (for example "3ea0")
+                          type: string
+                        name:
+                          description: Product name of the device (for example "UHD
+                            Graphics 620 (Whiskey Lake)")
+                          type: string
+                        vendor:
+                          description: The name of the device vendor (for example
+                            "Intel Corporation")
+                          type: string
+                        vendor_id:
+                          description: ID of the vendor (for example "8086")
+                          type: string
+                      type: object
+                    type: array
+                  hostname:
+                    description: hostname
+                    type: string
+                  interfaces:
+                    description: interfaces
+                    items:
+                      properties:
+                        biosdevname:
+                          description: biosdevname
+                          type: string
+                        client_id:
+                          description: client id
+                          type: string
+                        flags:
+                          description: flags
+                          items:
+                            type: string
+                          type: array
+                        has_carrier:
+                          description: has carrier
+                          type: boolean
+                        ipv4_addresses:
+                          description: ipv4 addresses
+                          items:
+                            type: string
+                          type: array
+                        ipv6_addresses:
+                          description: ipv6 addresses
+                          items:
+                            type: string
+                          type: array
+                        mac_address:
+                          description: mac address
+                          type: string
+                        mtu:
+                          description: mtu
+                          format: int64
+                          type: integer
+                        name:
+                          description: name
+                          type: string
+                        product:
+                          description: product
+                          type: string
+                        speed_mbps:
+                          description: speed mbps
+                          format: int64
+                          type: integer
+                        vendor:
+                          description: vendor
+                          type: string
+                      required:
+                      - flags
+                      - ipv4_addresses
+                      - ipv6_addresses
+                      type: object
+                    type: array
+                  memory:
+                    description: memory
+                    properties:
+                      physical_bytes:
+                        description: physical bytes
+                        format: int64
+                        type: integer
+                      usable_bytes:
+                        description: usable bytes
+                        format: int64
+                        type: integer
+                    type: object
+                  system_vendor:
+                    description: system vendor
+                    properties:
+                      manufacturer:
+                        description: manufacturer
+                        type: string
+                      product_name:
+                        description: product name
+                        type: string
+                      serial_number:
+                        description: serial number
+                        type: string
+                      virtual:
+                        description: Whether the machine appears to be a virtual machine
+                          or not
+                        type: boolean
+                    type: object
+                required:
+                - disks
+                - gpus
+                - interfaces
+                type: object
               lastSeenTime:
                 format: date-time
                 type: string
