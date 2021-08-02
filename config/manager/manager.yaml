@@ -54,3 +54,19 @@ spec:
             memory: 20Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: controller-manager
+  namespace: system
+  labels:
+    control-plane: controller-manager
+spec:
+  ports:
+    - protocol: TCP
+      port: 8888
+      targetPort: 8888
+  selector:
+    control-plane: controller-manager
+  type: ClusterIP
