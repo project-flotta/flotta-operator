@@ -3,6 +3,7 @@ package edgedevice
 import (
 	"context"
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -31,6 +32,24 @@ func (r *Repository) UpdateStatus(ctx context.Context, edgeDevice *v1alpha1.Edge
 func (r *Repository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error {
 	patch := client.MergeFrom(old)
 	return r.client.Patch(ctx, new, patch)
+}
+
+func (r Repository) ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error) {
+	s, err := metav1.LabelSelectorAsSelector(selector)
+	if err != nil {
+		return nil, err
+	}
+	options := client.ListOptions{
+		Namespace:     namespace,
+		LabelSelector: s,
+	}
+	var edl v1alpha1.EdgeDeviceList
+	err = r.client.List(ctx, &edl, &options)
+	if err != nil {
+		return nil, err
+	}
+
+	return edl.Items, nil
 }
 
 func (r *Repository) RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error {

@@ -26,9 +26,10 @@ import (
 
 // EdgeDeploymentSpec defines the desired state of EdgeDeployment
 type EdgeDeploymentSpec struct {
-	Device string             `json:"device"`
-	Type   EdgeDeploymentType `json:"type"`
-	Pod    Pod                `json:"pod,omitempty"`
+	DeviceSelector *metav1.LabelSelector `json:"deviceSelector,omitempty"`
+	Device         string                `json:"device,omitempty"`
+	Type           EdgeDeploymentType    `json:"type"`
+	Pod            Pod                   `json:"pod,omitempty"`
 }
 
 type Pod struct {
@@ -41,18 +42,8 @@ const (
 	PodDeploymentType EdgeDeploymentType = "pod"
 )
 
-type EdgeDeploymentPhase string
-
-const (
-	Deploying EdgeDeploymentPhase = "Deploying"
-	Running   EdgeDeploymentPhase = "Running"
-	Exited    EdgeDeploymentPhase = "Exited"
-)
-
 // EdgeDeploymentStatus defines the observed state of EdgeDeployment
 type EdgeDeploymentStatus struct {
-	Phase              EdgeDeploymentPhase `json:"phase,omitempty"`
-	LastTransitionTime metav1.Time         `json:"lastTransitionTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true

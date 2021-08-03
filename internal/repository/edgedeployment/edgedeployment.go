@@ -39,12 +39,26 @@ func (r *Repository) Read(ctx context.Context, name string, namespace string) (*
 	return &edgeDeployment, err
 }
 
-func (r *Repository) UpdateStatus(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment) error {
-	err := r.client.Status().Update(ctx, edgeDeployment)
-	return err
-}
-
 func (r *Repository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error {
 	patch := client.MergeFrom(old)
 	return r.client.Patch(ctx, new, patch)
+}
+
+func (r *Repository) RemoveFinalizer(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment, finalizer string) error {
+	cp := edgeDeployment.DeepCopy()
+
+	var finalizers []string
+	for _, f := range cp.Finalizers {
+		if f != finalizer {
+			finalizers = append(finalizers, f)
+		}
+	}
+	cp.Finalizers = finalizers
+
+	err := r.Patch(ctx, edgeDeployment, cp)
+	if err == nil {
+		edgeDeployment.Finalizers = cp.Finalizers
+	}
+
+	return nil
 }

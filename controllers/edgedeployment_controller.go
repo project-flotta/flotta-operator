@@ -21,9 +21,8 @@ import (
 
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/jakub-dzon/k4e-operator/internal/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,6 +30,8 @@ import (
 
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 )
+
+const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"
 
 // EdgeDeploymentReconciler reconciles a EdgeDeployment object
 type EdgeDeploymentReconciler struct {
@@ -65,21 +66,38 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 		return ctrl.Result{Requeue: true}, err
 	}
-	edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, edgeDeployment.Spec.Device, edgeDeployment.Namespace)
-	if err != nil {
-		return ctrl.Result{Requeue: true}, err
+
+	if edgeDeployment.DeletionTimestamp == nil && !utils.HasFinalizer(&edgeDeployment.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
+		deploymentCopy := edgeDeployment.DeepCopy()
+		deploymentCopy.Finalizers = []string{YggdrasilDeviceReferenceFinalizer}
+		err := r.EdgeDeploymentRepository.Patch(ctx, edgeDeployment, deploymentCopy)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
 	}
 
-	err = r.addOwnerReference(ctx, edgeDevice, edgeDeployment)
+	edgeDevices, err := r.getMatchingEdgeDevices(ctx, edgeDeployment)
 	if err != nil {
-		return ctrl.Result{Requeue: true}, err
+		if !errors.IsNotFound(err) {
+			logger.Error(err, "Cannot retrieve Edge Deployments")
+			return ctrl.Result{Requeue: true}, err
+		}
+		logger.Info("No Devices found")
 	}
 
-	if edgeDeployment.Status.Phase == "" {
-		edgeDeployment.Status.Phase = managementv1alpha1.Deploying
-		edgeDeployment.Status.LastTransitionTime = metav1.Now()
+	if edgeDeployment.DeletionTimestamp != nil {
+		if utils.HasFinalizer(&edgeDeployment.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
+			err = r.finalizeRemoval(ctx, edgeDevices, edgeDeployment)
+			if err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
+		return ctrl.Result{}, nil
 	}
-	err = r.EdgeDeploymentRepository.UpdateStatus(ctx, edgeDeployment)
+
+	err = r.addDeploymentsToDevices(ctx, edgeDevices, edgeDeployment)
+	// TODO: Label Device with the EdgeDeployment name to allow easy retrieval and bookkeeping
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -87,49 +105,62 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{}, nil
 }
 
+func (r *EdgeDeploymentReconciler) finalizeRemoval(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeDeployment *managementv1alpha1.EdgeDeployment) error {
+	for _, edgeDevice := range edgeDevices {
+		var newDeployemnts []managementv1alpha1.Deployment
+		for _, deployment := range edgeDevice.Status.Deployments {
+			if deployment.Name != edgeDeployment.Name {
+				newDeployemnts = append(newDeployemnts, deployment)
+			}
+		}
+		edgeDevice.Status.Deployments = newDeployemnts
+		err := r.EdgeDeviceRepository.UpdateStatus(ctx, &edgeDevice)
+		if err != nil {
+			return err
+		}
+	}
+	return r.EdgeDeploymentRepository.RemoveFinalizer(ctx, edgeDeployment, YggdrasilDeviceReferenceFinalizer)
+
+}
+
+func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeDeployment *managementv1alpha1.EdgeDeployment) error {
+	for _, edgeDevice := range edgeDevices {
+		for _, deployment := range edgeDevice.Status.Deployments {
+			if deployment.Name == edgeDeployment.Name {
+				return nil
+			}
+		}
+		deploymentStatus := managementv1alpha1.Deployment{Name: edgeDeployment.Name, Phase: managementv1alpha1.Deploying}
+		edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
+		err := r.EdgeDeviceRepository.UpdateStatus(ctx, &edgeDevice)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *EdgeDeploymentReconciler) getMatchingEdgeDevices(ctx context.Context, edgeDeployment *managementv1alpha1.EdgeDeployment) ([]managementv1alpha1.EdgeDevice, error) {
+	var edgeDevices []managementv1alpha1.EdgeDevice
+	if edgeDeployment.Spec.Device != "" {
+		edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, edgeDeployment.Spec.Device, edgeDeployment.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		edgeDevices = append(edgeDevices, *edgeDevice)
+	} else if edgeDeployment.Spec.DeviceSelector != nil {
+		ed, err := r.EdgeDeviceRepository.ListForSelector(ctx, edgeDeployment.Spec.DeviceSelector, edgeDeployment.Namespace)
+		if err != nil {
+			return nil, err
+		}
+		edgeDevices = append(edgeDevices, ed...)
+	}
+	return edgeDevices, nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *EdgeDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&managementv1alpha1.EdgeDeployment{}).
 		Complete(r)
-}
-
-func newEdgeDeviceOwnerReference(ed *managementv1alpha1.EdgeDevice) metav1.OwnerReference {
-	blockOwnerDeletion := true
-	isController := false
-	return metav1.OwnerReference{
-		APIVersion:         ed.GroupVersionKind().GroupVersion().String(),
-		Kind:               ed.GetObjectKind().GroupVersionKind().Kind,
-		Name:               ed.GetName(),
-		UID:                ed.GetUID(),
-		BlockOwnerDeletion: &blockOwnerDeletion,
-		Controller:         &isController,
-	}
-}
-
-func (r *EdgeDeploymentReconciler) addOwnerReference(ctx context.Context, owner *managementv1alpha1.EdgeDevice, ownedDeployment *managementv1alpha1.EdgeDeployment) error {
-	ownerRefs := ownedDeployment.GetOwnerReferences()
-	if ownerRefs == nil {
-		ownerRefs = []metav1.OwnerReference{}
-	}
-	if hasOwnerReference(ownerRefs, owner) {
-		return nil
-	}
-	ownerReference := newEdgeDeviceOwnerReference(owner)
-
-	ownerRefs = append(ownerRefs, ownerReference)
-
-	newEdgeDeployment := ownedDeployment.DeepCopy()
-	newEdgeDeployment.SetOwnerReferences(ownerRefs)
-
-	return r.EdgeDeploymentRepository.Patch(ctx, ownedDeployment, newEdgeDeployment)
-}
-
-func hasOwnerReference(ownerRefs []metav1.OwnerReference, owner *managementv1alpha1.EdgeDevice) bool {
-	for _, ref := range ownerRefs {
-		if ref.Name == owner.Name && ref.Kind == owner.Kind && ref.APIVersion == owner.APIVersion {
-			return true
-		}
-	}
-	return false
 }

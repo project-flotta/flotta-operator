@@ -82,13 +82,20 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 	var workloadList models.WorkloadList
 
 	if edgeDevice.DeletionTimestamp == nil {
-		edgeDeployments, err := h.deploymentRepository.ListForEdgeDevice(ctx, edgeDevice.Name, edgeDevice.Namespace)
-		if err != nil {
-			if !errors.IsNotFound(err) {
-				log.FromContext(ctx).Error(err, "Cannot retrieve Edge Deployments")
-				return operations.NewGetDataMessageForDeviceInternalServerError()
+		var edgeDeployments []v1alpha1.EdgeDeployment
+
+		for _, deployment := range edgeDevice.Status.Deployments {
+			edgeDeployment, err := h.deploymentRepository.Read(ctx, deployment.Name, edgeDevice.Namespace)
+			if err != nil {
+				if !errors.IsNotFound(err) {
+					log.FromContext(ctx).Error(err, "Cannot retrieve Edge Deployments")
+					return operations.NewGetDataMessageForDeviceInternalServerError()
+				}
+				continue
 			}
+			edgeDeployments = append(edgeDeployments, *edgeDeployment)
 		}
+
 		workloadList = h.toWorkloadList(ctx, edgeDeployments)
 	} else {
 		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
@@ -133,7 +140,6 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		Content:   dc,
 	}
 	return operations.NewGetDataMessageForDeviceOK().WithPayload(&message)
-
 }
 
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {
@@ -163,12 +169,12 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if heartbeat.Hardware != nil {
 			edgeDevice.Status.Hardware = mapHardware(ctx, heartbeat.Hardware)
 		}
-
+		deployments := h.updateDeploymentStatuses(edgeDevice.Status.Deployments, heartbeat.Workloads)
+		edgeDevice.Status.Deployments = deployments
 		err = h.deviceRepository.UpdateStatus(ctx, edgeDevice)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-		h.updateEdgeDeployments(ctx, heartbeat.Workloads)
 	case "registration":
 		_, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
 		if err != nil {
@@ -212,6 +218,27 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		logger.Info("Received unknown message", "message", msg)
 	}
 	return operations.NewPostDataMessageForDeviceOK()
+}
+
+func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment, workloads []*models.WorkloadStatus) []v1alpha1.Deployment {
+	deploymentMap := make(map[string]v1alpha1.Deployment)
+	for _, deploymentStatus := range oldDeployments {
+		deploymentMap[deploymentStatus.Name] = deploymentStatus
+	}
+	for _, status := range workloads {
+		if deployment, ok := deploymentMap[status.Name]; ok {
+			if string(deployment.Phase) != status.Status {
+				deployment.Phase = v1alpha1.EdgeDeploymentPhase(status.Status)
+				deployment.LastTransitionTime = metav1.Now()
+			}
+			deploymentMap[status.Name] = deployment
+		}
+	}
+	var deployments []v1alpha1.Deployment
+	for _, deployment := range deploymentMap {
+		deployments = append(deployments, deployment)
+	}
+	return deployments
 }
 
 func mapHardware(ctx context.Context, hardware *models.HardwareInfo) *v1alpha1.Hardware {
@@ -303,26 +330,6 @@ func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.Edg
 		list = append(list, &workload)
 	}
 	return list
-}
-
-func (h *Handler) updateEdgeDeployments(ctx context.Context, workloadStatuses []*models.WorkloadStatus) {
-	logger := log.FromContext(ctx)
-	for _, status := range workloadStatuses {
-		edgeDeployment, err := h.deploymentRepository.Read(ctx, status.Name, h.initialNamespace)
-		if err != nil {
-			logger.Error(err, "Cannot get Edge Deployment", "name", status.Name)
-			continue
-		}
-		if string(edgeDeployment.Status.Phase) != status.Status {
-			edgeDeployment.Status.Phase = v1alpha1.EdgeDeploymentPhase(status.Status)
-			edgeDeployment.Status.LastTransitionTime = metav1.Now()
-		}
-		err = h.deploymentRepository.UpdateStatus(ctx, edgeDeployment)
-		if err != nil {
-			logger.Error(err, "Cannot update Edge Deployment status")
-			continue
-		}
-	}
 }
 
 func (h *Handler) createDisconnectCommand() (*models.Message, error) {
