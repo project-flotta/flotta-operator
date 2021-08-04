@@ -3,13 +3,16 @@ kind: EdgeDeployment
 metadata:
   name: edgedeployment-sample
 spec:
-  device: 242e48d0-286b-4170-9b97-95502066e6ae
+  deviceSelector:
+    matchLabels:
+      foo: bar
+#  device: 242e48d0-286b-4170-9b97-95502066e6ae
   type: pod
   pod:
     spec:
       containers:
         - name: nginx
-          image: nginx:1.14.2
+          image: docker.io/nginx:1.14.2
           ports:
             - containerPort: 80
               hostPort: 9090
