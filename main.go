@@ -20,13 +20,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
 	"github.com/jakub-dzon/k4e-operator/restapi"
-	"log"
-	"net/http"
-	"os"
+	"github.com/kelseyhightower/envconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -46,8 +48,6 @@ import (
 )
 
 const (
-	Port = 8888
-
 	initialDeviceNamespace = "default"
 )
 
@@ -55,6 +55,10 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
+
+var Config struct {
+	HttpPort uint16 `envconfig:"HTTP_PORT" default:"8888"`
+}
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -141,7 +145,12 @@ func main() {
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
 		}
-		address := fmt.Sprintf(":%v", Port)
+		err = envconfig.Process("", &Config)
+		if err != nil {
+			setupLog.Error(err, "unable to process configuration values")
+			os.Exit(1)
+		}
+		address := fmt.Sprintf(":%v", Config.HttpPort)
 		setupLog.Info("starting http server", "address", address)
 		log.Fatal(http.ListenAndServe(address, h))
 	}()

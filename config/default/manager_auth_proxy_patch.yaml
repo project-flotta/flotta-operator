@@ -26,4 +26,4 @@ spec:
         - "--leader-elect"
         ports:
           - containerPort: 8888
-            name: api
+            name: http
