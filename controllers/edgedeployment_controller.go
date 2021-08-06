@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 
+	"github.com/jakub-dzon/k4e-operator/internal/labels"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/utils"
@@ -81,7 +82,7 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	labelledDevices, err := r.getLabelledEdgeDevices(ctx, edgeDeployment.Name, edgeDeployment.Namespace)
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			logger.Error(err, "Cannot retrieve Labelled Edge Deployments")
+			logger.Error(err, "Cannot retrieve labelled Edge Deployments", "edgeDeployment", edgeDeployment.Name, "namespace", edgeDeployment.Namespace)
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
@@ -110,6 +111,9 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	err = r.removeDeploymentFromNonMatchingDevices(ctx, edgeDeployment.Name, edgeDevices, labelledDevices)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -140,7 +144,7 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromDevice(ctx context.Contex
 
 	deviceCopy := edgeDevice.DeepCopy()
 	if deviceCopy.Labels != nil {
-		delete(deviceCopy.Labels, name)
+		delete(deviceCopy.Labels, labels.WorkloadLabel(name))
 		err = r.EdgeDeviceRepository.Patch(ctx, &edgeDevice, deviceCopy)
 		if err != nil {
 			return err
@@ -186,7 +190,7 @@ outer:
 		if deviceCopy.Labels == nil {
 			deviceCopy.Labels = make(map[string]string)
 		}
-		deviceCopy.Labels[name] = "true"
+		deviceCopy.Labels[labels.WorkloadLabel(name)] = "true"
 		err = r.EdgeDeviceRepository.Patch(ctx, &edgeDevice, deviceCopy)
 		if err != nil {
 			return err
@@ -214,7 +218,7 @@ func (r *EdgeDeploymentReconciler) getMatchingEdgeDevices(ctx context.Context, e
 }
 
 func (r *EdgeDeploymentReconciler) getLabelledEdgeDevices(ctx context.Context, name, namespace string) ([]managementv1alpha1.EdgeDevice, error) {
-	selector := metav1.LabelSelector{MatchLabels: map[string]string{name: "true"}}
+	selector := metav1.LabelSelector{MatchLabels: map[string]string{labels.WorkloadLabel(name): "true"}}
 	return r.EdgeDeviceRepository.ListForSelector(ctx, &selector, namespace)
 }
 
