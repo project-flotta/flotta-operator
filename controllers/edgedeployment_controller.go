@@ -18,7 +18,7 @@ package controllers
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/jakub-dzon/k4e-operator/internal/labels"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
@@ -119,11 +119,15 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 func (r *EdgeDeploymentReconciler) finalizeRemoval(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeDeployment *managementv1alpha1.EdgeDeployment) error {
+	var errs []error
 	for _, edgeDevice := range edgeDevices {
 		err := r.removeDeploymentFromDevice(ctx, edgeDeployment.Name, edgeDevice)
 		if err != nil {
-			return err
+			errs = append(errs, err)
 		}
+	}
+	if len(errs) != 0 {
+		return fmt.Errorf(mergeErrorMessages(errs))
 	}
 	return r.EdgeDeploymentRepository.RemoveFinalizer(ctx, edgeDeployment, YggdrasilDeviceReferenceFinalizer)
 
@@ -158,27 +162,33 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx co
 	for _, device := range matchingDevices {
 		matchingDevicesMap[device.Name] = struct{}{}
 	}
-
+	var errs []error
 	for _, device := range labelledDevices {
 		if _, ok := matchingDevicesMap[device.Name]; !ok {
 			err := r.removeDeploymentFromDevice(ctx, name, device)
 			if err != nil {
-				return err
+				errs = append(errs, err)
+				continue
 			}
 		}
+	}
+	if len(errs) != 0 {
+		return fmt.Errorf(mergeErrorMessages(errs))
 	}
 
 	return nil
 }
 
 func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, name string, edgeDevices []managementv1alpha1.EdgeDevice) error {
+	var errs []error
 	for _, edgeDevice := range edgeDevices {
 		if !hasDeployment(edgeDevice, name) {
 			deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
 			edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
 			err := r.EdgeDeviceRepository.UpdateStatus(ctx, &edgeDevice)
 			if err != nil {
-				return err
+				errs = append(errs, err)
+				continue
 			}
 		}
 		if !hasLabelForDeployment(edgeDevice, name) {
@@ -189,9 +199,13 @@ func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, 
 			deviceCopy.Labels[labels.WorkloadLabel(name)] = "true"
 			err := r.EdgeDeviceRepository.Patch(ctx, &edgeDevice, deviceCopy)
 			if err != nil {
-				return err
+				errs = append(errs, err)
+				continue
 			}
 		}
+	}
+	if len(errs) != 0 {
+		return fmt.Errorf(mergeErrorMessages(errs))
 	}
 	return nil
 }
@@ -253,4 +267,16 @@ func merge(edgeDevices1 []managementv1alpha1.EdgeDevice, edgeDevices2 []manageme
 		merged = append(merged, device)
 	}
 	return merged
+}
+
+func mergeErrorMessages(errs []error) string {
+	var message string
+	for _, err := range errs {
+		if message == "" {
+			message = err.Error()
+			continue
+		}
+		message += ", " + err.Error()
+	}
+	return message
 }
