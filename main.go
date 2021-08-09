@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -57,7 +56,20 @@ var (
 )
 
 var Config struct {
+	// The port of the HTTP server
 	HttpPort uint16 `envconfig:"HTTP_PORT" default:"8888"`
+
+	// The address the metric endpoint binds to.
+	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`
+
+	// The address the probe endpoint binds to.
+	ProbeAddr string `envconfig:"PROBE_ADDR" default:":8081"`
+
+	// Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.
+	EnableLeaderElection bool `envconfig:"LEADER_ELECT" default:"false"`
+
+	// WebhookPort is the port that the webhook server serves at.
+	WebhookPort int `envconfig:"WEBHOOK_PORT" default:"9443"`
 }
 
 func init() {
@@ -68,28 +80,20 @@ func init() {
 }
 
 func main() {
-	var metricsAddr string
-	var enableLeaderElection bool
-	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	opts := zap.Options{
-		Development: true,
+	err := envconfig.Process("", &Config)
+	if err != nil {
+		setupLog.Error(err, "unable to process configuration values")
+		os.Exit(1)
 	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
-
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	setupLog.Info("Started with configuration", "configuration", Config)
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
+		MetricsBindAddress:     Config.MetricsAddr,
+		Port:                   Config.WebhookPort,
+		HealthProbeBindAddress: Config.ProbeAddr,
+		LeaderElection:         Config.EnableLeaderElection,
 		LeaderElectionID:       "b9eebab3.k4e.io",
 	})
 	if err != nil {
@@ -144,11 +148,6 @@ func main() {
 		})
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
-		}
-		err = envconfig.Process("", &Config)
-		if err != nil {
-			setupLog.Error(err, "unable to process configuration values")
-			os.Exit(1)
 		}
 		address := fmt.Sprintf(":%v", Config.HttpPort)
 		setupLog.Info("starting http server", "address", address)
