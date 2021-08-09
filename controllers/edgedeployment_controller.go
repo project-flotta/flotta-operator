@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"k8s.io/apimachinery/pkg/api/errors"
