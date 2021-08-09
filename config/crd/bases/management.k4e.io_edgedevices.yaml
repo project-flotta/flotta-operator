@@ -65,6 +65,20 @@ spec:
           status:
             description: EdgeDeviceStatus defines the observed state of EdgeDevice
             properties:
+              deployments:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    name:
+                      type: string
+                    phase:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               hardware:
                 properties:
                   boot:
