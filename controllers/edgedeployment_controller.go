@@ -86,23 +86,23 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
-
-	if edgeDeployment.DeletionTimestamp != nil {
-		if utils.HasFinalizer(&edgeDeployment.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
-			err = r.finalizeRemoval(ctx, labelledDevices, edgeDeployment)
-			if err != nil {
-				return ctrl.Result{Requeue: true}, err
-			}
-		}
-		return ctrl.Result{}, nil
-	}
-
 	edgeDevices, err := r.getMatchingEdgeDevices(ctx, edgeDeployment)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			logger.Error(err, "Cannot retrieve Edge Deployments")
 			return ctrl.Result{Requeue: true}, err
 		}
+	}
+
+	if edgeDeployment.DeletionTimestamp != nil {
+		if utils.HasFinalizer(&edgeDeployment.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
+			matchingAndLabelledDevices := merge(edgeDevices, labelledDevices)
+			err = r.finalizeRemoval(ctx, matchingAndLabelledDevices, edgeDeployment)
+			if err != nil {
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
+		return ctrl.Result{}, nil
 	}
 
 	err = r.addDeploymentsToDevices(ctx, edgeDeployment.Name, edgeDevices)
@@ -172,28 +172,25 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx co
 }
 
 func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, name string, edgeDevices []managementv1alpha1.EdgeDevice) error {
-outer:
 	for _, edgeDevice := range edgeDevices {
-		for _, deployment := range edgeDevice.Status.Deployments {
-			if deployment.Name == name {
-				// Move to the next device
-				continue outer
+		if !hasDeployment(edgeDevice, name) {
+			deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
+			edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
+			err := r.EdgeDeviceRepository.UpdateStatus(ctx, &edgeDevice)
+			if err != nil {
+				return err
 			}
 		}
-		deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
-		edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
-		err := r.EdgeDeviceRepository.UpdateStatus(ctx, &edgeDevice)
-		if err != nil {
-			return err
-		}
-		deviceCopy := edgeDevice.DeepCopy()
-		if deviceCopy.Labels == nil {
-			deviceCopy.Labels = make(map[string]string)
-		}
-		deviceCopy.Labels[labels.WorkloadLabel(name)] = "true"
-		err = r.EdgeDeviceRepository.Patch(ctx, &edgeDevice, deviceCopy)
-		if err != nil {
-			return err
+		if !hasLabelForDeployment(edgeDevice, name) {
+			deviceCopy := edgeDevice.DeepCopy()
+			if deviceCopy.Labels == nil {
+				deviceCopy.Labels = make(map[string]string)
+			}
+			deviceCopy.Labels[labels.WorkloadLabel(name)] = "true"
+			err := r.EdgeDeviceRepository.Patch(ctx, &edgeDevice, deviceCopy)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -227,4 +224,33 @@ func (r *EdgeDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&managementv1alpha1.EdgeDeployment{}).
 		Complete(r)
+}
+
+func hasLabelForDeployment(edgeDevice managementv1alpha1.EdgeDevice, deploymentName string) bool {
+	_, exists := edgeDevice.Labels[labels.WorkloadLabel(deploymentName)]
+	return exists
+}
+
+func hasDeployment(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
+	for _, deployment := range edgeDevice.Status.Deployments {
+		if deployment.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func merge(edgeDevices1 []managementv1alpha1.EdgeDevice, edgeDevices2 []managementv1alpha1.EdgeDevice) []managementv1alpha1.EdgeDevice {
+	mergedMap := make(map[string]managementv1alpha1.EdgeDevice)
+	for _, device := range edgeDevices1 {
+		mergedMap[device.Name] = device
+	}
+	for _, device := range edgeDevices2 {
+		mergedMap[device.Name] = device
+	}
+	var merged []managementv1alpha1.EdgeDevice
+	for _, device := range mergedMap {
+		merged = append(merged, device)
+	}
+	return merged
 }
