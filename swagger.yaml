@@ -152,6 +152,8 @@ definitions:
     properties:
       heartbeat:
         $ref: '#/definitions/heartbeat-configuration'
+      storage:
+        $ref: '#/definitions/storage-configuration'
 
   heartbeat-configuration:
     type: object
@@ -171,6 +173,26 @@ definitions:
         enum:
           - full
           - delta
+
+  storage-configuration:
+    type: object
+    properties:
+      s3:
+        $ref: '#/definitions/s3-storage-configuration'
+
+  s3-storage-configuration:
+    type: object
+    properties:
+      bucket_host:
+        type: string
+      bucket_port:
+        type: integer
+      bucket_name:
+        type: string
+      aws_access_key_id:
+        type: string
+      aws_secret_access_key:
+        type: string
 
   workload-list:
     type: array

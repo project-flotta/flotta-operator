@@ -239,6 +239,9 @@ func init() {
       "properties": {
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
+        },
+        "storage": {
+          "$ref": "#/definitions/storage-configuration"
         }
       }
     },
@@ -551,6 +554,34 @@ func init() {
         },
         "os_image_id": {
           "type": "string"
+        }
+      }
+    },
+    "s3-storage-configuration": {
+      "type": "object",
+      "properties": {
+        "aws_access_key_id": {
+          "type": "string"
+        },
+        "aws_secret_access_key": {
+          "type": "string"
+        },
+        "bucket_host": {
+          "type": "string"
+        },
+        "bucket_name": {
+          "type": "string"
+        },
+        "bucket_port": {
+          "type": "integer"
+        }
+      }
+    },
+    "storage-configuration": {
+      "type": "object",
+      "properties": {
+        "s3": {
+          "$ref": "#/definitions/s3-storage-configuration"
         }
       }
     },
@@ -844,6 +875,9 @@ func init() {
       "properties": {
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
+        },
+        "storage": {
+          "$ref": "#/definitions/storage-configuration"
         }
       }
     },
@@ -1156,6 +1190,34 @@ func init() {
         },
         "os_image_id": {
           "type": "string"
+        }
+      }
+    },
+    "s3-storage-configuration": {
+      "type": "object",
+      "properties": {
+        "aws_access_key_id": {
+          "type": "string"
+        },
+        "aws_secret_access_key": {
+          "type": "string"
+        },
+        "bucket_host": {
+          "type": "string"
+        },
+        "bucket_name": {
+          "type": "string"
+        },
+        "bucket_port": {
+          "type": "integer"
+        }
+      }
+    },
+    "storage-configuration": {
+      "type": "object",
+      "properties": {
+        "s3": {
+          "$ref": "#/definitions/s3-storage-configuration"
         }
       }
     },
