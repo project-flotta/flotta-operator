@@ -19,6 +19,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/storage"
+	routev1 "github.com/openshift/api/route/v1"
 	"log"
 	"net/http"
 	"os"
@@ -34,15 +36,15 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/jakub-dzon/k4e-operator/controllers"
+	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-
-	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	"github.com/jakub-dzon/k4e-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -76,6 +78,8 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(managementv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(obv1.AddToScheme(scheme))
+	utilruntime.Must(routev1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -113,11 +117,13 @@ func main() {
 
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
 	edgeDeploymentRepository := edgedeployment.NewEdgeDeploymentRepository(mgr.GetClient())
+	claimer := storage.NewClaimer(mgr.GetClient())
 
 	if err = (&controllers.EdgeDeviceReconciler{
 		Client:               mgr.GetClient(),
 		Scheme:               mgr.GetScheme(),
 		EdgeDeviceRepository: edgeDeviceRepository,
+		Claimer:              claimer,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)
@@ -144,7 +150,7 @@ func main() {
 
 	go func() {
 		h, err := restapi.Handler(restapi.Config{
-			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, initialDeviceNamespace),
+			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, claimer, initialDeviceNamespace),
 		})
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")

@@ -19,6 +19,9 @@ package controllers
 import (
 	"context"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/jakub-dzon/k4e-operator/internal/storage"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,11 +36,16 @@ type EdgeDeviceReconciler struct {
 	client.Client
 	Scheme               *runtime.Scheme
 	EdgeDeviceRepository *edgedevice.Repository
+	Claimer              *storage.Claimer
 }
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices/finalizers,verbs=update
+//+kubebuilder:rbac:groups=objectbucket.io,resources=objectbucketclaims,verbs=get;list;watch;create;update;patch
+//+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=get;list;watch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -61,6 +69,29 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	logger.Info("Reconciling", "edgeDevice", edgeDevice)
 
+	// create object bucket claim for edge-device
+	if edgeDevice.Status.DataOBC == nil || len(*edgeDevice.Status.DataOBC) == 0 {
+		obc, err := r.Claimer.GetClaim(ctx, edgeDevice.Name, edgeDevice.Namespace)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				logger.Info("Failed to find an existing OBC for the device. Creating new OBC", "edgeDevice", edgeDevice)
+				obc, err = r.Claimer.CreateClaim(ctx, edgeDevice)
+				if err != nil {
+					logger.Error(err, "Cannot create object bucket claim for the device", "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)
+					return ctrl.Result{Requeue: true}, err
+				}
+			} else {
+				logger.Error(err, "Failed to get OBC for the device", "edgeDevice", edgeDevice)
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
+
+		edgeDevice.Status.DataOBC = &obc.Name
+		err = r.EdgeDeviceRepository.UpdateStatus(ctx, edgeDevice)
+		if err != nil {
+			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
+		}
+	}
 	return ctrl.Result{}, nil
 }
 

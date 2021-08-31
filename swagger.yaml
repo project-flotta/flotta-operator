@@ -194,6 +194,8 @@ definitions:
         type: string
       aws_secret_access_key:
         type: string
+      aws_ca_bundle:
+        type: string
 
   workload-list:
     type: array
