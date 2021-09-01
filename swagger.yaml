@@ -187,6 +187,7 @@ definitions:
         type: string
       bucket_port:
         type: integer
+        format: int32
       bucket_name:
         type: string
       aws_access_key_id:
