@@ -573,7 +573,8 @@ func init() {
           "type": "string"
         },
         "bucket_port": {
-          "type": "integer"
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1209,7 +1210,8 @@ func init() {
           "type": "string"
         },
         "bucket_port": {
-          "type": "integer"
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
