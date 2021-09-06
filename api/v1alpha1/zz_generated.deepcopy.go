@@ -65,8 +65,8 @@ func (in *DataConfiguration) DeepCopyInto(out *DataConfiguration) {
 	*out = *in
 	if in.Paths != nil {
 		in, out := &in.Paths, &out.Paths
-		*out = new(DataPath)
-		**out = **in
+		*out = make([]DataPath, len(*in))
+		copy(*out, *in)
 	}
 }
 

@@ -34,7 +34,7 @@ type EdgeDeploymentSpec struct {
 }
 
 type DataConfiguration struct {
-	Paths *DataPath `json:"paths,omitempty"`
+	Paths []DataPath `json:"paths,omitempty"`
 }
 
 type DataPath struct {

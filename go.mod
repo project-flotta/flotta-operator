@@ -13,10 +13,10 @@ require (
 	github.com/go-openapi/validate v0.19.10
 	github.com/google/uuid v1.1.2
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/kube-object-storage/lib-bucket-provisioner v0.0.0-20210818162813-3eee31c01875 // indirect
+	github.com/kube-object-storage/lib-bucket-provisioner v0.0.0-20210818162813-3eee31c01875
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
-	github.com/openshift/api v3.9.0+incompatible // indirect
+	github.com/openshift/api v3.9.0+incompatible
 	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 // indirect
 	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2

@@ -39,15 +39,17 @@ spec:
               data:
                 properties:
                   paths:
-                    properties:
-                      source:
-                        type: string
-                      target:
-                        type: string
-                    required:
-                    - source
-                    - target
-                    type: object
+                    items:
+                      properties:
+                        source:
+                          type: string
+                        target:
+                          type: string
+                      required:
+                      - source
+                      - target
+                      type: object
+                    type: array
                 type: object
               device:
                 type: string

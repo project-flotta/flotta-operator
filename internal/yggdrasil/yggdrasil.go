@@ -337,9 +337,18 @@ func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.Edg
 			log.FromContext(ctx).Error(err, "Cannot marshal pod specification")
 			continue
 		}
+		var data *models.DataConfiguration
+		if deployment.Spec.Data != nil && len(deployment.Spec.Data.Paths) > 0 {
+			var paths []*models.DataPath
+			for _, path := range deployment.Spec.Data.Paths {
+				paths = append(paths, &models.DataPath{Source: path.Source, Target: path.Target})
+			}
+			data = &models.DataConfiguration{Paths: paths}
+		}
 		workload := models.Workload{
 			Name:          deployment.Name,
 			Specification: string(podSpec),
+			Data:          data,
 		}
 		list = append(list, &workload)
 	}
