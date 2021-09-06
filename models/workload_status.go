@@ -19,6 +19,10 @@ import (
 // swagger:model workload-status
 type WorkloadStatus struct {
 
+	// last data upload
+	// Format: date-time
+	LastDataUpload strfmt.DateTime `json:"last_data_upload,omitempty"`
+
 	// name
 	Name string `json:"name,omitempty"`
 
@@ -31,6 +35,10 @@ type WorkloadStatus struct {
 func (m *WorkloadStatus) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateLastDataUpload(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateStatus(formats); err != nil {
 		res = append(res, err)
 	}
@@ -38,6 +46,19 @@ func (m *WorkloadStatus) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *WorkloadStatus) validateLastDataUpload(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.LastDataUpload) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("last_data_upload", "body", "date-time", m.LastDataUpload.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

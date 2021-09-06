@@ -439,6 +439,9 @@ definitions:
     properties:
       name:
         type: string
+      last_data_upload:
+        type: string
+        format: date-time
       status:
         type: string
         enum:

@@ -7,6 +7,10 @@ spec:
     matchLabels:
       foo: bar
 #  device: 242e48d0-286b-4170-9b97-95502066e6ae
+  data:
+    paths:
+      - source: .
+        target: nginx
   type: pod
   pod:
     spec:

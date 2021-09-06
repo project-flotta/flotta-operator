@@ -245,6 +245,7 @@ func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment,
 				deployment.Phase = v1alpha1.EdgeDeploymentPhase(status.Status)
 				deployment.LastTransitionTime = metav1.Now()
 			}
+			deployment.LastDataUpload = metav1.NewTime(time.Time(status.LastDataUpload))
 			deploymentMap[status.Name] = deployment
 		}
 	}

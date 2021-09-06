@@ -657,6 +657,10 @@ func init() {
     "workload-status": {
       "type": "object",
       "properties": {
+        "last_data_upload": {
+          "type": "string",
+          "format": "date-time"
+        },
         "name": {
           "type": "string"
         },
@@ -1326,6 +1330,10 @@ func init() {
     "workload-status": {
       "type": "object",
       "properties": {
+        "last_data_upload": {
+          "type": "string",
+          "format": "date-time"
+        },
         "name": {
           "type": "string"
         },
