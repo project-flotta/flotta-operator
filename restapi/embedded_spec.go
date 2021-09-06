@@ -563,6 +563,9 @@ func init() {
         "aws_access_key_id": {
           "type": "string"
         },
+        "aws_ca_bundle": {
+          "type": "string"
+        },
         "aws_secret_access_key": {
           "type": "string"
         },
@@ -1198,6 +1201,9 @@ func init() {
       "type": "object",
       "properties": {
         "aws_access_key_id": {
+          "type": "string"
+        },
+        "aws_ca_bundle": {
           "type": "string"
         },
         "aws_secret_access_key": {

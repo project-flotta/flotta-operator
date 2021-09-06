@@ -18,6 +18,9 @@ type S3StorageConfiguration struct {
 	// aws access key id
 	AwsAccessKeyID string `json:"aws_access_key_id,omitempty"`
 
+	// aws ca bundle
+	AwsCaBundle string `json:"aws_ca_bundle,omitempty"`
+
 	// aws secret access key
 	AwsSecretAccessKey string `json:"aws_secret_access_key,omitempty"`
 

@@ -85,6 +85,7 @@ type EdgeDeviceStatus struct {
 	LastSyncedResourceVersion string       `json:"lastSyncedResourceVersion,omitempty"`
 	Hardware                  *Hardware    `json:"hardware,omitempty"`
 	Deployments               []Deployment `json:"deployments,omitempty"`
+	DataOBC                   *string      `json:"dataObc,omitempty"`
 }
 
 type EdgeDeploymentPhase string

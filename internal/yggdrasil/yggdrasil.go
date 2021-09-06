@@ -11,6 +11,7 @@ import (
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	"github.com/jakub-dzon/k4e-operator/internal/utils"
 	"github.com/jakub-dzon/k4e-operator/models"
 	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
@@ -34,14 +35,15 @@ var (
 type Handler struct {
 	deviceRepository     *edgedevice.Repository
 	deploymentRepository *edgedeployment.Repository
+	claimer              *storage.Claimer
 	initialNamespace     string
 }
 
-func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, deploymentRepository *edgedeployment.Repository,
-	initialNamespace string) *Handler {
+func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, deploymentRepository *edgedeployment.Repository, claimer *storage.Claimer, initialNamespace string) *Handler {
 	return &Handler{
 		deviceRepository:     deviceRepository,
 		deploymentRepository: deploymentRepository,
+		claimer:              claimer,
 		initialNamespace:     initialNamespace,
 	}
 }
@@ -72,6 +74,7 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 
 func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
+	logger := log.FromContext(ctx).WithValues("DeviceID", deviceID)
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -130,6 +133,17 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		dc.Configuration.Heartbeat = &defaultHeartbeatConfiguration
 	}
 
+	if edgeDevice.Status.DataOBC != nil && len(*edgeDevice.Status.DataOBC) > 0 {
+		storageConf, err := h.claimer.GetStorageConfiguration(ctx, edgeDevice)
+		if err != nil {
+			logger.Error(err, "Failed to get storage configuration for device", "device", deviceID)
+		} else {
+			dc.Configuration.Storage = &models.StorageConfiguration{
+				S3: storageConf,
+			}
+		}
+	}
+
 	// TODO: Network optimization: Decide whether there is a need to return any payload based on difference between last applied configuration and current state in the cluster.
 	message := models.Message{
 		Type:      models.MessageTypeData,
@@ -176,7 +190,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 	case "registration":
-		_, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
+		_, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				contentJson, _ := json.Marshal(msg.Content)
@@ -189,7 +203,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 						RequestTime: &now,
 					},
 				}
-				device.Name = params.DeviceID
+				device.Name = deviceID
 				device.Namespace = h.initialNamespace
 				device.Spec.OsImageId = registrationInfo.OsImageID
 				device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
