@@ -36,6 +36,21 @@ spec:
           spec:
             description: EdgeDeploymentSpec defines the desired state of EdgeDeployment
             properties:
+              data:
+                properties:
+                  paths:
+                    items:
+                      properties:
+                        source:
+                          type: string
+                        target:
+                          type: string
+                      required:
+                      - source
+                      - target
+                      type: object
+                    type: array
+                type: object
               device:
                 type: string
               deviceSelector:

@@ -210,6 +210,28 @@ definitions:
         description: Name of the workload
       specification:
         type: string
+      data:
+        description: Configuration for data transfer
+        $ref: '#/definitions/data-configuration'
+
+  data-configuration:
+    type: object
+    properties:
+      paths:
+        type: array
+        items:
+          $ref: '#/definitions/data-path'
+
+  data-path:
+    type: object
+    description: Device-to-control plane paths mapping
+    properties:
+      source:
+        description: Path in the workload container
+        type: string
+      target:
+        description: Path in the control plane storage
+        type: string
 
   registration-info:
     type: object
@@ -417,6 +439,9 @@ definitions:
     properties:
       name:
         type: string
+      last_data_upload:
+        type: string
+        format: date-time
       status:
         type: string
         enum:

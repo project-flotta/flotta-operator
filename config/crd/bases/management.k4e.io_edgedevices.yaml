@@ -70,6 +70,9 @@ spec:
               deployments:
                 items:
                   properties:
+                    lastDataUpload:
+                      format: date-time
+                      type: string
                     lastTransitionTime:
                       format: date-time
                       type: string

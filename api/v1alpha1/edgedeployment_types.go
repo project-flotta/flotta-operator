@@ -30,6 +30,16 @@ type EdgeDeploymentSpec struct {
 	Device         string                `json:"device,omitempty"`
 	Type           EdgeDeploymentType    `json:"type"`
 	Pod            Pod                   `json:"pod,omitempty"`
+	Data           *DataConfiguration    `json:"data,omitempty"`
+}
+
+type DataConfiguration struct {
+	Paths []DataPath `json:"paths,omitempty"`
+}
+
+type DataPath struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
 }
 
 type Pod struct {

@@ -100,6 +100,7 @@ type Deployment struct {
 	Name               string              `json:"name"`
 	Phase              EdgeDeploymentPhase `json:"phase,omitempty"`
 	LastTransitionTime metav1.Time         `json:"lastTransitionTime,omitempty"`
+	LastDataUpload     metav1.Time         `json:"lastDataUpload,omitempty"`
 }
 
 type Hardware struct {

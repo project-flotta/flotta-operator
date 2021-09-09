@@ -245,6 +245,7 @@ func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment,
 				deployment.Phase = v1alpha1.EdgeDeploymentPhase(status.Status)
 				deployment.LastTransitionTime = metav1.Now()
 			}
+			deployment.LastDataUpload = metav1.NewTime(time.Time(status.LastDataUpload))
 			deploymentMap[status.Name] = deployment
 		}
 	}
@@ -337,9 +338,18 @@ func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.Edg
 			log.FromContext(ctx).Error(err, "Cannot marshal pod specification")
 			continue
 		}
+		var data *models.DataConfiguration
+		if deployment.Spec.Data != nil && len(deployment.Spec.Data.Paths) > 0 {
+			var paths []*models.DataPath
+			for _, path := range deployment.Spec.Data.Paths {
+				paths = append(paths, &models.DataPath{Source: path.Source, Target: path.Target})
+			}
+			data = &models.DataConfiguration{Paths: paths}
+		}
 		workload := models.Workload{
 			Name:          deployment.Name,
 			Specification: string(podSpec),
+			Data:          data,
 		}
 		list = append(list, &workload)
 	}
