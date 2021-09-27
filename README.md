@@ -1,5 +1,5 @@
 # Installation
- To install the operator CRDs in the cluster pointed to by kubectl configuration execute (it may take some time):
+ To install the operator [CRDs](docs/crds.md) in the cluster pointed to by kubectl configuration execute (it may take some time):
 
 `make install`
 
