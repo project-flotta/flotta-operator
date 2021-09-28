@@ -51,7 +51,7 @@ For more information about the `dataObc` property read about the [Data Upload](d
 
 ```yaml
 spec:
-  deviceSelector: # Specifies which EdgeDevice CRs this workload should be deployed to. See https://v1-18.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#labelselector-v1-meta
+  deviceSelector: # Specifies which EdgeDevice CRs this workload should be deployed to. See https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#resources-that-support-set-based-requirements
     matchLabels: # Mutually exclusive with matchExpressions
       dc: home
     matchExpressions: # Mutually exclusive with matchLabels
@@ -64,7 +64,7 @@ spec:
       - source: stats # well-known "/export" container directory sub-path (/export/stats in this case) that should be periodically uploaded to the control plane   
         target: statistics # path of the directory in control plane storage where the data should be uploaded to (currently - statistics directory in edge device's OBC) 
   pod:
-    spec: # Pod configuration as described in https://v1-18.docs.kubernetes.io/docs/reference/generated/kubernetes-api/v1.18/#podspec-v1-core
+    spec: # Pod configuration as described in https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/
       containers:
         - name: random-server
           image: quay.io/jdzon/random-server:v1
