@@ -1,0 +1,34 @@
+@startuml
+'https://plantuml.com/deployment-diagram
+
+frame Kubernetes {
+    node Operator {
+      control "k4e controller" as controller
+      interface "http  API" as operatorAPI
+
+    }
+    file "EdgeDeployment CR" as deployment
+    file "EdgeDevice CR" as deviceCR
+    database "Object Storage" as objectStore
+}
+
+node Device {
+    component Agent
+    control Podman
+    collections Workloads
+}
+deviceCR o-- deployment
+
+Operator -[dashed]-> deployment: process
+Operator -[dashed]-> deviceCR: process
+Operator -left-> objectStore: provision
+
+Agent ---> operatorAPI: get desired state
+Agent --> operatorAPI: update status
+Agent --> Podman : CRUD/monitor workloads
+Agent -> objectStore : upload files
+
+Podman -[dashed]-> Workloads: supervise workloads
+
+
+@enduml
