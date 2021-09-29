@@ -1,7 +1,209 @@
 apiVersion: management.k4e.io/v1alpha1
 kind: EdgeDevice
 metadata:
-  name: edgedevice-sample
+  creationTimestamp: "2021-09-22T08:35:25Z"
+  finalizers:
+    - yggdrasil-connection-finalizer
+    - yggdrasil-workload-finalizer
+  generation: 2
+  labels:
+    dc: home
+  name: 242e48d0-286b-4170-9b97-95502066e6ae
+  namespace: default
+  resourceVersion: "13040498"
+  uid: 7e435522-977d-4852-b096-253b55589427
 spec:
-  # Add fields here
-  foo: bar
+  heartbeat:
+    periodSeconds: 5
+  osImageId: unknown
+  requestTime: "2021-09-22T08:35:25Z"
+status:
+  dataObc: 242e48d0-286b-4170-9b97-95502066e6ae
+  hardware:
+    boot:
+      current_boot_mode: bios
+    cpu:
+      architecture: x86_64
+      count: 32
+      flags:
+        - fpu
+        - vme
+        - de
+        - pse
+        - tsc
+        - msr
+        - pae
+        - mce
+        - cx8
+        - apic
+        - sep
+        - mtrr
+        - pge
+        - mca
+        - cmov
+        - pat
+        - pse36
+        - clflush
+        - mmx
+        - fxsr
+        - sse
+        - sse2
+        - ht
+        - syscall
+        - nx
+        - mmxext
+        - fxsr_opt
+        - pdpe1gb
+        - rdtscp
+        - lm
+        - constant_tsc
+        - rep_good
+        - nopl
+        - nonstop_tsc
+        - cpuid
+        - extd_apicid
+        - amd_dcm
+        - aperfmperf
+        - pni
+        - pclmulqdq
+        - monitor
+        - ssse3
+        - fma
+        - cx16
+        - sse4_1
+        - sse4_2
+        - movbe
+        - popcnt
+        - aes
+        - xsave
+        - avx
+        - f16c
+        - rdrand
+        - lahf_lm
+        - cmp_legacy
+        - svm
+        - extapic
+        - cr8_legacy
+        - abm
+        - sse4a
+        - misalignsse
+        - 3dnowprefetch
+        - osvw
+        - skinit
+        - wdt
+        - tce
+        - topoext
+        - perfctr_core
+        - perfctr_nb
+        - bpext
+        - perfctr_llc
+        - mwaitx
+        - cpb
+        - hw_pstate
+        - ssbd
+        - vmmcall
+        - fsgsbase
+        - bmi1
+        - avx2
+        - smep
+        - bmi2
+        - rdseed
+        - adx
+        - smap
+        - clflushopt
+        - sha_ni
+        - xsaveopt
+        - xsavec
+        - xgetbv1
+        - xsaves
+        - clzero
+        - irperf
+        - xsaveerptr
+        - arat
+        - npt
+        - lbrv
+        - svm_lock
+        - nrip_save
+        - tsc_scale
+        - vmcb_clean
+        - flushbyasid
+        - decodeassists
+        - pausefilter
+        - pfthreshold
+        - avic
+        - v_vmsave_vmload
+        - vgif
+        - overflow_recov
+        - succor
+        - smca
+        - sme
+        - sev
+      frequency: "3400.00"
+      model_name: AMD Ryzen Threadripper 1950X 16-Core Processor
+    disks: []
+    gpus:
+      - address: "0000:42:00.0"
+        device_id: 1b06
+        name: GP102 [GeForce GTX 1080 Ti]
+        vendor: NVIDIA Corporation
+        vendor_id: 10de
+    hostname: fedora
+    interfaces:
+      - flags:
+          - up
+          - broadcast
+          - multicast
+        ipv4_addresses: []
+        ipv6_addresses: []
+        mac_address: 70:85:c2:56:61:0d
+        mtu: 1500
+        name: enp4s0
+        product: "0x1539"
+        speed_mbps: -1
+        vendor: "0x8086"
+      - flags:
+          - up
+          - broadcast
+          - multicast
+        ipv4_addresses: []
+        ipv6_addresses: []
+        mac_address: 70:85:c2:56:61:0b
+        mtu: 1500
+        name: enp6s0
+        product: "0x1539"
+        speed_mbps: -1
+        vendor: "0x8086"
+      - flags:
+          - up
+          - broadcast
+          - multicast
+        has_carrier: true
+        ipv4_addresses:
+          - 10.220.200.106/24
+        ipv6_addresses: []
+        mac_address: 70:85:c2:56:61:0f
+        mtu: 1500
+        name: enp3s0
+        product: "0xd107"
+        speed_mbps: 1000
+        vendor: "0x1d6a"
+      - flags:
+          - broadcast
+          - multicast
+        ipv4_addresses: []
+        ipv6_addresses: []
+        mac_address: 6e:96:85:4a:24:ed
+        mtu: 1500
+        name: wlp5s0
+        product: "0x24fb"
+        vendor: "0x8086"
+    memory:
+      physical_bytes: 68719476736
+      usable_bytes: 67271598080
+    system_vendor:
+      manufacturer: unknown
+      product_name: unknown
+      serial_number: unknown
+  lastSeenTime: "2021-09-23T09:27:58Z"
+  lastSyncedResourceVersion: "13040122"
+  phase: up
