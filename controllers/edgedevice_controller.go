@@ -86,8 +86,9 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			}
 		}
 
+		patch := client.MergeFrom(edgeDevice.DeepCopy())
 		edgeDevice.Status.DataOBC = &obc.Name
-		err = r.EdgeDeviceRepository.UpdateStatus(ctx, edgeDevice)
+		err = r.EdgeDeviceRepository.PatchStatus(ctx, edgeDevice, &patch)
 		if err != nil {
 			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 		}

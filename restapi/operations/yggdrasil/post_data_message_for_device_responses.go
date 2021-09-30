@@ -35,6 +35,30 @@ func (o *PostDataMessageForDeviceOK) WriteResponse(rw http.ResponseWriter, produ
 	rw.WriteHeader(200)
 }
 
+// PostDataMessageForDeviceBadRequestCode is the HTTP code returned for type PostDataMessageForDeviceBadRequest
+const PostDataMessageForDeviceBadRequestCode int = 400
+
+/*PostDataMessageForDeviceBadRequest Error
+
+swagger:response postDataMessageForDeviceBadRequest
+*/
+type PostDataMessageForDeviceBadRequest struct {
+}
+
+// NewPostDataMessageForDeviceBadRequest creates PostDataMessageForDeviceBadRequest with default headers values
+func NewPostDataMessageForDeviceBadRequest() *PostDataMessageForDeviceBadRequest {
+
+	return &PostDataMessageForDeviceBadRequest{}
+}
+
+// WriteResponse to the client
+func (o *PostDataMessageForDeviceBadRequest) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
+
+	rw.WriteHeader(400)
+}
+
 // PostDataMessageForDeviceUnauthorizedCode is the HTTP code returned for type PostDataMessageForDeviceUnauthorized
 const PostDataMessageForDeviceUnauthorizedCode int = 401
 
