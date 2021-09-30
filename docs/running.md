@@ -122,4 +122,7 @@ Execute following steps on the build machine:
 
 ## Using edge device ISO
 
-**TODO**
+1. Follow [ISO generation scripts](https://github.com/ydayagi/r4e) documentation to create installation ISO containing the agent
+2. Boot your device with generated ISO
+3. The system is installed automatically
+4. The agent installed on the device will register it with control plane configured in the first step
