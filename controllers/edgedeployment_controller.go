@@ -140,8 +140,9 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromDevice(ctx context.Contex
 			newDeployments = append(newDeployments, deployment)
 		}
 	}
+	patch := client.MergeFrom(edgeDevice.DeepCopy())
 	edgeDevice.Status.Deployments = newDeployments
-	err := r.EdgeDeviceRepository.UpdateStatus(ctx, &edgeDevice)
+	err := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
 	if err != nil {
 		return err
 	}
@@ -184,8 +185,9 @@ func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, 
 	for _, edgeDevice := range edgeDevices {
 		if !hasDeployment(edgeDevice, name) {
 			deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
+			patch := client.MergeFrom(edgeDevice.DeepCopy())
 			edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
-			err := r.EdgeDeviceRepository.UpdateStatus(ctx, &edgeDevice)
+			err := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
 			if err != nil {
 				errs = append(errs, err)
 				continue

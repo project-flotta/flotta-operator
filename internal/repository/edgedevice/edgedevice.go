@@ -25,8 +25,8 @@ func (r *Repository) Create(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice
 	return r.client.Create(ctx, edgeDevice)
 }
 
-func (r *Repository) UpdateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) error {
-	return r.client.Status().Update(ctx, edgeDevice)
+func (r *Repository) PatchStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) error {
+	return r.client.Status().Patch(ctx, edgeDevice, *patch)
 }
 
 func (r *Repository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error {

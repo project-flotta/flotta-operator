@@ -26,6 +26,12 @@ func (o *PostDataMessageForDeviceReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPostDataMessageForDeviceBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPostDataMessageForDeviceUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -73,6 +79,27 @@ func (o *PostDataMessageForDeviceOK) Error() string {
 }
 
 func (o *PostDataMessageForDeviceOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	return nil
+}
+
+// NewPostDataMessageForDeviceBadRequest creates a PostDataMessageForDeviceBadRequest with default headers values
+func NewPostDataMessageForDeviceBadRequest() *PostDataMessageForDeviceBadRequest {
+	return &PostDataMessageForDeviceBadRequest{}
+}
+
+/*PostDataMessageForDeviceBadRequest handles this case with default header values.
+
+Error
+*/
+type PostDataMessageForDeviceBadRequest struct {
+}
+
+func (o *PostDataMessageForDeviceBadRequest) Error() string {
+	return fmt.Sprintf("[POST /data/{device_id}/out][%d] postDataMessageForDeviceBadRequest ", 400)
+}
+
+func (o *PostDataMessageForDeviceBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }

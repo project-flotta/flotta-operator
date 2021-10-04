@@ -18,6 +18,7 @@ import (
 	operations "github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"time"
 )
@@ -168,7 +169,10 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 	case "heartbeat":
 		heartbeat := models.Heartbeat{}
 		contentJson, _ := json.Marshal(msg.Content)
-		json.Unmarshal(contentJson, &heartbeat)
+		err := json.Unmarshal(contentJson, &heartbeat)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceBadRequest()
+		}
 		logger.Info("Received heartbeat", "content", heartbeat)
 		edgeDevice, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
 		if err != nil {
@@ -177,61 +181,90 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			}
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-		edgeDevice.Status.LastSyncedResourceVersion = heartbeat.Version
-		edgeDevice.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
-		edgeDevice.Status.Phase = heartbeat.Status
-		if heartbeat.Hardware != nil {
-			edgeDevice.Status.Hardware = mapHardware(ctx, heartbeat.Hardware)
-		}
-		deployments := h.updateDeploymentStatuses(edgeDevice.Status.Deployments, heartbeat.Workloads)
-		edgeDevice.Status.Deployments = deployments
-		err = h.deviceRepository.UpdateStatus(ctx, edgeDevice)
+		err = h.updateDeviceStatus(ctx, edgeDevice, func(device *v1alpha1.EdgeDevice) {
+			device.Status.LastSyncedResourceVersion = heartbeat.Version
+			device.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
+			device.Status.Phase = heartbeat.Status
+			if heartbeat.Hardware != nil {
+				device.Status.Hardware = mapHardware(ctx, heartbeat.Hardware)
+			}
+			deployments := h.updateDeploymentStatuses(device.Status.Deployments, heartbeat.Workloads)
+			device.Status.Deployments = deployments
+		})
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 	case "registration":
 		_, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err != nil {
-			if errors.IsNotFound(err) {
-				contentJson, _ := json.Marshal(msg.Content)
-				registrationInfo := models.RegistrationInfo{}
-				json.Unmarshal(contentJson, &registrationInfo)
-				logger.Info("Received registration info", "content", registrationInfo)
-				now := metav1.Now()
-				device := v1alpha1.EdgeDevice{
-					Spec: v1alpha1.EdgeDeviceSpec{
-						RequestTime: &now,
-					},
-				}
-				device.Name = deviceID
-				device.Namespace = h.initialNamespace
-				device.Spec.OsImageId = registrationInfo.OsImageID
-				device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
-				err := h.deviceRepository.Create(ctx, &device)
-				if err != nil {
-					logger.Error(err, "Cannot save EdgeDevice")
-					return operations.NewPostDataMessageForDeviceInternalServerError()
-				}
-
+			if !errors.IsNotFound(err) {
+				return operations.NewPostDataMessageForDeviceInternalServerError()
+			}
+			// register new edge device
+			contentJson, _ := json.Marshal(msg.Content)
+			registrationInfo := models.RegistrationInfo{}
+			err := json.Unmarshal(contentJson, &registrationInfo)
+			if err != nil {
+				return operations.NewPostDataMessageForDeviceBadRequest()
+			}
+			logger.Info("Received registration info", "content", registrationInfo)
+			now := metav1.Now()
+			device := v1alpha1.EdgeDevice{
+				Spec: v1alpha1.EdgeDeviceSpec{
+					RequestTime: &now,
+				},
+			}
+			device.Name = deviceID
+			device.Namespace = h.initialNamespace
+			device.Spec.OsImageId = registrationInfo.OsImageID
+			device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
+			err = h.deviceRepository.Create(ctx, &device)
+			if err != nil {
+				logger.Error(err, "Cannot save EdgeDevice")
+				return operations.NewPostDataMessageForDeviceInternalServerError()
+			}
+			err = h.updateDeviceStatus(ctx, &device, func(device *v1alpha1.EdgeDevice) {
 				device.Status = v1alpha1.EdgeDeviceStatus{
 					Hardware: mapHardware(ctx, registrationInfo.Hardware),
 				}
-
-				// TODO: when controller starts updating the EdgeDevice CR the status update below will need to be
-				// executed in a retry loop to overcome potential optimistic locking problems.
-				err = h.deviceRepository.UpdateStatus(ctx, &device)
-				if err != nil {
-					logger.Error(err, "Cannot update EdgeDevice status")
-					return operations.NewPostDataMessageForDeviceInternalServerError()
-				}
-				logger.Info("Created", "device", device)
+			})
+			if err != nil {
+				logger.Error(err, "Cannot update EdgeDevice status")
+				return operations.NewPostDataMessageForDeviceInternalServerError()
 			}
-			return operations.NewPostDataMessageForDeviceInternalServerError()
+			logger.Info("Created", "device", device)
+			return operations.NewPostDataMessageForDeviceOK()
 		}
 	default:
 		logger.Info("Received unknown message", "message", msg)
+		return operations.NewPostDataMessageForDeviceBadRequest()
 	}
 	return operations.NewPostDataMessageForDeviceOK()
+}
+
+func (h *Handler) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeDevice, updateFunc func(d *v1alpha1.EdgeDevice)) error {
+	patch := client.MergeFrom(device.DeepCopy())
+	updateFunc(device)
+	err := h.deviceRepository.PatchStatus(ctx, device, &patch)
+	if err == nil {
+		return nil
+	}
+
+	// retry patching the edge device status
+	for i := 1; i < 4; i++ {
+		time.Sleep(time.Duration(i*50) * time.Millisecond)
+		device2, err := h.deviceRepository.Read(ctx, device.Name, device.Namespace)
+		if err != nil {
+			continue
+		}
+		patch = client.MergeFrom(device2.DeepCopy())
+		updateFunc(device2)
+		err = h.deviceRepository.PatchStatus(ctx, device2, &patch)
+		if err == nil {
+			return nil
+		}
+	}
+	return err
 }
 
 func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment, workloads []*models.WorkloadStatus) []v1alpha1.Deployment {
