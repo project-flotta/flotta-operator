@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ghodss/yaml"
+	"github.com/go-logr/logr"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
@@ -51,23 +52,23 @@ func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, deploymentRepo
 
 func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
+	logger := log.FromContext(ctx, "DeviceID", deviceID)
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			logger.Info("edge device is not found")
 			return operations.NewGetControlMessageForDeviceNotFound()
 		}
+		logger.Error(err, "failed to get edge device")
 		return operations.NewGetControlMessageForDeviceInternalServerError()
 	}
 	// Send disconnect only if YggdrasilWorkloadFinalizer was already processed and removed
 	if edgeDevice.DeletionTimestamp != nil && !utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
-		message, err := h.createDisconnectCommand()
-		if err != nil {
-			return operations.NewGetControlMessageForDeviceInternalServerError()
-		}
 		err = h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
 		if err != nil {
 			return operations.NewGetControlMessageForDeviceInternalServerError()
 		}
+		message := h.createDisconnectCommand()
 		return operations.NewGetControlMessageForDeviceOK().WithPayload(message)
 	}
 	return operations.NewGetControlMessageForDeviceOK()
@@ -75,12 +76,14 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 
 func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
-	logger := log.FromContext(ctx).WithValues("DeviceID", deviceID)
+	logger := log.FromContext(ctx, "DeviceID", deviceID)
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			logger.Info("edge device is not found")
 			return operations.NewGetDataMessageForDeviceNotFound()
 		}
+		logger.Error(err, "failed to get edge device")
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
 	var workloadList models.WorkloadList
@@ -92,7 +95,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 			edgeDeployment, err := h.deploymentRepository.Read(ctx, deployment.Name, edgeDevice.Namespace)
 			if err != nil {
 				if !errors.IsNotFound(err) {
-					log.FromContext(ctx).Error(err, "Cannot retrieve Edge Deployments")
+					logger.Error(err, "cannot retrieve Edge Deployments")
 					return operations.NewGetDataMessageForDeviceInternalServerError()
 				}
 				continue
@@ -100,7 +103,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 			edgeDeployments = append(edgeDeployments, *edgeDeployment)
 		}
 
-		workloadList = h.toWorkloadList(ctx, edgeDeployments)
+		workloadList = h.toWorkloadList(logger, edgeDeployments)
 	} else {
 		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
 			err := h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilWorkloadFinalizer)
@@ -137,7 +140,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 	if edgeDevice.Status.DataOBC != nil && len(*edgeDevice.Status.DataOBC) > 0 {
 		storageConf, err := h.claimer.GetStorageConfiguration(ctx, edgeDevice)
 		if err != nil {
-			logger.Error(err, "Failed to get storage configuration for device", "device", deviceID)
+			logger.Error(err, "failed to get storage configuration for device")
 		} else {
 			dc.Configuration.Storage = &models.StorageConfiguration{
 				S3: storageConf,
@@ -163,7 +166,7 @@ func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdra
 
 func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil.PostDataMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
-	logger := log.FromContext(ctx).WithValues("DeviceID", deviceID)
+	logger := log.FromContext(ctx, "DeviceID", deviceID)
 	msg := params.Message
 	switch msg.Directive {
 	case "heartbeat":
@@ -173,7 +176,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.Info("Received heartbeat", "content", heartbeat)
+		logger.Info("received heartbeat", "content", heartbeat)
 		edgeDevice, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -186,7 +189,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			device.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
 			device.Status.Phase = heartbeat.Status
 			if heartbeat.Hardware != nil {
-				device.Status.Hardware = mapHardware(ctx, heartbeat.Hardware)
+				device.Status.Hardware = mapHardware(logger, heartbeat.Hardware)
 			}
 			deployments := h.updateDeploymentStatuses(device.Status.Deployments, heartbeat.Workloads)
 			device.Status.Deployments = deployments
@@ -207,7 +210,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			if err != nil {
 				return operations.NewPostDataMessageForDeviceBadRequest()
 			}
-			logger.Info("Received registration info", "content", registrationInfo)
+			logger.Info("received registration info", "content", registrationInfo)
 			now := metav1.Now()
 			device := v1alpha1.EdgeDevice{
 				Spec: v1alpha1.EdgeDeviceSpec{
@@ -220,23 +223,23 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
 			err = h.deviceRepository.Create(ctx, &device)
 			if err != nil {
-				logger.Error(err, "Cannot save EdgeDevice")
+				logger.Error(err, "cannot save EdgeDevice")
 				return operations.NewPostDataMessageForDeviceInternalServerError()
 			}
 			err = h.updateDeviceStatus(ctx, &device, func(device *v1alpha1.EdgeDevice) {
 				device.Status = v1alpha1.EdgeDeviceStatus{
-					Hardware: mapHardware(ctx, registrationInfo.Hardware),
+					Hardware: mapHardware(logger, registrationInfo.Hardware),
 				}
 			})
 			if err != nil {
-				logger.Error(err, "Cannot update EdgeDevice status")
+				logger.Error(err, "cannot update EdgeDevice status")
 				return operations.NewPostDataMessageForDeviceInternalServerError()
 			}
-			logger.Info("Created", "device", device)
+			logger.Info("EdgeDevice created")
 			return operations.NewPostDataMessageForDeviceOK()
 		}
 	default:
-		logger.Info("Received unknown message", "message", msg)
+		logger.Info("received unknown message", "message", msg)
 		return operations.NewPostDataMessageForDeviceBadRequest()
 	}
 	return operations.NewPostDataMessageForDeviceOK()
@@ -289,27 +292,26 @@ func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment,
 	return deployments
 }
 
-func mapHardware(ctx context.Context, hardware *models.HardwareInfo) *v1alpha1.Hardware {
+func mapHardware(logger logr.Logger, hardware *models.HardwareInfo) *v1alpha1.Hardware {
 	if hardware == nil {
 		return nil
 	}
-	logger := log.FromContext(ctx)
 
 	var disks []*v1alpha1.Disk
 	err := utils.Copy(hardware.Disks, &disks)
 	if err != nil {
-		logger.Error(err, "Cannot map Disks")
+		logger.Error(err, "cannot map Disks")
 	}
 	var gpus []*v1alpha1.Gpu
 	err = utils.Copy(hardware.Gpus, &gpus)
 	if err != nil {
-		logger.Error(err, "Cannot map Gpus")
+		logger.Error(err, "cannot map Gpus")
 	}
 
 	var interfaces []*v1alpha1.Interface
 	err = utils.Copy(hardware.Interfaces, &interfaces)
 	if err != nil {
-		logger.Error(err, "Cannot map Interfaces")
+		logger.Error(err, "cannot map Interfaces")
 	}
 	hw := v1alpha1.Hardware{
 		Hostname: hardware.Hostname,
@@ -353,14 +355,10 @@ func mapHardware(ctx context.Context, hardware *models.HardwareInfo) *v1alpha1.H
 			Virtual:      systemVendor.Virtual,
 		}
 	}
-
-	if err != nil {
-		logger.Error(err, "Can't translate")
-	}
 	return &hw
 }
 
-func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.EdgeDeployment) models.WorkloadList {
+func (h *Handler) toWorkloadList(logger logr.Logger, deployments []v1alpha1.EdgeDeployment) models.WorkloadList {
 	list := models.WorkloadList{}
 	for _, deployment := range deployments {
 		if deployment.DeletionTimestamp != nil {
@@ -368,7 +366,7 @@ func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.Edg
 		}
 		podSpec, err := yaml.Marshal(deployment.Spec.Pod.Spec)
 		if err != nil {
-			log.FromContext(ctx).Error(err, "Cannot marshal pod specification")
+			logger.Error(err, "cannot marshal pod specification", "deployment name", deployment.Name)
 			continue
 		}
 		var data *models.DataConfiguration
@@ -389,7 +387,7 @@ func (h *Handler) toWorkloadList(ctx context.Context, deployments []v1alpha1.Edg
 	return list
 }
 
-func (h *Handler) createDisconnectCommand() (*models.Message, error) {
+func (h *Handler) createDisconnectCommand() *models.Message {
 	command := struct {
 		Command   string            `json:"command"`
 		Arguments map[string]string `json:"arguments"`
@@ -403,5 +401,5 @@ func (h *Handler) createDisconnectCommand() (*models.Message, error) {
 		Version:   1,
 		Sent:      strfmt.DateTime(time.Now()),
 		Content:   command,
-	}, nil
+	}
 }
