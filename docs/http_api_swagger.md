@@ -221,6 +221,7 @@ POST /api/k4e-management/v1/data/{device_id}/out
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
 | [200](#post-data-message-for-device-200) | OK | Success |  | [schema](#post-data-message-for-device-200-schema) |
+| [400](#post-data-message-for-device-400) | Bad Request | Error |  | [schema](#post-data-message-for-device-400-schema) |
 | [401](#post-data-message-for-device-401) | Unauthorized | Unauthorized |  | [schema](#post-data-message-for-device-401-schema) |
 | [403](#post-data-message-for-device-403) | Forbidden | Forbidden |  | [schema](#post-data-message-for-device-403-schema) |
 | [404](#post-data-message-for-device-404) | Not Found | Error |  | [schema](#post-data-message-for-device-404-schema) |
@@ -233,6 +234,11 @@ POST /api/k4e-management/v1/data/{device_id}/out
 Status: OK
 
 ###### <span id="post-data-message-for-device-200-schema"></span> Schema
+
+##### <span id="post-data-message-for-device-400"></span> 400 - Error
+Status: Bad Request
+
+###### <span id="post-data-message-for-device-400-schema"></span> Schema
 
 ##### <span id="post-data-message-for-device-401"></span> 401 - Unauthorized
 Status: Unauthorized
@@ -356,6 +362,7 @@ Status: Internal Server Error
 | device_id | string| `string` |  | | Device identifier |  |
 | version | string| `string` |  | |  |  |
 | workloads | [WorkloadList](#workload-list)| `WorkloadList` |  | | List of workloads deployed to the device |  |
+| workloads_monitoring_interval | integer| `int64` |  | | Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed |  |
 
 
 
