@@ -9,6 +9,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // DeviceConfigurationMessage device configuration message
@@ -27,6 +28,10 @@ type DeviceConfigurationMessage struct {
 
 	// List of workloads deployed to the device
 	Workloads WorkloadList `json:"workloads,omitempty"`
+
+	// Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed
+	// Minimum: > 0
+	WorkloadsMonitoringInterval int64 `json:"workloads_monitoring_interval,omitempty"`
 }
 
 // Validate validates this device configuration message
@@ -38,6 +43,10 @@ func (m *DeviceConfigurationMessage) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateWorkloads(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateWorkloadsMonitoringInterval(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -75,6 +84,19 @@ func (m *DeviceConfigurationMessage) validateWorkloads(formats strfmt.Registry) 
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("workloads")
 		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *DeviceConfigurationMessage) validateWorkloadsMonitoringInterval(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.WorkloadsMonitoringInterval) { // not required
+		return nil
+	}
+
+	if err := validate.MinimumInt("workloads_monitoring_interval", "body", int64(m.WorkloadsMonitoringInterval), 0, true); err != nil {
 		return err
 	}
 

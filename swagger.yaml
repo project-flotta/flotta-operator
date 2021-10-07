@@ -148,6 +148,11 @@ definitions:
       workloads:
         $ref: '#/definitions/workload-list'
         description: List of workloads deployed to the device
+      workloads_monitoring_interval:
+        type: integer
+        minimum: 0
+        exclusiveMinimum: true
+        description: Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed
 
   device-configuration:
     type: object

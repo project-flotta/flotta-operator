@@ -289,6 +289,11 @@ func init() {
         "workloads": {
           "description": "List of workloads deployed to the device",
           "$ref": "#/definitions/workload-list"
+        },
+        "workloads_monitoring_interval": {
+          "description": "Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed",
+          "type": "integer",
+          "exclusiveMinimum": true
         }
       }
     },
@@ -965,6 +970,12 @@ func init() {
         "workloads": {
           "description": "List of workloads deployed to the device",
           "$ref": "#/definitions/workload-list"
+        },
+        "workloads_monitoring_interval": {
+          "description": "Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed",
+          "type": "integer",
+          "minimum": 0,
+          "exclusiveMinimum": true
         }
       }
     },
