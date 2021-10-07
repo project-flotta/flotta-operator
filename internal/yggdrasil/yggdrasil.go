@@ -3,13 +3,15 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"time"
+
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/jakub-dzon/k4e-operator/internal/hardware"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
@@ -21,7 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 )
 
 const YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
@@ -189,7 +190,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			device.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
 			device.Status.Phase = heartbeat.Status
 			if heartbeat.Hardware != nil {
-				device.Status.Hardware = mapHardware(logger, heartbeat.Hardware)
+				device.Status.Hardware = hardware.MapHardware(heartbeat.Hardware)
 			}
 			deployments := h.updateDeploymentStatuses(device.Status.Deployments, heartbeat.Workloads)
 			device.Status.Deployments = deployments
@@ -228,7 +229,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			}
 			err = h.updateDeviceStatus(ctx, &device, func(device *v1alpha1.EdgeDevice) {
 				device.Status = v1alpha1.EdgeDeviceStatus{
-					Hardware: mapHardware(logger, registrationInfo.Hardware),
+					Hardware: hardware.MapHardware(registrationInfo.Hardware),
 				}
 			})
 			if err != nil {
@@ -290,72 +291,6 @@ func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment,
 		deployments = append(deployments, deployment)
 	}
 	return deployments
-}
-
-func mapHardware(logger logr.Logger, hardware *models.HardwareInfo) *v1alpha1.Hardware {
-	if hardware == nil {
-		return nil
-	}
-
-	var disks []*v1alpha1.Disk
-	err := utils.Copy(hardware.Disks, &disks)
-	if err != nil {
-		logger.Error(err, "cannot map Disks")
-	}
-	var gpus []*v1alpha1.Gpu
-	err = utils.Copy(hardware.Gpus, &gpus)
-	if err != nil {
-		logger.Error(err, "cannot map Gpus")
-	}
-
-	var interfaces []*v1alpha1.Interface
-	err = utils.Copy(hardware.Interfaces, &interfaces)
-	if err != nil {
-		logger.Error(err, "cannot map Interfaces")
-	}
-	hw := v1alpha1.Hardware{
-		Hostname: hardware.Hostname,
-
-		Gpus:       gpus,
-		Disks:      disks,
-		Interfaces: interfaces,
-	}
-	if hardware.Boot != nil {
-		hw.Boot = &v1alpha1.Boot{
-			CurrentBootMode: hardware.Boot.CurrentBootMode,
-			PxeInterface:    hardware.Boot.PxeInterface,
-		}
-	}
-
-	cpu := hardware.CPU
-	if cpu != nil {
-		hw.CPU = &v1alpha1.CPU{
-			Architecture: cpu.Architecture,
-			Count:        cpu.Count,
-			Flags:        cpu.Flags,
-			Frequency:    fmt.Sprintf("%.2f", cpu.Frequency),
-			ModelName:    cpu.ModelName,
-		}
-	}
-
-	memory := hardware.Memory
-	if memory != nil {
-		hw.Memory = &v1alpha1.Memory{
-			PhysicalBytes: memory.PhysicalBytes,
-			UsableBytes:   memory.UsableBytes,
-		}
-	}
-
-	systemVendor := hardware.SystemVendor
-	if systemVendor != nil {
-		hw.SystemVendor = &v1alpha1.SystemVendor{
-			Manufacturer: systemVendor.Manufacturer,
-			ProductName:  systemVendor.ProductName,
-			SerialNumber: systemVendor.SerialNumber,
-			Virtual:      systemVendor.Virtual,
-		}
-	}
-	return &hw
 }
 
 func (h *Handler) toWorkloadList(logger logr.Logger, deployments []v1alpha1.EdgeDeployment) models.WorkloadList {

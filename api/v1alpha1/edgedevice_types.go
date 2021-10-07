@@ -127,16 +127,16 @@ type Hardware struct {
 	Memory *Memory `json:"memory,omitempty"`
 
 	// system vendor
-	SystemVendor *SystemVendor `json:"system_vendor,omitempty"`
+	SystemVendor *SystemVendor `json:"systemVendor,omitempty"`
 }
 
 type Boot struct {
 
 	// current boot mode
-	CurrentBootMode string `json:"current_boot_mode,omitempty"`
+	CurrentBootMode string `json:"currentBootMode,omitempty"`
 
 	// pxe interface
-	PxeInterface string `json:"pxe_interface,omitempty"`
+	PxeInterface string `json:"pxeInterface,omitempty"`
 }
 
 type ClockMhz float64
@@ -156,7 +156,7 @@ type CPU struct {
 	Frequency string `json:"frequency,omitempty"`
 
 	// model name
-	ModelName string `json:"model_name,omitempty"`
+	ModelName string `json:"modelName,omitempty"`
 }
 
 type Disk struct {
@@ -165,13 +165,13 @@ type Disk struct {
 	Bootable bool `json:"bootable,omitempty"`
 
 	// by-id is the World Wide Number of the device which guaranteed to be unique for every storage device
-	ByID string `json:"by_id,omitempty"`
+	ByID string `json:"byId,omitempty"`
 
 	// by-path is the shortest physical path to the device
-	ByPath string `json:"by_path,omitempty"`
+	ByPath string `json:"byPath,omitempty"`
 
 	// drive type
-	DriveType string `json:"drive_type,omitempty"`
+	DriveType string `json:"driveType,omitempty"`
 
 	// hctl
 	Hctl string `json:"hctl,omitempty"`
@@ -180,10 +180,10 @@ type Disk struct {
 	ID string `json:"id,omitempty"`
 
 	// io perf
-	IoPerf *IoPerf `json:"io_perf,omitempty"`
+	IoPerf *IoPerf `json:"ioPerf,omitempty"`
 
 	// Whether the disk appears to be an installation media or not
-	IsInstallationMedia bool `json:"is_installation_media,omitempty"`
+	IsInstallationMedia bool `json:"isInstallationMedia,omitempty"`
 
 	// model
 	Model string `json:"model,omitempty"`
@@ -198,7 +198,7 @@ type Disk struct {
 	Serial string `json:"serial,omitempty"`
 
 	// size bytes
-	SizeBytes int64 `json:"size_bytes,omitempty"`
+	SizeBytes int64 `json:"sizeBytes,omitempty"`
 
 	// smart
 	Smart string `json:"smart,omitempty"`
@@ -216,7 +216,7 @@ type Gpu struct {
 	Address string `json:"address,omitempty"`
 
 	// ID of the device (for example "3ea0")
-	DeviceID string `json:"device_id,omitempty"`
+	DeviceID string `json:"deviceId,omitempty"`
 
 	// Product name of the device (for example "UHD Graphics 620 (Whiskey Lake)")
 	Name string `json:"name,omitempty"`
@@ -225,13 +225,13 @@ type Gpu struct {
 	Vendor string `json:"vendor,omitempty"`
 
 	// ID of the vendor (for example "8086")
-	VendorID string `json:"vendor_id,omitempty"`
+	VendorID string `json:"vendorId,omitempty"`
 }
 
 type IoPerf struct {
 
 	// 99th percentile of fsync duration in milliseconds
-	SyncDuration int64 `json:"sync_duration,omitempty"`
+	SyncDuration int64 `json:"syncDuration,omitempty"`
 }
 
 type Interface struct {
@@ -240,22 +240,22 @@ type Interface struct {
 	Biosdevname string `json:"biosdevname,omitempty"`
 
 	// client id
-	ClientID string `json:"client_id,omitempty"`
+	ClientID string `json:"clientId,omitempty"`
 
 	// flags
 	Flags []string `json:"flags"`
 
 	// has carrier
-	HasCarrier bool `json:"has_carrier,omitempty"`
+	HasCarrier bool `json:"hasCarrier,omitempty"`
 
 	// ipv4 addresses
-	IPV4Addresses []string `json:"ipv4_addresses"`
+	IPV4Addresses []string `json:"ipv4Addresses"`
 
 	// ipv6 addresses
-	IPV6Addresses []string `json:"ipv6_addresses"`
+	IPV6Addresses []string `json:"ipv6Addresses"`
 
 	// mac address
-	MacAddress string `json:"mac_address,omitempty"`
+	MacAddress string `json:"macAddress,omitempty"`
 
 	// mtu
 	Mtu int64 `json:"mtu,omitempty"`
@@ -267,7 +267,7 @@ type Interface struct {
 	Product string `json:"product,omitempty"`
 
 	// speed mbps
-	SpeedMbps int64 `json:"speed_mbps,omitempty"`
+	SpeedMbps int64 `json:"speedMbps,omitempty"`
 
 	// vendor
 	Vendor string `json:"vendor,omitempty"`
@@ -276,10 +276,10 @@ type Interface struct {
 type Memory struct {
 
 	// physical bytes
-	PhysicalBytes int64 `json:"physical_bytes,omitempty"`
+	PhysicalBytes int64 `json:"physicalBytes,omitempty"`
 
 	// usable bytes
-	UsableBytes int64 `json:"usable_bytes,omitempty"`
+	UsableBytes int64 `json:"usableBytes,omitempty"`
 }
 
 type Route struct {
@@ -303,10 +303,10 @@ type SystemVendor struct {
 	Manufacturer string `json:"manufacturer,omitempty"`
 
 	// product name
-	ProductName string `json:"product_name,omitempty"`
+	ProductName string `json:"productName,omitempty"`
 
 	// serial number
-	SerialNumber string `json:"serial_number,omitempty"`
+	SerialNumber string `json:"serialNumber,omitempty"`
 
 	// Whether the machine appears to be a virtual machine or not
 	Virtual bool `json:"virtual,omitempty"`

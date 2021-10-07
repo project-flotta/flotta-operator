@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/ghodss/yaml v1.0.0
+	github.com/go-logr/logr v0.3.0
 	github.com/go-openapi/errors v0.19.6
 	github.com/go-openapi/loads v0.19.5
 	github.com/go-openapi/runtime v0.19.20
@@ -17,6 +18,7 @@ require (
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
 	github.com/openshift/api v3.9.0+incompatible
+	github.com/stretchr/testify v1.7.0
 	golang.org/x/sys v0.0.0-20210320140829-1e4c9ba3b0c4 // indirect
 	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
