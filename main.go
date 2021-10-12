@@ -72,6 +72,9 @@ var Config struct {
 
 	// WebhookPort is the port that the webhook server serves at.
 	WebhookPort int `envconfig:"WEBHOOK_PORT" default:"9443"`
+
+	// Enable OBC auto creation when EdgeDevice is registered
+	EnableObcAutoCreation bool `envconfig:"OBC_AUTO_CREATE" default:"true"`
 }
 
 func init() {
@@ -124,6 +127,7 @@ func main() {
 		Scheme:               mgr.GetScheme(),
 		EdgeDeviceRepository: edgeDeviceRepository,
 		Claimer:              claimer,
+		ObcAutoCreate:        Config.EnableObcAutoCreation,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)

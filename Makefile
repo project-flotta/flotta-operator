@@ -105,7 +105,7 @@ build: generate fmt vet ## Build manager binary.
 	go build -mod=vendor -o bin/manager main.go
 
 run: manifests generate fmt vet ## Run a controller from your host.
-	go run -mod=vendor ./main.go
+	OBC_AUTO_CREATE=false go run -mod=vendor ./main.go
 
 docker-build: test ## Build docker image with the manager.
 	docker build -t ${IMG} .
