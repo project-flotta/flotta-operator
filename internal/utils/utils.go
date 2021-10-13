@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"encoding/json"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -13,15 +12,4 @@ func HasFinalizer(cr *metav1.ObjectMeta, name string) bool {
 		}
 	}
 	return false
-}
-
-func Copy(from interface{}, to interface{}) error {
-	if from == nil {
-		return nil
-	}
-	jsonFrom, err := json.Marshal(from)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(jsonFrom, to)
 }

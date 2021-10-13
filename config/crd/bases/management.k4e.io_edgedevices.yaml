@@ -89,10 +89,10 @@ spec:
                   boot:
                     description: boot
                     properties:
-                      current_boot_mode:
+                      currentBootMode:
                         description: current boot mode
                         type: string
-                      pxe_interface:
+                      pxeInterface:
                         description: pxe interface
                         type: string
                     type: object
@@ -114,7 +114,7 @@ spec:
                       frequency:
                         description: frequency
                         type: string
-                      model_name:
+                      modelName:
                         description: model name
                         type: string
                     required:
@@ -127,15 +127,15 @@ spec:
                         bootable:
                           description: bootable
                           type: boolean
-                        by_id:
+                        byId:
                           description: by-id is the World Wide Number of the device
                             which guaranteed to be unique for every storage device
                           type: string
-                        by_path:
+                        byPath:
                           description: by-path is the shortest physical path to the
                             device
                           type: string
-                        drive_type:
+                        driveType:
                           description: drive type
                           type: string
                         hctl:
@@ -146,15 +146,15 @@ spec:
                             is the by-id field if it exists and fallback to the by-path
                             field otherwise
                           type: string
-                        io_perf:
+                        ioPerf:
                           description: io perf
                           properties:
-                            sync_duration:
+                            syncDuration:
                               description: 99th percentile of fsync duration in milliseconds
                               format: int64
                               type: integer
                           type: object
-                        is_installation_media:
+                        isInstallationMedia:
                           description: Whether the disk appears to be an installation
                             media or not
                           type: boolean
@@ -170,7 +170,7 @@ spec:
                         serial:
                           description: serial
                           type: string
-                        size_bytes:
+                        sizeBytes:
                           description: size bytes
                           format: int64
                           type: integer
@@ -192,7 +192,7 @@ spec:
                         address:
                           description: Device address (for example "0000:00:02.0")
                           type: string
-                        device_id:
+                        deviceId:
                           description: ID of the device (for example "3ea0")
                           type: string
                         name:
@@ -203,7 +203,7 @@ spec:
                           description: The name of the device vendor (for example
                             "Intel Corporation")
                           type: string
-                        vendor_id:
+                        vendorId:
                           description: ID of the vendor (for example "8086")
                           type: string
                       type: object
@@ -218,7 +218,7 @@ spec:
                         biosdevname:
                           description: biosdevname
                           type: string
-                        client_id:
+                        clientId:
                           description: client id
                           type: string
                         flags:
@@ -226,20 +226,20 @@ spec:
                           items:
                             type: string
                           type: array
-                        has_carrier:
+                        hasCarrier:
                           description: has carrier
                           type: boolean
-                        ipv4_addresses:
+                        ipv4Addresses:
                           description: ipv4 addresses
                           items:
                             type: string
                           type: array
-                        ipv6_addresses:
+                        ipv6Addresses:
                           description: ipv6 addresses
                           items:
                             type: string
                           type: array
-                        mac_address:
+                        macAddress:
                           description: mac address
                           type: string
                         mtu:
@@ -252,7 +252,7 @@ spec:
                         product:
                           description: product
                           type: string
-                        speed_mbps:
+                        speedMbps:
                           description: speed mbps
                           format: int64
                           type: integer
@@ -261,32 +261,32 @@ spec:
                           type: string
                       required:
                       - flags
-                      - ipv4_addresses
-                      - ipv6_addresses
+                      - ipv4Addresses
+                      - ipv6Addresses
                       type: object
                     type: array
                   memory:
                     description: memory
                     properties:
-                      physical_bytes:
+                      physicalBytes:
                         description: physical bytes
                         format: int64
                         type: integer
-                      usable_bytes:
+                      usableBytes:
                         description: usable bytes
                         format: int64
                         type: integer
                     type: object
-                  system_vendor:
+                  systemVendor:
                     description: system vendor
                     properties:
                       manufacturer:
                         description: manufacturer
                         type: string
-                      product_name:
+                      productName:
                         description: product name
                         type: string
-                      serial_number:
+                      serialNumber:
                         description: serial number
                         type: string
                       virtual:
