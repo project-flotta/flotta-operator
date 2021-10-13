@@ -71,18 +71,19 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	logger.Info("Reconciling", "edgeDevice", edgeDevice)
 
-	if r.ObcAutoCreate {
-		// create object bucket claim for edge-device
-		if edgeDevice.Status.DataOBC == nil || len(*edgeDevice.Status.DataOBC) == 0 {
-			obc, err := r.createOrGetObc(ctx, edgeDevice)
-			if err != nil {
-				return ctrl.Result{Requeue: true}, err
-			}
+	if !r.ObcAutoCreate {
+		return ctrl.Result{}, nil
+	}
+	// create object bucket claim for edge-device
+	if edgeDevice.Status.DataOBC == nil || len(*edgeDevice.Status.DataOBC) == 0 {
+		obc, err := r.createOrGetObc(ctx, edgeDevice)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
 
-			err = r.addObcReference(ctx, edgeDevice, obc.Name)
-			if err != nil {
-				return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
-			}
+		err = r.addObcReference(ctx, edgeDevice, obc.Name)
+		if err != nil {
+			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 		}
 	}
 	return ctrl.Result{}, nil
@@ -90,21 +91,23 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *managementv1alpha1.EdgeDevice) (*obv1.ObjectBucketClaim, error) {
 	obc, err := r.Claimer.GetClaim(ctx, edgeDevice.Name, edgeDevice.Namespace)
-	if err != nil {
-		logger := log.FromContext(ctx)
-		if errors.IsNotFound(err) {
-			logger.Info("Failed to find an existing OBC for the device. Creating new OBC", "edgeDevice", edgeDevice)
-			obc, err = r.Claimer.CreateClaim(ctx, edgeDevice)
-			if err != nil {
-				logger.Error(err, "Cannot create object bucket claim for the device", "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)
-				return nil, err
-			}
-		} else {
-			logger.Error(err, "Failed to get OBC for the device", "edgeDevice", edgeDevice)
+	if err == nil {
+		return obc, err
+	}
+
+	logger := log.FromContext(ctx)
+	if errors.IsNotFound(err) {
+		logger.Info("Failed to find an existing OBC for the device. Creating new OBC", "edgeDevice", edgeDevice)
+		obc, err = r.Claimer.CreateClaim(ctx, edgeDevice)
+		if err != nil {
+			logger.Error(err, "Cannot create object bucket claim for the device", "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)
 			return nil, err
 		}
+		return obc, nil
 	}
-	return obc, nil
+
+	logger.Error(err, "Failed to get OBC for the device", "edgeDevice", edgeDevice)
+	return nil, err
 }
 
 func (r *EdgeDeviceReconciler) addObcReference(ctx context.Context, edgeDevice *managementv1alpha1.EdgeDevice, obcName string) error {

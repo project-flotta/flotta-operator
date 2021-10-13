@@ -92,6 +92,6 @@ var _ = Describe("EdgeDevice controller", func() {
 func getExpectedEdgeDevice(ctx context.Context, objectKey client.ObjectKey) v1alpha1.EdgeDevice {
 	var ed v1alpha1.EdgeDevice
 	err := k8sClient.Get(ctx, objectKey, &ed)
-	Expect(err).ToNot(HaveOccurred())
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 	return ed
 }
