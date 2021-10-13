@@ -20,6 +20,7 @@ import (
 	"context"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
+	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -36,6 +37,7 @@ type EdgeDeviceReconciler struct {
 	client.Client
 	Scheme               *runtime.Scheme
 	EdgeDeviceRepository *edgedevice.Repository
+	ObcAutoCreate        bool
 	Claimer              *storage.Claimer
 }
 
@@ -69,31 +71,49 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	logger.Info("Reconciling", "edgeDevice", edgeDevice)
 
+	if !r.ObcAutoCreate {
+		return ctrl.Result{}, nil
+	}
 	// create object bucket claim for edge-device
 	if edgeDevice.Status.DataOBC == nil || len(*edgeDevice.Status.DataOBC) == 0 {
-		obc, err := r.Claimer.GetClaim(ctx, edgeDevice.Name, edgeDevice.Namespace)
+		obc, err := r.createOrGetObc(ctx, edgeDevice)
 		if err != nil {
-			if errors.IsNotFound(err) {
-				logger.Info("Failed to find an existing OBC for the device. Creating new OBC", "edgeDevice", edgeDevice)
-				obc, err = r.Claimer.CreateClaim(ctx, edgeDevice)
-				if err != nil {
-					logger.Error(err, "Cannot create object bucket claim for the device", "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)
-					return ctrl.Result{Requeue: true}, err
-				}
-			} else {
-				logger.Error(err, "Failed to get OBC for the device", "edgeDevice", edgeDevice)
-				return ctrl.Result{Requeue: true}, err
-			}
+			return ctrl.Result{Requeue: true}, err
 		}
 
-		patch := client.MergeFrom(edgeDevice.DeepCopy())
-		edgeDevice.Status.DataOBC = &obc.Name
-		err = r.EdgeDeviceRepository.PatchStatus(ctx, edgeDevice, &patch)
+		err = r.addObcReference(ctx, edgeDevice, obc.Name)
 		if err != nil {
 			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 		}
 	}
 	return ctrl.Result{}, nil
+}
+
+func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *managementv1alpha1.EdgeDevice) (*obv1.ObjectBucketClaim, error) {
+	obc, err := r.Claimer.GetClaim(ctx, edgeDevice.Name, edgeDevice.Namespace)
+	if err == nil {
+		return obc, err
+	}
+
+	logger := log.FromContext(ctx)
+	if errors.IsNotFound(err) {
+		logger.Info("Failed to find an existing OBC for the device. Creating new OBC", "edgeDevice", edgeDevice)
+		obc, err = r.Claimer.CreateClaim(ctx, edgeDevice)
+		if err != nil {
+			logger.Error(err, "Cannot create object bucket claim for the device", "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)
+			return nil, err
+		}
+		return obc, nil
+	}
+
+	logger.Error(err, "Failed to get OBC for the device", "edgeDevice", edgeDevice)
+	return nil, err
+}
+
+func (r *EdgeDeviceReconciler) addObcReference(ctx context.Context, edgeDevice *managementv1alpha1.EdgeDevice, obcName string) error {
+	patch := client.MergeFrom(edgeDevice.DeepCopy())
+	edgeDevice.Status.DataOBC = &obcName
+	return r.EdgeDeviceRepository.PatchStatus(ctx, edgeDevice, &patch)
 }
 
 // SetupWithManager sets up the controller with the Manager.
