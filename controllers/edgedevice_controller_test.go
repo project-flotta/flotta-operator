@@ -1,19 +1,51 @@
-package controllers
+package controllers_test
 
 import (
 	"context"
+	"time"
+
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/jakub-dzon/k4e-operator/controllers"
+	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 var _ = Describe("EdgeDevice controller", func() {
+	var (
+		edgeDeviceReconciler *controllers.EdgeDeviceReconciler
+		err                  error
+		cancelContext        context.CancelFunc
+		signalContext        context.Context
+	)
+
+	BeforeEach(func() {
+		k8sManager := getK8sManager(cfg)
+
+		edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(k8sClient)
+		edgeDeviceReconciler = &controllers.EdgeDeviceReconciler{
+			Client:               k8sClient,
+			Scheme:               k8sManager.GetScheme(),
+			EdgeDeviceRepository: edgeDeviceRepository,
+			Claimer:              storage.NewClaimer(k8sClient),
+			ObcAutoCreate:        false,
+		}
+		err = edgeDeviceReconciler.SetupWithManager(k8sManager)
+		Expect(err).ToNot(HaveOccurred())
+
+		signalContext, cancelContext = context.WithCancel(context.TODO())
+		go func() {
+			err = k8sManager.Start(signalContext)
+			Expect(err).ToNot(HaveOccurred())
+		}()
+	})
 
 	AfterEach(func() {
+		cancelContext()
 		edgeDeviceReconciler.ObcAutoCreate = false
 	})
 

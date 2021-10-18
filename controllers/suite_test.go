@@ -14,25 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package controllers_test
 
 import (
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
-	"github.com/jakub-dzon/k4e-operator/internal/storage"
-	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	"path/filepath"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"testing"
+
+	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
+	ctrl "sigs.k8s.io/controller-runtime"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/envtest/printer"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
@@ -42,8 +42,8 @@ import (
 // http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var k8sClient client.Client
+var cfg *rest.Config
 var testEnv *envtest.Environment
-var edgeDeviceReconciler *EdgeDeviceReconciler
 
 func TestAPIs(t *testing.T) {
 	RegisterFailHandler(Fail)
@@ -64,8 +64,8 @@ var _ = BeforeSuite(func() {
 		},
 		ErrorIfCRDPathMissing: true,
 	}
-
-	cfg, err := testEnv.Start()
+	var err error
+	cfg, err = testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
@@ -75,40 +75,8 @@ var _ = BeforeSuite(func() {
 	err = obv1.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
-	//+kubebuilder:scaffold:scheme
-
-	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
-	})
-	Expect(err).ToNot(HaveOccurred())
-
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
 	Expect(err).NotTo(HaveOccurred())
-
-	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(k8sClient)
-	edgeDeviceReconciler = &EdgeDeviceReconciler{
-		Client:               k8sClient,
-		Scheme:               k8sManager.GetScheme(),
-		EdgeDeviceRepository: edgeDeviceRepository,
-		Claimer:              storage.NewClaimer(k8sClient),
-		ObcAutoCreate:        false,
-	}
-	err = edgeDeviceReconciler.SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
-	err = (&EdgeDeploymentReconciler{
-		Client:                   k8sClient,
-		Scheme:                   k8sManager.GetScheme(),
-		EdgeDeviceRepository:     edgeDeviceRepository,
-		EdgeDeploymentRepository: edgedeployment.NewEdgeDeploymentRepository(k8sClient),
-	}).SetupWithManager(k8sManager)
-	Expect(err).ToNot(HaveOccurred())
-
-	go func() {
-		err = k8sManager.Start(ctrl.SetupSignalHandler())
-		Expect(err).ToNot(HaveOccurred())
-	}()
-
 }, 60)
 
 var _ = AfterSuite(func() {
@@ -116,3 +84,13 @@ var _ = AfterSuite(func() {
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
 })
+
+func getK8sManager(cfg *rest.Config) manager.Manager {
+
+	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
+		Scheme: scheme.Scheme,
+	})
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
+
+	return k8sManager
+}
