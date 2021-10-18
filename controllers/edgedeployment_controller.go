@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	"github.com/jakub-dzon/k4e-operator/internal/labels"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
@@ -39,7 +40,7 @@ const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"
 type EdgeDeploymentReconciler struct {
 	client.Client
 	Scheme                   *runtime.Scheme
-	EdgeDeploymentRepository *edgedeployment.Repository
+	EdgeDeploymentRepository *edgedeployment.CRRespository
 	EdgeDeviceRepository     *edgedevice.Repository
 }
 

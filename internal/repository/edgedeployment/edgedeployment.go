@@ -2,20 +2,28 @@ package edgedeployment
 
 import (
 	"context"
+
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/fields"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Repository struct {
+type Repository interface {
+	ListForEdgeDevice(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDeployment, error)
+	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeployment, error)
+	Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error
+	RemoveFinalizer(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment, finalizer string) error
+}
+
+type CRRespository struct {
 	client client.Client
 }
 
-func NewEdgeDeploymentRepository(client client.Client) *Repository {
-	return &Repository{client: client}
+func NewEdgeDeploymentRepository(client client.Client) *CRRespository {
+	return &CRRespository{client: client}
 }
 
-func (r *Repository) ListForEdgeDevice(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDeployment, error) {
+func (r *CRRespository) ListForEdgeDevice(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDeployment, error) {
 	edl := v1alpha1.EdgeDeploymentList{}
 
 	selector, err := fields.ParseSelector("spec.device=" + name)
@@ -33,18 +41,18 @@ func (r *Repository) ListForEdgeDevice(ctx context.Context, name string, namespa
 	return edl.Items, nil
 }
 
-func (r *Repository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeployment, error) {
+func (r *CRRespository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeployment, error) {
 	edgeDeployment := v1alpha1.EdgeDeployment{}
 	err := r.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, &edgeDeployment)
 	return &edgeDeployment, err
 }
 
-func (r *Repository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error {
+func (r *CRRespository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error {
 	patch := client.MergeFrom(old)
 	return r.client.Patch(ctx, new, patch)
 }
 
-func (r *Repository) RemoveFinalizer(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment, finalizer string) error {
+func (r *CRRespository) RemoveFinalizer(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment, finalizer string) error {
 	cp := edgeDeployment.DeepCopy()
 
 	var finalizers []string
