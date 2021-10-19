@@ -6,8 +6,11 @@ import (
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/fields"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	_ "github.com/golang/mock/mockgen/model"
 )
 
+//go:generate mockgen -package=edgedeployment -destination=mock_edgedeployment.go . Repository
 type Repository interface {
 	ListForEdgeDevice(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDeployment, error)
 	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeployment, error)
