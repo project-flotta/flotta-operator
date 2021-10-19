@@ -36,13 +36,13 @@ var (
 )
 
 type Handler struct {
-	deviceRepository     *edgedevice.Repository
+	deviceRepository     *edgedevice.CRRepository
 	deploymentRepository *edgedeployment.CRRespository
 	claimer              *storage.Claimer
 	initialNamespace     string
 }
 
-func NewYggdrasilHandler(deviceRepository *edgedevice.Repository, deploymentRepository *edgedeployment.CRRespository, claimer *storage.Claimer, initialNamespace string) *Handler {
+func NewYggdrasilHandler(deviceRepository *edgedevice.CRRepository, deploymentRepository *edgedeployment.CRRespository, claimer *storage.Claimer, initialNamespace string) *Handler {
 	return &Handler{
 		deviceRepository:     deviceRepository,
 		deploymentRepository: deploymentRepository,

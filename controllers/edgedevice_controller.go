@@ -18,10 +18,11 @@ package controllers
 
 import (
 	"context"
+	"time"
+
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -36,7 +37,7 @@ import (
 type EdgeDeviceReconciler struct {
 	client.Client
 	Scheme               *runtime.Scheme
-	EdgeDeviceRepository *edgedevice.Repository
+	EdgeDeviceRepository *edgedevice.CRRepository
 	ObcAutoCreate        bool
 	Claimer              *storage.Claimer
 }

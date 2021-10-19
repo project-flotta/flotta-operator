@@ -39,9 +39,10 @@ const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"
 // EdgeDeploymentReconciler reconciles a EdgeDeployment object
 type EdgeDeploymentReconciler struct {
 	client.Client
-	Scheme                   *runtime.Scheme
+	Scheme *runtime.Scheme
+
 	EdgeDeploymentRepository *edgedeployment.CRRespository
-	EdgeDeviceRepository     *edgedevice.Repository
+	EdgeDeviceRepository     *edgedevice.CRRepository
 }
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments,verbs=get;list;watch;create;update;patch;delete

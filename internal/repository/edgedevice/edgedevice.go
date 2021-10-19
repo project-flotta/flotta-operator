@@ -2,39 +2,50 @@ package edgedevice
 
 import (
 	"context"
+
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type Repository struct {
+//go:generate mockgen -package=edgedevice -destination=mock_edgedevice.go . Repository
+type Repository interface {
+	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDevice, error)
+	Create(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) error
+	PatchStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) error
+	Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
+	ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error)
+	RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error
+}
+
+type CRRepository struct {
 	client client.Client
 }
 
-func NewEdgeDeviceRepository(client client.Client) *Repository {
-	return &Repository{client: client}
+func NewEdgeDeviceRepository(client client.Client) *CRRepository {
+	return &CRRepository{client: client}
 }
 
-func (r *Repository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDevice, error) {
+func (r *CRRepository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDevice, error) {
 	edgeDevice := v1alpha1.EdgeDevice{}
 	err := r.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, &edgeDevice)
 	return &edgeDevice, err
 }
 
-func (r *Repository) Create(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) error {
+func (r *CRRepository) Create(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) error {
 	return r.client.Create(ctx, edgeDevice)
 }
 
-func (r *Repository) PatchStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) error {
+func (r *CRRepository) PatchStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) error {
 	return r.client.Status().Patch(ctx, edgeDevice, *patch)
 }
 
-func (r *Repository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error {
+func (r *CRRepository) Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error {
 	patch := client.MergeFrom(old)
 	return r.client.Patch(ctx, new, patch)
 }
 
-func (r Repository) ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error) {
+func (r CRRepository) ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error) {
 	s, err := metav1.LabelSelectorAsSelector(selector)
 	if err != nil {
 		return nil, err
@@ -52,7 +63,7 @@ func (r Repository) ListForSelector(ctx context.Context, selector *metav1.LabelS
 	return edl.Items, nil
 }
 
-func (r *Repository) RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error {
+func (r *CRRepository) RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error {
 	cp := edgeDevice.DeepCopy()
 
 	var finalizers []string
