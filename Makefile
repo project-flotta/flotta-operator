@@ -78,11 +78,14 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 generate-tools:
 ifeq (, $(shell which mockery))
-	GO111MODULE=off go get github.com/vektra/mockery/.../@v1.1.2
+	(cd /tmp && go get github.com/vektra/mockery/.../@v1.1.2)
+endif
+ifeq (, $(shell which mockgen))
+	(cd /tmp/ && go get github.com/golang/mock/mockgen@v1.6.0)
 endif
 	@exit
 
-generate: controller-gen generate-from-swagger ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: generate-tools controller-gen generate-from-swagger ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 	go generate ./...
 
@@ -100,7 +103,6 @@ test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test  ./... -coverprofile cover.out --v -ginkgo.v -ginkgo.progress
-
 
 vendor:
 	go mod tidy
