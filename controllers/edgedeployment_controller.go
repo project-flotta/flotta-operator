@@ -258,17 +258,19 @@ func hasDeployment(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
 }
 
 func merge(edgeDevices1 []managementv1alpha1.EdgeDevice, edgeDevices2 []managementv1alpha1.EdgeDevice) []managementv1alpha1.EdgeDevice {
-	mergedMap := make(map[string]managementv1alpha1.EdgeDevice)
-	for _, device := range edgeDevices1 {
-		mergedMap[device.Name] = device
-	}
-	for _, device := range edgeDevices2 {
-		mergedMap[device.Name] = device
-	}
+	mergedMap := make(map[string]struct{})
 	var merged []managementv1alpha1.EdgeDevice
-	for _, device := range mergedMap {
+	for _, device := range edgeDevices1 {
+		mergedMap[device.Name] = struct{}{}
 		merged = append(merged, device)
 	}
+
+	for _, device := range edgeDevices2 {
+		if _, ok := mergedMap[device.Name]; !ok {
+			merged = append(merged, device)
+		}
+	}
+
 	return merged
 }
 
