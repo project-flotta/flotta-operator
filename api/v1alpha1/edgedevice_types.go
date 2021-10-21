@@ -249,10 +249,10 @@ type Interface struct {
 	HasCarrier bool `json:"hasCarrier,omitempty"`
 
 	// ipv4 addresses
-	IPV4Addresses []string `json:"ipv4Addresses"`
+	IPV4Addresses []string `json:"ipv4Addresses,omitempty"`
 
 	// ipv6 addresses
-	IPV6Addresses []string `json:"ipv6Addresses"`
+	IPV6Addresses []string `json:"ipv6Addresses,omitempty"`
 
 	// mac address
 	MacAddress string `json:"macAddress,omitempty"`
