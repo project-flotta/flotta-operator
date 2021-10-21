@@ -261,8 +261,6 @@ spec:
                           type: string
                       required:
                       - flags
-                      - ipv4Addresses
-                      - ipv6Addresses
                       type: object
                     type: array
                   memory:
