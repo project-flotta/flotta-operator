@@ -2,10 +2,13 @@ package storage_test
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
 	"path/filepath"
+	"strconv"
 
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 
@@ -329,10 +332,185 @@ var _ = Describe("Storage", func() {
 				BucketHost:         "test.com",
 				BucketName:         "test_bucket",
 				BucketPort:         443,
+				BucketRegion:       "ignore",
 			}
 			Expect(result).To(Equal(&cfg))
 
 			Expect(err).NotTo(HaveOccurred())
+		})
+	})
+
+	Context("GetExternalStorageConfig", func() {
+
+		var (
+			claimer    *storage.Claimer
+			device     *v1alpha1.EdgeDevice
+			storageObj *v1alpha1.Storage
+		)
+
+		getCmData := func() map[string]string {
+			return map[string]string{
+				"BUCKET_HOST":   "host",
+				"BUCKET_PORT":   "443",
+				"BUCKET_NAME":   "bucket",
+				"BUCKET_REGION": "region",
+			}
+		}
+
+		getSecretData := func() map[string][]byte {
+			return map[string][]byte{
+				"AWS_ACCESS_KEY_ID":     []byte("AWS_ACCESS_KEY_ID"),
+				"AWS_SECRET_ACCESS_KEY": []byte("AWS_SECRET_ACCESS_KEY"),
+				"tls.crt":               []byte("cert"),
+			}
+		}
+
+		createS3CM := func(data map[string]string) {
+			cm := corev1.ConfigMap{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test",
+					Namespace: "default",
+				},
+				Data: data,
+			}
+			err := k8sClient.Create(context.TODO(), &cm)
+			ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		}
+
+		createS3Secret := func(data map[string][]byte) {
+			secret := corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "test",
+					Namespace: "default",
+				},
+				Data: data,
+			}
+			err := k8sClient.Create(context.TODO(), &secret)
+			ExpectWithOffset(1, err).ToNot(HaveOccurred())
+		}
+
+		BeforeEach(func() {
+			claimer = storage.NewClaimer(k8sClient)
+			device = getDevice()
+			storageObj = &v1alpha1.Storage{
+				S3: &v1alpha1.S3Storage{
+					SecretName:         "test",
+					SecretNamespace:    "default",
+					ConfigMapName:      "test",
+					ConfigMapNamespace: "default",
+				},
+			}
+			device.Spec.Storage = storageObj
+		})
+
+		It("missing S3 configuration", func() {
+			// given
+			device.Spec.Storage = &v1alpha1.Storage{}
+
+			// when
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+
+			// then
+			Expect(err).ToNot(BeNil())
+			Expect(result).To(BeNil())
+		})
+
+		It("missing config map", func() {
+			// given
+			device.Spec.Storage.S3.ConfigMapName = "missing"
+			createS3Secret(nil)
+
+			// when
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+
+			// then
+			Expect(err).ToNot(BeNil())
+			Expect(result).To(BeNil())
+		})
+
+		It("missing secret", func() {
+			// given
+			device.Spec.Storage.S3.SecretName = "missing"
+			createS3CM(nil)
+
+			// when
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+
+			// then
+			Expect(err).ToNot(BeNil())
+			Expect(result).To(BeNil())
+		})
+
+		table.DescribeTable("missing ConfigMap field",
+			func(fieldName string) {
+				//given
+				cmData := getCmData()
+				delete(cmData, fieldName)
+				createS3CM(cmData)
+				createS3Secret(getSecretData())
+
+				// when
+				result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+
+				// then
+				Expect(err).ToNot(BeNil())
+				Expect(result).To(BeNil())
+			},
+			table.Entry("BUCKET_HOST", "BUCKET_HOST"),
+			table.Entry("BUCKET_PORT", "BUCKET_PORT"),
+			table.Entry("BUCKET_NAME", "BUCKET_NAME"),
+			table.Entry("BUCKET_REGION", "BUCKET_REGION"),
+		)
+
+		table.DescribeTable("missing Secret field",
+			func(fieldName string, optional bool) {
+				//given
+				secretData := getSecretData()
+				delete(secretData, fieldName)
+				createS3CM(getCmData())
+				createS3Secret(secretData)
+
+				// when
+				result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+
+				// then
+				if optional {
+					Expect(err).To(BeNil())
+					Expect(result).ToNot(BeNil())
+				} else {
+					Expect(err).ToNot(BeNil())
+					Expect(result).To(BeNil())
+				}
+			},
+			table.Entry("AWS_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID", false),
+			table.Entry("AWS_SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY", false),
+			table.Entry("tls.crt", "tls.crt", true),
+		)
+
+		It("success", func() {
+			// given
+			cmData := getCmData()
+			createS3CM(cmData)
+			secretData := getSecretData()
+			createS3Secret(secretData)
+			expectedPort, _ := strconv.Atoi(cmData["BUCKET_PORT"])
+			expected := models.S3StorageConfiguration{
+				AwsAccessKeyID:     base64.StdEncoding.EncodeToString(secretData["AWS_ACCESS_KEY_ID"]),
+				AwsSecretAccessKey: base64.StdEncoding.EncodeToString(secretData["AWS_SECRET_ACCESS_KEY"]),
+				AwsCaBundle:        base64.StdEncoding.EncodeToString(secretData["tls.crt"]),
+				BucketHost:         cmData["BUCKET_HOST"],
+				BucketPort:         int32(expectedPort),
+				BucketName:         cmData["BUCKET_NAME"],
+				BucketRegion:       cmData["BUCKET_REGION"],
+			}
+
+			// when
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+
+			// then
+			Expect(err).To(BeNil())
+			Expect(result).ToNot(BeNil())
+			Expect(*result).To(Equal(expected))
 		})
 	})
 

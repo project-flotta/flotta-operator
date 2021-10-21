@@ -61,6 +61,24 @@ spec:
                 description: RequestTime is the time of device registration request
                 format: date-time
                 type: string
+              storage:
+                properties:
+                  s3:
+                    properties:
+                      configMapName:
+                        description: configMap name
+                        type: string
+                      configMapNamespace:
+                        description: configMap namespace
+                        type: string
+                      secretName:
+                        description: secret name
+                        type: string
+                      secretNamespace:
+                        description: secret namespace
+                        type: string
+                    type: object
+                type: object
             type: object
           status:
             description: EdgeDeviceStatus defines the observed state of EdgeDevice

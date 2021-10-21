@@ -35,6 +35,21 @@ type EdgeDeviceSpec struct {
 	RequestTime *metav1.Time `json:"requestTime,omitempty"`
 
 	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
+	Storage   *Storage                `json:"storage,omitempty"`
+}
+
+type Storage struct {
+	S3 *S3Storage `json:"s3,omitempty"`
+}
+type S3Storage struct {
+	// secret name
+	SecretName string `json:"secretName,omitempty"`
+	// secret namespace
+	SecretNamespace string `json:"secretNamespace,omitempty"`
+	// configMap name
+	ConfigMapName string `json:"configMapName,omitempty"`
+	// configMap namespace
+	ConfigMapNamespace string `json:"configMapNamespace,omitempty"`
 }
 
 type DeviceConfiguration struct {
@@ -74,6 +89,7 @@ type S3StorageConfiguration struct {
 	BucketHost         string `json:"bucketHost,omitempty"`
 	BucketPort         int32  `json:"bucketPort,omitempty"`
 	BucketName         string `json:"bucketName,omitempty"`
+	BucketRegion       string `json:"bucketRegion,omitempty"`
 	AWSAccessKey       string `json:"awsAccessKeyId,omitempty"`
 	AWSSecretAccessKey string `json:"awsSecretAccessKey,omitempty"`
 }

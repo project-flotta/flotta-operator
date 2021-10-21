@@ -197,6 +197,8 @@ definitions:
         format: int32
       bucket_name:
         type: string
+      bucket_region:
+        type: string
       aws_access_key_id:
         type: string
       aws_secret_access_key:

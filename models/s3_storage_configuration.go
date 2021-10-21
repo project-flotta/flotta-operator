@@ -32,6 +32,9 @@ type S3StorageConfiguration struct {
 
 	// bucket port
 	BucketPort int32 `json:"bucket_port,omitempty"`
+
+	// bucket region
+	BucketRegion string `json:"bucket_region,omitempty"`
 }
 
 // Validate validates this s3 storage configuration
