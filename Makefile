@@ -128,11 +128,12 @@ deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
-
-release: manifests kustomize
+$(eval TMP_ODIR := $(shell mktemp -d))
+gen-manifests: manifests kustomize # generates manifests for deploying the operator into k4e-operator.yaml
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(eval TMP_ODIR := $(shell mktemp -d))
 	$(KUSTOMIZE) build config/default > $(TMP_ODIR)/k4e-operator.yaml
+
+release: manifests kustomize gen-manifests
 	gh release create v$(VERSION) --notes "Release v$(VERSION) of K4E Operator" --title "Release v$(VERSION)" '$(TMP_ODIR)/k4e-operator.yaml# K4E Operator'
 	rm -rf $(TMP_ODIR)
 
