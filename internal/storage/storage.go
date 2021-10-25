@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
+
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/models"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -42,6 +44,15 @@ func (c *Claimer) CreateClaim(ctx context.Context, device *v1alpha1.EdgeDevice) 
 }
 
 func (c *Claimer) GetStorageConfiguration(ctx context.Context, device *v1alpha1.EdgeDevice) (*models.S3StorageConfiguration, error) {
+
+	if device == nil {
+		return nil, fmt.Errorf("Cannot get device")
+	}
+
+	if device.Status.DataOBC == nil {
+		return nil, fmt.Errorf("Cannot get device OBC config, name: %v", device.Name)
+	}
+
 	obc, err := c.GetClaim(ctx, *device.Status.DataOBC, device.Namespace)
 	if err != nil {
 		return nil, err
@@ -74,12 +85,12 @@ func (c *Claimer) GetStorageConfiguration(ctx context.Context, device *v1alpha1.
 	}
 	awsAccessKeyID, exist := secret.Data["AWS_ACCESS_KEY_ID"]
 	if !exist {
-		return nil, err
+		return nil, fmt.Errorf("Cannot get AWS_ACCESS_KEY_ID for device '%v'", device.Name)
 	}
 	conf.AwsAccessKeyID = base64.StdEncoding.EncodeToString(awsAccessKeyID)
 	awsSecretAccessKey, exist := secret.Data["AWS_SECRET_ACCESS_KEY"]
 	if !exist {
-		return nil, err
+		return nil, fmt.Errorf("Cannot get AWS_SECRET_ACCESS_KEY_ID for device '%v'", device.Name)
 	}
 	conf.AwsSecretAccessKey = base64.StdEncoding.EncodeToString(awsSecretAccessKey)
 
