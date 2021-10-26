@@ -37,7 +37,7 @@ import (
 type EdgeDeviceReconciler struct {
 	client.Client
 	Scheme               *runtime.Scheme
-	EdgeDeviceRepository *edgedevice.CRRepository
+	EdgeDeviceRepository edgedevice.Repository
 	ObcAutoCreate        bool
 	Claimer              *storage.Claimer
 }
@@ -65,6 +65,7 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, req.Name, req.Namespace)
 	if err != nil {
+
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
@@ -75,6 +76,7 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	if !r.ObcAutoCreate {
 		return ctrl.Result{}, nil
 	}
+
 	// create object bucket claim for edge-device
 	if edgeDevice.Status.DataOBC == nil || len(*edgeDevice.Status.DataOBC) == 0 {
 		obc, err := r.createOrGetObc(ctx, edgeDevice)
