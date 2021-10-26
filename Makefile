@@ -76,8 +76,18 @@ help: ## Display this help.
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
-generate: controller-gen generate-from-swagger ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate-tools:
+ifeq (, $(shell which mockery))
+	(cd /tmp && go get github.com/vektra/mockery/.../@v1.1.2)
+endif
+ifeq (, $(shell which mockgen))
+	(cd /tmp/ && go get github.com/golang/mock/mockgen@v1.6.0)
+endif
+	@exit
+
+generate: generate-tools controller-gen generate-from-swagger ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+	go generate ./...
 
 generate-%:
 	./hack/generate.sh generate_$(subst -,_,$*)
@@ -93,7 +103,6 @@ test: manifests generate fmt vet ## Run tests.
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test  ./... -coverprofile cover.out --v -ginkgo.v -ginkgo.progress
-
 
 vendor:
 	go mod tidy

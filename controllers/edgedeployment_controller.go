@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+
 	"github.com/jakub-dzon/k4e-operator/internal/labels"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
@@ -39,8 +40,8 @@ const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"
 type EdgeDeploymentReconciler struct {
 	client.Client
 	Scheme                   *runtime.Scheme
-	EdgeDeploymentRepository *edgedeployment.Repository
-	EdgeDeviceRepository     *edgedevice.Repository
+	EdgeDeploymentRepository edgedeployment.Repository
+	EdgeDeviceRepository     edgedevice.Repository
 }
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments,verbs=get;list;watch;create;update;patch;delete
@@ -257,17 +258,19 @@ func hasDeployment(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
 }
 
 func merge(edgeDevices1 []managementv1alpha1.EdgeDevice, edgeDevices2 []managementv1alpha1.EdgeDevice) []managementv1alpha1.EdgeDevice {
-	mergedMap := make(map[string]managementv1alpha1.EdgeDevice)
-	for _, device := range edgeDevices1 {
-		mergedMap[device.Name] = device
-	}
-	for _, device := range edgeDevices2 {
-		mergedMap[device.Name] = device
-	}
+	mergedMap := make(map[string]struct{})
 	var merged []managementv1alpha1.EdgeDevice
-	for _, device := range mergedMap {
+	for _, device := range edgeDevices1 {
+		mergedMap[device.Name] = struct{}{}
 		merged = append(merged, device)
 	}
+
+	for _, device := range edgeDevices2 {
+		if _, ok := mergedMap[device.Name]; !ok {
+			merged = append(merged, device)
+		}
+	}
+
 	return merged
 }
 
