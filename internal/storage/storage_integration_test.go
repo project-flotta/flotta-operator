@@ -264,7 +264,7 @@ var _ = Describe("Storage", func() {
 			// then
 			Expect(result).To(BeNil())
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Cannot get AWS_ACCESS_KEY_ID for device 'test'"))
+			Expect(err.Error()).To(Equal("Cannot get AWS_ACCESS_KEY_ID"))
 		})
 
 		It("Cannot retrieve AWS access key secret", func() {
@@ -289,7 +289,7 @@ var _ = Describe("Storage", func() {
 			// then
 			Expect(result).To(BeNil())
 			Expect(err).To(HaveOccurred())
-			Expect(err.Error()).To(Equal("Cannot get AWS_SECRET_ACCESS_KEY_ID for device 'test'"))
+			Expect(err.Error()).To(Equal("Cannot get AWS_SECRET_ACCESS_KEY_ID"))
 		})
 
 		It("work as expected", func() {

@@ -50,7 +50,7 @@ func (c *Claimer) GetStorageConfiguration(ctx context.Context, device *v1alpha1.
 	}
 
 	if device.Status.DataOBC == nil {
-		return nil, fmt.Errorf("Cannot get device OBC config, name: %v", device.Name)
+		return nil, fmt.Errorf("Cannot get device OBC config")
 	}
 
 	obc, err := c.GetClaim(ctx, *device.Status.DataOBC, device.Namespace)
@@ -85,12 +85,12 @@ func (c *Claimer) GetStorageConfiguration(ctx context.Context, device *v1alpha1.
 	}
 	awsAccessKeyID, exist := secret.Data["AWS_ACCESS_KEY_ID"]
 	if !exist {
-		return nil, fmt.Errorf("Cannot get AWS_ACCESS_KEY_ID for device '%v'", device.Name)
+		return nil, fmt.Errorf("Cannot get AWS_ACCESS_KEY_ID")
 	}
 	conf.AwsAccessKeyID = base64.StdEncoding.EncodeToString(awsAccessKeyID)
 	awsSecretAccessKey, exist := secret.Data["AWS_SECRET_ACCESS_KEY"]
 	if !exist {
-		return nil, fmt.Errorf("Cannot get AWS_SECRET_ACCESS_KEY_ID for device '%v'", device.Name)
+		return nil, fmt.Errorf("Cannot get AWS_SECRET_ACCESS_KEY_ID")
 	}
 	conf.AwsSecretAccessKey = base64.StdEncoding.EncodeToString(awsSecretAccessKey)
 
