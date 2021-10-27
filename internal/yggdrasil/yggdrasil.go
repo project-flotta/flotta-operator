@@ -36,13 +36,13 @@ var (
 )
 
 type Handler struct {
-	deviceRepository     *edgedevice.CRRepository
-	deploymentRepository *edgedeployment.CRRespository
+	deviceRepository     edgedevice.Repository
+	deploymentRepository edgedeployment.Repository
 	claimer              *storage.Claimer
 	initialNamespace     string
 }
 
-func NewYggdrasilHandler(deviceRepository *edgedevice.CRRepository, deploymentRepository *edgedeployment.CRRespository, claimer *storage.Claimer, initialNamespace string) *Handler {
+func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository, claimer *storage.Claimer, initialNamespace string) *Handler {
 	return &Handler{
 		deviceRepository:     deviceRepository,
 		deploymentRepository: deploymentRepository,
@@ -63,7 +63,7 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 		logger.Error(err, "failed to get edge device")
 		return operations.NewGetControlMessageForDeviceInternalServerError()
 	}
-	// Send disconnect only if YggdrasilWorkloadFinalizer was already processed and removed
+
 	if edgeDevice.DeletionTimestamp != nil && !utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
 		err = h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
 		if err != nil {
@@ -200,45 +200,48 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		}
 	case "registration":
 		_, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
-		if err != nil {
-			if !errors.IsNotFound(err) {
-				return operations.NewPostDataMessageForDeviceInternalServerError()
-			}
-			// register new edge device
-			contentJson, _ := json.Marshal(msg.Content)
-			registrationInfo := models.RegistrationInfo{}
-			err := json.Unmarshal(contentJson, &registrationInfo)
-			if err != nil {
-				return operations.NewPostDataMessageForDeviceBadRequest()
-			}
-			logger.Info("received registration info", "content", registrationInfo)
-			now := metav1.Now()
-			device := v1alpha1.EdgeDevice{
-				Spec: v1alpha1.EdgeDeviceSpec{
-					RequestTime: &now,
-				},
-			}
-			device.Name = deviceID
-			device.Namespace = h.initialNamespace
-			device.Spec.OsImageId = registrationInfo.OsImageID
-			device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
-			err = h.deviceRepository.Create(ctx, &device)
-			if err != nil {
-				logger.Error(err, "cannot save EdgeDevice")
-				return operations.NewPostDataMessageForDeviceInternalServerError()
-			}
-			err = h.updateDeviceStatus(ctx, &device, func(device *v1alpha1.EdgeDevice) {
-				device.Status = v1alpha1.EdgeDeviceStatus{
-					Hardware: hardware.MapHardware(registrationInfo.Hardware),
-				}
-			})
-			if err != nil {
-				logger.Error(err, "cannot update EdgeDevice status")
-				return operations.NewPostDataMessageForDeviceInternalServerError()
-			}
-			logger.Info("EdgeDevice created")
+		if err == nil {
 			return operations.NewPostDataMessageForDeviceOK()
 		}
+
+		if !errors.IsNotFound(err) {
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
+		// register new edge device
+		contentJson, _ := json.Marshal(msg.Content)
+		registrationInfo := models.RegistrationInfo{}
+		err = json.Unmarshal(contentJson, &registrationInfo)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceBadRequest()
+		}
+		logger.Info("received registration info", "content", registrationInfo)
+		now := metav1.Now()
+		device := v1alpha1.EdgeDevice{
+			Spec: v1alpha1.EdgeDeviceSpec{
+				RequestTime: &now,
+			},
+		}
+		device.Name = deviceID
+		device.Namespace = h.initialNamespace
+		device.Spec.OsImageId = registrationInfo.OsImageID
+		device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
+		err = h.deviceRepository.Create(ctx, &device)
+		if err != nil {
+			logger.Error(err, "cannot save EdgeDevice")
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
+		err = h.updateDeviceStatus(ctx, &device, func(device *v1alpha1.EdgeDevice) {
+			device.Status = v1alpha1.EdgeDeviceStatus{
+				Hardware: hardware.MapHardware(registrationInfo.Hardware),
+			}
+		})
+
+		if err != nil {
+			logger.Error(err, "cannot update EdgeDevice status")
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
+		logger.Info("EdgeDevice created")
+		return operations.NewPostDataMessageForDeviceOK()
 	default:
 		logger.Info("received unknown message", "message", msg)
 		return operations.NewPostDataMessageForDeviceBadRequest()
