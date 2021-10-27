@@ -96,7 +96,7 @@ func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *m
 		return obc, err
 	}
 
-	logger := log.FromContext(ctx)
+	logger := log.FromContext(ctx, "DeviceID", edgeDevice.Name)
 	if errors.IsNotFound(err) {
 		logger.Info("Failed to find an existing OBC for the device. Creating new OBC", "edgeDevice", edgeDevice)
 		obc, err = r.Claimer.CreateClaim(ctx, edgeDevice)
