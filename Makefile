@@ -99,10 +99,20 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
-test: manifests generate fmt vet ## Run tests.
+test: manifests generate fmt vet test-fast ## Run tests.
+
+TEST_PACKAGES := ./...
+ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+test-fast:
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test  ./... -coverprofile cover.out --v -ginkgo.v -ginkgo.progress
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test  $(TEST_PACKAGES) -coverprofile cover.out --v -ginkgo.v -ginkgo.progress
+
+test-create-coverage:
+	go tool cover --html=cover.out -o coverage.html
+
+test-coverage:
+	go tool cover --html=cover.out
 
 vendor:
 	go mod tidy
