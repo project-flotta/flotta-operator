@@ -1,56 +1,19 @@
 name: Go
-
 on:
   push:
     branches: [ main ]
-  pull_request:
+  pull_request_target:
     branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Go
-      uses: actions/setup-go@v2
+    - uses: ouzi-dev/commit-status-updater@v1.1.0
       with:
-        go-version: 1.16
-
-    - name: Test
-      run: make test
-
-    - name: Coverage
-      run: make test-create-coverage
-
-    - name: Checking generated files are up to date
-      run: |
-        git diff --quiet config/ internal/ client/ restapi/ || (echo "There are not committed changes"; git diff config/ internal/ client/ restapi/ | tee; exit 1)
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: test-coverage
-        path: coverage.html
-
-
-  lint-code:
-    name: Lint code
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v2.5.1
-
-  Security-Scanner:
-    name: Security Scanner
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v2
-
-      - name: Run Gosec Security Scanner
-        uses: securego/gosec@master
-        with:
-          args: '-exclude-generated  ./...'
+        name: "Coverage"
+        ignoreForks: false
+        status: "error"
+        description: "Test coverage: TEST"
