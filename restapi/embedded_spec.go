@@ -611,6 +611,9 @@ func init() {
         "bucket_port": {
           "type": "integer",
           "format": "int32"
+        },
+        "bucket_region": {
+          "type": "string"
         }
       }
     },
@@ -1293,6 +1296,9 @@ func init() {
         "bucket_port": {
           "type": "integer",
           "format": "int32"
+        },
+        "bucket_region": {
+          "type": "string"
         }
       }
     },

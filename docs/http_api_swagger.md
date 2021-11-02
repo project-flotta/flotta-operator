@@ -600,6 +600,7 @@ Status: Internal Server Error
 | bucket_host | string| `string` |  | |  |  |
 | bucket_name | string| `string` |  | |  |  |
 | bucket_port | int32 (formatted integer)| `int32` |  | |  |  |
+| bucket_region | string| `string` |  | |  |  |
 
 
 

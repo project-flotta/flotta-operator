@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"strconv"
 
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/models"
@@ -11,6 +12,7 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -104,5 +106,70 @@ func (c *Claimer) GetStorageConfiguration(ctx context.Context, device *v1alpha1.
 	if exist {
 		conf.AwsCaBundle = base64.StdEncoding.EncodeToString(caBundle)
 	}
+	conf.BucketRegion = "ignore"
 	return conf, nil
+}
+
+func (c *Claimer) GetExternalStorageConfig(ctx context.Context, device *v1alpha1.EdgeDevice) (*models.S3StorageConfiguration, error) {
+	config := device.Spec.Storage.S3
+	if config == nil {
+		return nil, fmt.Errorf("missing storage in device configuration. Device name: %s", device.Name)
+	}
+	cm := corev1.ConfigMap{}
+	err := c.client.Get(ctx, client.ObjectKey{Namespace: config.ConfigMapNamespace, Name: config.ConfigMapName}, &cm)
+	if err != nil {
+		return nil, err
+	}
+	secret := corev1.Secret{}
+	err = c.client.Get(ctx, client.ObjectKey{Namespace: config.SecretNamespace, Name: config.SecretName}, &secret)
+	if err != nil {
+		return nil, err
+	}
+	configMapFullName := types.NamespacedName{
+		Namespace: config.ConfigMapNamespace,
+		Name:      config.ConfigMapName,
+	}.String()
+	secretFullName := types.NamespacedName{
+		Namespace: config.SecretNamespace,
+		Name:      config.SecretName,
+	}.String()
+	missingFieldMessage := "Missing field %s in resource %s"
+	bucketName, exists := cm.Data["BUCKET_NAME"]
+	if !exists {
+		return nil, fmt.Errorf(missingFieldMessage, "BUCKET_NAME", configMapFullName)
+	}
+	bucketHost, exists := cm.Data["BUCKET_HOST"]
+	if !exists {
+		return nil, fmt.Errorf(missingFieldMessage, "BUCKET_HOST", configMapFullName)
+	}
+	bucketPort, exists := cm.Data["BUCKET_PORT"]
+	if !exists {
+		return nil, fmt.Errorf(missingFieldMessage, "BUCKET_PORT", configMapFullName)
+	}
+	bucketRegion, exists := cm.Data["BUCKET_REGION"]
+	if !exists {
+		return nil, fmt.Errorf(missingFieldMessage, "BUCKET_REGION", configMapFullName)
+	}
+	accessKeyID, exists := secret.Data["AWS_ACCESS_KEY_ID"]
+	if !exists {
+		return nil, fmt.Errorf(missingFieldMessage, "AWS_ACCESS_KEY_ID", secretFullName)
+	}
+	secretAccessKey, exists := secret.Data["AWS_SECRET_ACCESS_KEY"]
+	if !exists {
+		return nil, fmt.Errorf(missingFieldMessage, "AWS_SECRET_ACCESS_KEY", secretFullName)
+	}
+	caBundle := secret.Data["tls.crt"]
+	bucketPortNumeric, err := strconv.Atoi(bucketPort)
+	if err != nil {
+		return nil, err
+	}
+	return &models.S3StorageConfiguration{
+		BucketName:         bucketName,
+		BucketPort:         int32(bucketPortNumeric),
+		BucketHost:         bucketHost,
+		BucketRegion:       bucketRegion,
+		AwsAccessKeyID:     base64.StdEncoding.EncodeToString(accessKeyID),
+		AwsSecretAccessKey: base64.StdEncoding.EncodeToString(secretAccessKey),
+		AwsCaBundle:        base64.StdEncoding.EncodeToString(caBundle),
+	}, nil
 }

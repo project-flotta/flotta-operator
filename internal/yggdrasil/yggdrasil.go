@@ -138,15 +138,10 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		dc.Configuration.Heartbeat = &defaultHeartbeatConfiguration
 	}
 
-	if edgeDevice.Status.DataOBC != nil && len(*edgeDevice.Status.DataOBC) > 0 {
-		storageConf, err := h.claimer.GetStorageConfiguration(ctx, edgeDevice)
-		if err != nil {
-			logger.Error(err, "failed to get storage configuration for device")
-		} else {
-			dc.Configuration.Storage = &models.StorageConfiguration{
-				S3: storageConf,
-			}
-		}
+	err = h.setStorageConfiguration(ctx, edgeDevice, &dc)
+
+	if err != nil {
+		logger.Error(err, "failed to get storage configuration for device")
 	}
 
 	// TODO: Network optimization: Decide whether there is a need to return any payload based on difference between last applied configuration and current state in the cluster.
@@ -337,4 +332,25 @@ func (h *Handler) createDisconnectCommand() *models.Message {
 		Sent:      strfmt.DateTime(time.Now()),
 		Content:   command,
 	}
+}
+
+func (h *Handler) setStorageConfiguration(ctx context.Context,
+	edgeDevice *v1alpha1.EdgeDevice, dc *models.DeviceConfigurationMessage) error {
+
+	var storageConf *models.S3StorageConfiguration
+	var err error
+
+	if edgeDevice.Status.DataOBC != nil && len(*edgeDevice.Status.DataOBC) > 0 {
+		storageConf, err = h.claimer.GetStorageConfiguration(ctx, edgeDevice)
+	} else if edgeDevice.Spec.Storage != nil && edgeDevice.Spec.Storage.S3 != nil {
+		storageConf, err = h.claimer.GetExternalStorageConfig(ctx, edgeDevice)
+	}
+
+	if err == nil && storageConf != nil {
+		dc.Configuration.Storage = &models.StorageConfiguration{
+			S3: storageConf,
+		}
+	}
+
+	return err
 }
