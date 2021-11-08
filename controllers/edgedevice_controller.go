@@ -73,7 +73,7 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 	logger.Info("Reconciling", "edgeDevice", edgeDevice)
 
-	if !r.ObcAutoCreate {
+	if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice) {
 		return ctrl.Result{}, nil
 	}
 

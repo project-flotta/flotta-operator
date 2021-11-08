@@ -345,7 +345,7 @@ func (h *Handler) setStorageConfiguration(ctx context.Context,
 
 	if edgeDevice.Status.DataOBC != nil && len(*edgeDevice.Status.DataOBC) > 0 {
 		storageConf, err = h.claimer.GetStorageConfiguration(ctx, edgeDevice)
-	} else if edgeDevice.Spec.Storage != nil && edgeDevice.Spec.Storage.S3 != nil {
+	} else if storage.ShouldUseExternalConfig(edgeDevice) {
 		storageConf, err = h.claimer.GetExternalStorageConfig(ctx, edgeDevice)
 	}
 

@@ -173,3 +173,37 @@ func (c *Claimer) GetExternalStorageConfig(ctx context.Context, device *v1alpha1
 		AwsCaBundle:        base64.StdEncoding.EncodeToString(caBundle),
 	}, nil
 }
+
+func ShouldUseExternalConfig(device *v1alpha1.EdgeDevice) bool {
+	s3Obj := getS3(device)
+	if s3Obj != nil {
+		if s3Obj.ConfigMapName != "" ||
+			s3Obj.ConfigMapNamespace != "" ||
+			s3Obj.SecretName != "" ||
+			s3Obj.SecretNamespace != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func ShouldCreateOBC(device *v1alpha1.EdgeDevice) bool {
+	s3Obj := getS3(device)
+	if s3Obj != nil {
+		if !ShouldUseExternalConfig(device) {
+			return s3Obj.CreateOBC
+		}
+	}
+	return false
+}
+
+func getS3(device *v1alpha1.EdgeDevice) *v1alpha1.S3Storage {
+	if device != nil {
+		storageObj := device.Spec.Storage
+		if storageObj != nil {
+			return storageObj.S3
+		}
+	}
+
+	return nil
+}
