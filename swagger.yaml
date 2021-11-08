@@ -442,6 +442,24 @@ definitions:
       hardware:
         description: Hardware information
         $ref: '#/definitions/hardware-info'
+      events:
+        description: Events produced by device worker.
+        type: array
+        items:
+          $ref: '#/definitions/event-info'
+
+  event-info:
+    type: object
+    properties:
+      reason:
+        type: string
+      message:
+        type: string
+      type:
+        type: string
+        enum:
+          - info
+          - warn
 
   workload-status:
     type: object

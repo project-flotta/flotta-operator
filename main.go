@@ -19,11 +19,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jakub-dzon/k4e-operator/internal/storage"
-	routev1 "github.com/openshift/api/route/v1"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/jakub-dzon/k4e-operator/internal/storage"
+	routev1 "github.com/openshift/api/route/v1"
 
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
@@ -154,7 +155,7 @@ func main() {
 
 	go func() {
 		h, err := restapi.Handler(restapi.Config{
-			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, claimer, initialDeviceNamespace),
+			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, claimer, initialDeviceNamespace, mgr.GetEventRecorderFor("edgedeployment-controller")),
 		})
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")

@@ -19,8 +19,10 @@ import (
 	"github.com/jakub-dzon/k4e-operator/models"
 	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
 	operations "github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -40,14 +42,16 @@ type Handler struct {
 	deploymentRepository edgedeployment.Repository
 	claimer              *storage.Claimer
 	initialNamespace     string
+	recorder             record.EventRecorder
 }
 
-func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository, claimer *storage.Claimer, initialNamespace string) *Handler {
+func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository, claimer *storage.Claimer, initialNamespace string, recorder record.EventRecorder) *Handler {
 	return &Handler{
 		deviceRepository:     deviceRepository,
 		deploymentRepository: deploymentRepository,
 		claimer:              claimer,
 		initialNamespace:     initialNamespace,
+		recorder:             recorder,
 	}
 }
 
@@ -180,6 +184,21 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			}
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
+
+		// Produce k8s events based on the device-worker events:
+		events := heartbeat.Events
+		for _, event := range events {
+			if event == nil {
+				continue
+			}
+
+			if event.Type == models.EventInfoTypeWarn {
+				h.recorder.Event(edgeDevice, corev1.EventTypeWarning, event.Reason, event.Message)
+			} else {
+				h.recorder.Event(edgeDevice, corev1.EventTypeNormal, event.Reason, event.Message)
+			}
+		}
+
 		err = h.updateDeviceStatus(ctx, edgeDevice, func(device *v1alpha1.EdgeDevice) {
 			device.Status.LastSyncedResourceVersion = heartbeat.Version
 			device.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))

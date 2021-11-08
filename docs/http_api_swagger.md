@@ -396,6 +396,23 @@ Status: Internal Server Error
 
 
 
+### <span id="event-info"></span> event-info
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| message | string| `string` |  | | Message describe the event which has occured. |  |
+| reason | string| `string` |  | | Reason is single word description of the subject of the event. |  |
+| type | string| `string` |  | | Either 'info' or 'warn', which reflect the importance of event. |  |
+
+
+
 ### <span id="gpu"></span> gpu
 
 
@@ -464,6 +481,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| events | [][EventInfo](#event-info)| `[]*EventInfo` |  | | Events produced by device worker. |  |
 | hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | | Hardware information |  |
 | status | string| `string` |  | |  |  |
 | time | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |

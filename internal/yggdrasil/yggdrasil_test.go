@@ -3,6 +3,7 @@ package yggdrasil_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/runtime/middleware"
@@ -12,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
@@ -41,6 +43,7 @@ var _ = Describe("Yggdrasil", func() {
 		deployRepoMock     *edgedeployment.MockRepository
 		edgeDeviceRepoMock *edgedevice.MockRepository
 		handler            *yggdrasil.Handler
+		eventsRecorder     *record.FakeRecorder
 
 		errorNotFound = errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
 	)
@@ -49,8 +52,9 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
+		eventsRecorder = record.NewFakeRecorder(1)
 
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, testNamespace)
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, testNamespace, eventsRecorder)
 	})
 
 	AfterEach(func() {
@@ -575,6 +579,69 @@ var _ = Describe("Yggdrasil", func() {
 
 				// when
 				res := handler.PostDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
+			})
+
+			It("Work with content and events", func() {
+				// given
+				content := models.Heartbeat{
+					Status:  "running",
+					Version: "1",
+					Workloads: []*models.WorkloadStatus{
+						{Name: "workload-1", Status: "created"}},
+					Hardware: &models.HardwareInfo{
+						Hostname: "test-hostname",
+					},
+					Events: []*models.EventInfo{{
+						Message: "failed to start container",
+						Reason:  "Started",
+						Type:    models.EventInfoTypeWarn,
+					}},
+				}
+
+				device.Status.Deployments = []v1alpha1.Deployment{{
+					Name:  "workload-1",
+					Phase: "failing",
+				}}
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					PatchStatus(gomock.Any(), device, gomock.Any()).
+					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
+						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
+						Expect(edgeDevice.Status.Deployments[0].Phase).To(
+							Equal(v1alpha1.EdgeDeploymentPhase("created")))
+						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("workload-1"))
+					}).
+					Return(nil).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content:   content,
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(context.TODO(), params)
+
+				// test emmiting the events:
+				close(eventsRecorder.Events)
+				found := false
+				for event := range eventsRecorder.Events {
+					if strings.Contains(event, "failed to start container") {
+						found = true
+					}
+				}
+				Expect(found).To(BeTrue())
 
 				// then
 				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))

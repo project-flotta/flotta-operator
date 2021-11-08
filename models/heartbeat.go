@@ -20,6 +20,9 @@ import (
 // swagger:model heartbeat
 type Heartbeat struct {
 
+	// Events produced by device worker.
+	Events []*EventInfo `json:"events"`
+
 	// Hardware information
 	Hardware *HardwareInfo `json:"hardware,omitempty"`
 
@@ -42,6 +45,10 @@ type Heartbeat struct {
 func (m *Heartbeat) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateEvents(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateHardware(formats); err != nil {
 		res = append(res, err)
 	}
@@ -61,6 +68,31 @@ func (m *Heartbeat) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Heartbeat) validateEvents(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Events) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Events); i++ {
+		if swag.IsZero(m.Events[i]) { // not required
+			continue
+		}
+
+		if m.Events[i] != nil {
+			if err := m.Events[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("events" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 
