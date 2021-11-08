@@ -224,7 +224,7 @@ var _ = Describe("EdgeDevice controller", func() {
 
 	})
 
-	It("should not attach OBC to EdgeDevice when OBC auto-creation is disabled", func() {
+	It("should not attach OBC to EdgeDevice when OBC creation (manual and automatic) is disabled", func() {
 		// given
 		edgeDeviceReconciler.ObcAutoCreate = false
 
@@ -269,6 +269,50 @@ var _ = Describe("EdgeDevice controller", func() {
 			},
 			Spec: v1alpha1.EdgeDeviceSpec{
 				RequestTime: &now,
+			},
+		}
+
+		// when
+		err := k8sClient.Create(ctx, &edgeDevice)
+
+		// then
+		Expect(err).ToNot(HaveOccurred())
+
+		edgeDeviceKey := client.ObjectKeyFromObject(&edgeDevice)
+		Eventually(func() *string {
+			var ed v1alpha1.EdgeDevice
+			err := k8sClient.Get(ctx, edgeDeviceKey, &ed)
+			if err != nil {
+				return nil
+			}
+			return ed.Status.DataOBC
+		}, 10*time.Second, 10*time.Millisecond).ShouldNot(BeNil())
+
+		ed := getExpectedEdgeDevice(ctx, edgeDeviceKey)
+		var obc obv1.ObjectBucketClaim
+		err = k8sClient.Get(ctx, client.ObjectKey{Namespace: ed.GetNamespace(), Name: *ed.Status.DataOBC}, &obc)
+		Expect(err).ToNot(HaveOccurred())
+		Expect(obc.Spec.StorageClassName).To(BeEquivalentTo("openshift-storage.noobaa.io"))
+	})
+
+	It("should attach OBC to EdgeDevice when OBC manual creation is enabled", func() {
+		// given
+		edgeDeviceReconciler.ObcAutoCreate = false
+
+		ctx := context.Background()
+		now := metav1.Now()
+		edgeDevice := v1alpha1.EdgeDevice{
+			ObjectMeta: metav1.ObjectMeta{
+				GenerateName: "no-obc-device",
+				Namespace:    "default",
+			},
+			Spec: v1alpha1.EdgeDeviceSpec{
+				RequestTime: &now,
+				Storage: &v1alpha1.Storage{
+					S3: &v1alpha1.S3Storage{
+						CreateOBC: true,
+					},
+				},
 			},
 		}
 

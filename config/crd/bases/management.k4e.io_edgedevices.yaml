@@ -71,6 +71,10 @@ spec:
                       configMapNamespace:
                         description: configMap namespace
                         type: string
+                      createOBC:
+                        description: createOBC. if the configuration above is empty
+                          and this bool is true then create OBC
+                        type: boolean
                       secretName:
                         description: secret name
                         type: string

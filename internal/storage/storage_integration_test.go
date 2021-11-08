@@ -514,4 +514,110 @@ var _ = Describe("Storage", func() {
 		})
 	})
 
+	Context("ShouldUseExternalConfig", func() {
+		var (
+			device *v1alpha1.EdgeDevice
+		)
+		BeforeEach(func() {
+			device = getDevice()
+		})
+		It("storage configuration does not exist", func() {
+			// given
+			// when
+			result := storage.ShouldUseExternalConfig(device)
+			// then
+			Expect(result).To(BeFalse())
+		})
+		It("s3 configuration does not exist", func() {
+			// given
+			device.Spec.Storage = &managementv1alpha1.Storage{}
+			// when
+			result := storage.ShouldUseExternalConfig(device)
+			// then
+			Expect(result).To(BeFalse())
+		})
+		It("s3 configuration is empty", func() {
+			// given
+			device.Spec.Storage = &managementv1alpha1.Storage{
+				S3: &managementv1alpha1.S3Storage{},
+			}
+			// when
+			result := storage.ShouldUseExternalConfig(device)
+			// then
+			Expect(result).To(BeFalse())
+		})
+		It("s3 configuration should be used", func() {
+			// given
+			device.Spec.Storage = &managementv1alpha1.Storage{
+				S3: &managementv1alpha1.S3Storage{
+					SecretName: "s3secret",
+				},
+			}
+			// when
+			result := storage.ShouldUseExternalConfig(device)
+			// then
+			Expect(result).To(BeTrue())
+		})
+	})
+
+	Context("ShouldCreateOBC", func() {
+		var (
+			device *v1alpha1.EdgeDevice
+		)
+		BeforeEach(func() {
+			device = getDevice()
+		})
+		It("storage configuration does not exist", func() {
+			// given
+			// when
+			result := storage.ShouldCreateOBC(device)
+			// then
+			Expect(result).To(BeFalse())
+		})
+		It("s3 configuration does not exist", func() {
+			// given
+			device.Spec.Storage = &managementv1alpha1.Storage{}
+			// when
+			result := storage.ShouldCreateOBC(device)
+			// then
+			Expect(result).To(BeFalse())
+		})
+		It("s3 external configuration not empty", func() {
+			// given
+			device.Spec.Storage = &managementv1alpha1.Storage{
+				S3: &managementv1alpha1.S3Storage{
+					SecretName: "s3secret",
+					CreateOBC:  true,
+				},
+			}
+			// when
+			result := storage.ShouldCreateOBC(device)
+			// then
+			Expect(result).To(BeFalse())
+		})
+		It("should not create OBC", func() {
+			// given
+			device.Spec.Storage = &managementv1alpha1.Storage{
+				S3: &managementv1alpha1.S3Storage{
+					CreateOBC: false,
+				},
+			}
+			// when
+			result := storage.ShouldCreateOBC(device)
+			// then
+			Expect(result).To(BeFalse())
+		})
+		It("should create OBC", func() {
+			// given
+			device.Spec.Storage = &managementv1alpha1.Storage{
+				S3: &managementv1alpha1.S3Storage{
+					CreateOBC: true,
+				},
+			}
+			// when
+			result := storage.ShouldCreateOBC(device)
+			// then
+			Expect(result).To(BeTrue())
+		})
+	})
 })

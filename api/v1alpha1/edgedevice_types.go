@@ -50,6 +50,8 @@ type S3Storage struct {
 	ConfigMapName string `json:"configMapName,omitempty"`
 	// configMap namespace
 	ConfigMapNamespace string `json:"configMapNamespace,omitempty"`
+	// createOBC. if the configuration above is empty and this bool is true then create OBC
+	CreateOBC bool `json:"createOBC,omitempty"`
 }
 
 type DeviceConfiguration struct {
