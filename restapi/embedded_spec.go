@@ -354,6 +354,24 @@ func init() {
         }
       }
     },
+    "event-info": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warn"
+          ]
+        }
+      }
+    },
     "gpu": {
       "type": "object",
       "properties": {
@@ -435,6 +453,13 @@ func init() {
     "heartbeat": {
       "type": "object",
       "properties": {
+        "events": {
+          "description": "Events produced by device worker.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event-info"
+          }
+        },
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
@@ -1039,6 +1064,24 @@ func init() {
         }
       }
     },
+    "event-info": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warn"
+          ]
+        }
+      }
+    },
     "gpu": {
       "type": "object",
       "properties": {
@@ -1120,6 +1163,13 @@ func init() {
     "heartbeat": {
       "type": "object",
       "properties": {
+        "events": {
+          "description": "Events produced by device worker.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event-info"
+          }
+        },
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"

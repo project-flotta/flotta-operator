@@ -9,6 +9,13 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - events
+  verbs:
+  - patch
+  - create
+- apiGroups:
+  - ""
+  resources:
   - configmaps
   verbs:
   - get
