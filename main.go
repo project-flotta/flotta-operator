@@ -19,31 +19,42 @@ package main
 import (
 	"context"
 	"fmt"
+
 	"github.com/jakub-dzon/k4e-operator/internal/images"
+
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
+	"github.com/go-logr/logr"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	routev1 "github.com/openshift/api/route/v1"
+	"go.uber.org/zap/zapcore"
 
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
 	"github.com/jakub-dzon/k4e-operator/restapi"
+	watchers "github.com/jakub-dzon/k4e-operator/watchers"
 	"github.com/kelseyhightower/envconfig"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/controllers"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
+
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -51,12 +62,15 @@ import (
 )
 
 const (
-	initialDeviceNamespace = "default"
+	initialDeviceNamespace   = "default"
+	defaultOperatorNamespace = "k4e-operator-system"
+	defaultConfigMapName     = "k4e-operator-manager-config"
+	logLevelLabel            = "LOG_LEVEL"
 )
 
 var (
 	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	setupLog logr.Logger
 )
 
 var Config struct {
@@ -77,6 +91,9 @@ var Config struct {
 
 	// Enable OBC auto creation when EdgeDevice is registered
 	EnableObcAutoCreation bool `envconfig:"OBC_AUTO_CREATE" default:"true"`
+
+	// Verbosity of the logger.
+	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 }
 
 func init() {
@@ -90,13 +107,27 @@ func init() {
 
 func main() {
 	err := envconfig.Process("", &Config)
+	setupLog = ctrl.Log.WithName("setup")
+
 	if err != nil {
 		setupLog.Error(err, "unable to process configuration values")
 		os.Exit(1)
 	}
 
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	var level zapcore.Level
+	err = level.UnmarshalText([]byte(Config.LogLevel))
+	if err != nil {
+		setupLog.Error(err, "unable to unmarshal log level", "log level", Config.LogLevel)
+		os.Exit(1)
+	}
+	opts := zap.Options{}
+	opts.Level = level
+	logger := zap.New(zap.UseFlagOptions(&opts))
+	ctrl.SetLogger(logger)
+
+	setupLog = ctrl.Log
 	setupLog.Info("Started with configuration", "configuration", Config)
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     Config.MetricsAddr,
@@ -111,7 +142,6 @@ func main() {
 	}
 
 	cache := mgr.GetCache()
-
 	indexFunc := func(obj client.Object) []string {
 		return []string{obj.(*managementv1alpha1.EdgeDeployment).Spec.Device}
 	}
@@ -167,10 +197,55 @@ func main() {
 		setupLog.Info("starting http server", "address", address)
 		log.Fatal(http.ListenAndServe(address, h))
 	}()
+
+	if isInCluster() {
+		k8sClient, err := kubernetes.NewForConfig(mgr.GetConfig())
+		if err != nil {
+			setupLog.Error(err, "cannot get the k8s client set")
+			os.Exit(1)
+		}
+		operatorNamespace, err := getOperatorNamespace()
+		if err != nil {
+			setupLog.Error(err, "cannot get the operator namespace")
+			os.Exit(1)
+		}
+		setupLog.V(1).Info("operator namespace found", "operatorNamespace", operatorNamespace)
+
+		currentConfigMap, err := k8sClient.CoreV1().ConfigMaps(operatorNamespace).Get(context.TODO(), defaultConfigMapName, metav1.GetOptions{})
+		if err != nil {
+			setupLog.Error(err, "cannot get ConfigMap", "namespace", operatorNamespace)
+			os.Exit(1)
+		}
+		setupLog.V(1).Info("operator configmap found", "operatorNamespace", operatorNamespace, "configmap name", defaultConfigMapName)
+		go watchers.WatchForChanges(k8sClient, operatorNamespace, defaultConfigMapName, logLevelLabel, currentConfigMap.Data[logLevelLabel], setupLog)
+	}
+
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+}
 
+func getOperatorNamespace() (operatorNamespace string, err error) {
+	if !isInCluster() {
+		return defaultOperatorNamespace, nil
+	}
+
+	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	if err != nil {
+		return "", err
+	}
+	ns := strings.TrimSpace(string(nsBytes))
+	return ns, nil
+}
+
+func isInCluster() bool {
+	_, err := os.Stat("/var/run/secrets/kubernetes.io/serviceaccount")
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
 }
