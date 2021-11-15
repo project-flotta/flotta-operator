@@ -43,6 +43,8 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/util/flowcontrol"
 
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/controllers"
@@ -94,6 +96,9 @@ var Config struct {
 
 	// Verbosity of the logger.
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
+
+	// Number of concurrent goroutines to create for handling EdgeDeployment reconcile
+	EdgeDeploymentConcurrency uint `envconfig:"EDGEDEPLOYMENT_CONCURRENCY" default:"5"`
 }
 
 func init() {
@@ -113,6 +118,10 @@ func main() {
 		setupLog.Error(err, "unable to process configuration values")
 		os.Exit(1)
 	}
+	if Config.EdgeDeploymentConcurrency == 0 {
+		setupLog.Error(err, "config field EDGEDEPLOYMENT_CONCURRENCY must be greater than 0")
+		os.Exit(1)
+	}
 
 	var level zapcore.Level
 	err = level.UnmarshalText([]byte(Config.LogLevel))
@@ -128,7 +137,10 @@ func main() {
 	setupLog = ctrl.Log
 	setupLog.Info("Started with configuration", "configuration", Config)
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	r, err := ctrl.GetConfig()
+	r.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(100, 1000)
+	mgr, err := ctrl.NewManager(r, ctrl.Options{
+		//mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     Config.MetricsAddr,
 		Port:                   Config.WebhookPort,
@@ -169,6 +181,8 @@ func main() {
 		Scheme:                   mgr.GetScheme(),
 		EdgeDeviceRepository:     edgeDeviceRepository,
 		EdgeDeploymentRepository: edgeDeploymentRepository,
+		Concurrency:              Config.EdgeDeploymentConcurrency,
+		ExecuteConcurrent:        controllers.ExecuteConcurrent,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDeployment")
 		os.Exit(1)

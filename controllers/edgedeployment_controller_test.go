@@ -3,6 +3,7 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/mock/gomock"
@@ -49,6 +50,8 @@ var _ = Describe("Controllers", func() {
 			Scheme:                   k8sManager.GetScheme(),
 			EdgeDeploymentRepository: deployRepoMock,
 			EdgeDeviceRepository:     edgeDeviceRepoMock,
+			Concurrency:              1,
+			ExecuteConcurrent:        controllers.ExecuteConcurrent,
 		}
 
 		signalContext, cancelContext = context.WithCancel(context.TODO())
@@ -628,6 +631,158 @@ var _ = Describe("Controllers", func() {
 				// then
 				Expect(err).To(HaveOccurred())
 				Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
+			})
+		})
+		Context("Concurrency", func() {
+			var (
+				deploymentData *v1alpha1.EdgeDeployment
+				devices        []v1alpha1.EdgeDevice
+				numDevices     = 100
+				concurrency    = 7
+				expectedSplit  = map[int]int{15: 2, 14: 5}
+				actualSplit    map[int]int
+				syncMap        = sync.Mutex{}
+			)
+			executeConcurrent := func(concurrency uint, f controllers.ConcurrentFunc, devices []v1alpha1.EdgeDevice) []error {
+				if len(devices) == 0 {
+					return nil
+				}
+				testF := func(devices []v1alpha1.EdgeDevice) []error {
+					defer GinkgoRecover()
+					errs := f(devices)
+					lenErrs := len(errs)
+					syncMap.Lock()
+					val, ok := actualSplit[lenErrs]
+					if ok {
+						val += 1
+					} else {
+						val = 1
+					}
+					actualSplit[lenErrs] = val
+					syncMap.Unlock()
+					return errs
+				}
+				_ = controllers.ExecuteConcurrent(concurrency, testF, devices)
+				return nil
+			}
+
+			BeforeEach(func() {
+				deploymentData = &v1alpha1.EdgeDeployment{
+					ObjectMeta: v1.ObjectMeta{
+						Name:       "test",
+						Namespace:  "test",
+						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
+					},
+					Spec: v1alpha1.EdgeDeploymentSpec{
+						DeviceSelector: &v1.LabelSelector{
+							MatchLabels: map[string]string{"test": "test"},
+						},
+						Type: "test",
+						Pod:  v1alpha1.Pod{},
+						Data: &v1alpha1.DataConfiguration{},
+					}}
+
+				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(deploymentData, nil).Times(1)
+
+				devices = nil
+				for i := 0; i < numDevices; i++ {
+					devices = append(devices, *getDevice(fmt.Sprintf("testdevice%d", i)))
+				}
+
+				actualSplit = map[int]int{}
+				edgeDeploymentReconciler.Concurrency = uint(concurrency)
+				edgeDeploymentReconciler.ExecuteConcurrent = executeConcurrent
+			})
+
+			It("Add deployment to devices", func() {
+				// given
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return([]v1alpha1.EdgeDevice{}, nil).
+					Times(1)
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(devices, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(fmt.Errorf("failed")).
+					Times(numDevices)
+
+				// when
+				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+				Expect(actualSplit).To(Equal(expectedSplit))
+			})
+
+			It("Delete deployment", func() {
+				// given
+				deploymentData.ObjectMeta.DeletionTimestamp = &v1.Time{Time: time.Now()}
+				for _, d := range devices {
+					d.Status.Deployments = []v1alpha1.Deployment{
+						{Name: "test"},
+					}
+				}
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return([]v1alpha1.EdgeDevice{}, nil).
+					Times(1)
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(devices, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(fmt.Errorf("failed")).
+					Times(numDevices)
+
+				deployRepoMock.EXPECT().
+					RemoveFinalizer(gomock.Any(), gomock.Any(), gomock.Eq("yggdrasil-device-reference-finalizer")).
+					Return(nil).Times(1)
+
+				// when
+				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+				Expect(actualSplit).To(Equal(expectedSplit))
+			})
+
+			It("Remove deployment from non matching devices", func() {
+				// given
+				for _, d := range devices {
+					d.Status.Deployments = []v1alpha1.Deployment{
+						{Name: "test"},
+					}
+				}
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(devices, nil).
+					Times(1)
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return([]v1alpha1.EdgeDevice{}, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(fmt.Errorf("failed")).
+					Times(numDevices)
+
+				// when
+				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+				Expect(actualSplit).To(Equal(expectedSplit))
 			})
 		})
 	})
