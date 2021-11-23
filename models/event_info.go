@@ -19,13 +19,13 @@ import (
 // swagger:model event-info
 type EventInfo struct {
 
-	// message
+	// Message describe the event which has occured.
 	Message string `json:"message,omitempty"`
 
-	// reason
+	// Reason is single word description of the subject of the event.
 	Reason string `json:"reason,omitempty"`
 
-	// type
+	// Either 'info' or 'warn', which reflect the importance of event.
 	// Enum: [info warn]
 	Type string `json:"type,omitempty"`
 }
