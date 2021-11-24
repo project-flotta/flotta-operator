@@ -452,10 +452,13 @@ definitions:
     type: object
     properties:
       reason:
+        description: Reason is single word description of the subject of the event.
         type: string
       message:
+        description: Message describe the event which has occured.
         type: string
       type:
+        description: Either 'info' or 'warn', which reflect the importance of event.
         type: string
         enum:
           - info

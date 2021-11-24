@@ -358,12 +358,15 @@ func init() {
       "type": "object",
       "properties": {
         "message": {
+          "description": "Message describe the event which has occured.",
           "type": "string"
         },
         "reason": {
+          "description": "Reason is single word description of the subject of the event.",
           "type": "string"
         },
         "type": {
+          "description": "Either 'info' or 'warn', which reflect the importance of event.",
           "type": "string",
           "enum": [
             "info",
@@ -1068,12 +1071,15 @@ func init() {
       "type": "object",
       "properties": {
         "message": {
+          "description": "Message describe the event which has occured.",
           "type": "string"
         },
         "reason": {
+          "description": "Reason is single word description of the subject of the event.",
           "type": "string"
         },
         "type": {
+          "description": "Either 'info' or 'warn', which reflect the importance of event.",
           "type": "string",
           "enum": [
             "info",
