@@ -15,7 +15,7 @@ COPY controllers/ controllers/
 COPY internal/ internal/
 COPY models/ models/
 COPY restapi/ restapi/
-
+COPY watchers/ watchers/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -a -o manager main.go
 

@@ -18,3 +18,4 @@ coverage.html
 .idea
 bin
 testbin
+.vscode
