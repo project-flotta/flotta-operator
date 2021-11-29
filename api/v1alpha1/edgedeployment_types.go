@@ -26,15 +26,15 @@ import (
 
 // EdgeDeploymentSpec defines the desired state of EdgeDeployment
 type EdgeDeploymentSpec struct {
-	DeviceSelector    *metav1.LabelSelector           `json:"deviceSelector,omitempty"`
-	Device            string                          `json:"device,omitempty"`
-	Type              EdgeDeploymentType              `json:"type"`
-	Pod               Pod                             `json:"pod,omitempty"`
-	Data              *DataConfiguration              `json:"data,omitempty"`
-	ImageRepositories *ImageRepositoriesConfiguration `json:"imageRepositories,omitempty"`
+	DeviceSelector  *metav1.LabelSelector         `json:"deviceSelector,omitempty"`
+	Device          string                        `json:"device,omitempty"`
+	Type            EdgeDeploymentType            `json:"type"`
+	Pod             Pod                           `json:"pod,omitempty"`
+	Data            *DataConfiguration            `json:"data,omitempty"`
+	ImageRegistries *ImageRegistriesConfiguration `json:"imageRegistries,omitempty"`
 }
 
-type ImageRepositoriesConfiguration struct {
+type ImageRegistriesConfiguration struct {
 	AuthFileSecret *ObjectRef `json:"secretRef,omitempty"`
 }
 

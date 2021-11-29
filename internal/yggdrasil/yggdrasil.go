@@ -3,6 +3,8 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -38,20 +40,23 @@ var (
 )
 
 type Handler struct {
-	deviceRepository     edgedevice.Repository
-	deploymentRepository edgedeployment.Repository
-	claimer              *storage.Claimer
-	initialNamespace     string
-	recorder             record.EventRecorder
+	deviceRepository       edgedevice.Repository
+	deploymentRepository   edgedeployment.Repository
+	claimer                *storage.Claimer
+	initialNamespace       string
+	recorder               record.EventRecorder
+	registryAuthRepository images.RegistryAuthAPI
 }
 
-func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository, claimer *storage.Claimer, initialNamespace string, recorder record.EventRecorder) *Handler {
+func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
+	claimer *storage.Claimer, initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI) *Handler {
 	return &Handler{
-		deviceRepository:     deviceRepository,
-		deploymentRepository: deploymentRepository,
-		claimer:              claimer,
-		initialNamespace:     initialNamespace,
-		recorder:             recorder,
+		deviceRepository:       deviceRepository,
+		deploymentRepository:   deploymentRepository,
+		claimer:                claimer,
+		initialNamespace:       initialNamespace,
+		recorder:               recorder,
+		registryAuthRepository: registryAuth,
 	}
 }
 
@@ -108,7 +113,10 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 			edgeDeployments = append(edgeDeployments, *edgeDeployment)
 		}
 
-		workloadList = h.toWorkloadList(logger, edgeDeployments)
+		workloadList, err = h.toWorkloadList(ctx, logger, edgeDeployments, edgeDevice)
+		if err != nil {
+			return operations.NewGetDataMessageForDeviceInternalServerError()
+		}
 	} else {
 		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
 			err := h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilWorkloadFinalizer)
@@ -310,33 +318,65 @@ func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment,
 	return deployments
 }
 
-func (h *Handler) toWorkloadList(logger logr.Logger, deployments []v1alpha1.EdgeDeployment) models.WorkloadList {
+func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deployments []v1alpha1.EdgeDeployment, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
 	list := models.WorkloadList{}
 	for _, deployment := range deployments {
 		if deployment.DeletionTimestamp != nil {
 			continue
 		}
-		podSpec, err := yaml.Marshal(deployment.Spec.Pod.Spec)
+		spec := deployment.Spec
+		podSpec, err := yaml.Marshal(spec.Pod.Spec)
 		if err != nil {
 			logger.Error(err, "cannot marshal pod specification", "deployment name", deployment.Name)
 			continue
 		}
 		var data *models.DataConfiguration
-		if deployment.Spec.Data != nil && len(deployment.Spec.Data.Paths) > 0 {
+		if spec.Data != nil && len(spec.Data.Paths) > 0 {
 			var paths []*models.DataPath
-			for _, path := range deployment.Spec.Data.Paths {
+			for _, path := range spec.Data.Paths {
 				paths = append(paths, &models.DataPath{Source: path.Source, Target: path.Target})
 			}
 			data = &models.DataConfiguration{Paths: paths}
 		}
+
 		workload := models.Workload{
 			Name:          deployment.Name,
 			Specification: string(podSpec),
 			Data:          data,
 		}
+		authFile, err := h.getAuthFile(ctx, spec.ImageRegistries, deployment.Namespace)
+		if err != nil {
+			msg := fmt.Sprintf("Auth file secret %s used by deployment %s/%s is missing", spec.ImageRegistries.AuthFileSecret.Name, deployment.Namespace, deployment.Name)
+			h.recorder.Event(device, corev1.EventTypeWarning, "Misconfiguration", msg)
+			logger.Error(err, msg)
+			return nil, err
+		}
+		if authFile != "" {
+			workload.ImageRegistries = &models.ImageRegistries{
+				AuthFile: authFile,
+			}
+		}
 		list = append(list, &workload)
 	}
-	return list
+	return list, nil
+}
+
+func (h *Handler) getAuthFile(ctx context.Context, imageRegistries *v1alpha1.ImageRegistriesConfiguration, defaultNamespace string) (string, error) {
+	if imageRegistries != nil {
+		if secretRef := imageRegistries.AuthFileSecret; secretRef != nil {
+			namespace := secretRef.Namespace
+			if secretRef.Namespace == "" {
+				namespace = defaultNamespace
+			}
+
+			authFile, err := h.registryAuthRepository.GetAuthFileFromSecret(ctx, namespace, secretRef.Name)
+			if err != nil {
+				return "", err
+			}
+			return authFile, nil
+		}
+	}
+	return "", nil
 }
 
 func (h *Handler) createDisconnectCommand() *models.Message {

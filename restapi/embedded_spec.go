@@ -500,11 +500,11 @@ func init() {
         }
       }
     },
-    "image-repositories": {
+    "image-registries": {
       "type": "object",
       "properties": {
         "authFile": {
-          "description": "Image repositories authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.",
+          "description": "Image registries authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.",
           "type": "string"
         }
       }
@@ -687,9 +687,9 @@ func init() {
           "description": "Configuration for data transfer",
           "$ref": "#/definitions/data-configuration"
         },
-        "imageRepositories": {
-          "description": "Image repositories configuration",
-          "$ref": "#/definitions/image-repositories"
+        "imageRegistries": {
+          "description": "Image registries configuration",
+          "$ref": "#/definitions/image-registries"
         },
         "name": {
           "description": "Name of the workload",
@@ -1226,11 +1226,11 @@ func init() {
         }
       }
     },
-    "image-repositories": {
+    "image-registries": {
       "type": "object",
       "properties": {
         "authFile": {
-          "description": "Image repositories authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.",
+          "description": "Image registries authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.",
           "type": "string"
         }
       }
@@ -1413,9 +1413,9 @@ func init() {
           "description": "Configuration for data transfer",
           "$ref": "#/definitions/data-configuration"
         },
-        "imageRepositories": {
-          "description": "Image repositories configuration",
-          "$ref": "#/definitions/image-repositories"
+        "imageRegistries": {
+          "description": "Image registries configuration",
+          "$ref": "#/definitions/image-registries"
         },
         "name": {
           "description": "Name of the workload",

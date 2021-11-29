@@ -3,6 +3,7 @@ package yggdrasil_test
 import (
 	"context"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"strings"
 	"time"
 
@@ -42,6 +43,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl           *gomock.Controller
 		deployRepoMock     *edgedeployment.MockRepository
 		edgeDeviceRepoMock *edgedevice.MockRepository
+		registryAuth       *images.MockRegistryAuthAPI
 		handler            *yggdrasil.Handler
 		eventsRecorder     *record.FakeRecorder
 
@@ -52,9 +54,9 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
+		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
-
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, testNamespace, eventsRecorder)
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, testNamespace, eventsRecorder, registryAuth)
 	})
 
 	AfterEach(func() {
@@ -432,7 +434,156 @@ var _ = Describe("Yggdrasil", func() {
 
 			Expect(config.DeviceID).To(Equal(deviceName))
 			Expect(config.Workloads).To(HaveLen(1))
-			Expect(config.Workloads[0].Name).To(Equal("workload1"))
+			workload := config.Workloads[0]
+			Expect(workload.Name).To(Equal("workload1"))
+			Expect(workload.ImageRegistries).To(BeNil())
+		})
+
+		It("Image registry authfile is included", func() {
+			// given
+			deviceName := "foo"
+			device := getDevice(deviceName)
+			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), deviceName, testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			deploymentData := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					Type: "pod",
+					Pod:  v1alpha1.Pod{},
+					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
+						AuthFileSecret: &v1alpha1.ObjectRef{
+							Name:      "fooSecret",
+							Namespace: "fooNamespace",
+						},
+					},
+				}}
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload1", testNamespace).
+				Return(deploymentData, nil)
+
+			authFileContent := "authfile-content"
+			registryAuth.EXPECT().
+				GetAuthFileFromSecret(gomock.Any(), gomock.Eq("fooNamespace"), gomock.Eq("fooSecret")).
+				Return(authFileContent, nil)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+			config := validateAndGetDeviceConfig(res)
+
+			Expect(config.DeviceID).To(Equal(deviceName))
+			Expect(config.Workloads).To(HaveLen(1))
+			workload := config.Workloads[0]
+			Expect(workload.Name).To(Equal("workload1"))
+			Expect(workload.ImageRegistries).To(Not(BeNil()))
+			Expect(workload.ImageRegistries.AuthFile).To(Equal(authFileContent))
+
+			Expect(eventsRecorder.Events).ToNot(Receive())
+		})
+
+		It("Image registry authfile is included when secret namespace is missing", func() {
+			// given
+			deviceName := "foo"
+			device := getDevice(deviceName)
+			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), deviceName, testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			deploymentData := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					Type: "pod",
+					Pod:  v1alpha1.Pod{},
+					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
+						AuthFileSecret: &v1alpha1.ObjectRef{
+							Name: "fooSecret",
+						},
+					},
+				}}
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload1", testNamespace).
+				Return(deploymentData, nil)
+
+			authFileContent := "authfile-content"
+			registryAuth.EXPECT().
+				GetAuthFileFromSecret(gomock.Any(), gomock.Eq(deploymentData.Namespace), gomock.Eq("fooSecret")).
+				Return(authFileContent, nil)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+			config := validateAndGetDeviceConfig(res)
+
+			Expect(config.DeviceID).To(Equal(deviceName))
+			Expect(config.Workloads).To(HaveLen(1))
+			workload := config.Workloads[0]
+			Expect(workload.Name).To(Equal("workload1"))
+			Expect(workload.ImageRegistries).To(Not(BeNil()))
+			Expect(workload.ImageRegistries.AuthFile).To(Equal(authFileContent))
+
+			Expect(eventsRecorder.Events).ToNot(Receive())
+		})
+
+		It("Image registry authfile retrieval error", func() {
+			// given
+			deviceName := "foo"
+			device := getDevice(deviceName)
+			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), deviceName, testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			deploymentData := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					Type: "pod",
+					Pod:  v1alpha1.Pod{},
+					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
+						AuthFileSecret: &v1alpha1.ObjectRef{
+							Name:      "fooSecret",
+							Namespace: "fooNamespace",
+						},
+					},
+				}}
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload1", testNamespace).
+				Return(deploymentData, nil)
+
+			registryAuth.EXPECT().
+				GetAuthFileFromSecret(gomock.Any(), gomock.Eq("fooNamespace"), gomock.Eq("fooSecret")).
+				Return("", fmt.Errorf("failure"))
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
+
+			Expect(eventsRecorder.Events).To(HaveLen(1))
+			Expect(eventsRecorder.Events).To(Receive(ContainSubstring("Auth file secret")))
 		})
 
 	})
