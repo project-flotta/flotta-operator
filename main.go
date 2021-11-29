@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"log"
 	"net/http"
 	"os"
@@ -154,8 +155,10 @@ func main() {
 	}
 
 	go func() {
+		registryAuth := images.NewRegistryAuth(mgr.GetClient())
 		h, err := restapi.Handler(restapi.Config{
-			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, claimer, initialDeviceNamespace, mgr.GetEventRecorderFor("edgedeployment-controller")),
+			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, claimer,
+				initialDeviceNamespace, mgr.GetEventRecorderFor("edgedeployment-controller"), registryAuth),
 		})
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
