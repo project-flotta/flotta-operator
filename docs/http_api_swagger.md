@@ -506,7 +506,7 @@ Status: Internal Server Error
 
 
 
-### <span id="image-repositories"></span> image-repositories
+### <span id="image-registries"></span> image-registries
 
 
   
@@ -517,7 +517,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| authFile | string| `string` |  | | Image repositories authfile created by executing `podman login` or `docker login` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured. |  |
+| authFile | string| `string` |  | | Image registries authfile created by executing `podman login` or `docker login` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured. |  |
 
 
 
@@ -682,7 +682,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | | Configuration for data transfer |  |
-| imageRepositories | [ImageRepositories](#image-repositories)| `ImageRepositories` |  | | Image repositories configuration |  |
+| imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | | Image registries configuration |  |
 | name | string| `string` |  | | Name of the workload |  |
 | specification | string| `string` |  | |  |  |
 

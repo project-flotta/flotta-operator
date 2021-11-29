@@ -100,7 +100,7 @@ spec:
                       are ANDed.
                     type: object
                 type: object
-              imageRepositories:
+              imageRegistries:
                 properties:
                   secretRef:
                     properties:
