@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/jakub-dzon/k4e-operator/internal/labels"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
@@ -42,7 +43,11 @@ type EdgeDeploymentReconciler struct {
 	Scheme                   *runtime.Scheme
 	EdgeDeploymentRepository edgedeployment.Repository
 	EdgeDeviceRepository     edgedevice.Repository
+	Concurrency              uint
+	ExecuteConcurrent        func(uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
 }
+
+type ConcurrentFunc func([]managementv1alpha1.EdgeDevice) []error
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments/status,verbs=get;update;patch
@@ -120,18 +125,25 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 func (r *EdgeDeploymentReconciler) finalizeRemoval(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeDeployment *managementv1alpha1.EdgeDeployment) error {
-	var errs []error
-	for _, edgeDevice := range edgeDevices {
-		err := r.removeDeploymentFromDevice(ctx, edgeDeployment.Name, edgeDevice)
-		if err != nil {
-			errs = append(errs, err)
-		}
+	f := func(input []managementv1alpha1.EdgeDevice) []error {
+		return r.removeDeploymentFromDevices(ctx, input, edgeDeployment.Name)
 	}
+	errs := r.executeConcurrent(ctx, f, edgeDevices)
 	if len(errs) != 0 {
 		return fmt.Errorf(mergeErrorMessages(errs))
 	}
 	return r.EdgeDeploymentRepository.RemoveFinalizer(ctx, edgeDeployment, YggdrasilDeviceReferenceFinalizer)
+}
 
+func (r *EdgeDeploymentReconciler) removeDeploymentFromDevices(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeDeployment string) []error {
+	var errs []error
+	for _, edgeDevice := range edgeDevices {
+		err := r.removeDeploymentFromDevice(ctx, edgeDeployment, edgeDevice)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
 }
 
 func (r *EdgeDeploymentReconciler) removeDeploymentFromDevice(ctx context.Context, name string, edgeDevice managementv1alpha1.EdgeDevice) error {
@@ -164,16 +176,22 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx co
 	for _, device := range matchingDevices {
 		matchingDevicesMap[device.Name] = struct{}{}
 	}
-	var errs []error
-	for _, device := range labelledDevices {
-		if _, ok := matchingDevicesMap[device.Name]; !ok {
-			err := r.removeDeploymentFromDevice(ctx, name, device)
-			if err != nil {
-				errs = append(errs, err)
-				continue
+
+	f := func(input []managementv1alpha1.EdgeDevice) []error {
+		var errs []error
+		for _, device := range input {
+			if _, ok := matchingDevicesMap[device.Name]; !ok {
+				err := r.removeDeploymentFromDevice(ctx, name, device)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
 			}
 		}
+		return errs
 	}
+
+	errs := r.executeConcurrent(ctx, f, labelledDevices)
 	if len(errs) != 0 {
 		return fmt.Errorf(mergeErrorMessages(errs))
 	}
@@ -182,31 +200,36 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx co
 }
 
 func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, name string, edgeDevices []managementv1alpha1.EdgeDevice) error {
-	var errs []error
-	for _, edgeDevice := range edgeDevices {
-		if !hasDeployment(edgeDevice, name) {
-			deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
-			patch := client.MergeFrom(edgeDevice.DeepCopy())
-			edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
-			err := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
-			if err != nil {
-				errs = append(errs, err)
-				continue
+	f := func(input []managementv1alpha1.EdgeDevice) []error {
+		var errs []error
+		for _, edgeDevice := range input {
+			if !hasDeployment(edgeDevice, name) {
+				deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
+				patch := client.MergeFrom(edgeDevice.DeepCopy())
+				edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
+				err := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+			}
+			if !hasLabelForDeployment(edgeDevice, name) {
+				deviceCopy := edgeDevice.DeepCopy()
+				if deviceCopy.Labels == nil {
+					deviceCopy.Labels = make(map[string]string)
+				}
+				deviceCopy.Labels[labels.WorkloadLabel(name)] = "true"
+				err := r.EdgeDeviceRepository.Patch(ctx, &edgeDevice, deviceCopy)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
 			}
 		}
-		if !hasLabelForDeployment(edgeDevice, name) {
-			deviceCopy := edgeDevice.DeepCopy()
-			if deviceCopy.Labels == nil {
-				deviceCopy.Labels = make(map[string]string)
-			}
-			deviceCopy.Labels[labels.WorkloadLabel(name)] = "true"
-			err := r.EdgeDeviceRepository.Patch(ctx, &edgeDevice, deviceCopy)
-			if err != nil {
-				errs = append(errs, err)
-				continue
-			}
-		}
+
+		return errs
 	}
+	errs := r.executeConcurrent(ctx, f, edgeDevices)
 	if len(errs) != 0 {
 		return fmt.Errorf(mergeErrorMessages(errs))
 	}
@@ -236,11 +259,45 @@ func (r *EdgeDeploymentReconciler) getLabelledEdgeDevices(ctx context.Context, n
 	return r.EdgeDeviceRepository.ListForSelector(ctx, &selector, namespace)
 }
 
+func (r *EdgeDeploymentReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+	var errs []error
+	if r.Concurrency == 1 {
+		errs = f(edgeDevices)
+	} else {
+		errs = r.ExecuteConcurrent(r.Concurrency, f, edgeDevices)
+	}
+	return errs
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *EdgeDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&managementv1alpha1.EdgeDeployment{}).
 		Complete(r)
+}
+
+func ExecuteConcurrent(concurrency uint, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+	if len(edgeDevices) == 0 || concurrency == 0 {
+		return nil
+	}
+	inputs := splitEdgeDevices(edgeDevices, concurrency)
+	nInputs := len(inputs)
+	returnValues := make([][]error, nInputs)
+	var wg sync.WaitGroup
+	wg.Add(nInputs)
+	for i := 0; i < nInputs; i++ {
+		index := i
+		go func() {
+			defer wg.Done()
+			returnValues[index] = f(inputs[index])
+		}()
+	}
+	wg.Wait()
+	var result []error
+	for _, returnValue := range returnValues {
+		result = append(result, returnValue...)
+	}
+	return result
 }
 
 func hasLabelForDeployment(edgeDevice managementv1alpha1.EdgeDevice, deploymentName string) bool {
@@ -284,4 +341,27 @@ func mergeErrorMessages(errs []error) string {
 		message += ", " + err.Error()
 	}
 	return message
+}
+
+func splitEdgeDevices(edgeDevices []managementv1alpha1.EdgeDevice, splitSize uint) [][]managementv1alpha1.EdgeDevice {
+	if splitSize == 0 {
+		return nil
+	}
+	intX := int(splitSize)
+	sLen := len(edgeDevices)
+	var result [][]managementv1alpha1.EdgeDevice
+	splitLen := sLen / intX
+	residueLen := sLen - (splitLen * intX)
+	newSliceLen := 0
+	for usedLen := 0; usedLen < sLen; usedLen += newSliceLen {
+		residueExtra := 0
+		if residueLen > 0 {
+			residueExtra = 1
+			residueLen--
+		}
+		newSliceLen = splitLen + residueExtra
+		newSlice := edgeDevices[usedLen : usedLen+newSliceLen]
+		result = append(result, newSlice)
+	}
+	return result
 }
