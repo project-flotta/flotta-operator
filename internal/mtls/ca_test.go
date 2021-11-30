@@ -70,7 +70,7 @@ var _ = Describe("CA test", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("No namespace does not exists", func() {
+		It("No namespace exists", func() {
 			// given
 			config := mtls.NewMTLSconfig(k8sClient, "falsy", []string{"foo.com"}, true)
 
@@ -167,7 +167,7 @@ var _ = Describe("CA test", func() {
 				config.InitCertificates()
 
 				// when
-				err := config.CreateRegistrationClient()
+				err := config.CreateRegistrationClientCerts()
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -180,7 +180,7 @@ var _ = Describe("CA test", func() {
 				config.SetCAProvider([]mtls.CAProvider{})
 
 				// when
-				err := config.CreateRegistrationClient()
+				err := config.CreateRegistrationClientCerts()
 
 				// then
 				Expect(err).To(HaveOccurred())
@@ -191,7 +191,7 @@ var _ = Describe("CA test", func() {
 				config := mtls.NewMTLSconfig(k8sClient, namespace, dnsNames, false)
 
 				// when
-				err := config.CreateRegistrationClient()
+				err := config.CreateRegistrationClientCerts()
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -277,7 +277,7 @@ var _ = Describe("CA test", func() {
 				Expect(res).To(BeFalse())
 			})
 
-			It("Lastet CA certificate is valid", func() {
+			It("Last CA certificate is valid", func() {
 				// given
 				cert := createRegistrationClientCert(ca[1])
 				r := &http.Request{
@@ -360,7 +360,7 @@ var _ = Describe("CA test", func() {
 				Expect(res).To(BeTrue())
 			})
 
-			It("Invalid certificate is correct", func() {
+			It("Invalid certificate is rejected", func() {
 
 				// given
 				cert := createClientCert(createCACert())

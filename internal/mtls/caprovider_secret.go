@@ -107,9 +107,9 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 		KeyUsage:     x509.KeyUsageDigitalSignature,
 	}
 
-	certGroup, err := getKeyAndCSR(cert, CACert)
+	certGroup, err := createKeyAndCSR(cert, CACert)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot sign certificate request")
+		return nil, fmt.Errorf("Cannot sign certificate request: %v", err)
 	}
 	certGroup.CreatePem()
 

@@ -55,22 +55,29 @@ func NewCertificateGroupFromCACM(configMap map[string][]byte) (*CertificateGroup
 }
 
 // CreatePem from the load certificates create the PEM file and stores in local
-func (c *CertificateGroup) CreatePem() {
+func (c *CertificateGroup) CreatePem() error {
 
 	caPEM := new(bytes.Buffer)
-	pem.Encode(caPEM, &pem.Block{
+	err := pem.Encode(caPEM, &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: c.certBytes,
 	})
-
-	c.certPEM = caPEM
+	if err != nil {
+		return err
+	}
 
 	privKeyPEM := new(bytes.Buffer)
-	pem.Encode(privKeyPEM, &pem.Block{
+	err = pem.Encode(privKeyPEM, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(c.privKey),
 	})
+
+	if err != nil {
+		return err
+	}
+	c.certPEM = caPEM
 	c.PrivKeyPEM = privKeyPEM
+	return nil
 }
 
 func (c *CertificateGroup) parseSignedCertificate() error {
@@ -119,12 +126,15 @@ func getCACertificate() (*CertificateGroup, error) {
 		privKey:   caPrivKey,
 		certBytes: caBytes,
 	}
-	certificateBundle.CreatePem()
+	err = certificateBundle.CreatePem()
+	if err != nil {
+		return nil, fmt.Errorf("Cannot encode certificate: %v", err)
+	}
 	certificateBundle.parseSignedCertificate()
 	return &certificateBundle, nil
 }
 
-func getKeyAndCSR(cert *x509.Certificate, caCert *CertificateGroup) (*CertificateGroup, error) {
+func createKeyAndCSR(cert *x509.Certificate, caCert *CertificateGroup) (*CertificateGroup, error) {
 
 	certKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -170,5 +180,5 @@ func getServerCertificate(dnsNames []string, localhostEnabled bool, CACert *Cert
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:     x509.KeyUsageDigitalSignature,
 	}
-	return getKeyAndCSR(cert, CACert)
+	return createKeyAndCSR(cert, CACert)
 }

@@ -115,15 +115,15 @@ func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, err
 	return tlsConfig, CACertChain, nil
 }
 
-func (conf *TLSConfig) CreateRegistrationClient() error {
-
-	name := fmt.Sprintf("%s-%s",
-		regClientSecretNamePrefix,
-		utilrand.String(regClientSecretNameRandomLen))
+func (conf *TLSConfig) CreateRegistrationClientCerts() error {
 
 	if len(conf.caProvider) == 0 {
 		return fmt.Errorf("Cannot get ca provider")
 	}
+
+	name := fmt.Sprintf("%s-%s",
+		regClientSecretNamePrefix,
+		utilrand.String(regClientSecretNameRandomLen))
 
 	certData, err := conf.caProvider[0].CreateRegistrationCertificate(name)
 	if err != nil {

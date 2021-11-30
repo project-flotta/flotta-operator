@@ -84,7 +84,7 @@ var Config struct {
 	HttpPort uint16 `envconfig:"HTTP_PORT" default:"8888"`
 
 	// The port of the HTTPs server
-	HttpsPort uint16 `envconfig:"HTTP_PORT" default:"8443"`
+	HttpsPort uint16 `envconfig:"HTTP_PORT" default:"8043"`
 
 	// Domain where TLS certificate listen.
 	// FIXME check default here
@@ -229,7 +229,7 @@ func main() {
 		}
 
 		// @TODO check here what to do with leftovers or if a new one is need to be created
-		err = MTLSconfig.CreateRegistrationClient()
+		err = MTLSconfig.CreateRegistrationClientCerts()
 		if err != nil {
 			setupLog.Error(err, "Cannot create registration client certificate")
 			os.Exit(1)
