@@ -140,7 +140,6 @@ func main() {
 	r, err := ctrl.GetConfig()
 	r.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(100, 1000)
 	mgr, err := ctrl.NewManager(r, ctrl.Options{
-		//mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     Config.MetricsAddr,
 		Port:                   Config.WebhookPort,
