@@ -126,7 +126,7 @@ func init() {
 
 func main() {
 	err := envconfig.Process("", &Config)
-	setupLog = ctrl.Log.WithName("setup")
+	setupLog = ctrl.LoggerFrom(context.TODO())
 
 	if err != nil {
 		setupLog.Error(err, "unable to process configuration values")
@@ -145,10 +145,16 @@ func main() {
 	}
 	opts := zap.Options{}
 	opts.Level = level
-	logger := zap.New(zap.UseFlagOptions(&opts))
+	logger := zap.New(zap.UseFlagOptions(&opts)).WithName("setup")
 	ctrl.SetLogger(logger)
 
-	setupLog = ctrl.Log
+	operatorNamespace, err := getOperatorNamespace()
+	if err != nil {
+		setupLog.Error(err, "cannot get the operator namespace")
+		os.Exit(1)
+	}
+	setupLog = ctrl.Log.WithValues("namespace", operatorNamespace)
+
 	setupLog.Info("Started with configuration", "configuration", Config)
 
 	r, err := ctrl.GetConfig()
@@ -287,12 +293,6 @@ func main() {
 			setupLog.Error(err, "cannot get the k8s client set")
 			os.Exit(1)
 		}
-		operatorNamespace, err := getOperatorNamespace()
-		if err != nil {
-			setupLog.Error(err, "cannot get the operator namespace")
-			os.Exit(1)
-		}
-		setupLog.V(1).Info("operator namespace found", "operatorNamespace", operatorNamespace)
 
 		currentConfigMap, err := k8sClient.CoreV1().ConfigMaps(operatorNamespace).Get(context.TODO(), defaultConfigMapName, metav1.GetOptions{})
 		if err != nil {
