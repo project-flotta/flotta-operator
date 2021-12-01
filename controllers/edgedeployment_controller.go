@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"github.com/jakub-dzon/k4e-operator/internal/labels"
+	"github.com/jakub-dzon/k4e-operator/internal/metrics"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/utils"
@@ -45,6 +46,7 @@ type EdgeDeploymentReconciler struct {
 	EdgeDeviceRepository     edgedevice.Repository
 	Concurrency              uint
 	ExecuteConcurrent        func(uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
+	Metrics                  metrics.Metrics
 }
 
 type ConcurrentFunc func([]managementv1alpha1.EdgeDevice) []error

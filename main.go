@@ -28,6 +28,7 @@ import (
 
 	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
+	"github.com/jakub-dzon/k4e-operator/internal/metrics"
 	"github.com/jakub-dzon/k4e-operator/internal/mtls"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
@@ -173,6 +174,7 @@ func main() {
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
 	edgeDeploymentRepository := edgedeployment.NewEdgeDeploymentRepository(mgr.GetClient())
 	claimer := storage.NewClaimer(mgr.GetClient())
+	metricsObj := metrics.New()
 
 	if err = (&controllers.EdgeDeviceReconciler{
 		Client:               mgr.GetClient(),
@@ -180,6 +182,7 @@ func main() {
 		EdgeDeviceRepository: edgeDeviceRepository,
 		Claimer:              claimer,
 		ObcAutoCreate:        Config.EnableObcAutoCreation,
+		Metrics:              metricsObj,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)
@@ -191,6 +194,7 @@ func main() {
 		EdgeDeploymentRepository: edgeDeploymentRepository,
 		Concurrency:              Config.EdgeDeploymentConcurrency,
 		ExecuteConcurrent:        controllers.ExecuteConcurrent,
+		Metrics:                  metricsObj,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDeployment")
 		os.Exit(1)
@@ -243,7 +247,8 @@ func main() {
 			k8sClient,
 			initialDeviceNamespace,
 			mgr.GetEventRecorderFor("edgedeployment-controller"),
-			registryAuth)
+			registryAuth,
+			metricsObj)
 
 		h, err := restapi.Handler(restapi.Config{
 			YggdrasilAPI: yggdrasilAPIHandler,

@@ -20,6 +20,8 @@ require (
 	github.com/onsi/ginkgo v1.14.1
 	github.com/onsi/gomega v1.10.2
 	github.com/openshift/api v3.9.0+incompatible
+	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_model v0.2.0
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.15.0
 	k8s.io/api v0.20.2

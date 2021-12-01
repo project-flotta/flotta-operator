@@ -21,6 +21,7 @@ import (
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/internal/hardware"
 	"github.com/jakub-dzon/k4e-operator/internal/images"
+	"github.com/jakub-dzon/k4e-operator/internal/metrics"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
@@ -58,13 +59,14 @@ type Handler struct {
 	initialNamespace       string
 	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
+	metrics                metrics.Metrics
 }
 
 type keyMapType = map[string]interface{}
 type secretMapType = map[string]keyMapType
 
 func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
-	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI) *Handler {
+	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics) *Handler {
 	return &Handler{
 		deviceRepository:       deviceRepository,
 		deploymentRepository:   deploymentRepository,
@@ -73,6 +75,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 		initialNamespace:       initialNamespace,
 		recorder:               recorder,
 		registryAuthRepository: registryAuth,
+		metrics:                metrics,
 	}
 }
 
@@ -293,6 +296,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		err = h.deviceRepository.Create(ctx, &device)
 		if err != nil {
 			logger.Error(err, "cannot save EdgeDevice")
+			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 		err = h.updateDeviceStatus(ctx, &device, func(device *v1alpha1.EdgeDevice) {
@@ -303,9 +307,11 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		if err != nil {
 			logger.Error(err, "cannot update EdgeDevice status")
+			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 		logger.Info("EdgeDevice created")
+		h.metrics.IncEdgeDeviceSuccessfulRegistration()
 		return operations.NewPostDataMessageForDeviceOK()
 	default:
 		logger.Info("received unknown message", "message", msg)

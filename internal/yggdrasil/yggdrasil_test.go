@@ -21,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/jakub-dzon/k4e-operator/internal/metrics"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
@@ -48,6 +49,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl           *gomock.Controller
 		deployRepoMock     *edgedeployment.MockRepository
 		edgeDeviceRepoMock *edgedevice.MockRepository
+		metricsMock        *metrics.MockMetrics
 		registryAuth       *images.MockRegistryAuthAPI
 		handler            *yggdrasil.Handler
 		eventsRecorder     *record.FakeRecorder
@@ -61,10 +63,11 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
+		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
 		k8sClient = k8sclient.NewMockK8sClient(mockCtrl)
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, k8sClient, testNamespace, eventsRecorder, registryAuth)
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, k8sClient, testNamespace, eventsRecorder, registryAuth, metricsMock)
 	})
 
 	AfterEach(func() {
@@ -1593,6 +1596,10 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil).
 					Times(1)
 
+				metricsMock.EXPECT().
+					IncEdgeDeviceSuccessfulRegistration().
+					AnyTimes()
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -1640,6 +1647,10 @@ var _ = Describe("Yggdrasil", func() {
 					}).
 					Return(nil).
 					Times(1)
+
+				metricsMock.EXPECT().
+					IncEdgeDeviceSuccessfulRegistration().
+					AnyTimes()
 
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
@@ -1696,6 +1707,10 @@ var _ = Describe("Yggdrasil", func() {
 					Return(fmt.Errorf("Failed")).
 					Times(1)
 
+				metricsMock.EXPECT().
+					IncEdgeDeviceFailedRegistration().
+					AnyTimes()
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -1742,6 +1757,10 @@ var _ = Describe("Yggdrasil", func() {
 					Read(gomock.Any(), deviceName, testNamespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(3)
+
+				metricsMock.EXPECT().
+					IncEdgeDeviceFailedRegistration().
+					AnyTimes()
 
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
