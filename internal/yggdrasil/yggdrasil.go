@@ -69,7 +69,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 	}
 }
 
-func isRegisteredURL(url *url.URL) bool {
+func isRegistrationURL(url *url.URL) bool {
 	parts := strings.Split(url.Path, "/")
 	if len(parts) == 0 {
 		return false
@@ -79,9 +79,9 @@ func isRegisteredURL(url *url.URL) bool {
 	return last == "registration"
 }
 
-func (h *Handler) SetAuthType(r *http.Request) int {
+func (h *Handler) GetAuthType(r *http.Request) int {
 	res := YggdrasilCompleteAuth
-	if isRegisteredURL(r.URL) {
+	if isRegistrationURL(r.URL) {
 		res = YggdrasilRegisterAuth
 	}
 	return res

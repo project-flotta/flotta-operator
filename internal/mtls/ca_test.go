@@ -7,7 +7,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"fmt"
 	"math/big"
 	"net"
 	"net/http"
@@ -43,7 +42,6 @@ var _ = Describe("CA test", func() {
 		)
 
 		BeforeEach(func() {
-			fmt.Println(namespace)
 			By("bootstrapping test environment")
 			testEnv = &envtest.Environment{
 				CRDDirectoryPaths: []string{
@@ -72,7 +70,7 @@ var _ = Describe("CA test", func() {
 
 		It("No namespace exists", func() {
 			// given
-			config := mtls.NewMTLSconfig(k8sClient, "falsy", []string{"foo.com"}, true)
+			config := mtls.NewMTLSConfig(k8sClient, "falsy", []string{"foo.com"}, true)
 
 			// when
 			tlsConfig, caChain, err := config.InitCertificates()
@@ -87,7 +85,7 @@ var _ = Describe("CA test", func() {
 
 		It("retrieve correctly", func() {
 			// given
-			config := mtls.NewMTLSconfig(k8sClient, namespace, dnsNames, true)
+			config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, true)
 
 			// when
 			tlsConfig, caChain, err := config.InitCertificates()
@@ -111,7 +109,7 @@ var _ = Describe("CA test", func() {
 
 		It("Server cert without localhost IPS", func() {
 			// given
-			config := mtls.NewMTLSconfig(k8sClient, namespace, dnsNames, false)
+			config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
 
 			// when
 			tlsConfig, caChain, err := config.InitCertificates()
@@ -133,7 +131,7 @@ var _ = Describe("CA test", func() {
 
 		It("No CaProviders defined", func() {
 			// given
-			config := mtls.NewMTLSconfig(k8sClient, namespace, dnsNames, false)
+			config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
 			config.SetCAProvider([]mtls.CAProvider{})
 
 			// when
@@ -163,7 +161,7 @@ var _ = Describe("CA test", func() {
 
 			It("Create cert", func() {
 				// given
-				config := mtls.NewMTLSconfig(k8sClient, namespace, dnsNames, false)
+				config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
 				config.InitCertificates()
 
 				// when
@@ -176,7 +174,7 @@ var _ = Describe("CA test", func() {
 
 			It("Not valid CA set ", func() {
 				// given
-				config := mtls.NewMTLSconfig(k8sClient, namespace, dnsNames, false)
+				config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
 				config.SetCAProvider([]mtls.CAProvider{})
 
 				// when
@@ -188,7 +186,7 @@ var _ = Describe("CA test", func() {
 
 			It("If ca not started return new one", func() {
 				// given
-				config := mtls.NewMTLSconfig(k8sClient, namespace, dnsNames, false)
+				config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
 
 				// when
 				err := config.CreateRegistrationClientCerts()

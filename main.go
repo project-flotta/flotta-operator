@@ -88,7 +88,7 @@ var Config struct {
 
 	// Domain where TLS certificate listen.
 	// FIXME check default here
-	Domain string `envconfig:"Domain" default:"k4e.com"`
+	Domain string `envconfig:"DOMAIN" default:"k4e.com"`
 
 	// If TLS server certificates should work on 127.0.0.1
 	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
@@ -219,7 +219,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		MTLSconfig := mtls.NewMTLSconfig(mgr.GetClient(), operatorNamespace,
+		MTLSconfig := mtls.NewMTLSConfig(mgr.GetClient(), operatorNamespace,
 			[]string{Config.Domain}, Config.TLSLocalhostEnabled)
 
 		tlsConfig, CACertChain, err := MTLSconfig.InitCertificates()
@@ -257,7 +257,7 @@ func main() {
 				// to renew client certificates, and because some devices can be
 				// disconnected for days and does not have the option to renew it.
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					authType := yggdrasilAPIHandler.SetAuthType(r)
+					authType := yggdrasilAPIHandler.GetAuthType(r)
 					if !mtls.VerifyRequest(r, authType, opts, CACertChain) {
 						w.WriteHeader(http.StatusUnauthorized)
 						return

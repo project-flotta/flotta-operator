@@ -52,15 +52,15 @@ func (config *CASecretProvider) GetCACertificate() (*CertificateGroup, error) {
 		Name:      CASecretName,
 	}, &secret)
 
+	if !errors.IsNotFound(err) && err != nil {
+		return nil, err
+	}
+
 	if err == nil {
 		// Certificate is already created, parse it as *certificateGroup and return
 		// it
-		certGroup, err := NewCertificateGroupFromCACM(secret.Data)
+		certGroup, err := NewCertificateGroupFromSecret(secret.Data)
 		return certGroup, err
-	}
-
-	if !errors.IsNotFound(err) {
-		return nil, err
 	}
 
 	certificateGroup, err := getCACertificate()
@@ -97,7 +97,6 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 		Subject: pkix.Name{
 			CommonName:   certRegisterCN,
 			Organization: []string{certOrganization},
-			// Country:      []string{"US"},
 			SerialNumber: name,
 		},
 		NotBefore:    time.Now(),

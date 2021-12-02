@@ -24,12 +24,14 @@ type CertificateGroup struct {
 	PrivKeyPEM *bytes.Buffer
 }
 
-func NewCertificateGroupFromCACM(configMap map[string][]byte) (*CertificateGroup, error) {
+func NewCertificateGroupFromSecret(secretData map[string][]byte) (*CertificateGroup, error) {
 	certGroup := &CertificateGroup{
-		certPEM:    bytes.NewBuffer(configMap["ca.crt"]),
-		PrivKeyPEM: bytes.NewBuffer(configMap["ca.key"]),
+		certPEM:    bytes.NewBuffer(secretData["ca.crt"]),
+		PrivKeyPEM: bytes.NewBuffer(secretData["ca.key"]),
 	}
 
+	// @TODO These can be multiple certificate, but we only check one, because is
+	// how we handle right now.
 	block, _ := pem.Decode(certGroup.certPEM.Bytes())
 	if block == nil {
 		return nil, fmt.Errorf("Cannot get CA certificate")
@@ -86,7 +88,7 @@ func (c *CertificateGroup) parseSignedCertificate() error {
 	return err
 }
 
-// GetCertificate returns the certificate Group in tls.Certficicate format.
+// GetCertificate returns the certificate Group in tls.Certificate format.
 func (c *CertificateGroup) GetCertificate() (tls.Certificate, error) {
 	return tls.X509KeyPair(c.certPEM.Bytes(), c.PrivKeyPEM.Bytes())
 }
@@ -99,7 +101,7 @@ func getCACertificate() (*CertificateGroup, error) {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().Unix()),
 		Subject: pkix.Name{
-			Organization: []string{"K4e-operator"},
+			Organization: []string{serverCertOrganization},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
@@ -170,7 +172,6 @@ func getServerCertificate(dnsNames []string, localhostEnabled bool, CACert *Cert
 		Subject: pkix.Name{
 			CommonName:   "*", // CommonName match all, and using ASN names
 			Organization: []string{serverCertOrganization},
-			Country:      []string{"US"},
 		},
 		DNSNames:     dnsNames,
 		IPAddresses:  ips,

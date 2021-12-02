@@ -21,7 +21,7 @@ const (
 	regClientSecretLabelKey      = "reg-client-ca"
 )
 
-// The main reason to have an interface here is to be able to extend this to
+// CAProvider The main reason to have an interface here is to be able to extend this to
 // future Cert providers, like:
 // - Vault
 // - Acme protocol
@@ -41,7 +41,7 @@ type TLSConfig struct {
 	namespace        string
 }
 
-func NewMTLSconfig(client client.Client, namespace string, domains []string, localhostEnabled bool) *TLSConfig {
+func NewMTLSConfig(client client.Client, namespace string, domains []string, localhostEnabled bool) *TLSConfig {
 	config := &TLSConfig{
 		config:           nil,
 		client:           client,
@@ -64,7 +64,7 @@ func (conf *TLSConfig) SetCAProvider(caProviders []CAProvider) {
 
 func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, error) {
 	if len(conf.caProvider) == 0 {
-		return nil, nil, fmt.Errorf("No provider set")
+		return nil, nil, fmt.Errorf("no CA provider is set")
 	}
 
 	var errors error
@@ -92,7 +92,7 @@ func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, err
 	}
 
 	if len(caCerts) == 0 {
-		return nil, nil, fmt.Errorf("Cannot get any CA certificate")
+		return nil, nil, fmt.Errorf("cannot get any CA certificate")
 	}
 
 	// We always sign the certificates with the first CA server. I guess that it's normal
@@ -148,20 +148,15 @@ func (conf *TLSConfig) CreateRegistrationClientCerts() error {
 // for registration endpoint, we cannot assume that it'll be ok.
 func isClientCertificateSigned(PeerCertificates []*x509.Certificate, CAChain []*x509.Certificate) bool {
 	for _, cert := range PeerCertificates {
-		certValid := false
 		for _, caCert := range CAChain {
 			err := cert.CheckSignatureFrom(caCert)
 			// TODO log debug here with the error. Can be too verbose.
 			if err == nil {
-				certValid = true
-				break
+				return true
 			}
 		}
-		if !certValid {
-			return false
-		}
 	}
-	return true
+	return false
 }
 
 // VerifyRequest check certificate based on the scenario needed:
@@ -179,15 +174,14 @@ func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOption
 		return res
 	}
 
-	valid := true
 	for _, cert := range r.TLS.PeerCertificates {
 		if cert.Subject.CommonName == certRegisterCN {
-			valid = false
+			return false
 		}
 		if _, err := cert.Verify(verifyOpts); err != nil {
 			// TODO log debug here with the error. Can be too verbose.
 			return false
 		}
 	}
-	return valid
+	return true
 }
