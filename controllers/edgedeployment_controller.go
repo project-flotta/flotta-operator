@@ -64,7 +64,7 @@ type ConcurrentFunc func([]managementv1alpha1.EdgeDevice) []error
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling", "request", req)
+	logger.Info("Reconciling", "edgeDeployment", req)
 
 	// your logic here
 	edgeDeployment, err := r.EdgeDeploymentRepository.Read(ctx, req.Name, req.Namespace)

@@ -184,7 +184,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.Info("received heartbeat", "content", heartbeat)
+		logger.V(1).Info("received heartbeat", "content", heartbeat)
 		edgeDevice, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -236,7 +236,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.Info("received registration info", "content", registrationInfo)
+		logger.V(1).Info("received registration info", "content", registrationInfo)
 		now := metav1.Now()
 		device := v1alpha1.EdgeDevice{
 			Spec: v1alpha1.EdgeDeviceSpec{
