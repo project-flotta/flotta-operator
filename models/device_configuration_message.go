@@ -23,6 +23,9 @@ type DeviceConfigurationMessage struct {
 	// Device identifier
 	DeviceID string `json:"device_id,omitempty"`
 
+	// List of secrets used by the workloads
+	Secrets SecretList `json:"secrets,omitempty"`
+
 	// version
 	Version string `json:"version,omitempty"`
 
@@ -39,6 +42,10 @@ func (m *DeviceConfigurationMessage) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateConfiguration(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSecrets(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -69,6 +76,22 @@ func (m *DeviceConfigurationMessage) validateConfiguration(formats strfmt.Regist
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfigurationMessage) validateSecrets(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Secrets) { // not required
+		return nil
+	}
+
+	if err := m.Secrets.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("secrets")
+		}
+		return err
 	}
 
 	return nil

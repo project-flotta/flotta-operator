@@ -27,6 +27,7 @@ import (
 	"strings"
 
 	"github.com/jakub-dzon/k4e-operator/internal/images"
+	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
 	"github.com/jakub-dzon/k4e-operator/internal/mtls"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
@@ -239,10 +240,13 @@ func main() {
 			Intermediates: x509.NewCertPool(),
 		}
 
+		k8sClient := k8sclient.NewK8sClient(mgr.GetClient())
+
 		yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
 			edgeDeviceRepository,
 			edgeDeploymentRepository,
 			claimer,
+			k8sClient,
 			initialDeviceNamespace,
 			mgr.GetEventRecorderFor("edgedeployment-controller"),
 			registryAuth)

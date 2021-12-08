@@ -360,6 +360,7 @@ Status: Internal Server Error
 |------|------|---------|:--------:| ------- |-------------|---------|
 | configuration | [DeviceConfiguration](#device-configuration)| `DeviceConfiguration` |  | |  |  |
 | device_id | string| `string` |  | | Device identifier |  |
+| secrets | [SecretList](#secret-list)| `SecretList` |  | | List of secrets used by the workloads |  |
 | version | string| `string` |  | |  |  |
 | workloads | [WorkloadList](#workload-list)| `WorkloadList` |  | | List of workloads deployed to the device |  |
 | workloads_monitoring_interval | integer| `int64` |  | | Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed |  |
@@ -636,6 +637,29 @@ Status: Internal Server Error
 | bucket_region | string| `string` |  | |  |  |
 
 
+
+### <span id="secret"></span> secret
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| data | string| `string` |  | | The secret's data section in JSON format |  |
+| name | string| `string` |  | | Name of the secret |  |
+
+
+
+### <span id="secret-list"></span> secret-list
+
+
+  
+
+[][Secret](#secret)
 
 ### <span id="storage-configuration"></span> storage-configuration
 
