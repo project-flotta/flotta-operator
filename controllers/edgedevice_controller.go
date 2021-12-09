@@ -62,17 +62,15 @@ type EdgeDeviceReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling", "request", req)
+	logger.Info("Reconciling", "edgeDevice", req)
 
 	edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, req.Name, req.Namespace)
 	if err != nil {
-
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{Requeue: true}, err
 	}
-	logger.Info("Reconciling", "edgeDevice", edgeDevice)
 
 	if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice) {
 		return ctrl.Result{}, nil
@@ -99,18 +97,18 @@ func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *m
 		return obc, err
 	}
 
-	logger := log.FromContext(ctx, "DeviceID", edgeDevice.Name)
+	logger := log.FromContext(ctx, "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)
 	if errors.IsNotFound(err) {
-		logger.Info("Failed to find an existing OBC for the device. Creating new OBC", "edgeDevice", edgeDevice)
+		logger.Info("Failed to find an existing OBC for the device. Creating new OBC")
 		obc, err = r.Claimer.CreateClaim(ctx, edgeDevice)
 		if err != nil {
-			logger.Error(err, "Cannot create object bucket claim for the device", "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)
+			logger.Error(err, "Cannot create object bucket claim for the device")
 			return nil, err
 		}
 		return obc, nil
 	}
 
-	logger.Error(err, "Failed to get OBC for the device", "edgeDevice", edgeDevice)
+	logger.Error(err, "Failed to get OBC for the device")
 	return nil, err
 }
 

@@ -6,34 +6,35 @@ package images
 
 import (
 	context "context"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
-// MockRegistryAuthAPI is a mock of RegistryAuthAPI interface
+// MockRegistryAuthAPI is a mock of RegistryAuthAPI interface.
 type MockRegistryAuthAPI struct {
 	ctrl     *gomock.Controller
 	recorder *MockRegistryAuthAPIMockRecorder
 }
 
-// MockRegistryAuthAPIMockRecorder is the mock recorder for MockRegistryAuthAPI
+// MockRegistryAuthAPIMockRecorder is the mock recorder for MockRegistryAuthAPI.
 type MockRegistryAuthAPIMockRecorder struct {
 	mock *MockRegistryAuthAPI
 }
 
-// NewMockRegistryAuthAPI creates a new mock instance
+// NewMockRegistryAuthAPI creates a new mock instance.
 func NewMockRegistryAuthAPI(ctrl *gomock.Controller) *MockRegistryAuthAPI {
 	mock := &MockRegistryAuthAPI{ctrl: ctrl}
 	mock.recorder = &MockRegistryAuthAPIMockRecorder{mock}
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use
+// EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRegistryAuthAPI) EXPECT() *MockRegistryAuthAPIMockRecorder {
 	return m.recorder
 }
 
-// GetAuthFileFromSecret mocks base method
+// GetAuthFileFromSecret mocks base method.
 func (m *MockRegistryAuthAPI) GetAuthFileFromSecret(arg0 context.Context, arg1, arg2 string) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAuthFileFromSecret", arg0, arg1, arg2)
@@ -42,7 +43,7 @@ func (m *MockRegistryAuthAPI) GetAuthFileFromSecret(arg0 context.Context, arg1, 
 	return ret0, ret1
 }
 
-// GetAuthFileFromSecret indicates an expected call of GetAuthFileFromSecret
+// GetAuthFileFromSecret indicates an expected call of GetAuthFileFromSecret.
 func (mr *MockRegistryAuthAPIMockRecorder) GetAuthFileFromSecret(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAuthFileFromSecret", reflect.TypeOf((*MockRegistryAuthAPI)(nil).GetAuthFileFromSecret), arg0, arg1, arg2)
