@@ -21,8 +21,8 @@ jobs:
     - name: Test
       run: make test
 
-    - name: Coverage
-      run: make test-create-coverage
+    - name: Checking generated files are up to date
+      run: git diff --quiet internal/ client/ restapi/ || echo "There are not committed changes"; git diff internal/ client/ restapi/; exit 1
 
     - uses: actions/upload-artifact@v2
       with:
