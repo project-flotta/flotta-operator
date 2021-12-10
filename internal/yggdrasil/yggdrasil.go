@@ -4,7 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/jakub-dzon/k4e-operator/internal/images"
+
+	"net/http"
+	"net/url"
+	"strings"
+
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -14,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/internal/hardware"
+	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
@@ -29,8 +34,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
-const YggdrasilWorkloadFinalizer = "yggdrasil-workload-finalizer"
+const (
+	YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
+	YggdrasilWorkloadFinalizer   = "yggdrasil-workload-finalizer"
+	YggdrasilRegisterAuth        = 1
+	YggdrasilCompleteAuth        = 0
+)
 
 var (
 	defaultHeartbeatConfiguration = models.HeartbeatConfiguration{
@@ -58,6 +67,24 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 		recorder:               recorder,
 		registryAuthRepository: registryAuth,
 	}
+}
+
+func isRegistrationURL(url *url.URL) bool {
+	parts := strings.Split(url.Path, "/")
+	if len(parts) == 0 {
+		return false
+	}
+
+	last := parts[len(parts)-1]
+	return last == "registration"
+}
+
+func (h *Handler) GetAuthType(r *http.Request) int {
+	res := YggdrasilCompleteAuth
+	if isRegistrationURL(r.URL) {
+		res = YggdrasilRegisterAuth
+	}
+	return res
 }
 
 func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {

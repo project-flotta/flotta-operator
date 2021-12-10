@@ -18,27 +18,25 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
-
-	"github.com/jakub-dzon/k4e-operator/internal/images"
-
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/go-logr/logr"
-	"github.com/jakub-dzon/k4e-operator/internal/storage"
-	routev1 "github.com/openshift/api/route/v1"
-	"go.uber.org/zap/zapcore"
-
+	"github.com/jakub-dzon/k4e-operator/internal/images"
+	"github.com/jakub-dzon/k4e-operator/internal/mtls"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
 	"github.com/jakub-dzon/k4e-operator/restapi"
 	watchers "github.com/jakub-dzon/k4e-operator/watchers"
 	"github.com/kelseyhightower/envconfig"
+	routev1 "github.com/openshift/api/route/v1"
+	"go.uber.org/zap/zapcore"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -72,12 +70,28 @@ const (
 
 var (
 	scheme   = runtime.NewScheme()
-	setupLog logr.Logger
+	setupLog = ctrl.Log.WithName("setup")
+
+	// @TODO read /var/run/secrets/kubernetes.io/serviceaccount/namespace to get
+	// the correct namespace if it's installed in k8s
+	operatorNamespace = "k4e-operator-system"
 )
 
 var Config struct {
+
+	// NOTE DEPRECATE
 	// The port of the HTTP server
 	HttpPort uint16 `envconfig:"HTTP_PORT" default:"8888"`
+
+	// The port of the HTTPs server
+	HttpsPort uint16 `envconfig:"HTTP_PORT" default:"8043"`
+
+	// Domain where TLS certificate listen.
+	// FIXME check default here
+	Domain string `envconfig:"DOMAIN" default:"k4e.com"`
+
+	// If TLS server certificates should work on 127.0.0.1
+	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
 
 	// The address the metric endpoint binds to.
 	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`
@@ -196,19 +210,75 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
-
+	registryAuth := images.NewRegistryAuth(mgr.GetClient())
 	go func() {
-		registryAuth := images.NewRegistryAuth(mgr.GetClient())
+
+		if !mgr.GetCache().WaitForCacheSync(context.TODO()) {
+			setupLog.Error(err, "Cache cannot start")
+			os.Exit(1)
+		}
+
+		MTLSconfig := mtls.NewMTLSConfig(mgr.GetClient(), operatorNamespace,
+			[]string{Config.Domain}, Config.TLSLocalhostEnabled)
+
+		tlsConfig, CACertChain, err := MTLSconfig.InitCertificates()
+		if err != nil {
+			setupLog.Error(err, "Cannot retrieve any MTLS configuration")
+			os.Exit(1)
+		}
+
+		// @TODO check here what to do with leftovers or if a new one is need to be created
+		err = MTLSconfig.CreateRegistrationClientCerts()
+		if err != nil {
+			setupLog.Error(err, "Cannot create registration client certificate")
+			os.Exit(1)
+		}
+
+		opts := x509.VerifyOptions{
+			Roots:         tlsConfig.ClientCAs,
+			Intermediates: x509.NewCertPool(),
+		}
+
+		yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
+			edgeDeviceRepository,
+			edgeDeploymentRepository,
+			claimer,
+			initialDeviceNamespace,
+			mgr.GetEventRecorderFor("edgedeployment-controller"),
+			registryAuth)
+
 		h, err := restapi.Handler(restapi.Config{
-			YggdrasilAPI: yggdrasil.NewYggdrasilHandler(edgeDeviceRepository, edgeDeploymentRepository, claimer,
-				initialDeviceNamespace, mgr.GetEventRecorderFor("edgedeployment-controller"), registryAuth),
+			YggdrasilAPI: yggdrasilAPIHandler,
+			InnerMiddleware: func(h http.Handler) http.Handler {
+				// This is needed for one reason. Registration endpoint can be
+				// triggered with a certificate signed by the CA, but can be expired
+				// The main reason to allow expired certificates in this endpoint, it's
+				// to renew client certificates, and because some devices can be
+				// disconnected for days and does not have the option to renew it.
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					authType := yggdrasilAPIHandler.GetAuthType(r)
+					if !mtls.VerifyRequest(r, authType, opts, CACertChain) {
+						w.WriteHeader(http.StatusUnauthorized)
+						return
+					}
+					h.ServeHTTP(w, r)
+				})
+			},
 		})
+
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
 		}
-		address := fmt.Sprintf(":%v", Config.HttpPort)
-		setupLog.Info("starting http server", "address", address)
-		log.Fatal(http.ListenAndServe(address, h))
+
+		//@TODO This is a hack to keep compatibility now, to be deleted.
+		go http.ListenAndServe(fmt.Sprintf(":%v", Config.HttpPort), h)
+
+		server := &http.Server{
+			Addr:      fmt.Sprintf(":%v", Config.HttpsPort),
+			TLSConfig: tlsConfig,
+			Handler:   h,
+		}
+		log.Fatal(server.ListenAndServeTLS("", ""))
 	}()
 
 	if isInCluster() {
