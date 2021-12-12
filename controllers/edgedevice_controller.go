@@ -47,7 +47,7 @@ type EdgeDeviceReconciler struct {
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices/finalizers,verbs=update
 //+kubebuilder:rbac:groups=objectbucket.io,resources=objectbucketclaims,verbs=get;list;watch;create;update;patch
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create
 //+kubebuilder:rbac:groups=core,resources=events,verbs=create;patch
 //+kubebuilder:rbac:groups=route.openshift.io,resources=routes,verbs=get;list;watch
 
