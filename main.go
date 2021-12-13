@@ -111,6 +111,9 @@ var Config struct {
 
 	// Number of concurrent goroutines to create for handling EdgeDeployment reconcile
 	EdgeDeploymentConcurrency uint `envconfig:"EDGEDEPLOYMENT_CONCURRENCY" default:"5"`
+
+	// Client Certificate expiration time
+	ClientCertExpirationTime uint `envconfig:"CLIENT_CERT_EXPIRATION_DAYS" default:"30"`
 }
 
 func init() {
@@ -215,6 +218,11 @@ func main() {
 
 		MTLSconfig := mtls.NewMTLSConfig(mgr.GetClient(), operatorNamespace,
 			[]string{Config.Domain}, Config.TLSLocalhostEnabled)
+
+		err = MTLSconfig.SetClientExpiration(int(Config.ClientCertExpirationTime))
+		if err != nil {
+			setupLog.Error(err, "Cannot set MTLS client certificate expiration time")
+		}
 
 		tlsConfig, CACertChain, err := MTLSconfig.InitCertificates()
 		if err != nil {

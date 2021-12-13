@@ -2,9 +2,12 @@ package mtls
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/pem"
 	"fmt"
+	"math/big"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -28,9 +31,12 @@ const (
 	serverCertOrganization = "k4e-operator"
 )
 
+// @TODO Add a watcher on the secret if it's manually updated to renew the
+// latestCA
 type CASecretProvider struct {
 	client    client.Client
 	namespace string
+	latestCA  *CertificateGroup
 }
 
 func NewCASecretProvider(client client.Client, namespace string) *CASecretProvider {
@@ -60,6 +66,7 @@ func (config *CASecretProvider) GetCACertificate() (*CertificateGroup, error) {
 		// Certificate is already created, parse it as *certificateGroup and return
 		// it
 		certGroup, err := NewCertificateGroupFromSecret(secret.Data)
+		config.latestCA = certGroup
 		return certGroup, err
 	}
 
@@ -83,6 +90,8 @@ func (config *CASecretProvider) GetCACertificate() (*CertificateGroup, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	config.latestCA = certificateGroup
 	return certificateGroup, err
 }
 
@@ -117,4 +126,56 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 		clientCertSecretKey: certGroup.PrivKeyPEM.Bytes(),
 	}
 	return res, nil
+}
+
+// SignCSR sign a new CertificateRequest and returns the PEM certificate.
+// This function is going to be used a lot, so using config.latestCA ensure
+// that APIServer is not overloaded with that.
+// Because the CM is always managed by this, should be safe to use that one.
+func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expiration time.Time) ([]byte, error) {
+	if config.latestCA == nil {
+		return nil, fmt.Errorf("Cannot get CA certificate")
+	}
+	// next blocks to be avoided just because we only sign one CSR. If more than
+	// one maybe it's an attack.
+	decodecCert, _ := pem.Decode([]byte(CSRPem))
+	if decodecCert == nil {
+		return nil, fmt.Errorf("Cannot decode CSR certificate")
+	}
+
+	CSR, err := x509.ParseCertificateRequest(decodecCert.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse CSR: %v", err)
+	}
+
+	clientCert := &x509.Certificate{
+		Signature:          CSR.Signature,
+		SignatureAlgorithm: CSR.SignatureAlgorithm,
+		PublicKeyAlgorithm: CSR.PublicKeyAlgorithm,
+		PublicKey:          CSR.PublicKey,
+		SerialNumber:       big.NewInt(time.Now().Unix()),
+		Subject:            CSR.Subject,
+		NotBefore:          time.Now(),
+		NotAfter:           expiration,
+		KeyUsage:           x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+
+	// We always make sure that commonName is the device one, so noone can try to
+	// get access to another device.
+	clientCert.Subject.CommonName = commonName
+	clientCert.Subject.Organization = []string{certOrganization}
+
+	certBytes, err := x509.CreateCertificate(
+		rand.Reader, clientCert, config.latestCA.cert, CSR.PublicKey, config.latestCA.privKey)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot sign certificate reques: %v", err)
+	}
+
+	certPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	})
+
+	return certPEM, nil
 }
