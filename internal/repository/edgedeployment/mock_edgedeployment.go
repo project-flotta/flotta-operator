@@ -35,21 +35,6 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
-// ListForEdgeDevice mocks base method.
-func (m *MockRepository) ListForEdgeDevice(arg0 context.Context, arg1, arg2 string) ([]v1alpha1.EdgeDeployment, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListForEdgeDevice", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]v1alpha1.EdgeDeployment)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ListForEdgeDevice indicates an expected call of ListForEdgeDevice.
-func (mr *MockRepositoryMockRecorder) ListForEdgeDevice(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListForEdgeDevice", reflect.TypeOf((*MockRepository)(nil).ListForEdgeDevice), arg0, arg1, arg2)
-}
-
 // Patch mocks base method.
 func (m *MockRepository) Patch(arg0 context.Context, arg1, arg2 *v1alpha1.EdgeDeployment) error {
 	m.ctrl.T.Helper()
