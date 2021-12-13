@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/fields"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	_ "github.com/golang/mock/mockgen/model"
@@ -12,7 +11,6 @@ import (
 
 //go:generate mockgen -package=edgedeployment -destination=mock_edgedeployment.go . Repository
 type Repository interface {
-	ListForEdgeDevice(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDeployment, error)
 	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeployment, error)
 	Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error
 	RemoveFinalizer(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment, finalizer string) error
@@ -24,24 +22,6 @@ type CRRespository struct {
 
 func NewEdgeDeploymentRepository(client client.Client) *CRRespository {
 	return &CRRespository{client: client}
-}
-
-func (r *CRRespository) ListForEdgeDevice(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDeployment, error) {
-	edl := v1alpha1.EdgeDeploymentList{}
-
-	selector, err := fields.ParseSelector("spec.device=" + name)
-	if err != nil {
-		return nil, err
-	}
-	options := client.ListOptions{
-		Namespace:     namespace,
-		FieldSelector: selector,
-	}
-	err = r.client.List(ctx, &edl, &options)
-	if err != nil {
-		return nil, err
-	}
-	return edl.Items, nil
 }
 
 func (r *CRRespository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeployment, error) {
