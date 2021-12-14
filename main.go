@@ -80,7 +80,7 @@ var Config struct {
 	HttpPort uint16 `envconfig:"HTTP_PORT" default:"8888"`
 
 	// The port of the HTTPs server
-	HttpsPort uint16 `envconfig:"HTTP_PORT" default:"8043"`
+	HttpsPort uint16 `envconfig:"HTTPS_PORT" default:"8043"`
 
 	// Domain where TLS certificate listen.
 	// FIXME check default here
