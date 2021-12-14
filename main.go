@@ -37,6 +37,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
 	"go.uber.org/zap/zapcore"
+
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -243,10 +244,12 @@ func main() {
 				// to renew client certificates, and because some devices can be
 				// disconnected for days and does not have the option to renew it.
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					authType := yggdrasilAPIHandler.GetAuthType(r)
-					if !mtls.VerifyRequest(r, authType, opts, CACertChain) {
-						w.WriteHeader(http.StatusUnauthorized)
-						return
+					if r.TLS != nil {
+						authType := yggdrasilAPIHandler.GetAuthType(r)
+						if !mtls.VerifyRequest(r, authType, opts, CACertChain) {
+							w.WriteHeader(http.StatusUnauthorized)
+							return
+						}
 					}
 					h.ServeHTTP(w, r)
 				})
