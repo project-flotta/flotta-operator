@@ -3,13 +3,16 @@ package yggdrasil_test
 import (
 	"context"
 	"fmt"
-	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"strings"
 	"time"
+
+	"github.com/jakub-dzon/k4e-operator/internal/images"
+	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -24,6 +27,8 @@ import (
 	"github.com/jakub-dzon/k4e-operator/models"
 	api "github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
 	operations "github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -46,8 +51,10 @@ var _ = Describe("Yggdrasil", func() {
 		registryAuth       *images.MockRegistryAuthAPI
 		handler            *yggdrasil.Handler
 		eventsRecorder     *record.FakeRecorder
+		k8sClient          *k8sclient.MockK8sClient
 
 		errorNotFound = errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
+		boolTrue      = true
 	)
 
 	BeforeEach(func() {
@@ -56,7 +63,8 @@ var _ = Describe("Yggdrasil", func() {
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, testNamespace, eventsRecorder, registryAuth)
+		k8sClient = k8sclient.NewMockK8sClient(mockCtrl)
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, k8sClient, testNamespace, eventsRecorder, registryAuth)
 	})
 
 	AfterEach(func() {
@@ -584,6 +592,639 @@ var _ = Describe("Yggdrasil", func() {
 
 			Expect(eventsRecorder.Events).To(HaveLen(1))
 			Expect(eventsRecorder.Events).To(Receive(ContainSubstring("Auth file secret")))
+		})
+
+		It("Secrets reading failed", func() {
+			// given
+			deviceName := "foo"
+			device := getDevice(deviceName)
+			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), deviceName, testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			secretName := "test"
+			secretNamespacedName := types.NamespacedName{Namespace: device.Namespace, Name: secretName}
+			podData := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: secretName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			deploymentData := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					DeviceSelector: &v1.LabelSelector{
+						MatchLabels: map[string]string{"test": "test"},
+					},
+					Type: "pod",
+					Pod:  podData,
+					Data: &v1alpha1.DataConfiguration{},
+				}}
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload1", testNamespace).
+				Return(deploymentData, nil)
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
+				Return(fmt.Errorf("test"))
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
+		})
+
+		It("Secrets missing secret", func() {
+			// given
+			deviceName := "foo"
+			device := getDevice(deviceName)
+			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), deviceName, testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			secretName := "test"
+			secretNamespacedName := types.NamespacedName{Namespace: device.Namespace, Name: secretName}
+			podData := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: secretName,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			deploymentData := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					DeviceSelector: &v1.LabelSelector{
+						MatchLabels: map[string]string{"test": "test"},
+					},
+					Type: "pod",
+					Pod:  podData,
+					Data: &v1alpha1.DataConfiguration{},
+				}}
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload1", testNamespace).
+				Return(deploymentData, nil)
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
+				Return(errorNotFound)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
+		})
+
+		It("Secrets partially optional secret", func() {
+			// given
+			deviceName := "foo"
+			device := getDevice(deviceName)
+			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), deviceName, testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			secretName := "test"
+			secretNamespacedName := types.NamespacedName{Namespace: device.Namespace, Name: secretName}
+			podData := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: secretName,
+										},
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: secretName,
+											},
+											Key:      "key",
+											Optional: &boolTrue,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			deploymentData := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					DeviceSelector: &v1.LabelSelector{
+						MatchLabels: map[string]string{"test": "test"},
+					},
+					Type: "pod",
+					Pod:  podData,
+					Data: &v1alpha1.DataConfiguration{},
+				}}
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload1", testNamespace).
+				Return(deploymentData, nil)
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
+				Return(errorNotFound)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
+		})
+		Context("Secrets missing secret key", func() {
+			podData1 := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret",
+											},
+											Key: "key",
+										},
+									},
+								},
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret",
+											},
+											Key: "key1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			podData2 := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret",
+											},
+											Key: "key",
+										},
+									},
+								},
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret",
+											},
+											Key:      "key",
+											Optional: &boolTrue,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			podData3 := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "test",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "secret",
+										},
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret",
+											},
+											Key:      "key",
+											Optional: &boolTrue,
+										},
+									},
+								},
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret",
+											},
+											Key: "key",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			table.DescribeTable("Test table", func(podData *v1alpha1.Pod) {
+				// given
+				deviceName := "foo"
+				device := getDevice(deviceName)
+				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				deploymentData := &v1alpha1.EdgeDeployment{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      "workload1",
+						Namespace: "default",
+					},
+					Spec: v1alpha1.EdgeDeploymentSpec{
+						DeviceSelector: &v1.LabelSelector{
+							MatchLabels: map[string]string{"test": "test"},
+						},
+						Type: "pod",
+						Pod:  *podData,
+						Data: &v1alpha1.DataConfiguration{},
+					}}
+				deployRepoMock.EXPECT().
+					Read(gomock.Any(), "workload1", testNamespace).
+					Return(deploymentData, nil)
+				secretDataMap := map[string][]byte{"key1": []byte("username"), "key2": []byte("password")}
+				k8sClient.EXPECT().
+					Get(gomock.Any(), types.NamespacedName{Namespace: device.Namespace, Name: "secret"}, gomock.Any()).
+					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
+						obj.(*corev1.Secret).Data = secretDataMap
+					}).
+					Return(nil).Times(1)
+
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
+			},
+				table.Entry("missing secret key", &podData1),
+				table.Entry("partially optional secret key - mandatory appears first", &podData2),
+				table.Entry("partially optional secret key - optional appears first", &podData3),
+			)
+		})
+
+		It("Secrets reading succeeded", func() {
+			// This test covers:
+			// multiple deployment
+			// init containers and regular containers
+			// secretRef and secretKeyRef
+			// optional secretRef
+			// optional secretKeyRef missing secret
+			// optional secretKeyRef missing key
+			// duplicate secret references
+
+			// given
+			deviceName := "foo"
+			device := getDevice(deviceName)
+			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}, {Name: "workload2"}}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), deviceName, testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			podData1 := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:  "ic1",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "secret1",
+										},
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret1",
+											},
+											Key:      "notexist",
+											Optional: &boolTrue,
+										},
+									},
+								},
+							},
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "c1",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "secret2",
+										},
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret3",
+											},
+											Key: "key1",
+										},
+									},
+								},
+							},
+						},
+						{
+							Name:  "c2",
+							Image: "test",
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "secret4",
+											},
+											Key: "key1",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+			podData2 := v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:  "ic1",
+							Image: "test",
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "optional1",
+											},
+											Key:      "key1",
+											Optional: &boolTrue,
+										},
+									},
+								},
+							},
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "c1",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "optional2",
+										},
+										Optional: &boolTrue,
+									},
+								},
+							},
+						},
+						{
+							Name:  "c2",
+							Image: "test",
+							EnvFrom: []corev1.EnvFromSource{
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "secret1",
+										},
+									},
+								},
+								{
+									SecretRef: &corev1.SecretEnvSource{
+										LocalObjectReference: corev1.LocalObjectReference{
+											Name: "secret5",
+										},
+									},
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name: "test",
+									ValueFrom: &corev1.EnvVarSource{
+										SecretKeyRef: &corev1.SecretKeySelector{
+											LocalObjectReference: corev1.LocalObjectReference{
+												Name: "optional1",
+											},
+											Key:      "key1",
+											Optional: &boolTrue,
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			deploymentData1 := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload1",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					DeviceSelector: &v1.LabelSelector{
+						MatchLabels: map[string]string{"test": "test"},
+					},
+					Type: "pod",
+					Pod:  podData1,
+					Data: &v1alpha1.DataConfiguration{},
+				}}
+			deploymentData2 := &v1alpha1.EdgeDeployment{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      "workload2",
+					Namespace: "default",
+				},
+				Spec: v1alpha1.EdgeDeploymentSpec{
+					DeviceSelector: &v1.LabelSelector{
+						MatchLabels: map[string]string{"test": "test"},
+					},
+					Type: "pod",
+					Pod:  podData2,
+					Data: &v1alpha1.DataConfiguration{},
+				}}
+
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload1", testNamespace).
+				Return(deploymentData1, nil)
+			deployRepoMock.EXPECT().
+				Read(gomock.Any(), "workload2", testNamespace).
+				Return(deploymentData2, nil)
+
+			secretName := types.NamespacedName{
+				Namespace: device.Namespace,
+			}
+			secretDataMap := map[string][]byte{"key1": []byte("username"), "key2": []byte("password")}
+			secretDataJson := `{"key1":"dXNlcm5hbWU=","key2":"cGFzc3dvcmQ="}`
+			secretName.Name = "secret1"
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretName, gomock.Any()).
+				Return(nil).Times(1)
+			secretName.Name = "secret2"
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretName, gomock.Any()).
+				Return(nil).Times(1)
+			secretName.Name = "secret3"
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretName, gomock.Any()).
+				Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
+					obj.(*corev1.Secret).Data = secretDataMap
+				}).
+				Return(nil).Times(1)
+			secretName.Name = "secret4"
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretName, gomock.Any()).
+				Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
+					obj.(*corev1.Secret).Data = secretDataMap
+				}).
+				Return(nil).Times(1)
+			secretName.Name = "secret5"
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretName, gomock.Any()).
+				Return(nil).Times(1)
+			secretName.Name = "optional1"
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretName, gomock.Any()).
+				Return(errorNotFound).Times(1)
+			secretName.Name = "optional2"
+			k8sClient.EXPECT().
+				Get(gomock.Any(), secretName, gomock.Any()).
+				Return(errorNotFound).Times(1)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+			config := validateAndGetDeviceConfig(res)
+			expectedList := []interface{}{
+				&models.Secret{
+					Name: "secret1",
+					Data: "{}",
+				},
+				&models.Secret{
+					Name: "secret2",
+					Data: "{}",
+				},
+				&models.Secret{
+					Name: "secret3",
+					Data: secretDataJson,
+				},
+				&models.Secret{
+					Name: "secret4",
+					Data: secretDataJson,
+				},
+				&models.Secret{
+					Name: "secret5",
+					Data: "{}",
+				},
+			}
+			Expect(config.Secrets).To(HaveLen(len(expectedList)))
+			Expect(config.Secrets).To(ContainElements(expectedList...))
 		})
 
 	})

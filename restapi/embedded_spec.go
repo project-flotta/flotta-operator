@@ -283,6 +283,10 @@ func init() {
           "description": "Device identifier",
           "type": "string"
         },
+        "secrets": {
+          "description": "List of secrets used by the workloads",
+          "$ref": "#/definitions/secret-list"
+        },
         "version": {
           "type": "string"
         },
@@ -654,6 +658,25 @@ func init() {
         }
       }
     },
+    "secret": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "The secret's data section in JSON format",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the secret",
+          "type": "string"
+        }
+      }
+    },
+    "secret-list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/secret"
+      }
+    },
     "storage-configuration": {
       "type": "object",
       "properties": {
@@ -1007,6 +1030,10 @@ func init() {
         "device_id": {
           "description": "Device identifier",
           "type": "string"
+        },
+        "secrets": {
+          "description": "List of secrets used by the workloads",
+          "$ref": "#/definitions/secret-list"
         },
         "version": {
           "type": "string"
@@ -1378,6 +1405,25 @@ func init() {
         "bucket_region": {
           "type": "string"
         }
+      }
+    },
+    "secret": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "The secret's data section in JSON format",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the secret",
+          "type": "string"
+        }
+      }
+    },
+    "secret-list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/secret"
       }
     },
     "storage-configuration": {

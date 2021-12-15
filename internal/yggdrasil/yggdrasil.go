@@ -11,6 +11,8 @@ import (
 
 	"time"
 
+	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
+
 	"github.com/ghodss/yaml"
 	"github.com/go-logr/logr"
 	"github.com/go-openapi/runtime/middleware"
@@ -52,17 +54,22 @@ type Handler struct {
 	deviceRepository       edgedevice.Repository
 	deploymentRepository   edgedeployment.Repository
 	claimer                *storage.Claimer
+	client                 k8sclient.K8sClient
 	initialNamespace       string
 	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 }
 
+type keyMapType = map[string]interface{}
+type secretMapType = map[string]keyMapType
+
 func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
-	claimer *storage.Claimer, initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI) *Handler {
+	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI) *Handler {
 	return &Handler{
 		deviceRepository:       deviceRepository,
 		deploymentRepository:   deploymentRepository,
 		claimer:                claimer,
+		client:                 k8sClient,
 		initialNamespace:       initialNamespace,
 		recorder:               recorder,
 		registryAuthRepository: registryAuth,
@@ -124,6 +131,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
 	var workloadList models.WorkloadList
+	var secretList models.SecretList
 
 	if edgeDevice.DeletionTimestamp == nil {
 		var edgeDeployments []v1alpha1.EdgeDeployment
@@ -137,11 +145,18 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 				}
 				continue
 			}
-			edgeDeployments = append(edgeDeployments, *edgeDeployment)
+			if edgeDeployment.DeletionTimestamp == nil {
+				edgeDeployments = append(edgeDeployments, *edgeDeployment)
+			}
 		}
 
 		workloadList, err = h.toWorkloadList(ctx, logger, edgeDeployments, edgeDevice)
 		if err != nil {
+			return operations.NewGetDataMessageForDeviceInternalServerError()
+		}
+		secretList, err = h.createSecretList(ctx, logger, edgeDeployments, edgeDevice)
+		if err != nil {
+			logger.Error(err, "failed reading secrets for device deployments")
 			return operations.NewGetDataMessageForDeviceInternalServerError()
 		}
 	} else {
@@ -158,6 +173,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		Version:       edgeDevice.ResourceVersion,
 		Configuration: &models.DeviceConfiguration{},
 		Workloads:     workloadList,
+		Secrets:       secretList,
 	}
 
 	if edgeDevice.Spec.Heartbeat != nil {
@@ -442,4 +458,130 @@ func (h *Handler) setStorageConfiguration(ctx context.Context,
 	}
 
 	return err
+}
+
+func (h *Handler) readAndValidateSecret(ctx context.Context, secretName, secretNamespace string, secretKeys keyMapType) (*corev1.Secret, error) {
+	optional := secretKeys == nil
+	secretObj := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: secretNamespace}}
+	err := h.client.Get(ctx, client.ObjectKeyFromObject(secretObj), secretObj)
+	if err != nil {
+		if errors.IsNotFound(err) && optional {
+			return nil, nil
+		}
+		return nil, err
+	}
+	for key := range secretKeys {
+		if secretObj.Data != nil {
+			if _, ok := secretObj.Data[key]; ok {
+				continue
+			}
+		}
+		return nil, fmt.Errorf("missing secret key. secret: %s. key: %s. Namespace: %s", secretName, key, secretNamespace)
+	}
+	return secretObj, nil
+}
+
+func addSecretToSecretList(secretList *models.SecretList, secret *corev1.Secret) error {
+	dataMap := map[string]string{}
+	for name, value := range secret.Data {
+		dataMap[name] = strfmt.Base64(value).String()
+	}
+	dataJson, err := json.Marshal(dataMap)
+	if err != nil {
+		return err
+	}
+	*secretList = append(*secretList, &models.Secret{
+		Data: string(dataJson),
+		Name: secret.Name,
+	})
+
+	return nil
+}
+
+func (h *Handler) createSecretList(ctx context.Context, logger logr.Logger, deployments []v1alpha1.EdgeDeployment, device *v1alpha1.EdgeDevice) (models.SecretList, error) {
+	list := models.SecretList{}
+
+	// create map of secret names and keys
+	secretMap := secretMapType{}
+	for _, deployment := range deployments {
+		podSpec := deployment.Spec.Pod.Spec
+		allContainers := append(podSpec.InitContainers, podSpec.Containers...)
+		for _, container := range allContainers {
+			extractSecretsFromContainer(&container, secretMap)
+		}
+	}
+
+	// read secrets and add to secrets list
+	for name, keys := range secretMap {
+		secretObj, err := h.readAndValidateSecret(ctx, name, device.Namespace, keys)
+		if err != nil {
+			return nil, err
+		}
+		if secretObj == nil {
+			continue
+		}
+		err = addSecretToSecretList(&list, secretObj)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return list, nil
+}
+
+// return value maps a secret name to its mandatory keys. nil keys indicates optional secret
+func extractSecretsFromContainer(container *corev1.Container, secretMap secretMapType) {
+	extractSecretsFromEnvFrom(container.EnvFrom, secretMap)
+	extractSecretsFromEnv(container.Env, secretMap)
+}
+
+func extractSecretsFromEnvFrom(envFrom []corev1.EnvFromSource, secretMap secretMapType) {
+	for _, envFrom := range envFrom {
+		if envFrom.SecretRef == nil {
+			continue
+		}
+		var optional bool
+		if envFrom.SecretRef.Optional != nil {
+			optional = *envFrom.SecretRef.Optional
+		}
+		if keys, ok := secretMap[envFrom.SecretRef.Name]; ok {
+			if !optional && keys == nil {
+				secretMap[envFrom.SecretRef.Name] = keyMapType{}
+			}
+		} else {
+			if optional {
+				secretMap[envFrom.SecretRef.Name] = nil
+			} else {
+				secretMap[envFrom.SecretRef.Name] = keyMapType{}
+			}
+		}
+	}
+}
+
+func extractSecretsFromEnv(env []corev1.EnvVar, secretMap secretMapType) {
+	for _, envVar := range env {
+		if envVar.ValueFrom == nil || envVar.ValueFrom.SecretKeyRef == nil {
+			continue
+		}
+		keyRef := envVar.ValueFrom.SecretKeyRef
+		var optional bool
+		if keyRef.Optional != nil {
+			optional = *keyRef.Optional
+		}
+		if keys, ok := secretMap[keyRef.Name]; ok {
+			if !optional {
+				if keys == nil {
+					secretMap[keyRef.Name] = keyMapType{keyRef.Key: nil}
+				} else {
+					keys[keyRef.Key] = nil
+				}
+			}
+		} else {
+			if optional {
+				secretMap[keyRef.Name] = nil
+			} else {
+				secretMap[keyRef.Name] = keyMapType{keyRef.Key: nil}
+			}
+		}
+	}
 }

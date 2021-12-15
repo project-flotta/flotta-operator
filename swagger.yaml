@@ -153,6 +153,9 @@ definitions:
         minimum: 0
         exclusiveMinimum: true
         description: Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed
+      secrets:
+        $ref: '#/definitions/secret-list'
+        description: List of secrets used by the workloads
 
   device-configuration:
     type: object
@@ -225,6 +228,21 @@ definitions:
       imageRegistries:
         description: Image registries configuration
         $ref: '#/definitions/image-registries'
+ 
+  secret-list:
+    type: array
+    items:
+      $ref: '#/definitions/secret'
+
+  secret:
+    type: object
+    properties:
+      name:
+        type: string
+        description: Name of the secret
+      data:
+        description: The secret's data section in JSON format
+        type: string
 
   image-registries:
     type: object
