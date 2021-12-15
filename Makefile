@@ -47,6 +47,12 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
+# Default k4e-Operator  namespace
+K4E_OPERATOR_NAMESPACE ?= "k4e-operator-system"
+
+# Set quiet mode by default
+Q=@
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -124,6 +130,7 @@ build: generate fmt vet ## Build manager binary.
 	go build -mod=vendor -o bin/manager main.go
 
 run: manifests generate fmt vet ## Run a controller from your host.
+	$(Q) kubectl create ns $(K4E_OPERATOR_NAMESPACE) 2> /dev/null || exit 0
 	OBC_AUTO_CREATE=false LOG_LEVEL=debug go run -mod=vendor ./main.go
 
 docker-build: test ## Build docker image with the manager.

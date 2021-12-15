@@ -118,6 +118,12 @@ func init() {
 	utilruntime.Must(managementv1alpha1.AddToScheme(scheme))
 	utilruntime.Must(obv1.AddToScheme(scheme))
 	utilruntime.Must(routev1.AddToScheme(scheme))
+
+	ns, err := getOperatorNamespace()
+	if err != nil {
+		log.Fatalf("Cannot get running namespace: %v", err)
+	}
+	operatorNamespace = ns
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -275,11 +281,6 @@ func main() {
 		k8sClient, err := kubernetes.NewForConfig(mgr.GetConfig())
 		if err != nil {
 			setupLog.Error(err, "cannot get the k8s client set")
-			os.Exit(1)
-		}
-		operatorNamespace, err := getOperatorNamespace()
-		if err != nil {
-			setupLog.Error(err, "cannot get the operator namespace")
 			os.Exit(1)
 		}
 		setupLog.V(1).Info("operator namespace found", "operatorNamespace", operatorNamespace)
