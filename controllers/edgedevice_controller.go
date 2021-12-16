@@ -20,6 +20,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/jakub-dzon/k4e-operator/internal/metrics"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -40,6 +41,7 @@ type EdgeDeviceReconciler struct {
 	EdgeDeviceRepository edgedevice.Repository
 	ObcAutoCreate        bool
 	Claimer              *storage.Claimer
+	Metrics              metrics.Metrics
 }
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
@@ -105,6 +107,7 @@ func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *m
 			logger.Error(err, "Cannot create object bucket claim for the device")
 			return nil, err
 		}
+		r.Metrics.IncCreatedOBCs()
 		return obc, nil
 	}
 
