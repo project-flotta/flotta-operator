@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+        with:
+          submodules: recursive
       - uses: engineerd/setup-kind@v0.5.0
       - name: Testing on KinD
         run: |
@@ -23,3 +25,7 @@ jobs:
           if [ $retVal -ne 124 ]; then
             echo "Make run failed"; exit 1
           fi
+
+      - name: Integration tests
+        run: |
+          timeout 10m ./tests/bats/bin/bats --verbose-run tests/registration.bats
