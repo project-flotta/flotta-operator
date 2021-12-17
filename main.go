@@ -216,22 +216,22 @@ func main() {
 			os.Exit(1)
 		}
 
-		MTLSconfig := mtls.NewMTLSConfig(mgr.GetClient(), operatorNamespace,
+		mtlsConfig := mtls.NewMTLSConfig(mgr.GetClient(), operatorNamespace,
 			[]string{Config.Domain}, Config.TLSLocalhostEnabled)
 
-		err = MTLSconfig.SetClientExpiration(int(Config.ClientCertExpirationTime))
+		err = mtlsConfig.SetClientExpiration(int(Config.ClientCertExpirationTime))
 		if err != nil {
 			setupLog.Error(err, "Cannot set MTLS client certificate expiration time")
 		}
 
-		tlsConfig, CACertChain, err := MTLSconfig.InitCertificates()
+		tlsConfig, CACertChain, err := mtlsConfig.InitCertificates()
 		if err != nil {
 			setupLog.Error(err, "Cannot retrieve any MTLS configuration")
 			os.Exit(1)
 		}
 
 		// @TODO check here what to do with leftovers or if a new one is need to be created
-		err = MTLSconfig.CreateRegistrationClientCerts()
+		err = mtlsConfig.CreateRegistrationClientCerts()
 		if err != nil {
 			setupLog.Error(err, "Cannot create registration client certificate")
 			os.Exit(1)

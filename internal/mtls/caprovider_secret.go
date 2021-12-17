@@ -155,7 +155,7 @@ func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expira
 		PublicKey:          CSR.PublicKey,
 		SerialNumber:       big.NewInt(time.Now().Unix()),
 		Subject:            CSR.Subject,
-		NotBefore:          time.Now(),
+		NotBefore:          time.Now().AddDate(0, 0, -1), // 1 day before for time drift issues
 		NotAfter:           expiration,
 		KeyUsage:           x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
