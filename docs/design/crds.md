@@ -16,7 +16,6 @@ spec:
     hardwareProfile: # Defines the scope of hardware information sent with the heartbeat messages; currently unused
       include: true # Specifies whether the hardware should be sent at all
       scope: full # Specifies how much information should be provided; "full" - everything; "delta" - only changes compared to the previous updated
-  osImageId: unknown # ID of the OS image; currently unused
   requestTime: "2021-09-22T08:35:25Z" # Time of the device registration request
 ```
 

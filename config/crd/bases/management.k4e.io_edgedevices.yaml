@@ -95,10 +95,22 @@ spec:
                         type: integer
                     type: object
                 type: object
-              osImageId:
-                description: OsImageId carries information about ID of the OS Image
-                  deployed to the device
-                type: string
+              osInformation:
+                description: OsInformation carries information about commit ID of
+                  the OS Image deployed to the device
+                properties:
+                  automaticallyUpgrade:
+                    description: Automatically upgrade the OS image
+                    type: boolean
+                  commitID:
+                    description: CommitID carries information about commit of the
+                      OS Image
+                    type: string
+                  hostedObjectsURL:
+                    description: HostedObjectsURL carries the URL of the hosted commits
+                      web server
+                    type: string
+                type: object
               requestTime:
                 description: RequestTime is the time of device registration request
                 format: date-time
@@ -368,6 +380,20 @@ spec:
                 type: string
               phase:
                 type: string
+              upgradeInformation:
+                properties:
+                  currentCommitID:
+                    description: Current commit
+                    type: string
+                  lastUpgradeStatus:
+                    description: last upgrade status
+                    type: string
+                  lastUpgradeTime:
+                    description: last upgrade time
+                    type: string
+                required:
+                - currentCommitID
+                type: object
             type: object
         type: object
     served: true

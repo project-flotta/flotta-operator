@@ -34,7 +34,6 @@ These resources are specified in the 'spec.storage.s3' section.
 Here's an example of EdgeDevice with storage configuration:
 ```yml
 spec:
-  osImageId: "unknown",
   requestTime: "2021-10-19T18:13:04Z",
   storage:
     s3:

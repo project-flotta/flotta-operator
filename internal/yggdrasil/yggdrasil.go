@@ -211,6 +211,10 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		dc.Configuration.Heartbeat = &defaultHeartbeatConfiguration
 	}
 
+	if edgeDevice.Spec.OsInformation != nil {
+		dc.Configuration.Os = (*models.OsInformation)(edgeDevice.Spec.OsInformation)
+	}
+
 	err = h.setStorageConfiguration(ctx, edgeDevice, &dc)
 	if err != nil {
 		logger.Error(err, "failed to get storage configuration for device")
@@ -324,7 +328,6 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		}
 		device.Name = deviceID
 		device.Namespace = h.initialNamespace
-		device.Spec.OsImageId = registrationInfo.OsImageID
 		device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
 		err = h.deviceRepository.Create(ctx, &device)
 		if err != nil {

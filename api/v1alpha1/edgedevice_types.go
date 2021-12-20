@@ -28,8 +28,8 @@ type EdgeDeviceSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// OsImageId carries information about ID of the OS Image deployed to the device
-	OsImageId string `json:"osImageId,omitempty"`
+	// OsInformation carries information about commit ID of the OS Image deployed to the device
+	OsInformation *OsInformation `json:"osInformation,omitempty"`
 
 	// RequestTime is the time of device registration request
 	RequestTime *metav1.Time `json:"requestTime,omitempty"`
@@ -70,6 +70,19 @@ type Retention struct {
 type Storage struct {
 	S3 *S3Storage `json:"s3,omitempty"`
 }
+
+type OsInformation struct {
+
+	//Automatically upgrade the OS image
+	AutomaticallyUpgrade bool `json:"automaticallyUpgrade,omitempty"`
+
+	//CommitID carries information about commit of the OS Image
+	CommitID string `json:"commitID,omitempty"`
+
+	//HostedObjectsURL carries the URL of the hosted commits web server
+	HostedObjectsURL string `json:"hostedObjectsURL,omitempty"`
+}
+
 type S3Storage struct {
 	// secret name
 	SecretName string `json:"secretName,omitempty"`
@@ -127,12 +140,13 @@ type S3StorageConfiguration struct {
 
 // EdgeDeviceStatus defines the observed state of EdgeDevice
 type EdgeDeviceStatus struct {
-	Phase                     string       `json:"phase,omitempty"`
-	LastSeenTime              metav1.Time  `json:"lastSeenTime,omitempty"`
-	LastSyncedResourceVersion string       `json:"lastSyncedResourceVersion,omitempty"`
-	Hardware                  *Hardware    `json:"hardware,omitempty"`
-	Deployments               []Deployment `json:"deployments,omitempty"`
-	DataOBC                   *string      `json:"dataObc,omitempty"`
+	Phase                     string              `json:"phase,omitempty"`
+	LastSeenTime              metav1.Time         `json:"lastSeenTime,omitempty"`
+	LastSyncedResourceVersion string              `json:"lastSyncedResourceVersion,omitempty"`
+	Hardware                  *Hardware           `json:"hardware,omitempty"`
+	Deployments               []Deployment        `json:"deployments,omitempty"`
+	DataOBC                   *string             `json:"dataObc,omitempty"`
+	UpgradeInformation        *UpgradeInformation `json:"upgradeInformation,omitempty"`
 }
 
 type EdgeDeploymentPhase string
@@ -148,6 +162,15 @@ type Deployment struct {
 	Phase              EdgeDeploymentPhase `json:"phase,omitempty"`
 	LastTransitionTime metav1.Time         `json:"lastTransitionTime,omitempty"`
 	LastDataUpload     metav1.Time         `json:"lastDataUpload,omitempty"`
+}
+
+type UpgradeInformation struct {
+	// Current commit
+	CurrentCommitID string `json:"currentCommitID"`
+	// last upgrade status
+	LastUpgradeStatus string `json:"lastUpgradeStatus,omitempty"`
+	// last upgrade time
+	LastUpgradeTime string `json:"lastUpgradeTime,omitempty"`
 }
 
 type Hardware struct {

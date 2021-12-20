@@ -34,6 +34,9 @@ type Heartbeat struct {
 	// Format: date-time
 	Time strfmt.DateTime `json:"time,omitempty"`
 
+	// Upgrade status
+	Upgrade *UpgradeStatus `json:"upgrade,omitempty"`
+
 	// version
 	Version string `json:"version,omitempty"`
 
@@ -58,6 +61,10 @@ func (m *Heartbeat) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateTime(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateUpgrade(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -165,6 +172,24 @@ func (m *Heartbeat) validateTime(formats strfmt.Registry) error {
 
 	if err := validate.FormatOf("time", "body", "date-time", m.Time.String(), formats); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *Heartbeat) validateUpgrade(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Upgrade) { // not required
+		return nil
+	}
+
+	if m.Upgrade != nil {
+		if err := m.Upgrade.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("upgrade")
+			}
+			return err
+		}
 	}
 
 	return nil

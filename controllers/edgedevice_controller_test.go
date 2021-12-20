@@ -93,7 +93,6 @@ var _ = Describe("EdgeDevice controller", func() {
 					Namespace: "default",
 				},
 				Spec: v1alpha1.EdgeDeviceSpec{
-					OsImageId:   "test",
 					RequestTime: &v1.Time{},
 					Heartbeat:   &v1alpha1.HeartbeatConfiguration{},
 				},
