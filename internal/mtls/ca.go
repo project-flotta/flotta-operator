@@ -6,9 +6,10 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
+
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
@@ -19,6 +20,11 @@ const (
 	regClientSecretNameRandomLen = 10
 	regClientSecretNamePrefix    = "reg-client-ca"
 	regClientSecretLabelKey      = "reg-client-ca"
+
+	YggdrasilRegisterAuth = 1
+	YggdrasilCompleteAuth = 0
+
+	defaultDaysToExpireClientCertificate = 7
 )
 
 // CAProvider The main reason to have an interface here is to be able to extend this to
@@ -30,24 +36,27 @@ type CAProvider interface {
 	GetName() string
 	GetCACertificate() (*CertificateGroup, error)
 	CreateRegistrationCertificate(name string) (map[string][]byte, error)
+	SignCSR(CSRPem string, commonName string, expiration time.Time) ([]byte, error)
 }
 
 type TLSConfig struct {
-	config           *tls.Config
-	client           client.Client
-	caProvider       []CAProvider
-	Domains          []string
-	LocalhostEnabled bool
-	namespace        string
+	config               *tls.Config
+	client               client.Client
+	caProvider           []CAProvider
+	Domains              []string
+	LocalhostEnabled     bool
+	namespace            string
+	clientExpirationDays int
 }
 
 func NewMTLSConfig(client client.Client, namespace string, domains []string, localhostEnabled bool) *TLSConfig {
 	config := &TLSConfig{
-		config:           nil,
-		client:           client,
-		Domains:          domains,
-		namespace:        namespace,
-		LocalhostEnabled: localhostEnabled,
+		config:               nil,
+		client:               client,
+		Domains:              domains,
+		namespace:            namespace,
+		LocalhostEnabled:     localhostEnabled,
+		clientExpirationDays: defaultDaysToExpireClientCertificate,
 	}
 
 	// Secret providers here
@@ -55,6 +64,26 @@ func NewMTLSConfig(client client.Client, namespace string, domains []string, loc
 	config.caProvider = append(config.caProvider, secretProvider)
 
 	return config
+}
+
+// SetClientExpiration sets the client expiration time in days
+func (conf *TLSConfig) SetClientExpiration(days int) error {
+	if days <= 0 {
+		return fmt.Errorf("Cannot set 1 day expiration time")
+	}
+	conf.clientExpirationDays = days
+	return nil
+}
+
+// SignCSR sign the given CSRPem using the first CA provider in use.
+func (conf *TLSConfig) SignCSR(CSRPem string, commonName string) ([]byte, error) {
+	if len(conf.caProvider) <= 0 {
+		return nil, fmt.Errorf("Cannot get caProvider to sign the CSR")
+	}
+	return conf.caProvider[0].SignCSR(
+		CSRPem,
+		commonName,
+		time.Now().AddDate(0, 0, conf.clientExpirationDays))
 }
 
 // @TODO mainly used for testing, maybe not needed at all
@@ -169,7 +198,7 @@ func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOption
 		return false
 	}
 
-	if verifyType == yggdrasil.YggdrasilRegisterAuth {
+	if verifyType == YggdrasilRegisterAuth {
 		res := isClientCertificateSigned(r.TLS.PeerCertificates, CACertChain)
 		return res
 	}
