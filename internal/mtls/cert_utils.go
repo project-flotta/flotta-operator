@@ -132,7 +132,10 @@ func getCACertificate() (*CertificateGroup, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Cannot encode certificate: %v", err)
 	}
-	certificateBundle.parseSignedCertificate()
+	err = certificateBundle.parseSignedCertificate()
+	if err != nil {
+		return nil, fmt.Errorf("Cannot parse PEM certificate: %v", err)
+	}
 	return &certificateBundle, nil
 }
 
@@ -155,8 +158,15 @@ func createKeyAndCSR(cert *x509.Certificate, caCert *CertificateGroup) (*Certifi
 		privKey:   certKey,
 		certBytes: certBytes,
 	}
-	certificateBundle.CreatePem()
-	certificateBundle.parseSignedCertificate()
+	err = certificateBundle.CreatePem()
+	if err != nil {
+		return nil, fmt.Errorf("Cannot encode certificate: %v", err)
+	}
+
+	err = certificateBundle.parseSignedCertificate()
+	if err != nil {
+		return nil, fmt.Errorf("Cannot parse PEM certificate: %v", err)
+	}
 	return &certificateBundle, nil
 }
 

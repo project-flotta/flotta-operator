@@ -160,6 +160,10 @@ func main() {
 	setupLog.Info("Started with configuration", "configuration", Config)
 
 	r, err := ctrl.GetConfig()
+	if err != nil {
+		setupLog.Error(err, "Unable to retrieve config")
+		os.Exit(1)
+	}
 	r.RateLimiter = flowcontrol.NewTokenBucketRateLimiter(100, 1000)
 	mgr, err := ctrl.NewManager(r, ctrl.Options{
 		Scheme:                 scheme,
@@ -284,7 +288,9 @@ func main() {
 		}
 
 		//@TODO This is a hack to keep compatibility now, to be deleted.
-		go http.ListenAndServe(fmt.Sprintf(":%v", Config.HttpPort), h)
+		go func() {
+			_ = http.ListenAndServe(fmt.Sprintf(":%v", Config.HttpPort), h)
+		}()
 
 		server := &http.Server{
 			Addr:      fmt.Sprintf(":%v", Config.HttpsPort),

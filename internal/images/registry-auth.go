@@ -2,8 +2,8 @@ package images
 
 import (
 	"context"
-	"errors"
 	"fmt"
+
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -29,7 +29,7 @@ func (r *RegistryAuth) GetAuthFileFromSecret(ctx context.Context, namespace, nam
 	}
 	authFile, found := secret.Data[".dockerconfigjson"]
 	if !found {
-		return "", errors.New(fmt.Sprintf(".dockerconfigjson not found in %s/%s Secret", namespace, name))
+		return "", fmt.Errorf(".dockerconfigjson not found in %s/%s Secret", namespace, name)
 	}
 
 	return string(authFile), nil

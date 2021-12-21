@@ -57,7 +57,8 @@ var _ = Describe("Storage", func() {
 		Expect(err).NotTo(HaveOccurred())
 
 		// Add custom schemes
-		routev1.AddToScheme(scheme.Scheme)
+		err = routev1.AddToScheme(scheme.Scheme)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	AfterEach(func() {
