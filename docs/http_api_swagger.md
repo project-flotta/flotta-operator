@@ -278,6 +278,23 @@ Status: Internal Server Error
 
 
 
+### <span id="container-metrics"></span> container-metrics
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| disabled | boolean| `bool` |  | |  |  |
+| path | string| `string` |  | | Path to use when retrieving metrics |  |
+| port | int32 (formatted integer)| `int32` |  | | Port to use when retrieve the metrics |  |
+
+
+
 ### <span id="cpu"></span> cpu
 
 
@@ -602,6 +619,24 @@ Status: Internal Server Error
 
 
 
+### <span id="metrics"></span> metrics
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| containers | map of [ContainerMetrics](#container-metrics)| `map[string]ContainerMetrics` |  | |  |  |
+| interval | integer| `int64` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
+| path | string| `string` |  | | Path to use when retrieving metrics |  |
+| port | int32 (formatted integer)| `int32` |  | |  |  |
+
+
+
 ### <span id="metrics-configuration"></span> metrics-configuration
 
 
@@ -742,6 +777,7 @@ Status: Internal Server Error
 |------|------|---------|:--------:| ------- |-------------|---------|
 | data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | | Configuration for data transfer |  |
 | imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | | Image registries configuration |  |
+| metrics | [Metrics](#metrics)| `Metrics` |  | | Metrics endpoint configuration |  |
 | name | string| `string` |  | | Name of the workload |  |
 | specification | string| `string` |  | |  |  |
 

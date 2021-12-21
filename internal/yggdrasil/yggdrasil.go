@@ -422,6 +422,26 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 				AuthFile: authFile,
 			}
 		}
+
+		if spec.Metrics != nil && spec.Metrics.Port > 0 {
+			workload.Metrics = &models.Metrics{
+				Path: spec.Metrics.Path,
+				Port: spec.Metrics.Port,
+			}
+			addedContainers := false
+			containers := map[string]models.ContainerMetrics{}
+			for container, metricConf := range spec.Metrics.Containers {
+				containers[container] = models.ContainerMetrics{
+					Disabled: metricConf.Disabled,
+					Port:     metricConf.Port,
+					Path:     metricConf.Path,
+				}
+				addedContainers = true
+			}
+			if addedContainers {
+				workload.Metrics.Containers = containers
+			}
+		}
 		list = append(list, &workload)
 	}
 	return list, nil

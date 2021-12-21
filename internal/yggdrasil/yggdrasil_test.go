@@ -450,6 +450,132 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(workload.ImageRegistries).To(BeNil())
 		})
 
+		Context("Metrics", func() {
+			var (
+				deviceName string = "foo"
+				device     *v1alpha1.EdgeDevice
+			)
+
+			BeforeEach(func() {
+				deviceName = "foo"
+				device = getDevice(deviceName)
+				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+			})
+
+			getDeployment := func(name string, ns string) *v1alpha1.EdgeDeployment {
+				return &v1alpha1.EdgeDeployment{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      name,
+						Namespace: ns,
+					},
+					Spec: v1alpha1.EdgeDeploymentSpec{
+						Type: "pod",
+						Pod:  v1alpha1.Pod{},
+					},
+				}
+			}
+
+			It("Path and port is honored", func() {
+				// given
+				expectedResult := &models.Metrics{
+					Path: "/metrics",
+					Port: 9999,
+				}
+
+				deploy := getDeployment("workload1", testNamespace)
+				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
+					Path: "/metrics", Port: 9999}
+
+				deployRepoMock.EXPECT().
+					Read(gomock.Any(), "workload1", testNamespace).
+					Return(deploy, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				Expect(config.Workloads[0].Metrics).To(Equal(expectedResult))
+			})
+
+			It("Path and port in containers is honored", func() {
+
+				// given
+				expectedResult := &models.Metrics{
+					Path: "/metrics",
+					Port: 9999,
+					Containers: map[string]models.ContainerMetrics{
+						"test": {
+							Disabled: false,
+							Port:     int32(8899),
+							Path:     "/test/",
+						},
+					},
+				}
+
+				deploy := getDeployment("workload1", testNamespace)
+				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
+					Path: "/metrics", Port: 9999, Containers: map[string]*v1alpha1.MetricsConfigEntity{
+						"test": {
+							Port:     8899,
+							Path:     "/test/",
+							Disabled: false,
+						},
+					},
+				}
+
+				deployRepoMock.EXPECT().
+					Read(gomock.Any(), "workload1", testNamespace).
+					Return(deploy, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				Expect(config.Workloads[0].Metrics).To(Equal(expectedResult))
+			})
+
+			It("Negative port is not considered", func() {
+
+				// given
+				deploy := getDeployment("workload1", testNamespace)
+				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
+					Path: "/metrics",
+					Port: -1,
+				}
+
+				deployRepoMock.EXPECT().
+					Read(gomock.Any(), "workload1", testNamespace).
+					Return(deploy, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				Expect(config.Workloads[0].Metrics).To(BeNil())
+			})
+
+		})
+
 		It("Image registry authfile is included", func() {
 			// given
 			deviceName := "foo"

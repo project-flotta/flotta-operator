@@ -112,6 +112,39 @@ spec:
                     - name
                     type: object
                 type: object
+              metrics:
+                properties:
+                  containers:
+                    additionalProperties:
+                      properties:
+                        disabled:
+                          type: boolean
+                        path:
+                          default: /
+                          description: Path to use when retrieving metrics
+                          type: string
+                        port:
+                          description: Port to use when retrieve the metrics
+                          maximum: 65535
+                          minimum: 0
+                          type: integer
+                      type: object
+                    type: object
+                  interval:
+                    default: 60
+                    description: Interval(in seconds) to scrape metrics endpoint.
+                    minimum: 0
+                    type: integer
+                  path:
+                    default: /
+                    description: Path to use when retrieving metrics
+                    type: string
+                  port:
+                    description: Port to use when retrieve the metrics
+                    maximum: 65535
+                    minimum: 0
+                    type: integer
+                type: object
               pod:
                 properties:
                   spec:

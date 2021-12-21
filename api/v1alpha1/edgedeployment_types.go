@@ -26,16 +26,48 @@ import (
 
 // EdgeDeploymentSpec defines the desired state of EdgeDeployment
 type EdgeDeploymentSpec struct {
-	DeviceSelector  *metav1.LabelSelector         `json:"deviceSelector,omitempty"`
-	Device          string                        `json:"device,omitempty"`
-	Type            EdgeDeploymentType            `json:"type"`
-	Pod             Pod                           `json:"pod,omitempty"`
-	Data            *DataConfiguration            `json:"data,omitempty"`
-	ImageRegistries *ImageRegistriesConfiguration `json:"imageRegistries,omitempty"`
+	DeviceSelector  *metav1.LabelSelector          `json:"deviceSelector,omitempty"`
+	Device          string                         `json:"device,omitempty"`
+	Type            EdgeDeploymentType             `json:"type"`
+	Pod             Pod                            `json:"pod,omitempty"`
+	Data            *DataConfiguration             `json:"data,omitempty"`
+	ImageRegistries *ImageRegistriesConfiguration  `json:"imageRegistries,omitempty"`
+	Metrics         *ContainerMetricsConfiguration `json:"metrics,omitempty"`
 }
 
 type ImageRegistriesConfiguration struct {
 	AuthFileSecret *ObjectRef `json:"secretRef,omitempty"`
+}
+
+type MetricsConfigEntity struct {
+	// Path to use when retrieving metrics
+	// +kubebuilder:default=/
+	Path string `json:"path,omitempty"`
+
+	// Port to use when retrieve the metrics
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=65535
+	Port int32 `json:"port,omitempty"`
+
+	Disabled bool `json:"disabled,omitempty"`
+}
+
+type ContainerMetricsConfiguration struct {
+	// Path to use when retrieving metrics
+	// +kubebuilder:default=/
+	Path string `json:"path,omitempty"`
+
+	// Port to use when retrieve the metrics
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Maximum=65535
+	Port int32 `json:"port,omitempty"`
+
+	// Interval(in seconds) to scrape metrics endpoint.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:default=60
+	Interval int `json:"interval,omitempty"`
+
+	Containers map[string]*MetricsConfigEntity `json:"containers,omitempty"`
 }
 
 type ObjectRef struct {
