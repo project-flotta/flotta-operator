@@ -39,6 +39,10 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
+# Cluster type - k8s/ocp
+TARGET ?= k8s
+# Host name for ingress creation
+HOST ?= k4e-operator.srv
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -80,7 +84,7 @@ help: ## Display this help.
 ##@ Development
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	@$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 generate-tools:
 ifeq (, $(shell which mockery))
@@ -147,17 +151,35 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-deploy: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default | kubectl apply -f -
+deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+	kubectl apply -f $(TMP_ODIR)/k4e-operator.yaml
+ifeq ($(TARGET), k8s)
+	minikube addons enable ingress
+endif
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 $(eval TMP_ODIR := $(shell mktemp -d))
-gen-manifests: manifests kustomize # generates manifests for deploying the operator into k4e-operator.yaml
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into k4e-operator.yaml
+# Add network resources by cluster type
+ifeq ($(TARGET), k8s)
+	@sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/network/ingress.yaml
+	@cd config/network && $(KUSTOMIZE) edit add resource ingress.yaml
+else ifeq ($(TARGET), ocp)
+	@cd config/network && $(KUSTOMIZE) edit add resource route.yaml
+endif
+	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > $(TMP_ODIR)/k4e-operator.yaml
+# Revert the changes
+ifeq ($(TARGET), k8s)
+	@cd config/network && $(KUSTOMIZE) edit remove resource ingress.yaml
+	@sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/network/ingress.yaml
+else ifeq ($(TARGET), ocp)
+	@cd config/network && $(KUSTOMIZE) edit remove resource route.yaml
+endif
+	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/k4e-operator:latest
+	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/k4e-operator.yaml\033[0m"
 
 release: gen-manifests
 	gh release create v$(VERSION) --notes "Release v$(VERSION) of K4E Operator" --title "Release v$(VERSION)" '$(TMP_ODIR)/k4e-operator.yaml# K4E Operator'
