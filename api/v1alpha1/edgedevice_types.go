@@ -36,6 +36,20 @@ type EdgeDeviceSpec struct {
 
 	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
 	Storage   *Storage                `json:"storage,omitempty"`
+	Metrics   *MetricsConfiguration   `json:"metrics,omitempty"`
+}
+
+type MetricsConfiguration struct {
+	Retention *Retention `json:"retention,omitempty"`
+}
+
+type Retention struct {
+	// MaxMiB specifies how much disk space should be used for storing persisted metrics on the device
+	// +kubebuilder:validation:Minimum=0
+	MaxMiB int32 `json:"maxMiB,omitempty"`
+	// MaxHours specifies how long should persisted metrics be stored on the device disk
+	// +kubebuilder:validation:Minimum=0
+	MaxHours int32 `json:"maxHours,omitempty"`
 }
 
 type Storage struct {

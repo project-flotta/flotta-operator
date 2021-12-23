@@ -164,6 +164,9 @@ definitions:
         $ref: '#/definitions/heartbeat-configuration'
       storage:
         $ref: '#/definitions/storage-configuration'
+      metrics:
+        $ref: '#/definitions/metrics-configuration'
+
 
   heartbeat-configuration:
     type: object
@@ -209,6 +212,26 @@ definitions:
       aws_ca_bundle:
         type: string
 
+  metrics-configuration:
+    description: Defines metrics configuration for the device
+    type: object
+    properties:
+      retention:
+        description: Defines metrics data retention limits
+        $ref: '#/definitions/metrics-retention'
+
+  metrics-retention:
+    type: object
+    properties:
+      max_mib:
+        description: Maximum size of metrics stored on disk
+        type: integer
+        format: int32
+      max_hours:
+        description: Maximum time in hours metrics data files should kept on the device
+        type: integer
+        format: int32
+
   workload-list:
     type: array
     items:
@@ -228,7 +251,7 @@ definitions:
       imageRegistries:
         description: Image registries configuration
         $ref: '#/definitions/image-registries'
- 
+
   secret-list:
     type: array
     items:

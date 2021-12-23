@@ -1230,6 +1230,36 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Secrets).To(ContainElements(expectedList...))
 		})
 
+		It("should map metrics retention configuration", func() {
+			// given
+			maxMiB := int32(123)
+			maxHours := int32(24)
+
+			device := getDevice("foo")
+			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+				Retention: &v1alpha1.Retention{
+					MaxMiB:   maxMiB,
+					MaxHours: maxHours,
+				},
+			}
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), "foo", testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+			config := validateAndGetDeviceConfig(res)
+
+			Expect(config.Configuration.Metrics).ToNot(BeNil())
+			Expect(config.Configuration.Metrics.Retention).ToNot(BeNil())
+			Expect(config.Configuration.Metrics.Retention.MaxMib).To(Equal(maxMiB))
+			Expect(config.Configuration.Metrics.Retention.MaxHours).To(Equal(maxHours))
+		})
 	})
 
 	Context("PostDataMessageForDevice", func() {

@@ -19,6 +19,9 @@ type DeviceConfiguration struct {
 	// heartbeat
 	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
 
+	// metrics
+	Metrics *MetricsConfiguration `json:"metrics,omitempty"`
+
 	// storage
 	Storage *StorageConfiguration `json:"storage,omitempty"`
 }
@@ -28,6 +31,10 @@ func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateHeartbeat(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMetrics(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -51,6 +58,24 @@ func (m *DeviceConfiguration) validateHeartbeat(formats strfmt.Registry) error {
 		if err := m.Heartbeat.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("heartbeat")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) validateMetrics(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Metrics) { // not required
+		return nil
+	}
+
+	if m.Metrics != nil {
+		if err := m.Metrics.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("metrics")
 			}
 			return err
 		}
