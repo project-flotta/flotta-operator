@@ -119,7 +119,11 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 	if err != nil {
 		return nil, fmt.Errorf("Cannot sign certificate request: %v", err)
 	}
-	certGroup.CreatePem()
+
+	err = certGroup.CreatePem()
+	if err != nil {
+		return nil, fmt.Errorf("Cannot encode certs: %v", err)
+	}
 
 	res := map[string][]byte{
 		clientCertCertKey:   certGroup.certPEM.Bytes(),

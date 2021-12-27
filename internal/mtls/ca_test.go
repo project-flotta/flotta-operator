@@ -99,6 +99,7 @@ var _ = Describe("CA test", func() {
 			Expect(caChain).To(HaveLen(1))
 
 			cert, err := x509.ParseCertificate(tlsConfig.Certificates[0].Certificate[0])
+			Expect(err).NotTo(HaveOccurred())
 			Expect(cert).NotTo(BeNil())
 			Expect(cert.SerialNumber).To(Equal(caChain[0].SerialNumber))
 			Expect(cert.Subject.CommonName).To(Equal("*"))
@@ -123,6 +124,7 @@ var _ = Describe("CA test", func() {
 			Expect(caChain).To(HaveLen(1))
 
 			cert, err := x509.ParseCertificate(tlsConfig.Certificates[0].Certificate[0])
+			Expect(err).NotTo(HaveOccurred())
 			Expect(cert).NotTo(BeNil())
 			Expect(cert.SerialNumber).To(Equal(caChain[0].SerialNumber))
 			Expect(cert.Subject.CommonName).To(Equal("*"))
@@ -163,10 +165,11 @@ var _ = Describe("CA test", func() {
 			It("Create cert", func() {
 				// given
 				config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
-				config.InitCertificates()
+				_, _, err := config.InitCertificates()
+				Expect(err).NotTo(HaveOccurred())
 
 				// when
-				err := config.CreateRegistrationClientCerts()
+				err = config.CreateRegistrationClientCerts()
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -320,7 +323,10 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 					Type:  "CERTIFICATE REQUEST",
 					Bytes: createCSR(),
 				})
-				config.SetClientExpiration(1)
+
+				err := config.SetClientExpiration(1)
+				Expect(err).NotTo(HaveOccurred())
+
 				date := time.Now().AddDate(0, 0, 1)
 				// when
 
