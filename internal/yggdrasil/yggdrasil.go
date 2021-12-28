@@ -197,10 +197,11 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 	}
 
 	err = h.setStorageConfiguration(ctx, edgeDevice, &dc)
-
 	if err != nil {
 		logger.Error(err, "failed to get storage configuration for device")
 	}
+
+	dc.Configuration.Metrics = getDeviceMetricsConfiguration(edgeDevice)
 
 	// TODO: Network optimization: Decide whether there is a need to return any payload based on difference between last applied configuration and current state in the cluster.
 	message := models.Message{
@@ -212,6 +213,22 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		Content:   dc,
 	}
 	return operations.NewGetDataMessageForDeviceOK().WithPayload(&message)
+}
+
+func getDeviceMetricsConfiguration(edgeDevice *v1alpha1.EdgeDevice) *models.MetricsConfiguration {
+	var metricsConfig *models.MetricsConfiguration
+	if edgeDevice.Spec.Metrics != nil {
+		retention := edgeDevice.Spec.Metrics.Retention
+		if retention != nil {
+			metricsConfig = &models.MetricsConfiguration{
+				Retention: &models.MetricsRetention{
+					MaxHours: retention.MaxHours,
+					MaxMib:   retention.MaxMiB,
+				},
+			}
+		}
+	}
+	return metricsConfig
 }
 
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {

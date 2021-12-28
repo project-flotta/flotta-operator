@@ -53,6 +53,24 @@ spec:
                     format: int64
                     type: integer
                 type: object
+              metrics:
+                properties:
+                  retention:
+                    properties:
+                      maxHours:
+                        description: MaxHours specifies how long should persisted
+                          metrics be stored on the device disk
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      maxMiB:
+                        description: MaxMiB specifies how much disk space should be
+                          used for storing persisted metrics on the device
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: object
+                type: object
               osImageId:
                 description: OsImageId carries information about ID of the OS Image
                   deployed to the device

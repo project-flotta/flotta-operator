@@ -343,6 +343,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | heartbeat | [HeartbeatConfiguration](#heartbeat-configuration)| `HeartbeatConfiguration` |  | |  |  |
+| metrics | [MetricsConfiguration](#metrics-configuration)| `MetricsConfiguration` |  | |  |  |
 | storage | [StorageConfiguration](#storage-configuration)| `StorageConfiguration` |  | |  |  |
 
 
@@ -598,6 +599,40 @@ Status: Internal Server Error
 | sent | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
 | type | string| `string` |  | |  |  |
 | version | integer| `int64` |  | |  |  |
+
+
+
+### <span id="metrics-configuration"></span> metrics-configuration
+
+
+> Defines metrics configuration for the device
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| retention | [MetricsRetention](#metrics-retention)| `MetricsRetention` |  | | Defines metrics data retention limits |  |
+
+
+
+### <span id="metrics-retention"></span> metrics-retention
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| max_hours | int32 (formatted integer)| `int32` |  | | Maximum time in hours metrics data files should kept on the device |  |
+| max_mib | int32 (formatted integer)| `int32` |  | | Maximum size of metrics stored on disk |  |
 
 
 

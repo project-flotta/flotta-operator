@@ -268,6 +268,9 @@ func init() {
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
         },
+        "metrics": {
+          "$ref": "#/definitions/metrics-configuration"
+        },
         "storage": {
           "$ref": "#/definitions/storage-configuration"
         }
@@ -616,6 +619,31 @@ func init() {
         },
         "version": {
           "type": "integer"
+        }
+      }
+    },
+    "metrics-configuration": {
+      "description": "Defines metrics configuration for the device",
+      "type": "object",
+      "properties": {
+        "retention": {
+          "description": "Defines metrics data retention limits",
+          "$ref": "#/definitions/metrics-retention"
+        }
+      }
+    },
+    "metrics-retention": {
+      "type": "object",
+      "properties": {
+        "max_hours": {
+          "description": "Maximum time in hours metrics data files should kept on the device",
+          "type": "integer",
+          "format": "int32"
+        },
+        "max_mib": {
+          "description": "Maximum size of metrics stored on disk",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1016,6 +1044,9 @@ func init() {
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
         },
+        "metrics": {
+          "$ref": "#/definitions/metrics-configuration"
+        },
         "storage": {
           "$ref": "#/definitions/storage-configuration"
         }
@@ -1365,6 +1396,31 @@ func init() {
         },
         "version": {
           "type": "integer"
+        }
+      }
+    },
+    "metrics-configuration": {
+      "description": "Defines metrics configuration for the device",
+      "type": "object",
+      "properties": {
+        "retention": {
+          "description": "Defines metrics data retention limits",
+          "$ref": "#/definitions/metrics-retention"
+        }
+      }
+    },
+    "metrics-retention": {
+      "type": "object",
+      "properties": {
+        "max_hours": {
+          "description": "Maximum time in hours metrics data files should kept on the device",
+          "type": "integer",
+          "format": "int32"
+        },
+        "max_mib": {
+          "description": "Maximum size of metrics stored on disk",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
