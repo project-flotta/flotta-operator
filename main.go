@@ -194,6 +194,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)
 	}
+	if err = (&controllers.EdgeDeviceLabelsReconciler{
+		EdgeDeviceRepository:     edgeDeviceRepository,
+		EdgeDeploymentRepository: edgeDeploymentRepository,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "EdgeDeviceLabels")
+		os.Exit(1)
+	}
 	if err = (&controllers.EdgeDeploymentReconciler{
 		Client:                   mgr.GetClient(),
 		Scheme:                   mgr.GetScheme(),

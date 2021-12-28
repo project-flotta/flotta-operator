@@ -19,6 +19,8 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/jakub-dzon/k4e-operator/internal/labels"
@@ -36,7 +38,12 @@ import (
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 )
 
-const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"
+const (
+	YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"
+	selectorLabelPrefix               = "selector/"
+	DeviceNameLabel                   = "devicename"
+	DoesNotExistLabel                 = "doesnotexist"
+)
 
 // EdgeDeploymentReconciler reconciles a EdgeDeployment object
 type EdgeDeploymentReconciler struct {
@@ -85,6 +92,13 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			return ctrl.Result{Requeue: true}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
+	}
+
+	if edgeDeployment.DeletionTimestamp == nil {
+		err = r.updateLabelsFromSelector(ctx, edgeDeployment)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
 	}
 
 	labelledDevices, err := r.getLabelledEdgeDevices(ctx, edgeDeployment.Name, edgeDeployment.Namespace)
@@ -366,4 +380,61 @@ func splitEdgeDevices(edgeDevices []managementv1alpha1.EdgeDevice, splitSize uin
 		result = append(result, newSlice)
 	}
 	return result
+}
+
+func (r *EdgeDeploymentReconciler) updateLabelsFromSelector(ctx context.Context, edgeDeployment *managementv1alpha1.EdgeDeployment) error {
+	edgeDeploymentCopy := edgeDeployment.DeepCopy()
+	UpdateSelectorLabels(edgeDeploymentCopy)
+	newLabels := edgeDeploymentCopy.Labels
+
+	if (len(newLabels) == 0 && edgeDeployment.Labels == nil) || reflect.DeepEqual(newLabels, edgeDeployment.Labels) {
+		return nil
+	}
+
+	err := r.EdgeDeploymentRepository.Patch(ctx, edgeDeployment, edgeDeploymentCopy)
+	return err
+}
+
+func isSelectorLabel(label string) bool {
+	return strings.HasPrefix(label, selectorLabelPrefix)
+}
+
+func CreateSelectorLabel(label string) string {
+	return selectorLabelPrefix + label
+}
+
+func UpdateSelectorLabels(edgeDeployments ...*managementv1alpha1.EdgeDeployment) {
+	for _, edgeDeployment := range edgeDeployments {
+		labels := edgeDeployment.Labels
+		if labels == nil {
+			labels = map[string]string{}
+			edgeDeployment.Labels = labels
+		}
+		for label := range labels {
+			if isSelectorLabel(label) {
+				delete(labels, label)
+			}
+		}
+		if edgeDeployment.Spec.Device != "" {
+			selectorLabel := CreateSelectorLabel(DeviceNameLabel)
+			labels[selectorLabel] = edgeDeployment.Spec.Device
+		} else {
+			labelSelector := edgeDeployment.Spec.DeviceSelector
+			if labelSelector != nil {
+				for label := range labelSelector.MatchLabels {
+					selectorLabel := CreateSelectorLabel(label)
+					labels[selectorLabel] = "true"
+				}
+				for _, requirement := range labelSelector.MatchExpressions {
+					if requirement.Operator == metav1.LabelSelectorOpDoesNotExist {
+						selectorLabel := CreateSelectorLabel(DoesNotExistLabel)
+						labels[selectorLabel] = "true"
+					} else {
+						selectorLabel := CreateSelectorLabel(requirement.Key)
+						labels[selectorLabel] = "true"
+					}
+				}
+			}
+		}
+	}
 }

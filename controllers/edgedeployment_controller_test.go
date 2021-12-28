@@ -175,8 +175,15 @@ var _ = Describe("Controllers", func() {
 
 		Context("devices selector section", func() {
 			var (
-				deploymentData *v1alpha1.EdgeDeployment
-				device         *v1alpha1.EdgeDevice
+				deploymentData         *v1alpha1.EdgeDeployment
+				device                 *v1alpha1.EdgeDevice
+				expectedSelectorLabels = map[string]string{
+					controllers.CreateSelectorLabel("test"):                        "true",
+					controllers.CreateSelectorLabel("matchlabel1"):                 "true",
+					controllers.CreateSelectorLabel("matchexp1"):                   "true",
+					controllers.CreateSelectorLabel("matchexp2"):                   "true",
+					controllers.CreateSelectorLabel(controllers.DoesNotExistLabel): "true",
+				}
 			)
 
 			BeforeEach(func() {
@@ -188,7 +195,21 @@ var _ = Describe("Controllers", func() {
 					},
 					Spec: v1alpha1.EdgeDeploymentSpec{
 						DeviceSelector: &v1.LabelSelector{
-							MatchLabels: map[string]string{"test": "test"},
+							MatchLabels: map[string]string{"test": "test", "matchlabel1": "matchlabel1"},
+							MatchExpressions: []v1.LabelSelectorRequirement{
+								{
+									Key: "matchexp1", Operator: metav1.LabelSelectorOpIn, Values: []string{"matchexp1"},
+								},
+								{
+									Key: "matchexp2", Operator: metav1.LabelSelectorOpExists, Values: nil,
+								},
+								{
+									Key: "matchexp3", Operator: metav1.LabelSelectorOpDoesNotExist, Values: nil,
+								},
+								{
+									Key: "matchexp4", Operator: metav1.LabelSelectorOpDoesNotExist, Values: []string{},
+								},
+							},
 						},
 						Type: "test",
 						Pod:  v1alpha1.Pod{},
@@ -197,6 +218,11 @@ var _ = Describe("Controllers", func() {
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(deploymentData, nil).Times(1)
+				deployRepoMock.EXPECT().
+					Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					Do(func(ctx context.Context, old, new *v1alpha1.EdgeDeployment) {
+						Expect(new.Labels).To(Equal(expectedSelectorLabels))
+					})
 
 				device = getDevice("testdevice")
 			})
@@ -302,7 +328,7 @@ var _ = Describe("Controllers", func() {
 				edgeDeviceRepoMock.EXPECT().
 					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, selector *metav1.LabelSelector, namespace string) {
-						Expect(selector.MatchLabels).To(Equal(map[string]string{"test": "test"}))
+						Expect(selector).To(Equal(deploymentData.Spec.DeviceSelector))
 					}).
 					Return([]v1alpha1.EdgeDevice{*device}, nil).
 					Times(1)
@@ -342,6 +368,63 @@ var _ = Describe("Controllers", func() {
 				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 			})
 
+			It("Selector labels new EdgeDeployment", func() {
+				// given
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return([]v1alpha1.EdgeDevice{}, nil).
+					Times(2)
+
+				// when
+				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+			})
+
+			It("Selector labels updated EdgeDeployment", func() {
+				// given
+				deploymentData.Labels = map[string]string{
+					controllers.CreateSelectorLabel("todelete1"): "true",
+					controllers.CreateSelectorLabel("todelete2"): "true",
+				}
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return([]v1alpha1.EdgeDevice{}, nil).
+					Times(2)
+
+				// when
+				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+			})
+
+			It("Selector labels device name label", func() {
+				// given
+				deploymentData.Spec.Device = device.Name
+				expectedSelectorLabels = map[string]string{
+					controllers.CreateSelectorLabel(controllers.DeviceNameLabel): device.Name,
+				}
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return([]v1alpha1.EdgeDevice{}, nil).
+					Times(1)
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, fmt.Errorf("")).
+					Times(1)
+
+				// when
+				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).To(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
+			})
+
 		})
 
 		Context("using device selector", func() {
@@ -367,6 +450,8 @@ var _ = Describe("Controllers", func() {
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(deploymentData, nil).Times(1)
+				deployRepoMock.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
 
 				device = getDevice("testdevice")
 			})
@@ -489,6 +574,8 @@ var _ = Describe("Controllers", func() {
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(deploymentData, nil).Times(1)
+				deployRepoMock.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
 
 				fooDevice = getDevice("foo")
 				fooDevice.Status.Deployments = []v1alpha1.Deployment{
@@ -684,6 +771,8 @@ var _ = Describe("Controllers", func() {
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(deploymentData, nil).Times(1)
+				deployRepoMock.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).AnyTimes()
 
 				devices = nil
 				for i := 0; i < numDevices; i++ {
