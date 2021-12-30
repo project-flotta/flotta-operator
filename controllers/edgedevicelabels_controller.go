@@ -132,15 +132,15 @@ func isDeploymentMatchDevice(deployment *managementv1alpha1.EdgeDeployment, devi
 
 func createSelectorLabelsMap(device *managementv1alpha1.EdgeDevice) map[string]string {
 	result := map[string]string{
-		CreateSelectorLabel(DeviceNameLabel):   device.Name,
-		CreateSelectorLabel(DoesNotExistLabel): "true",
+		k4elabels.CreateSelectorLabel(k4elabels.DeviceNameLabel):   device.Name,
+		k4elabels.CreateSelectorLabel(k4elabels.DoesNotExistLabel): "true",
 	}
 
 	for deviceLabel := range device.Labels {
 		if k4elabels.IsWorkloadLabel(deviceLabel) {
 			continue
 		}
-		selectorLabel := CreateSelectorLabel(deviceLabel)
+		selectorLabel := k4elabels.CreateSelectorLabel(deviceLabel)
 		result[selectorLabel] = "true"
 	}
 
