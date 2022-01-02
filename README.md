@@ -128,7 +128,7 @@ spec:
  ``` 
 -  Connecting Prometheus to our Custom Grafana
    -  Grant cluster-monitoring-view cluster role to the  grafana-serviceaccount service account, that was created alongside the Grafana instance\
-   `oc adm policy add-cluster-role-to-user cluster-monitoring-view -z grafana-serviceaccount`
+   `oc adm policy add-cluster-role-to-user cluster-monitoring-view -z grafana-serviceaccount -n k4e-operator-system`
    -  Generate Bearer Token:\
    `oc serviceaccounts get-token grafana-serviceaccount -n k4e-operator-system`
    -  Create Grafana Data Source resource and replace the `${BEARER_TOKEN}` with the output of the previous command:\
