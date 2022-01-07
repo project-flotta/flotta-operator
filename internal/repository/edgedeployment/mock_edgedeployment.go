@@ -35,6 +35,21 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// ListByLabel mocks base method.
+func (m *MockRepository) ListByLabel(arg0 context.Context, arg1, arg2 string) ([]v1alpha1.EdgeDeployment, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByLabel", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]v1alpha1.EdgeDeployment)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByLabel indicates an expected call of ListByLabel.
+func (mr *MockRepositoryMockRecorder) ListByLabel(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByLabel", reflect.TypeOf((*MockRepository)(nil).ListByLabel), arg0, arg1, arg2)
+}
+
 // Patch mocks base method.
 func (m *MockRepository) Patch(arg0 context.Context, arg1, arg2 *v1alpha1.EdgeDeployment) error {
 	m.ctrl.T.Helper()
