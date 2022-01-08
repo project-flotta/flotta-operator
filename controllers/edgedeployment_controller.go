@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sync"
 
 	"github.com/jakub-dzon/k4e-operator/internal/labels"
@@ -48,6 +49,7 @@ type EdgeDeploymentReconciler struct {
 	Concurrency              uint
 	ExecuteConcurrent        func(uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
 	Metrics                  metrics.Metrics
+	MaxConcurrentReconciles  int
 }
 
 type ConcurrentFunc func([]managementv1alpha1.EdgeDevice) []error
@@ -289,6 +291,7 @@ func (r *EdgeDeploymentReconciler) executeConcurrent(ctx context.Context, f Conc
 func (r *EdgeDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&managementv1alpha1.EdgeDeployment{}).
+		WithOptions(controller.Options{MaxConcurrentReconciles: r.MaxConcurrentReconciles}).
 		Complete(r)
 }
 

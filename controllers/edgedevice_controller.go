@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"time"
 
 	"github.com/jakub-dzon/k4e-operator/internal/metrics"
@@ -37,11 +38,12 @@ import (
 // EdgeDeviceReconciler reconciles a EdgeDevice object
 type EdgeDeviceReconciler struct {
 	client.Client
-	Scheme               *runtime.Scheme
-	EdgeDeviceRepository edgedevice.Repository
-	ObcAutoCreate        bool
-	Claimer              *storage.Claimer
-	Metrics              metrics.Metrics
+	Scheme                  *runtime.Scheme
+	EdgeDeviceRepository    edgedevice.Repository
+	ObcAutoCreate           bool
+	Claimer                 *storage.Claimer
+	Metrics                 metrics.Metrics
+	MaxConcurrentReconciles int
 }
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
@@ -125,5 +127,6 @@ func (r *EdgeDeviceReconciler) addObcReference(ctx context.Context, edgeDevice *
 func (r *EdgeDeviceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&managementv1alpha1.EdgeDevice{}).
+		WithOptions(controller.Options{MaxConcurrentReconciles: r.MaxConcurrentReconciles}).
 		Complete(r)
 }
