@@ -22,6 +22,9 @@ type Workload struct {
 	// Image registries configuration
 	ImageRegistries *ImageRegistries `json:"imageRegistries,omitempty"`
 
+	// Metrics endpoint configuration
+	Metrics *Metrics `json:"metrics,omitempty"`
+
 	// Name of the workload
 	Name string `json:"name,omitempty"`
 
@@ -38,6 +41,10 @@ func (m *Workload) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateImageRegistries(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMetrics(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -75,6 +82,24 @@ func (m *Workload) validateImageRegistries(formats strfmt.Registry) error {
 		if err := m.ImageRegistries.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("imageRegistries")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Workload) validateMetrics(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Metrics) { // not required
+		return nil
+	}
+
+	if m.Metrics != nil {
+		if err := m.Metrics.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("metrics")
 			}
 			return err
 		}

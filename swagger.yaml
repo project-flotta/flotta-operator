@@ -251,6 +251,9 @@ definitions:
       imageRegistries:
         description: Image registries configuration
         $ref: '#/definitions/image-registries'
+      metrics:
+        description: Metrics endpoint configuration
+        $ref: '#/definitions/metrics'
 
   secret-list:
     type: array
@@ -266,6 +269,38 @@ definitions:
       data:
         description: The secret's data section in JSON format
         type: string
+
+  metrics:
+    type: object
+    properties:
+      path:
+        description: Path to use when retrieving metrics
+        type: string
+      port:
+        type: integer
+        format: int32
+      interval:
+        type: integer
+        description: Interval(in seconds) to scrape metrics endpoint.
+
+      containers:
+        type: object
+        additionalProperties:
+          description: Metrics container configuration
+          $ref: '#/definitions/container-metrics'
+
+  container-metrics:
+    type: object
+    properties:
+      disabled:
+        type: boolean
+      path:
+        description: Path to use when retrieving metrics
+        type: string
+      port:
+        description: Port to use when retrieve the metrics
+        type: integer
+        format: int32
 
   image-registries:
     type: object

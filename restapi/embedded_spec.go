@@ -214,6 +214,23 @@ func init() {
         }
       }
     },
+    "container-metrics": {
+      "type": "object",
+      "properties": {
+        "disabled": {
+          "type": "boolean"
+        },
+        "path": {
+          "description": "Path to use when retrieving metrics",
+          "type": "string"
+        },
+        "port": {
+          "description": "Port to use when retrieve the metrics",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "cpu": {
       "type": "object",
       "properties": {
@@ -622,6 +639,30 @@ func init() {
         }
       }
     },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "containers": {
+          "type": "object",
+          "additionalProperties": {
+            "description": "Metrics container configuration",
+            "$ref": "#/definitions/container-metrics"
+          }
+        },
+        "interval": {
+          "description": "Interval(in seconds) to scrape metrics endpoint.",
+          "type": "integer"
+        },
+        "path": {
+          "description": "Path to use when retrieving metrics",
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "metrics-configuration": {
       "description": "Defines metrics configuration for the device",
       "type": "object",
@@ -741,6 +782,10 @@ func init() {
         "imageRegistries": {
           "description": "Image registries configuration",
           "$ref": "#/definitions/image-registries"
+        },
+        "metrics": {
+          "description": "Metrics endpoint configuration",
+          "$ref": "#/definitions/metrics"
         },
         "name": {
           "description": "Name of the workload",
@@ -987,6 +1032,23 @@ func init() {
         },
         "pxe_interface": {
           "type": "string"
+        }
+      }
+    },
+    "container-metrics": {
+      "type": "object",
+      "properties": {
+        "disabled": {
+          "type": "boolean"
+        },
+        "path": {
+          "description": "Path to use when retrieving metrics",
+          "type": "string"
+        },
+        "port": {
+          "description": "Port to use when retrieve the metrics",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1399,6 +1461,30 @@ func init() {
         }
       }
     },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "containers": {
+          "type": "object",
+          "additionalProperties": {
+            "description": "Metrics container configuration",
+            "$ref": "#/definitions/container-metrics"
+          }
+        },
+        "interval": {
+          "description": "Interval(in seconds) to scrape metrics endpoint.",
+          "type": "integer"
+        },
+        "path": {
+          "description": "Path to use when retrieving metrics",
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "metrics-configuration": {
       "description": "Defines metrics configuration for the device",
       "type": "object",
@@ -1518,6 +1604,10 @@ func init() {
         "imageRegistries": {
           "description": "Image registries configuration",
           "$ref": "#/definitions/image-registries"
+        },
+        "metrics": {
+          "description": "Metrics endpoint configuration",
+          "$ref": "#/definitions/metrics"
         },
         "name": {
           "description": "Name of the workload",
