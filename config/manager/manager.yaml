@@ -66,26 +66,6 @@ spec:
       protocol: TCP
       port: 8043
       targetPort: 8043
-    - name: metrics
-      protocol: TCP
-      port: 8080
-      targetPort: 8080
   selector:
     control-plane: controller-manager
   type: ClusterIP
----
-kind: ServiceMonitor
-apiVersion: monitoring.coreos.com/v1
-metadata:
-  name: servicemonitor
-  namespace: system
-  labels:
-    control-plane: controller-manager
-spec:
-  endpoints:
-    - port: metrics
-      interval: 30s
-      path: /metrics
-  selector:
-    matchLabels:
-      control-plane: controller-manager
