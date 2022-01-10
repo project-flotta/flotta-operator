@@ -23,7 +23,7 @@ function generate_go_server() {
 
 function generate_docs() {
     docker run -u $(id -u):$(id -u) -v ${__root}:${__root}:rw,Z -v /etc/passwd:/etc/passwd -w ${__root} \
-        quay.io/goswagger/swagger:v0.27.0 generate markdown  -f ${__root}/swagger.yaml --template=stratoscale --output=docs/http-api-swagger.md
+        quay.io/goswagger/swagger:v0.27.0 generate markdown  -f ${__root}/swagger.yaml --template=stratoscale --output=docs/design/http-api-swagger.md
 }
 
 function generate_from_swagger() {
