@@ -125,6 +125,7 @@ spec:
                           type: string
                         port:
                           description: Port to use when retrieve the metrics
+                          format: int32
                           maximum: 65535
                           minimum: 0
                           type: integer
@@ -141,6 +142,7 @@ spec:
                     type: string
                   port:
                     description: Port to use when retrieve the metrics
+                    format: int32
                     maximum: 65535
                     minimum: 0
                     type: integer
