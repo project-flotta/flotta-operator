@@ -32,6 +32,13 @@ spec:
             name: manager-config
         image: controller:latest
         name: manager
+        ports:
+          - containerPort: 8888
+            name: http
+          - containerPort: 8043
+            name: https
+          - containerPort: 8080
+            name: metrics
         securityContext:
           allowPrivilegeEscalation: false
         livenessProbe:
@@ -68,11 +75,11 @@ spec:
     - name: http
       protocol: TCP
       port: 8888
-      targetPort: 8888
+      targetPort: http
     - name: https
       protocol: TCP
       port: 8043
-      targetPort: 8043
+      targetPort: https
   selector:
     control-plane: controller-manager
   type: ClusterIP
