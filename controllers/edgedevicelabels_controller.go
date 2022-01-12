@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	k4elabels "github.com/jakub-dzon/k4e-operator/internal/labels"
@@ -37,6 +38,7 @@ import (
 type EdgeDeviceLabelsReconciler struct {
 	EdgeDeviceRepository     edgedevice.Repository
 	EdgeDeploymentRepository edgedeployment.Repository
+	MaxConcurrentReconciles  int
 }
 
 //+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices,verbs=get;watch;patch
@@ -72,6 +74,7 @@ func (r *EdgeDeviceLabelsReconciler) Reconcile(ctx context.Context, req ctrl.Req
 func (r *EdgeDeviceLabelsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&managementv1alpha1.EdgeDevice{}, builder.WithPredicates(predicate.LabelChangedPredicate{})).
+		WithOptions(controller.Options{MaxConcurrentReconciles: r.MaxConcurrentReconciles}).
 		Complete(r)
 }
 

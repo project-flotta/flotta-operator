@@ -115,6 +115,9 @@ var Config struct {
 
 	// Client Certificate expiration time
 	ClientCertExpirationTime uint `envconfig:"CLIENT_CERT_EXPIRATION_DAYS" default:"30"`
+
+	// MaxConcurrentReconciles is the maximum number of concurrent Reconciles which can be run
+	MaxConcurrentReconciles uint `envconfig:"MAX_CONCURRENT_RECONCILES" default:"3"`
 }
 
 func init() {
@@ -184,12 +187,13 @@ func main() {
 	metricsObj := metrics.New()
 
 	if err = (&controllers.EdgeDeviceReconciler{
-		Client:               mgr.GetClient(),
-		Scheme:               mgr.GetScheme(),
-		EdgeDeviceRepository: edgeDeviceRepository,
-		Claimer:              claimer,
-		ObcAutoCreate:        Config.EnableObcAutoCreation,
-		Metrics:              metricsObj,
+		Client:                  mgr.GetClient(),
+		Scheme:                  mgr.GetScheme(),
+		EdgeDeviceRepository:    edgeDeviceRepository,
+		Claimer:                 claimer,
+		ObcAutoCreate:           Config.EnableObcAutoCreation,
+		Metrics:                 metricsObj,
+		MaxConcurrentReconciles: int(Config.MaxConcurrentReconciles),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)
@@ -197,6 +201,7 @@ func main() {
 	if err = (&controllers.EdgeDeviceLabelsReconciler{
 		EdgeDeviceRepository:     edgeDeviceRepository,
 		EdgeDeploymentRepository: edgeDeploymentRepository,
+		MaxConcurrentReconciles:  int(Config.MaxConcurrentReconciles),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDeviceLabels")
 		os.Exit(1)
@@ -209,6 +214,7 @@ func main() {
 		Concurrency:              Config.EdgeDeploymentConcurrency,
 		ExecuteConcurrent:        controllers.ExecuteConcurrent,
 		Metrics:                  metricsObj,
+		MaxConcurrentReconciles:  int(Config.MaxConcurrentReconciles),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDeployment")
 		os.Exit(1)
