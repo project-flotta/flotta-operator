@@ -19,7 +19,3 @@ spec:
         ports:
         - containerPort: 8443
           name: https
-      - name: manager
-        ports:
-          - containerPort: 8888
-            name: http
