@@ -280,11 +280,20 @@ definitions:
       metrics:
         description: Metrics endpoint configuration
         $ref: '#/definitions/metrics'
+      configmaps:
+        $ref: '#/definitions/configmap-list'
+        description: List of configmaps used by the workload
 
   secret-list:
     type: array
     items:
       $ref: '#/definitions/secret'
+
+  configmap-list:
+    type: array
+    items:
+      type: string
+      description: ConfigMap kubernetes yaml specification
 
   secret:
     type: object

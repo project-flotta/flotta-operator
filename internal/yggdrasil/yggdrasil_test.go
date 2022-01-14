@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jakub-dzon/k4e-operator/internal/configmaps"
 	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 
 	"github.com/jakub-dzon/k4e-operator/internal/images"
@@ -57,6 +58,7 @@ var _ = Describe("Yggdrasil", func() {
 		eventsRecorder     *record.FakeRecorder
 		k8sClient          *k8sclient.MockK8sClient
 		allowListsMock     *devicemetrics.MockAllowListGenerator
+		configMap          *configmaps.MockConfigMap
 
 		errorNotFound = errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
 		boolTrue      = true
@@ -71,8 +73,9 @@ var _ = Describe("Yggdrasil", func() {
 		eventsRecorder = record.NewFakeRecorder(1)
 		k8sClient = k8sclient.NewMockK8sClient(mockCtrl)
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
+		configMap = configmaps.NewMockConfigMap(mockCtrl)
 		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, k8sClient, testNamespace,
-			eventsRecorder, registryAuth, metricsMock, allowListsMock)
+			eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap)
 	})
 
 	AfterEach(func() {
@@ -436,6 +439,8 @@ var _ = Describe("Yggdrasil", func() {
 					Pod:  v1alpha1.Pod{},
 					Data: &v1alpha1.DataConfiguration{},
 				}}
+
+			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
 				Return(deploymentData, nil)
@@ -501,6 +506,7 @@ var _ = Describe("Yggdrasil", func() {
 						Name: allowListName,
 					}}
 
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
@@ -571,6 +577,7 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
@@ -596,6 +603,7 @@ var _ = Describe("Yggdrasil", func() {
 					Port: -1,
 				}
 
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
@@ -640,6 +648,7 @@ var _ = Describe("Yggdrasil", func() {
 						},
 					},
 				}}
+			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
 				Return(deploymentData, nil)
@@ -691,6 +700,7 @@ var _ = Describe("Yggdrasil", func() {
 						},
 					},
 				}}
+			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
 				Return(deploymentData, nil)
@@ -807,6 +817,7 @@ var _ = Describe("Yggdrasil", func() {
 					Pod:  podData,
 					Data: &v1alpha1.DataConfiguration{},
 				}}
+			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
 				Return(deploymentData, nil)
@@ -867,6 +878,7 @@ var _ = Describe("Yggdrasil", func() {
 					Pod:  podData,
 					Data: &v1alpha1.DataConfiguration{},
 				}}
+			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
 				Return(deploymentData, nil)
@@ -941,6 +953,7 @@ var _ = Describe("Yggdrasil", func() {
 					Pod:  podData,
 					Data: &v1alpha1.DataConfiguration{},
 				}}
+			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
 				Return(deploymentData, nil)
@@ -1092,6 +1105,7 @@ var _ = Describe("Yggdrasil", func() {
 						Pod:  *podData,
 						Data: &v1alpha1.DataConfiguration{},
 					}}
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploymentData, nil)
@@ -1315,6 +1329,7 @@ var _ = Describe("Yggdrasil", func() {
 					Data: &v1alpha1.DataConfiguration{},
 				}}
 
+			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil).AnyTimes()
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
 				Return(deploymentData1, nil)

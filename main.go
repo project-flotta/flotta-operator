@@ -20,12 +20,14 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/jakub-dzon/k4e-operator/internal/configmaps"
+	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 
 	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
@@ -284,7 +286,9 @@ func main() {
 			mgr.GetEventRecorderFor("edgedeployment-controller"),
 			registryAuth,
 			metricsObj,
-			devicemetrics.NewAllowListGenerator(k8sClient))
+			devicemetrics.NewAllowListGenerator(k8sClient),
+			configmaps.NewConfigMap(k8sClient),
+		)
 
 		h, err := restapi.Handler(restapi.Config{
 			YggdrasilAPI: yggdrasilAPIHandler,
