@@ -25,7 +25,7 @@ jobs:
 
     - name: Checking generated files are up to date
       run: |
-        git diff --quiet internal/ client/ restapi/ || (echo "There are not committed changes"; git diff internal/ client/ restapi/ | tee; exit 1)
+        git diff --quiet config/ internal/ client/ restapi/ || (echo "There are not committed changes"; git diff config/ internal/ client/ restapi/ | tee; exit 1)
 
     - uses: actions/upload-artifact@v2
       with:
