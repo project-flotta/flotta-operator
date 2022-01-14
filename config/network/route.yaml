@@ -10,6 +10,6 @@ spec:
     targetPort: http
   to:
     kind: Service
-    name: controller-manager
+    name: k4e-operator-controller-manager
     weight: 100
   wildcardPolicy: None
