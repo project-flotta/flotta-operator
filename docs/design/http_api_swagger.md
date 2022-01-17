@@ -631,7 +631,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | containers | map of [ContainerMetrics](#container-metrics)| `map[string]ContainerMetrics` |  | |  |  |
-| interval | integer| `int64` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
+| interval | int32 (formatted integer)| `int32` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
 | path | string| `string` |  | | Path to use when retrieving metrics |  |
 | port | int32 (formatted integer)| `int32` |  | |  |  |
 

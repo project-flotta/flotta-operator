@@ -65,7 +65,7 @@ type ContainerMetricsConfiguration struct {
 	// Interval(in seconds) to scrape metrics endpoint.
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=60
-	Interval int `json:"interval,omitempty"`
+	Interval int32 `json:"interval,omitempty"`
 
 	Containers map[string]*MetricsConfigEntity `json:"containers,omitempty"`
 }

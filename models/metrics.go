@@ -21,7 +21,7 @@ type Metrics struct {
 	Containers map[string]ContainerMetrics `json:"containers,omitempty"`
 
 	// Interval(in seconds) to scrape metrics endpoint.
-	Interval int64 `json:"interval,omitempty"`
+	Interval int32 `json:"interval,omitempty"`
 
 	// Path to use when retrieving metrics
 	Path string `json:"path,omitempty"`

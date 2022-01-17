@@ -427,7 +427,7 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 			workload.Metrics = &models.Metrics{
 				Path:     spec.Metrics.Path,
 				Port:     spec.Metrics.Port,
-				Interval: int64(spec.Metrics.Interval),
+				Interval: spec.Metrics.Interval,
 			}
 			addedContainers := false
 			containers := map[string]models.ContainerMetrics{}
