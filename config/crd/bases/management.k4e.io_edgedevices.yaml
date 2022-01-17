@@ -70,6 +70,15 @@ spec:
                         minimum: 0
                         type: integer
                     type: object
+                  system:
+                    properties:
+                      interval:
+                        default: 60
+                        description: Interval(in seconds) to scrape system metrics.
+                        format: int32
+                        minimum: 0
+                        type: integer
+                    type: object
                 type: object
               osImageId:
                 description: OsImageId carries information about ID of the OS Image

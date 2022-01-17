@@ -671,6 +671,10 @@ func init() {
         "retention": {
           "description": "Defines metrics data retention limits",
           "$ref": "#/definitions/metrics-retention"
+        },
+        "system": {
+          "description": "System metrics gathering configuration",
+          "$ref": "#/definitions/system-metrics-configuration"
         }
       }
     },
@@ -752,6 +756,16 @@ func init() {
       "properties": {
         "s3": {
           "$ref": "#/definitions/s3-storage-configuration"
+        }
+      }
+    },
+    "system-metrics-configuration": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "description": "Interval(in seconds) to scrape metrics endpoint.",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1494,6 +1508,10 @@ func init() {
         "retention": {
           "description": "Defines metrics data retention limits",
           "$ref": "#/definitions/metrics-retention"
+        },
+        "system": {
+          "description": "System metrics gathering configuration",
+          "$ref": "#/definitions/system-metrics-configuration"
         }
       }
     },
@@ -1575,6 +1593,16 @@ func init() {
       "properties": {
         "s3": {
           "$ref": "#/definitions/s3-storage-configuration"
+        }
+      }
+    },
+    "system-metrics-configuration": {
+      "type": "object",
+      "properties": {
+        "interval": {
+          "description": "Interval(in seconds) to scrape metrics endpoint.",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },

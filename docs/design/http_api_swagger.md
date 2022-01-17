@@ -652,6 +652,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | retention | [MetricsRetention](#metrics-retention)| `MetricsRetention` |  | | Defines metrics data retention limits |  |
+| system | [SystemMetricsConfiguration](#system-metrics-configuration)| `SystemMetricsConfiguration` |  | | System metrics gathering configuration |  |
 
 
 
@@ -743,6 +744,21 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | s3 | [S3StorageConfiguration](#s3-storage-configuration)| `S3StorageConfiguration` |  | |  |  |
+
+
+
+### <span id="system-metrics-configuration"></span> system-metrics-configuration
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| interval | int32 (formatted integer)| `int32` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
 
 
 
