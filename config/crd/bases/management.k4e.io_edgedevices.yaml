@@ -72,6 +72,17 @@ spec:
                     type: object
                   system:
                     properties:
+                      allowList:
+                        description: AllowList defines name and namespace of a ConfigMap
+                          containing list of system metrics that should be scraped
+                        properties:
+                          name:
+                            type: string
+                          namespace:
+                            type: string
+                        required:
+                        - name
+                        type: object
                       interval:
                         default: 60
                         description: Interval(in seconds) to scrape system metrics.

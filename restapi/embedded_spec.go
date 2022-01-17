@@ -664,6 +664,18 @@ func init() {
         }
       }
     },
+    "metrics-allow-list": {
+      "description": "Specification of metrics to be collected",
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "metrics-configuration": {
       "description": "Defines metrics configuration for the device",
       "type": "object",
@@ -762,6 +774,10 @@ func init() {
     "system-metrics-configuration": {
       "type": "object",
       "properties": {
+        "allow_list": {
+          "description": "Specification of system metrics to be collected",
+          "$ref": "#/definitions/metrics-allow-list"
+        },
         "interval": {
           "description": "Interval(in seconds) to scrape metrics endpoint.",
           "type": "integer",
@@ -1501,6 +1517,18 @@ func init() {
         }
       }
     },
+    "metrics-allow-list": {
+      "description": "Specification of metrics to be collected",
+      "type": "object",
+      "properties": {
+        "names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "metrics-configuration": {
       "description": "Defines metrics configuration for the device",
       "type": "object",
@@ -1599,6 +1627,10 @@ func init() {
     "system-metrics-configuration": {
       "type": "object",
       "properties": {
+        "allow_list": {
+          "description": "Specification of system metrics to be collected",
+          "$ref": "#/definitions/metrics-allow-list"
+        },
         "interval": {
           "description": "Interval(in seconds) to scrape metrics endpoint.",
           "type": "integer",

@@ -49,6 +49,10 @@ type SystemMetricsConfiguration struct {
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=60
 	Interval int32 `json:"interval,omitempty"`
+
+	// AllowList defines name and namespace of a ConfigMap containing
+	// list of system metrics that should be scraped
+	AllowList *ObjectRef `json:"allowList,omitempty"`
 }
 
 type Retention struct {

@@ -242,6 +242,18 @@ definitions:
         type: integer
         description: Interval(in seconds) to scrape metrics endpoint.
         format: int32
+      allow_list:
+        description: Specification of system metrics to be collected
+        $ref: '#/definitions/metrics-allow-list'
+
+  metrics-allow-list:
+    type: object
+    description: Specification of metrics to be collected
+    properties:
+      names:
+        type: array
+        items:
+          type: string
 
   workload-list:
     type: array
