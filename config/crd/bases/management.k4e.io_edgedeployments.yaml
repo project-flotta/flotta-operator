@@ -134,6 +134,7 @@ spec:
                   interval:
                     default: 60
                     description: Interval(in seconds) to scrape metrics endpoint.
+                    format: int32
                     minimum: 0
                     type: integer
                   path:

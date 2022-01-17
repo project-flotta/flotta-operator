@@ -651,7 +651,8 @@ func init() {
         },
         "interval": {
           "description": "Interval(in seconds) to scrape metrics endpoint.",
-          "type": "integer"
+          "type": "integer",
+          "format": "int32"
         },
         "path": {
           "description": "Path to use when retrieving metrics",
@@ -1473,7 +1474,8 @@ func init() {
         },
         "interval": {
           "description": "Interval(in seconds) to scrape metrics endpoint.",
-          "type": "integer"
+          "type": "integer",
+          "format": "int32"
         },
         "path": {
           "description": "Path to use when retrieving metrics",
