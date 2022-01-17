@@ -480,16 +480,17 @@ var _ = Describe("Yggdrasil", func() {
 				}
 			}
 
-			It("Path and port is honored", func() {
+			It("Path, port and interval is honored", func() {
 				// given
 				expectedResult := &models.Metrics{
-					Path: "/metrics",
-					Port: 9999,
+					Path:     "/metrics",
+					Port:     9999,
+					Interval: 55,
 				}
 
 				deploy := getDeployment("workload1", testNamespace)
 				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
-					Path: "/metrics", Port: 9999}
+					Path: "/metrics", Port: 9999, Interval: 55}
 
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
