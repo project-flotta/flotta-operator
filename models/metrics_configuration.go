@@ -18,6 +18,9 @@ type MetricsConfiguration struct {
 
 	// Defines metrics data retention limits
 	Retention *MetricsRetention `json:"retention,omitempty"`
+
+	// System metrics gathering configuration
+	System *SystemMetricsConfiguration `json:"system,omitempty"`
 }
 
 // Validate validates this metrics configuration
@@ -25,6 +28,10 @@ func (m *MetricsConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateRetention(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSystem(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -44,6 +51,24 @@ func (m *MetricsConfiguration) validateRetention(formats strfmt.Registry) error 
 		if err := m.Retention.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("retention")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *MetricsConfiguration) validateSystem(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.System) { // not required
+		return nil
+	}
+
+	if m.System != nil {
+		if err := m.System.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("system")
 			}
 			return err
 		}

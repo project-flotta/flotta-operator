@@ -216,19 +216,27 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 }
 
 func getDeviceMetricsConfiguration(edgeDevice *v1alpha1.EdgeDevice) *models.MetricsConfiguration {
-	var metricsConfig *models.MetricsConfiguration
-	if edgeDevice.Spec.Metrics != nil {
-		retention := edgeDevice.Spec.Metrics.Retention
+	metricsConfigSpec := edgeDevice.Spec.Metrics
+	if metricsConfigSpec != nil {
+		var metricsConfig models.MetricsConfiguration
+
+		retention := metricsConfigSpec.Retention
 		if retention != nil {
-			metricsConfig = &models.MetricsConfiguration{
-				Retention: &models.MetricsRetention{
-					MaxHours: retention.MaxHours,
-					MaxMib:   retention.MaxMiB,
-				},
+			metricsConfig.Retention = &models.MetricsRetention{
+				MaxHours: retention.MaxHours,
+				MaxMib:   retention.MaxMiB,
 			}
 		}
+
+		systemMetrics := metricsConfigSpec.SystemMetrics
+		if systemMetrics != nil {
+			metricsConfig.System = &models.SystemMetricsConfiguration{
+				Interval: systemMetrics.Interval,
+			}
+		}
+		return &metricsConfig
 	}
-	return metricsConfig
+	return nil
 }
 
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {

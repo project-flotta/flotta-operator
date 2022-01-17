@@ -219,6 +219,9 @@ definitions:
       retention:
         description: Defines metrics data retention limits
         $ref: '#/definitions/metrics-retention'
+      system:
+        description: System metrics gathering configuration
+        $ref: '#/definitions/system-metrics-configuration'
 
   metrics-retention:
     type: object
@@ -230,6 +233,14 @@ definitions:
       max_hours:
         description: Maximum time in hours metrics data files should kept on the device
         type: integer
+        format: int32
+
+  system-metrics-configuration:
+    type: object
+    properties:
+      interval:
+        type: integer
+        description: Interval(in seconds) to scrape metrics endpoint.
         format: int32
 
   workload-list:

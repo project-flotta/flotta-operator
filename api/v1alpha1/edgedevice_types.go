@@ -40,7 +40,15 @@ type EdgeDeviceSpec struct {
 }
 
 type MetricsConfiguration struct {
-	Retention *Retention `json:"retention,omitempty"`
+	Retention     *Retention                  `json:"retention,omitempty"`
+	SystemMetrics *SystemMetricsConfiguration `json:"system,omitempty"`
+}
+
+type SystemMetricsConfiguration struct {
+	// Interval(in seconds) to scrape system metrics.
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:default=60
+	Interval int32 `json:"interval,omitempty"`
 }
 
 type Retention struct {
