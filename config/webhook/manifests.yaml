@@ -1,0 +1,29 @@
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-management-k4e-io-v1alpha1-edgedeployment
+  failurePolicy: Fail
+  name: edgedeploymnet.management.k4e.io
+  rules:
+  - apiGroups:
+    - management.k4e.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    - DELETE
+    resources:
+    - edgedeployments
+  sideEffects: None

@@ -135,7 +135,7 @@ build: generate fmt vet ## Build manager binary.
 
 run: manifests generate fmt vet ## Run a controller from your host.
 	$(Q) kubectl create ns $(K4E_OPERATOR_NAMESPACE) 2> /dev/null || exit 0
-	OBC_AUTO_CREATE=false LOG_LEVEL=debug go run -mod=vendor ./main.go
+	OBC_AUTO_CREATE=false ENABLE_WEBHOOKS=false LOG_LEVEL=debug go run -mod=vendor ./main.go
 
 docker-build: ## Build docker image with the manager.
 	docker build -t ${IMG} .

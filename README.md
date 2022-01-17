@@ -5,6 +5,17 @@
 
 When the CRDs are present in the cluster, the operator can either be run outside or inside the cluster.
 
+## Prerequisites/Dependencies
+### podman
+This project relies strongly on Podman. It is used in the edge devices and also in the operator.
+Supported Podman version is `3.4.4`
+
+### cert-manager
+We use admission webhooks for managing the CRDs. Therefore, there's a need for TLS certificates and keys management.
+When deploying in a cluster, webhooks are enabled and require [cert-manager](https://cert-manager.io/). Refer to its installation instructions for installing it.
+
+Disabling webhooks is done by setting environment variable `ENABLE_WEBHOOKS=false` for the manager's container.
+
 # Getting started
 ## Outside the cluster
 Run `make run` to start the operator.
