@@ -3,6 +3,7 @@ package yggdrasil_test
 import (
 	"context"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 	"strings"
 	"time"
 
@@ -54,6 +55,7 @@ var _ = Describe("Yggdrasil", func() {
 		handler            *yggdrasil.Handler
 		eventsRecorder     *record.FakeRecorder
 		k8sClient          *k8sclient.MockK8sClient
+		allowListsMock     *devicemetrics.MockAllowListGenerator
 
 		errorNotFound = errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
 		boolTrue      = true
@@ -67,7 +69,9 @@ var _ = Describe("Yggdrasil", func() {
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
 		k8sClient = k8sclient.NewMockK8sClient(mockCtrl)
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, k8sClient, testNamespace, eventsRecorder, registryAuth, metricsMock)
+		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, k8sClient, testNamespace,
+			eventsRecorder, registryAuth, metricsMock, allowListsMock)
 	})
 
 	AfterEach(func() {
@@ -1414,6 +1418,77 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Configuration.Metrics).ToNot(BeNil())
 			Expect(config.Configuration.Metrics.System).ToNot(BeNil())
 			Expect(config.Configuration.Metrics.System.Interval).To(Equal(interval))
+		})
+
+		It("should add allow-list configuration", func() {
+			// given
+			const (
+				allowListName      = "a-name"
+				allowListNamespace = "a-namespace"
+			)
+			allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
+
+			device := getDevice("foo")
+			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
+					AllowList: &v1alpha1.ObjectRef{
+						Name:      allowListName,
+						Namespace: allowListNamespace,
+					},
+				},
+			}
+
+			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, allowListNamespace).
+				Return(&allowList, nil)
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), "foo", testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+			config := validateAndGetDeviceConfig(res)
+
+			Expect(config.Configuration.Metrics).ToNot(BeNil())
+			Expect(config.Configuration.Metrics.System).ToNot(BeNil())
+			Expect(config.Configuration.Metrics.System.AllowList).ToNot(BeNil())
+			Expect(*config.Configuration.Metrics.System.AllowList).To(Equal(allowList))
+		})
+
+		It("should fail when allow-list generation fails", func() {
+			// given
+			const (
+				allowListName      = "a-name"
+				allowListNamespace = "a-namespace"
+			)
+
+			device := getDevice("foo")
+			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
+					AllowList: &v1alpha1.ObjectRef{
+						Name:      allowListName,
+						Namespace: allowListNamespace,
+					},
+				},
+			}
+
+			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, allowListNamespace).
+				Return(nil, fmt.Errorf("boom!"))
+
+			edgeDeviceRepoMock.EXPECT().
+				Read(gomock.Any(), "foo", testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			// when
+			res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
 		})
 	})
 
