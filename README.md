@@ -29,4 +29,4 @@ Run `make run` to start the operator.
 
 In order to change the verbosity of the logger check out [here](docs/user-guide/logger.md). 
 
-For additional resources check out: [metrics](docs/metrics/metrics.md), [grafana dashboard](docs/metrics/grafana.md).
+For additional resources check out: [metrics](docs/metrics/metrics.md), [grafana dashboard](docs/metrics/grafana.md), [device metrics](docs/user-guide/device-metrics.md).
