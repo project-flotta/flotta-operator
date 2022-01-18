@@ -163,11 +163,15 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into k4e-operator.yaml
 # Add network resources by cluster type
+# TODO: replace this if-else-if with kustomize base and overlays for each cluster-type
 ifeq ($(TARGET), k8s)
 	@sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/network/ingress.yaml
 	@cd config/network && $(KUSTOMIZE) edit add resource ingress.yaml
 else ifeq ($(TARGET), ocp)
 	@cd config/network && $(KUSTOMIZE) edit add resource route.yaml
+	@cd config/prometheus && $(KUSTOMIZE) edit add resource prometheus_role.yaml
+	@cd config/prometheus && $(KUSTOMIZE) edit add resource prometheus_role_binding.yaml
+	@cd config/prometheus && $(KUSTOMIZE) edit add resource monitor.yaml
 endif
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > $(TMP_ODIR)/k4e-operator.yaml
@@ -177,6 +181,9 @@ ifeq ($(TARGET), k8s)
 	@sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/network/ingress.yaml
 else ifeq ($(TARGET), ocp)
 	@cd config/network && $(KUSTOMIZE) edit remove resource route.yaml
+	@cd config/prometheus && $(KUSTOMIZE) edit remove resource prometheus_role.yaml
+	@cd config/prometheus && $(KUSTOMIZE) edit remove resource prometheus_role_binding.yaml
+	@cd config/prometheus && $(KUSTOMIZE) edit remove resource monitor.yaml
 endif
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/k4e-operator:latest
 	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/k4e-operator.yaml\033[0m"
