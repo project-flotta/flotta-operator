@@ -33,18 +33,6 @@ func (m *MockMetrics) EXPECT() *MockMetricsMockRecorder {
 	return m.recorder
 }
 
-// IncCreatedOBCs mocks base method.
-func (m *MockMetrics) IncCreatedOBCs() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "IncCreatedOBCs")
-}
-
-// IncCreatedOBCs indicates an expected call of IncCreatedOBCs.
-func (mr *MockMetricsMockRecorder) IncCreatedOBCs() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncCreatedOBCs", reflect.TypeOf((*MockMetrics)(nil).IncCreatedOBCs))
-}
-
 // IncEdgeDeviceFailedRegistration mocks base method.
 func (m *MockMetrics) IncEdgeDeviceFailedRegistration() {
 	m.ctrl.T.Helper()
@@ -67,4 +55,16 @@ func (m *MockMetrics) IncEdgeDeviceSuccessfulRegistration() {
 func (mr *MockMetricsMockRecorder) IncEdgeDeviceSuccessfulRegistration() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncEdgeDeviceSuccessfulRegistration", reflect.TypeOf((*MockMetrics)(nil).IncEdgeDeviceSuccessfulRegistration))
+}
+
+// IncEdgeDeviceUnregistration mocks base method.
+func (m *MockMetrics) IncEdgeDeviceUnregistration() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncEdgeDeviceUnregistration")
+}
+
+// IncEdgeDeviceUnregistration indicates an expected call of IncEdgeDeviceUnregistration.
+func (mr *MockMetricsMockRecorder) IncEdgeDeviceUnregistration() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncEdgeDeviceUnregistration", reflect.TypeOf((*MockMetrics)(nil).IncEdgeDeviceUnregistration))
 }

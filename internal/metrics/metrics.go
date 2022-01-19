@@ -9,7 +9,7 @@ import (
 const (
 	EdgeDeviceSuccessfulRegistrationQuery = "k4e_operator_edge_devices_successful_registration"
 	EdgeDeviceFailedRegistrationQuery     = "k4e_operator_edge_devices_failed_registration"
-	CreatedOBCQuery                       = "k4e_operator_created_obc"
+	EdgeDeviceUnregistrationQuery         = "k4e_operator_edge_devices_unregistration"
 )
 
 var (
@@ -25,10 +25,10 @@ var (
 			Help: "Number of failed registration EdgeDevices",
 		},
 	)
-	createdOBC = prometheus.NewCounter(
+	unregisteredEdgeDevices = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: CreatedOBCQuery,
-			Help: "Number of created OBCs",
+			Name: EdgeDeviceUnregistrationQuery,
+			Help: "Number of unregistered EdgeDevices",
 		},
 	)
 )
@@ -38,7 +38,7 @@ func init() {
 	metrics.Registry.MustRegister(
 		registeredEdgeDevices,
 		failedToCompleteRegistrationEdgeDevices,
-		createdOBC,
+		unregisteredEdgeDevices,
 	)
 }
 
@@ -48,7 +48,7 @@ func init() {
 type Metrics interface {
 	IncEdgeDeviceSuccessfulRegistration()
 	IncEdgeDeviceFailedRegistration()
-	IncCreatedOBCs()
+	IncEdgeDeviceUnregistration()
 }
 
 func New() Metrics {
@@ -63,6 +63,6 @@ func (m *metricsImpl) IncEdgeDeviceSuccessfulRegistration() {
 func (m *metricsImpl) IncEdgeDeviceFailedRegistration() {
 	failedToCompleteRegistrationEdgeDevices.Inc()
 }
-func (m *metricsImpl) IncCreatedOBCs() {
-	createdOBC.Inc()
+func (m *metricsImpl) IncEdgeDeviceUnregistration() {
+	unregisteredEdgeDevices.Inc()
 }
