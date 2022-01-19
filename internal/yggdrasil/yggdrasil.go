@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 
 	"net/http"
 	"net/url"
@@ -60,13 +61,15 @@ type Handler struct {
 	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 	metrics                metrics.Metrics
+	allowLists             devicemetrics.AllowListGenerator
 }
 
 type keyMapType = map[string]interface{}
 type secretMapType = map[string]keyMapType
 
 func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
-	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics) *Handler {
+	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder,
+	registryAuth images.RegistryAuthAPI, metrics metrics.Metrics, allowLists devicemetrics.AllowListGenerator) *Handler {
 	return &Handler{
 		deviceRepository:       deviceRepository,
 		deploymentRepository:   deploymentRepository,
@@ -76,6 +79,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 		recorder:               recorder,
 		registryAuthRepository: registryAuth,
 		metrics:                metrics,
+		allowLists:             allowLists,
 	}
 }
 
@@ -201,7 +205,11 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		logger.Error(err, "failed to get storage configuration for device")
 	}
 
-	dc.Configuration.Metrics = getDeviceMetricsConfiguration(edgeDevice)
+	dc.Configuration.Metrics, err = h.getDeviceMetricsConfiguration(ctx, edgeDevice)
+	if err != nil {
+		logger.Error(err, "failed getting device metrics configuration")
+		return operations.NewGetDataMessageForDeviceInternalServerError()
+	}
 
 	// TODO: Network optimization: Decide whether there is a need to return any payload based on difference between last applied configuration and current state in the cluster.
 	message := models.Message{
@@ -215,28 +223,39 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 	return operations.NewGetDataMessageForDeviceOK().WithPayload(&message)
 }
 
-func getDeviceMetricsConfiguration(edgeDevice *v1alpha1.EdgeDevice) *models.MetricsConfiguration {
+func (h *Handler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) (*models.MetricsConfiguration, error) {
 	metricsConfigSpec := edgeDevice.Spec.Metrics
-	if metricsConfigSpec != nil {
-		var metricsConfig models.MetricsConfiguration
-
-		retention := metricsConfigSpec.Retention
-		if retention != nil {
-			metricsConfig.Retention = &models.MetricsRetention{
-				MaxHours: retention.MaxHours,
-				MaxMib:   retention.MaxMiB,
-			}
-		}
-
-		systemMetrics := metricsConfigSpec.SystemMetrics
-		if systemMetrics != nil {
-			metricsConfig.System = &models.SystemMetricsConfiguration{
-				Interval: systemMetrics.Interval,
-			}
-		}
-		return &metricsConfig
+	if metricsConfigSpec == nil {
+		return nil, nil
 	}
-	return nil
+
+	var metricsConfig models.MetricsConfiguration
+
+	retention := metricsConfigSpec.Retention
+	if retention != nil {
+		metricsConfig.Retention = &models.MetricsRetention{
+			MaxHours: retention.MaxHours,
+			MaxMib:   retention.MaxMiB,
+		}
+	}
+
+	systemMetrics := metricsConfigSpec.SystemMetrics
+	if systemMetrics != nil {
+		metricsConfig.System = &models.SystemMetricsConfiguration{
+			Interval: systemMetrics.Interval,
+		}
+
+		allowListSpec := systemMetrics.AllowList
+		if allowListSpec != nil {
+			allowList, err := h.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, allowListSpec.Namespace)
+			if err != nil {
+				return nil, err
+			}
+			metricsConfig.System.AllowList = allowList
+		}
+	}
+
+	return &metricsConfig, nil
 }
 
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {

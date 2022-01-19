@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -273,7 +274,8 @@ func main() {
 			initialDeviceNamespace,
 			mgr.GetEventRecorderFor("edgedeployment-controller"),
 			registryAuth,
-			metricsObj)
+			metricsObj,
+			devicemetrics.NewAllowListGenerator(k8sClient))
 
 		h, err := restapi.Handler(restapi.Config{
 			YggdrasilAPI: yggdrasilAPIHandler,

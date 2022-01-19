@@ -637,6 +637,24 @@ Status: Internal Server Error
 
 
 
+### <span id="metrics-allow-list"></span> metrics-allow-list
+
+
+> Specification of metrics to be collected
+  
+
+
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| names | []string| `[]string` |  | |  |  |
+
+
+
 ### <span id="metrics-configuration"></span> metrics-configuration
 
 
@@ -758,6 +776,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| allow_list | [MetricsAllowList](#metrics-allow-list)| `MetricsAllowList` |  | | Specification of system metrics to be collected |  |
 | interval | int32 (formatted integer)| `int32` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
 
 
