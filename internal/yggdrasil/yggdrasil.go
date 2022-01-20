@@ -115,9 +115,12 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 	}
 
 	if edgeDevice.DeletionTimestamp != nil && !utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
-		err = h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
-		if err != nil {
-			return operations.NewGetControlMessageForDeviceInternalServerError()
+		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilConnectionFinalizer) {
+			err = h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
+			if err != nil {
+				return operations.NewGetControlMessageForDeviceInternalServerError()
+			}
+			h.metrics.IncEdgeDeviceUnregistration()
 		}
 		message := h.createDisconnectCommand()
 		return operations.NewGetControlMessageForDeviceOK().WithPayload(message)

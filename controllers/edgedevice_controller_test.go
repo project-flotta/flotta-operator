@@ -8,7 +8,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/controllers"
-	"github.com/jakub-dzon/k4e-operator/internal/metrics"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -34,13 +33,11 @@ var _ = Describe("EdgeDevice controller", func() {
 
 		edgeDeviceRepoMock *edgedevice.MockRepository
 		k8sManager         manager.Manager
-		metricsMock        *metrics.MockMetrics
 	)
 
 	BeforeEach(func() {
 		k8sManager = getK8sManager(cfg)
 		mockCtrl := gomock.NewController(GinkgoT())
-		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(k8sClient)
 		edgeDeviceReconciler = &controllers.EdgeDeviceReconciler{
 			Client:               k8sClient,
@@ -48,7 +45,6 @@ var _ = Describe("EdgeDevice controller", func() {
 			EdgeDeviceRepository: edgeDeviceRepository,
 			Claimer:              storage.NewClaimer(k8sClient),
 			ObcAutoCreate:        false,
-			Metrics:              metricsMock,
 		}
 		err = edgeDeviceReconciler.SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
@@ -87,7 +83,6 @@ var _ = Describe("EdgeDevice controller", func() {
 				EdgeDeviceRepository: edgeDeviceRepoMock,
 				Claimer:              storage.NewClaimer(k8sClient),
 				ObcAutoCreate:        false,
-				Metrics:              metricsMock,
 			}
 		})
 
@@ -189,10 +184,6 @@ var _ = Describe("EdgeDevice controller", func() {
 				Return(fmt.Errorf("failed")).
 				Times(1)
 
-			metricsMock.EXPECT().
-				IncCreatedOBCs().
-				AnyTimes()
-
 			edgeDeviceReconciler.ObcAutoCreate = true
 
 			// when
@@ -221,10 +212,6 @@ var _ = Describe("EdgeDevice controller", func() {
 				Times(1)
 
 			edgeDeviceReconciler.ObcAutoCreate = true
-
-			metricsMock.EXPECT().
-				IncCreatedOBCs().
-				AnyTimes()
 
 			// when
 			res, err := edgeDeviceReconciler.Reconcile(context.TODO(), req)
@@ -284,10 +271,6 @@ var _ = Describe("EdgeDevice controller", func() {
 			},
 		}
 
-		metricsMock.EXPECT().
-			IncCreatedOBCs().
-			AnyTimes()
-
 		// when
 		err := k8sClient.Create(ctx, &edgeDevice)
 
@@ -331,10 +314,6 @@ var _ = Describe("EdgeDevice controller", func() {
 				},
 			},
 		}
-
-		metricsMock.EXPECT().
-			IncCreatedOBCs().
-			AnyTimes()
 
 		// when
 		err := k8sClient.Create(ctx, &edgeDevice)

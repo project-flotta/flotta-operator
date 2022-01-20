@@ -193,7 +193,6 @@ func main() {
 		EdgeDeviceRepository:    edgeDeviceRepository,
 		Claimer:                 claimer,
 		ObcAutoCreate:           Config.EnableObcAutoCreation,
-		Metrics:                 metricsObj,
 		MaxConcurrentReconciles: int(Config.MaxConcurrentReconciles),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")

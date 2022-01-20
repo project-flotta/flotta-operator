@@ -14,7 +14,7 @@ import (
 const (
 	numberOfEdgeDevicesSuccessfulRegisteredValue = 3
 	numberOfEdgeDevicesFailedToRegisterValue     = 1
-	numberOfCreatedOBCsValue                     = 2
+	numberOfEdgeDevicesUnregisteredValue         = 2
 )
 
 func TestMetrics(t *testing.T) {
@@ -54,12 +54,12 @@ var _ = Describe("Metrics", func() {
 
 	Context("EdgeDevice", func() {
 		It("correctly passes calls to the IncEdgeDeviceFailedRegistration", func() {
-			for i := 0; i < numberOfCreatedOBCsValue; i++ {
-				m.IncCreatedOBCs()
+			for i := 0; i < numberOfEdgeDevicesUnregisteredValue; i++ {
+				m.IncEdgeDeviceUnregistration()
 			}
 
 			//then
-			validateMetric(metrics.CreatedOBCQuery, numberOfCreatedOBCsValue)
+			validateMetric(metrics.EdgeDeviceUnregistrationQuery, numberOfEdgeDevicesUnregisteredValue)
 		})
 
 		It("correctly passes calls to the IncEdgeDeviceSuccessfulRegistration", func() {

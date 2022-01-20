@@ -109,7 +109,6 @@ func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *m
 			logger.Error(err, "Cannot create object bucket claim for the device")
 			return nil, err
 		}
-		r.Metrics.IncCreatedOBCs()
 		return obc, nil
 	}
 

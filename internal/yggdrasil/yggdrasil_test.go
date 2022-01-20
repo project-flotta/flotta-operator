@@ -150,11 +150,6 @@ var _ = Describe("Yggdrasil", func() {
 				Return(device, nil).
 				Times(1)
 
-			edgeDeviceRepoMock.EXPECT().
-				RemoveFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
-				Return(nil).
-				Times(1)
-
 			// when
 			res := handler.GetControlMessageForDevice(context.TODO(), params)
 			data := res.(*api.GetControlMessageForDeviceOK)
@@ -193,6 +188,10 @@ var _ = Describe("Yggdrasil", func() {
 			edgeDeviceRepoMock.EXPECT().
 				RemoveFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
 				Return(nil).
+				Times(1)
+
+			metricsMock.EXPECT().
+				IncEdgeDeviceUnregistration().
 				Times(1)
 
 			// when
@@ -366,7 +365,7 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Workloads).To(HaveLen(0))
 		})
 
-		It("Retrival of deployment failed", func() {
+		It("Retrieval of deployment failed", func() {
 			// given
 			device := getDevice("foo")
 			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
