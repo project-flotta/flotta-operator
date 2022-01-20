@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 	"github.com/jakub-dzon/k4e-operator/internal/heartbeat"
 
@@ -335,6 +336,12 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		if err != nil {
 			logger.Error(err, "cannot update EdgeDevice status")
+			h.metrics.IncEdgeDeviceFailedRegistration()
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
+		err = h.deviceRepository.UpdateLabels(ctx, &device, hardware.MapLabels(registrationInfo.Hardware))
+		if err != nil {
+			logger.Error(err, "cannot update EdgeDevice labels")
 			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}

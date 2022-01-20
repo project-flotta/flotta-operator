@@ -1,6 +1,8 @@
 package hardware_test
 
 import (
+	"strings"
+
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/internal/hardware"
 	"github.com/jakub-dzon/k4e-operator/models"
@@ -211,6 +213,48 @@ var _ = Describe("Hardware", func() {
 			Expect(result.SystemVendor.ProductName).To(Equal(testProductName))
 			Expect(result.SystemVendor.SerialNumber).To(Equal(testSerialNumber))
 			Expect(result.SystemVendor.Virtual).To(Equal(testVirtual))
+		})
+	})
+
+	Context("MapLabels", func() {
+		It("should accept nil input", func() {
+			// given
+			var input *models.HardwareInfo
+
+			// when
+			result := hardware.MapLabels(input)
+
+			// then
+			Expect(result).To(BeNil())
+		})
+
+		It("should handle nil fields in input", func() {
+			// given
+			input := models.HardwareInfo{}
+
+			// when
+			result := hardware.MapHardware(&input)
+
+			// then
+			Expect(result).NotTo(BeNil())
+		})
+
+		It("should map all labels", func() {
+			// given
+			input := testInputFull
+
+			//when
+			result := hardware.MapLabels(input)
+
+			// then
+			Expect(result).NotTo(BeNil())
+			Expect(len(result)).To(Equal(6))
+			Expect(result["device.hostname"]).To(Equal(testHostname))
+			Expect(result["device.cpu-architecture"]).To(Equal(strings.ToLower(testArchitecture)))
+			Expect(result["device.cpu-model"]).To(Equal(strings.ToLower(testModelName)))
+			Expect(result["device.system-manufacturer"]).To(Equal(strings.ToLower(testManufacturer)))
+			Expect(result["device.system-product"]).To(Equal(strings.ToLower(testProductName)))
+			Expect(result["device.system-serial"]).To(Equal(testSerialNumber))
 		})
 	})
 })

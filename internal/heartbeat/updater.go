@@ -2,6 +2,8 @@ package heartbeat
 
 import (
 	"context"
+	"time"
+
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/internal/hardware"
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
@@ -10,7 +12,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"time"
 )
 
 type Updater struct {
@@ -32,6 +33,10 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 
 	err := u.deviceRepository.PatchStatus(ctx, edgeDevice, &patch)
 	return err
+}
+
+func (u *Updater) updateLabels(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, heartbeat *models.Heartbeat) error {
+	return u.deviceRepository.UpdateLabels(ctx, edgeDevice, hardware.MapLabels(heartbeat.Hardware))
 }
 
 func (u *Updater) processEvents(edgeDevice *v1alpha1.EdgeDevice, events []*models.EventInfo) {

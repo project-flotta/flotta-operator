@@ -2,6 +2,8 @@ package edgedevice
 
 import (
 	"context"
+	"reflect"
+	"time"
 
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +18,7 @@ type Repository interface {
 	Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
 	ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error)
 	RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error
+	UpdateLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error
 }
 
 type CRRepository struct {
@@ -80,4 +83,45 @@ func (r *CRRepository) RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1
 	}
 
 	return nil
+}
+
+func (r *CRRepository) UpdateLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error {
+	err := r.updateLabels(ctx, device, labels)
+	if err == nil {
+		return nil
+	}
+
+	// retry patching the edge device labels because the device can be update concurrently
+	for i := 1; i < 4; i++ {
+		time.Sleep(time.Duration(i*50) * time.Millisecond)
+		device2, err := r.Read(ctx, device.Name, device.Namespace)
+		if err != nil {
+			continue
+		}
+		err = r.updateLabels(ctx, device2, labels)
+		if err == nil {
+			return nil
+		}
+	}
+	return err
+}
+
+func (r *CRRepository) updateLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error {
+	deviceCopy := device.DeepCopy()
+	deviceLabels := deviceCopy.Labels
+	if deviceLabels == nil {
+		deviceLabels = make(map[string]string)
+	}
+	for key, value := range labels {
+		deviceLabels[key] = value
+	}
+	if reflect.DeepEqual(deviceLabels, device.Labels) {
+		return nil
+	}
+	deviceCopy.Labels = deviceLabels
+	err := r.Patch(ctx, device, deviceCopy)
+	if err == nil {
+		device.Labels = deviceCopy.Labels
+	}
+	return err
 }
