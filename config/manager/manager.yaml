@@ -3,6 +3,7 @@ kind: Namespace
 metadata:
   labels:
     control-plane: controller-manager
+    openshift.io/cluster-monitoring: "true"
   name: system
 ---
 apiVersion: apps/v1
@@ -34,9 +35,9 @@ spec:
         name: manager
         ports:
           - containerPort: 8888
-            name: http
+            name: yggd
           - containerPort: 8043
-            name: https
+            name: yggds
           - containerPort: 8080
             name: metrics
         securityContext:
@@ -72,14 +73,14 @@ metadata:
     control-plane: controller-manager
 spec:
   ports:
-    - name: http
+    - name: yggd
       protocol: TCP
       port: 8888
-      targetPort: http
-    - name: https
+      targetPort: yggd
+    - name: yggds
       protocol: TCP
       port: 8043
-      targetPort: https
+      targetPort: yggds
   selector:
     control-plane: controller-manager
   type: ClusterIP
