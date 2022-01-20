@@ -243,6 +243,7 @@ func (h *Handler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice 
 	if systemMetrics != nil {
 		metricsConfig.System = &models.SystemMetricsConfiguration{
 			Interval: systemMetrics.Interval,
+			Disabled: systemMetrics.Disabled,
 		}
 
 		allowListSpec := systemMetrics.AllowList

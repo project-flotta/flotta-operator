@@ -245,6 +245,9 @@ definitions:
       allow_list:
         description: Specification of system metrics to be collected
         $ref: '#/definitions/metrics-allow-list'
+      disabled:
+        type: boolean
+        description: When true, turns system metrics collection off. False by default.
 
   metrics-allow-list:
     type: object

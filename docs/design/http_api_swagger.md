@@ -777,6 +777,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | allow_list | [MetricsAllowList](#metrics-allow-list)| `MetricsAllowList` |  | | Specification of system metrics to be collected |  |
+| disabled | boolean| `bool` |  | | When true, turns system metrics collection off. False by default. |  |
 | interval | int32 (formatted integer)| `int32` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
 
 

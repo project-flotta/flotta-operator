@@ -1392,45 +1392,19 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Configuration.Metrics.Retention.MaxHours).To(Equal(maxHours))
 		})
 
-		It("should map system metrics interval", func() {
+		It("should map system metrics", func() {
 			// given
+			const (
+				allowListName      = "a-name"
+				allowListNamespace = "a-namespace"
+			)
 			interval := int32(3600)
 
 			device := getDevice("foo")
 			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
 				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
 					Interval: interval,
-				},
-			}
-
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
-
-			// when
-			res := handler.GetDataMessageForDevice(context.TODO(), params)
-
-			// then
-			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
-			config := validateAndGetDeviceConfig(res)
-
-			Expect(config.Configuration.Metrics).ToNot(BeNil())
-			Expect(config.Configuration.Metrics.System).ToNot(BeNil())
-			Expect(config.Configuration.Metrics.System.Interval).To(Equal(interval))
-		})
-
-		It("should add allow-list configuration", func() {
-			// given
-			const (
-				allowListName      = "a-name"
-				allowListNamespace = "a-namespace"
-			)
-			allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
-
-			device := getDevice("foo")
-			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
-				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
+					Disabled: true,
 					AllowList: &v1alpha1.ObjectRef{
 						Name:      allowListName,
 						Namespace: allowListNamespace,
@@ -1438,13 +1412,14 @@ var _ = Describe("Yggdrasil", func() {
 				},
 			}
 
-			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, allowListNamespace).
-				Return(&allowList, nil)
-
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
+
+			allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
+			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, allowListNamespace).
+				Return(&allowList, nil)
 
 			// when
 			res := handler.GetDataMessageForDevice(context.TODO(), params)
@@ -1455,6 +1430,11 @@ var _ = Describe("Yggdrasil", func() {
 
 			Expect(config.Configuration.Metrics).ToNot(BeNil())
 			Expect(config.Configuration.Metrics.System).ToNot(BeNil())
+
+			Expect(config.Configuration.Metrics.System.Interval).To(Equal(interval))
+
+			Expect(config.Configuration.Metrics.System.Disabled).To(BeTrue())
+
 			Expect(config.Configuration.Metrics.System.AllowList).ToNot(BeNil())
 			Expect(*config.Configuration.Metrics.System.AllowList).To(Equal(allowList))
 		})
