@@ -19,6 +19,9 @@ type SystemMetricsConfiguration struct {
 	// Specification of system metrics to be collected
 	AllowList *MetricsAllowList `json:"allow_list,omitempty"`
 
+	// When true, turns system metrics collection off. False by default.
+	Disabled bool `json:"disabled,omitempty"`
+
 	// Interval(in seconds) to scrape metrics endpoint.
 	Interval int32 `json:"interval,omitempty"`
 }

@@ -778,6 +778,10 @@ func init() {
           "description": "Specification of system metrics to be collected",
           "$ref": "#/definitions/metrics-allow-list"
         },
+        "disabled": {
+          "description": "When true, turns system metrics collection off. False by default.",
+          "type": "boolean"
+        },
         "interval": {
           "description": "Interval(in seconds) to scrape metrics endpoint.",
           "type": "integer",
@@ -1630,6 +1634,10 @@ func init() {
         "allow_list": {
           "description": "Specification of system metrics to be collected",
           "$ref": "#/definitions/metrics-allow-list"
+        },
+        "disabled": {
+          "description": "When true, turns system metrics collection off. False by default.",
+          "type": "boolean"
         },
         "interval": {
           "description": "Interval(in seconds) to scrape metrics endpoint.",

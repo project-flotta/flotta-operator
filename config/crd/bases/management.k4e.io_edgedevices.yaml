@@ -83,6 +83,10 @@ spec:
                         required:
                         - name
                         type: object
+                      disabled:
+                        description: Disabled when set to true instructs the device
+                          to turn off system metrics collection
+                        type: boolean
                       interval:
                         default: 60
                         description: Interval(in seconds) to scrape system metrics.
