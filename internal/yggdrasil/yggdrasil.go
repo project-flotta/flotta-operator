@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
+	"github.com/jakub-dzon/k4e-operator/internal/heartbeat"
 
 	"net/http"
 	"net/url"
@@ -62,6 +63,7 @@ type Handler struct {
 	registryAuthRepository images.RegistryAuthAPI
 	metrics                metrics.Metrics
 	allowLists             devicemetrics.AllowListGenerator
+	heartbeatHandler       heartbeat.Handler
 }
 
 type keyMapType = map[string]interface{}
@@ -80,6 +82,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 		registryAuthRepository: registryAuth,
 		metrics:                metrics,
 		allowLists:             allowLists,
+		heartbeatHandler:       heartbeat.NewSynchronousHandler(deviceRepository, recorder),
 	}
 }
 
@@ -272,46 +275,23 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 	msg := params.Message
 	switch msg.Directive {
 	case "heartbeat":
-		heartbeat := models.Heartbeat{}
+		hb := models.Heartbeat{}
 		contentJson, _ := json.Marshal(msg.Content)
-		err := json.Unmarshal(contentJson, &heartbeat)
+		err := json.Unmarshal(contentJson, &hb)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.V(1).Info("received heartbeat", "content", heartbeat)
-		edgeDevice, err := h.deviceRepository.Read(ctx, params.DeviceID, h.initialNamespace)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return operations.NewPostDataMessageForDeviceNotFound()
-			}
-			return operations.NewPostDataMessageForDeviceInternalServerError()
-		}
-
-		// Produce k8s events based on the device-worker events:
-		events := heartbeat.Events
-		for _, event := range events {
-			if event == nil {
-				continue
-			}
-
-			if event.Type == models.EventInfoTypeWarn {
-				h.recorder.Event(edgeDevice, corev1.EventTypeWarning, event.Reason, event.Message)
-			} else {
-				h.recorder.Event(edgeDevice, corev1.EventTypeNormal, event.Reason, event.Message)
-			}
-		}
-
-		err = h.updateDeviceStatus(ctx, edgeDevice, func(device *v1alpha1.EdgeDevice) {
-			device.Status.LastSyncedResourceVersion = heartbeat.Version
-			device.Status.LastSeenTime = metav1.NewTime(time.Time(heartbeat.Time))
-			device.Status.Phase = heartbeat.Status
-			if heartbeat.Hardware != nil {
-				device.Status.Hardware = hardware.MapHardware(heartbeat.Hardware)
-			}
-			deployments := h.updateDeploymentStatuses(device.Status.Deployments, heartbeat.Workloads)
-			device.Status.Deployments = deployments
+		err = h.heartbeatHandler.Process(ctx, heartbeat.Notification{
+			DeviceID:  deviceID,
+			Namespace: h.initialNamespace,
+			Heartbeat: &hb,
 		})
 		if err != nil {
+			if errors.IsNotFound(err) {
+				logger.V(1).Info("Device not found")
+				return operations.NewPostDataMessageForDeviceNotFound()
+			}
+			logger.Error(err, "Device not found")
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 	case "registration":
@@ -391,28 +371,6 @@ func (h *Handler) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeD
 		}
 	}
 	return err
-}
-
-func (h *Handler) updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment, workloads []*models.WorkloadStatus) []v1alpha1.Deployment {
-	deploymentMap := make(map[string]v1alpha1.Deployment)
-	for _, deploymentStatus := range oldDeployments {
-		deploymentMap[deploymentStatus.Name] = deploymentStatus
-	}
-	for _, status := range workloads {
-		if deployment, ok := deploymentMap[status.Name]; ok {
-			if string(deployment.Phase) != status.Status {
-				deployment.Phase = v1alpha1.EdgeDeploymentPhase(status.Status)
-				deployment.LastTransitionTime = metav1.Now()
-			}
-			deployment.LastDataUpload = metav1.NewTime(time.Time(status.LastDataUpload))
-			deploymentMap[status.Name] = deployment
-		}
-	}
-	var deployments []v1alpha1.Deployment
-	for _, deployment := range deploymentMap {
-		deployments = append(deployments, deployment)
-	}
-	return deployments
 }
 
 func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deployments []v1alpha1.EdgeDeployment, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
