@@ -305,11 +305,13 @@ definitions:
       port:
         type: integer
         format: int32
+      allow_list:
+        description: Specification of system metrics to be collected
+        $ref: '#/definitions/metrics-allow-list'
       interval:
         type: integer
         format: int32
         description: Interval(in seconds) to scrape metrics endpoint.
-
       containers:
         type: object
         additionalProperties:

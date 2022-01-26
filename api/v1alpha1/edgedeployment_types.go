@@ -67,7 +67,14 @@ type ContainerMetricsConfiguration struct {
 	// +kubebuilder:default=60
 	Interval int32 `json:"interval,omitempty"`
 
+	// Specification of workload metrics to be collected
+	AllowList *NameRef `json:"allowList,omitempty"`
+
 	Containers map[string]*MetricsConfigEntity `json:"containers,omitempty"`
+}
+
+type NameRef struct {
+	Name string `json:"name"`
 }
 
 type ObjectRef struct {

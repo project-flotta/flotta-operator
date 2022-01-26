@@ -642,6 +642,10 @@ func init() {
     "metrics": {
       "type": "object",
       "properties": {
+        "allow_list": {
+          "description": "Specification of system metrics to be collected",
+          "$ref": "#/definitions/metrics-allow-list"
+        },
         "containers": {
           "type": "object",
           "additionalProperties": {
@@ -1499,6 +1503,10 @@ func init() {
     "metrics": {
       "type": "object",
       "properties": {
+        "allow_list": {
+          "description": "Specification of system metrics to be collected",
+          "$ref": "#/definitions/metrics-allow-list"
+        },
         "containers": {
           "type": "object",
           "additionalProperties": {

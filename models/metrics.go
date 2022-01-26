@@ -17,6 +17,9 @@ import (
 // swagger:model metrics
 type Metrics struct {
 
+	// Specification of system metrics to be collected
+	AllowList *MetricsAllowList `json:"allow_list,omitempty"`
+
 	// containers
 	Containers map[string]ContainerMetrics `json:"containers,omitempty"`
 
@@ -34,6 +37,10 @@ type Metrics struct {
 func (m *Metrics) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateAllowList(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateContainers(formats); err != nil {
 		res = append(res, err)
 	}
@@ -41,6 +48,24 @@ func (m *Metrics) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Metrics) validateAllowList(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.AllowList) { // not required
+		return nil
+	}
+
+	if m.AllowList != nil {
+		if err := m.AllowList.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("allow_list")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
