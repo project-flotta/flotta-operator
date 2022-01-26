@@ -1528,7 +1528,7 @@ var _ = Describe("Yggdrasil", func() {
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
 					Return(nil, fmt.Errorf("failed")).
-					Times(1)
+					Times(4)
 
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
