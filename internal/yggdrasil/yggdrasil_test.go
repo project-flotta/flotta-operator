@@ -456,8 +456,10 @@ var _ = Describe("Yggdrasil", func() {
 
 		Context("Metrics", func() {
 			var (
-				deviceName string = "foo"
-				device     *v1alpha1.EdgeDevice
+				deviceName    string = "foo"
+				device        *v1alpha1.EdgeDevice
+				allowList     = models.MetricsAllowList{Names: []string{"foo", "bar"}}
+				allowListName = "foo"
 			)
 
 			BeforeEach(func() {
@@ -484,21 +486,28 @@ var _ = Describe("Yggdrasil", func() {
 				}
 			}
 
-			It("Path, port and interval is honored", func() {
+			It("Path, port, interval, allowList is honored", func() {
 				// given
 				expectedResult := &models.Metrics{
-					Path:     "/metrics",
-					Port:     9999,
-					Interval: 55,
+					Path:      "/metrics",
+					Port:      9999,
+					Interval:  55,
+					AllowList: &allowList,
 				}
 
 				deploy := getDeployment("workload1", testNamespace)
 				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
-					Path: "/metrics", Port: 9999, Interval: 55}
+					Path: "/metrics", Port: 9999, Interval: 55, AllowList: &v1alpha1.NameRef{
+						Name: allowListName,
+					}}
 
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
+
+				allowListsMock.EXPECT().
+					GenerateFromConfigMap(gomock.Any(), allowListName, testNamespace).
+					Return(&allowList, nil).Times(1)
 
 				// when
 				res := handler.GetDataMessageForDevice(context.TODO(), params)
@@ -510,6 +519,30 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(config.DeviceID).To(Equal(deviceName))
 				Expect(config.Workloads).To(HaveLen(1))
 				Expect(config.Workloads[0].Metrics).To(Equal(expectedResult))
+			})
+
+			It("AllowList configmap retrival error", func() {
+
+				// given
+				deploy := getDeployment("workload1", testNamespace)
+				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
+					Path: "/metrics", Port: 9999, Interval: 55, AllowList: &v1alpha1.NameRef{
+						Name: allowListName,
+					}}
+
+				deployRepoMock.EXPECT().
+					Read(gomock.Any(), "workload1", testNamespace).
+					Return(deploy, nil)
+
+				allowListsMock.EXPECT().
+					GenerateFromConfigMap(gomock.Any(), allowListName, testNamespace).
+					Return(nil, fmt.Errorf("Failed to get CM")).Times(1)
+
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
 			})
 
 			It("Path and port in containers is honored", func() {

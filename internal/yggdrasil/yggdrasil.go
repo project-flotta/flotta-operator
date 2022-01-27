@@ -420,11 +420,21 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 		}
 
 		if spec.Metrics != nil && spec.Metrics.Port > 0 {
+
 			workload.Metrics = &models.Metrics{
 				Path:     spec.Metrics.Path,
 				Port:     spec.Metrics.Port,
 				Interval: spec.Metrics.Interval,
 			}
+
+			if allowListSpec := spec.Metrics.AllowList; allowListSpec != nil {
+				allowList, err := h.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, deployment.Namespace)
+				if err != nil {
+					return nil, fmt.Errorf("Cannot get AllowList Metrics Confimap for %v: %v", deployment.Name, err)
+				}
+				workload.Metrics.AllowList = allowList
+			}
+
 			addedContainers := false
 			containers := map[string]models.ContainerMetrics{}
 			for container, metricConf := range spec.Metrics.Containers {

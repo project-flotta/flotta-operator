@@ -114,6 +114,14 @@ spec:
                 type: object
               metrics:
                 properties:
+                  allowList:
+                    description: Specification of workload metrics to be collected
+                    properties:
+                      name:
+                        type: string
+                    required:
+                    - name
+                    type: object
                   containers:
                     additionalProperties:
                       properties:
