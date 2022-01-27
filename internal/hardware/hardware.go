@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/jakub-dzon/k4e-operator/internal/utils"
 	"github.com/jakub-dzon/k4e-operator/models"
 )
 
@@ -88,4 +89,46 @@ func MapHardware(hardware *models.HardwareInfo) *v1alpha1.Hardware {
 		}
 	}
 	return &hw
+}
+
+func MapLabels(hardware *models.HardwareInfo) map[string]string {
+	if hardware == nil {
+		return nil
+	}
+	var labels = make(map[string]string)
+
+	hostname, err := utils.NormalizeLabel(hardware.Hostname)
+	if err == nil {
+		labels["device.hostname"] = hostname
+	}
+
+	cpu := hardware.CPU
+	if cpu != nil {
+		arch, err := utils.NormalizeLabel(cpu.Architecture)
+		if err == nil {
+			labels["device.cpu-architecture"] = arch
+		}
+		model, err := utils.NormalizeLabel(cpu.ModelName)
+		if err == nil {
+			labels["device.cpu-model"] = model
+		}
+	}
+
+	systemVendor := hardware.SystemVendor
+	if systemVendor != nil {
+		manufacturer, err := utils.NormalizeLabel(systemVendor.Manufacturer)
+		if err == nil {
+			labels["device.system-manufacturer"] = manufacturer
+		}
+		productName, err := utils.NormalizeLabel(systemVendor.ProductName)
+		if err == nil {
+			labels["device.system-product"] = productName
+		}
+		serialNumber, err := utils.NormalizeLabel(systemVendor.SerialNumber)
+		if err == nil {
+			labels["device.system-serial"] = serialNumber
+		}
+	}
+
+	return labels
 }

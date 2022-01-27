@@ -3,9 +3,10 @@ package yggdrasil_test
 import (
 	"context"
 	"fmt"
-	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 	"strings"
 	"time"
+
+	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 
 	"github.com/jakub-dzon/k4e-operator/internal/images"
 	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
@@ -1556,6 +1557,11 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil).
 					Times(1)
 
+				edgeDeviceRepoMock.EXPECT().
+					UpdateLabels(gomock.Any(), device, gomock.Any()).
+					Return(nil).
+					Times(1)
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -1590,6 +1596,11 @@ var _ = Describe("Yggdrasil", func() {
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					UpdateLabels(gomock.Any(), device, gomock.Any()).
+					Return(nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
@@ -1643,6 +1654,11 @@ var _ = Describe("Yggdrasil", func() {
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					UpdateLabels(gomock.Any(), device, gomock.Any()).
+					Return(nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
@@ -1748,6 +1764,11 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil).
 					Times(1)
 
+				edgeDeviceRepoMock.EXPECT().
+					UpdateLabels(gomock.Any(), device, gomock.Any()).
+					Return(nil).
+					Times(1)
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -1835,6 +1856,11 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil).
 					Times(1)
 
+				edgeDeviceRepoMock.EXPECT().
+					UpdateLabels(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil).
+					Times(1)
+
 				metricsMock.EXPECT().
 					IncEdgeDeviceSuccessfulRegistration().
 					AnyTimes()
@@ -1884,6 +1910,11 @@ var _ = Describe("Yggdrasil", func() {
 						Expect(edgeDevice.Status.Deployments).To(HaveLen(0))
 						Expect(edgeDevice.Status.Hardware.Hostname).To(Equal("fooHostname"))
 					}).
+					Return(nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					UpdateLabels(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil).
 					Times(1)
 

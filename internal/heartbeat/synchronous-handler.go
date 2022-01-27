@@ -2,11 +2,12 @@ package heartbeat
 
 import (
 	"context"
+	"time"
+
 	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 )
 
 type SynchronousHandler struct {
@@ -65,6 +66,10 @@ func (h *SynchronousHandler) process(ctx context.Context, notification Notificat
 	}
 
 	err = h.updater.updateStatus(ctx, edgeDevice, heartbeat)
+	if err != nil {
+		return err, true
+	}
+	err = h.updater.updateLabels(ctx, edgeDevice, heartbeat)
 	if err != nil {
 		return err, true
 	}

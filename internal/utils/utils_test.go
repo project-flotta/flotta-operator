@@ -4,6 +4,7 @@ import (
 	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
 	"github.com/jakub-dzon/k4e-operator/internal/utils"
 	. "github.com/onsi/ginkgo"
+	"github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
@@ -58,5 +59,27 @@ var _ = Describe("Utils", func() {
 			// then
 			Expect(found).To(BeFalse())
 		})
+	})
+
+	Context("NormalizeLabel", func() {
+		table.DescribeTable("should fail for an invalid format", func(tested string) {
+			result, err := utils.NormalizeLabel(tested)
+			Expect(result).To(Equal(""))
+			Expect(err).To(HaveOccurred())
+		},
+			table.Entry("Empty string", ""),
+			table.Entry("Non-alphanumeric characters", "$!@#$!@#$%"),
+			table.Entry("Only dashes without alphanumeric characters", "-----"),
+		)
+
+		table.DescribeTable("should normalize given label to expected format", func(tested string, expected string) {
+			result, err := utils.NormalizeLabel(tested)
+			Expect(result).To(Equal(expected))
+			Expect(err).NotTo(HaveOccurred())
+		},
+			table.Entry("CPU model", "Intel(R) Core(TM) i7-8665U CPU @ 1.90GHz", "intelrcoretmi7-8665ucpu1.90ghz"),
+			table.Entry("CPU arch", "x86_64", "x86_64"),
+			table.Entry("Serial", "PF20YKWG;", "pf20ykwg"),
+		)
 	})
 })
