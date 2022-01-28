@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/jakub-dzon/k4e-operator/internal/configmaps"
 	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
 	"github.com/jakub-dzon/k4e-operator/internal/heartbeat"
 
@@ -65,6 +66,7 @@ type Handler struct {
 	metrics                metrics.Metrics
 	allowLists             devicemetrics.AllowListGenerator
 	heartbeatHandler       heartbeat.Handler
+	configMaps             configmaps.ConfigMap
 }
 
 type keyMapType = map[string]interface{}
@@ -72,7 +74,8 @@ type secretMapType = map[string]keyMapType
 
 func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
 	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder,
-	registryAuth images.RegistryAuthAPI, metrics metrics.Metrics, allowLists devicemetrics.AllowListGenerator) *Handler {
+	registryAuth images.RegistryAuthAPI, metrics metrics.Metrics, allowLists devicemetrics.AllowListGenerator,
+	configMaps configmaps.ConfigMap) *Handler {
 	return &Handler{
 		deviceRepository:       deviceRepository,
 		deploymentRepository:   deploymentRepository,
@@ -84,6 +87,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 		metrics:                metrics,
 		allowLists:             allowLists,
 		heartbeatHandler:       heartbeat.NewSynchronousHandler(deviceRepository, recorder),
+		configMaps:             configMaps,
 	}
 }
 
@@ -449,6 +453,13 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 				workload.Metrics.Containers = containers
 			}
 		}
+
+		configmapList, err := h.configMaps.Fetch(ctx, deployment, device.Namespace)
+		if err != nil {
+			logger.Error(err, "Faled to fetch configmaps")
+			return nil, err
+		}
+		workload.Configmaps = configmapList
 		list = append(list, &workload)
 	}
 	return list, nil

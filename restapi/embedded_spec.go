@@ -214,6 +214,13 @@ func init() {
         }
       }
     },
+    "configmap-list": {
+      "type": "array",
+      "items": {
+        "description": "ConfigMap kubernetes yaml specification",
+        "type": "string"
+      }
+    },
     "container-metrics": {
       "type": "object",
       "properties": {
@@ -814,6 +821,10 @@ func init() {
     "workload": {
       "type": "object",
       "properties": {
+        "configmaps": {
+          "description": "List of configmaps used by the workload",
+          "$ref": "#/definitions/configmap-list"
+        },
         "data": {
           "description": "Configuration for data transfer",
           "$ref": "#/definitions/data-configuration"
@@ -1072,6 +1083,13 @@ func init() {
         "pxe_interface": {
           "type": "string"
         }
+      }
+    },
+    "configmap-list": {
+      "type": "array",
+      "items": {
+        "description": "ConfigMap kubernetes yaml specification",
+        "type": "string"
       }
     },
     "container-metrics": {
@@ -1675,6 +1693,10 @@ func init() {
     "workload": {
       "type": "object",
       "properties": {
+        "configmaps": {
+          "description": "List of configmaps used by the workload",
+          "$ref": "#/definitions/configmap-list"
+        },
         "data": {
           "description": "Configuration for data transfer",
           "$ref": "#/definitions/data-configuration"

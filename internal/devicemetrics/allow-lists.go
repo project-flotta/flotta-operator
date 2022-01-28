@@ -3,6 +3,7 @@ package devicemetrics
 import (
 	"context"
 	"fmt"
+
 	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
 	"github.com/jakub-dzon/k4e-operator/models"
 	corev1 "k8s.io/api/core/v1"

@@ -16,6 +16,9 @@ import (
 // swagger:model workload
 type Workload struct {
 
+	// List of configmaps used by the workload
+	Configmaps ConfigmapList `json:"configmaps,omitempty"`
+
 	// Configuration for data transfer
 	Data *DataConfiguration `json:"data,omitempty"`
 
@@ -36,6 +39,10 @@ type Workload struct {
 func (m *Workload) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateConfigmaps(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateData(formats); err != nil {
 		res = append(res, err)
 	}
@@ -51,6 +58,22 @@ func (m *Workload) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Workload) validateConfigmaps(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Configmaps) { // not required
+		return nil
+	}
+
+	if err := m.Configmaps.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("configmaps")
+		}
+		return err
+	}
+
 	return nil
 }
 

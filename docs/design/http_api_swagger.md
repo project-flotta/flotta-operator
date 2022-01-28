@@ -278,6 +278,13 @@ Status: Internal Server Error
 
 
 
+### <span id="configmap-list"></span> configmap-list
+
+
+  
+
+[]string
+
 ### <span id="container-metrics"></span> container-metrics
 
 
@@ -812,6 +819,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| configmaps | [ConfigmapList](#configmap-list)| `ConfigmapList` |  | | List of configmaps used by the workload |  |
 | data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | | Configuration for data transfer |  |
 | imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | | Image registries configuration |  |
 | metrics | [Metrics](#metrics)| `Metrics` |  | | Metrics endpoint configuration |  |
