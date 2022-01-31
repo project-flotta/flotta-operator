@@ -22,6 +22,9 @@ type DeviceConfiguration struct {
 	// metrics
 	Metrics *MetricsConfiguration `json:"metrics,omitempty"`
 
+	// OS lifecycle information
+	Os *OsInformation `json:"os,omitempty"`
+
 	// storage
 	Storage *StorageConfiguration `json:"storage,omitempty"`
 }
@@ -35,6 +38,10 @@ func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMetrics(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateOs(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -76,6 +83,24 @@ func (m *DeviceConfiguration) validateMetrics(formats strfmt.Registry) error {
 		if err := m.Metrics.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("metrics")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) validateOs(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Os) { // not required
+		return nil
+	}
+
+	if m.Os != nil {
+		if err := m.Os.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("os")
 			}
 			return err
 		}

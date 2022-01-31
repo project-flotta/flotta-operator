@@ -18,9 +18,6 @@ type RegistrationInfo struct {
 
 	// Hardware information
 	Hardware *HardwareInfo `json:"hardware,omitempty"`
-
-	// os image id
-	OsImageID string `json:"os_image_id,omitempty"`
 }
 
 // Validate validates this registration info

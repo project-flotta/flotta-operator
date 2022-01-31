@@ -15,7 +15,6 @@ metadata:
 spec:
   heartbeat:
     periodSeconds: 5
-  osImageId: unknown
   requestTime: "2021-09-22T08:35:25Z"
 status:
   dataObc: 242e48d0-286b-4170-9b97-95502066e6ae

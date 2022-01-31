@@ -30,6 +30,7 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 	}
 	deployments := updateDeploymentStatuses(edgeDevice.Status.Deployments, heartbeat.Workloads)
 	edgeDevice.Status.Deployments = deployments
+	edgeDevice.Status.UpgradeInformation = (*v1alpha1.UpgradeInformation)(heartbeat.Upgrade)
 
 	err := u.deviceRepository.PatchStatus(ctx, edgeDevice, &patch)
 	return err

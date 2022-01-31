@@ -295,6 +295,10 @@ func init() {
         "metrics": {
           "$ref": "#/definitions/metrics-configuration"
         },
+        "os": {
+          "description": "OS lifecycle information",
+          "$ref": "#/definitions/os-information"
+        },
         "storage": {
           "$ref": "#/definitions/storage-configuration"
         }
@@ -509,6 +513,10 @@ func init() {
           "type": "string",
           "format": "date-time"
         },
+        "upgrade": {
+          "description": "Upgrade status",
+          "$ref": "#/definitions/upgrade-status"
+        },
         "version": {
           "type": "string"
         },
@@ -716,15 +724,29 @@ func init() {
         }
       }
     },
+    "os-information": {
+      "type": "object",
+      "properties": {
+        "automatically_upgrade": {
+          "description": "automatically upgrade the OS image",
+          "type": "boolean"
+        },
+        "commit_id": {
+          "description": "the last commit ID",
+          "type": "string"
+        },
+        "hosted_objects_url": {
+          "description": "the URL of the hosted commits web server",
+          "type": "string"
+        }
+      }
+    },
     "registration-info": {
       "type": "object",
       "properties": {
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
-        },
-        "os_image_id": {
-          "type": "string"
         }
       }
     },
@@ -815,6 +837,24 @@ func init() {
         "virtual": {
           "description": "Whether the machine appears to be a virtual machine or not",
           "type": "boolean"
+        }
+      }
+    },
+    "upgrade-status": {
+      "type": "object",
+      "properties": {
+        "current_commit_ID": {
+          "type": "string"
+        },
+        "last_upgrade_status": {
+          "type": "string",
+          "enum": [
+            "succeeded",
+            "failed"
+          ]
+        },
+        "last_upgrade_time": {
+          "type": "string"
         }
       }
     },
@@ -1166,6 +1206,10 @@ func init() {
         "metrics": {
           "$ref": "#/definitions/metrics-configuration"
         },
+        "os": {
+          "description": "OS lifecycle information",
+          "$ref": "#/definitions/os-information"
+        },
         "storage": {
           "$ref": "#/definitions/storage-configuration"
         }
@@ -1381,6 +1425,10 @@ func init() {
           "type": "string",
           "format": "date-time"
         },
+        "upgrade": {
+          "description": "Upgrade status",
+          "$ref": "#/definitions/upgrade-status"
+        },
         "version": {
           "type": "string"
         },
@@ -1588,15 +1636,29 @@ func init() {
         }
       }
     },
+    "os-information": {
+      "type": "object",
+      "properties": {
+        "automatically_upgrade": {
+          "description": "automatically upgrade the OS image",
+          "type": "boolean"
+        },
+        "commit_id": {
+          "description": "the last commit ID",
+          "type": "string"
+        },
+        "hosted_objects_url": {
+          "description": "the URL of the hosted commits web server",
+          "type": "string"
+        }
+      }
+    },
     "registration-info": {
       "type": "object",
       "properties": {
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
-        },
-        "os_image_id": {
-          "type": "string"
         }
       }
     },
@@ -1687,6 +1749,24 @@ func init() {
         "virtual": {
           "description": "Whether the machine appears to be a virtual machine or not",
           "type": "boolean"
+        }
+      }
+    },
+    "upgrade-status": {
+      "type": "object",
+      "properties": {
+        "current_commit_ID": {
+          "type": "string"
+        },
+        "last_upgrade_status": {
+          "type": "string",
+          "enum": [
+            "succeeded",
+            "failed"
+          ]
+        },
+        "last_upgrade_time": {
+          "type": "string"
         }
       }
     },

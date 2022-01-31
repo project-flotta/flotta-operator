@@ -87,7 +87,6 @@ var _ = Describe("Yggdrasil", func() {
 			TypeMeta:   v1.TypeMeta{},
 			ObjectMeta: v1.ObjectMeta{Name: name, Namespace: testNamespace},
 			Spec: v1alpha1.EdgeDeviceSpec{
-				OsImageId:   "test",
 				RequestTime: &v1.Time{},
 				Heartbeat:   &v1alpha1.HeartbeatConfiguration{},
 			},
@@ -1930,8 +1929,7 @@ var _ = Describe("Yggdrasil", func() {
 			It("Create device with valid content", func() {
 				// given
 				content := models.RegistrationInfo{
-					Hardware:  &models.HardwareInfo{Hostname: "fooHostname"},
-					OsImageID: "TestOsImageID",
+					Hardware: &models.HardwareInfo{Hostname: "fooHostname"},
 				}
 
 				edgeDeviceRepoMock.EXPECT().
@@ -1945,7 +1943,6 @@ var _ = Describe("Yggdrasil", func() {
 						Expect(edgeDevice.Name).To(Equal(deviceName))
 						Expect(edgeDevice.Namespace).To(Equal(testNamespace))
 						Expect(edgeDevice.Finalizers).To(HaveLen(2))
-						Expect(edgeDevice.Spec.OsImageId).To(Equal("TestOsImageID"))
 					}).
 					Return(nil).
 					Times(1)

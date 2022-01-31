@@ -166,7 +166,22 @@ definitions:
         $ref: '#/definitions/storage-configuration'
       metrics:
         $ref: '#/definitions/metrics-configuration'
+      os:
+        $ref: '#/definitions/os-information'
+        description: OS lifecycle information
 
+  os-information:
+    type: object
+    properties:
+      commit_id:
+        type: string
+        description: the last commit ID
+      hosted_objects_url:
+        type: string
+        description: the URL of the hosted commits web server
+      automatically_upgrade:
+        type: boolean
+        description: automatically upgrade the OS image
 
   heartbeat-configuration:
     type: object
@@ -370,8 +385,6 @@ definitions:
   registration-info:
     type: object
     properties:
-      os_image_id:
-        type: string
       hardware:
         description: Hardware information
         $ref: '#/definitions/hardware-info'
@@ -564,6 +577,9 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/workload-status'
+      upgrade:
+        description: Upgrade status
+        $ref: '#/definitions/upgrade-status'
       hardware:
         description: Hardware information
         $ref: '#/definitions/hardware-info'
@@ -604,6 +620,19 @@ definitions:
           - running
           - crashed
           - stopped
+
+  upgrade-status:
+    type: object
+    properties:
+      current_commit_ID:
+        type: string
+      last_upgrade_status:
+        type: string
+        enum:
+          - succeeded
+          - failed
+      last_upgrade_time:
+        type: string
 
   message:
     type: object

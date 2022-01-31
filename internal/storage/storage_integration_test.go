@@ -108,7 +108,6 @@ var _ = Describe("Storage", func() {
 			TypeMeta:   v1.TypeMeta{},
 			ObjectMeta: v1.ObjectMeta{Name: "test", Namespace: "default"},
 			Spec: v1alpha1.EdgeDeviceSpec{
-				OsImageId:   "test",
 				RequestTime: &v1.Time{},
 				Heartbeat:   &v1alpha1.HeartbeatConfiguration{},
 			},
@@ -138,7 +137,6 @@ var _ = Describe("Storage", func() {
 					Namespace: "test",
 				},
 				Spec: v1alpha1.EdgeDeviceSpec{
-					OsImageId:   "test",
 					RequestTime: &v1.Time{},
 					Heartbeat:   &v1alpha1.HeartbeatConfiguration{},
 				},

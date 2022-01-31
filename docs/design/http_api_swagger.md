@@ -368,6 +368,7 @@ Status: Internal Server Error
 |------|------|---------|:--------:| ------- |-------------|---------|
 | heartbeat | [HeartbeatConfiguration](#heartbeat-configuration)| `HeartbeatConfiguration` |  | |  |  |
 | metrics | [MetricsConfiguration](#metrics-configuration)| `MetricsConfiguration` |  | |  |  |
+| os | [OsInformation](#os-information)| `OsInformation` |  | | OS lifecycle information |  |
 | storage | [StorageConfiguration](#storage-configuration)| `StorageConfiguration` |  | |  |  |
 
 
@@ -511,6 +512,7 @@ Status: Internal Server Error
 | hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | | Hardware information |  |
 | status | string| `string` |  | |  |  |
 | time | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
+| upgrade | [UpgradeStatus](#upgrade-status)| `UpgradeStatus` |  | | Upgrade status |  |
 | version | string| `string` |  | |  |  |
 | workloads | [][WorkloadStatus](#workload-status)| `[]*WorkloadStatus` |  | |  |  |
 
@@ -698,6 +700,23 @@ Status: Internal Server Error
 
 
 
+### <span id="os-information"></span> os-information
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| automatically_upgrade | boolean| `bool` |  | | automatically upgrade the OS image |  |
+| commit_id | string| `string` |  | | the last commit ID |  |
+| hosted_objects_url | string| `string` |  | | the URL of the hosted commits web server |  |
+
+
+
 ### <span id="registration-info"></span> registration-info
 
 
@@ -710,7 +729,6 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | | Hardware information |  |
-| os_image_id | string| `string` |  | |  |  |
 
 
 
@@ -805,6 +823,23 @@ Status: Internal Server Error
 | product_name | string| `string` |  | |  |  |
 | serial_number | string| `string` |  | |  |  |
 | virtual | boolean| `bool` |  | | Whether the machine appears to be a virtual machine or not |  |
+
+
+
+### <span id="upgrade-status"></span> upgrade-status
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| current_commit_ID | string| `string` |  | |  |  |
+| last_upgrade_status | string| `string` |  | |  |  |
+| last_upgrade_time | string| `string` |  | |  |  |
 
 
 
