@@ -91,7 +91,7 @@ var Config struct {
 
 	// Domain where TLS certificate listen.
 	// FIXME check default here
-	Domain string `envconfig:"DOMAIN" default:"k4e.com"`
+	Domain string `envconfig:"DOMAIN" default:"project-flotta.io"`
 
 	// If TLS server certificates should work on 127.0.0.1
 	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`

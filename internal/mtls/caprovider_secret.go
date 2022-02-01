@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	CASecretName = "k4e-ca"
+	CASecretName = "flotta-ca"
 	providerName = "secret"
 
 	caCertSecretKey     = "ca.key"

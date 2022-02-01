@@ -662,7 +662,7 @@ func createCSR() []byte {
 		Version: 0,
 		Subject: pkix.Name{
 			CommonName:   "test",
-			Organization: []string{"k4e"},
+			Organization: []string{"flotta"},
 		},
 		SignatureAlgorithm: x509.SHA512WithRSA,
 	}

@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	k4elabels "github.com/project-flotta/flotta-operator/internal/labels"
+	flottalabels "github.com/project-flotta/flotta-operator/internal/labels"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -135,15 +135,15 @@ func isDeploymentMatchDevice(deployment *managementv1alpha1.EdgeDeployment, devi
 
 func createSelectorLabelsMap(device *managementv1alpha1.EdgeDevice) map[string]string {
 	result := map[string]string{
-		k4elabels.CreateSelectorLabel(k4elabels.DeviceNameLabel):   device.Name,
-		k4elabels.CreateSelectorLabel(k4elabels.DoesNotExistLabel): "true",
+		flottalabels.CreateSelectorLabel(flottalabels.DeviceNameLabel):   device.Name,
+		flottalabels.CreateSelectorLabel(flottalabels.DoesNotExistLabel): "true",
 	}
 
 	for deviceLabel := range device.Labels {
-		if k4elabels.IsWorkloadLabel(deviceLabel) {
+		if flottalabels.IsWorkloadLabel(deviceLabel) {
 			continue
 		}
-		selectorLabel := k4elabels.CreateSelectorLabel(deviceLabel)
+		selectorLabel := flottalabels.CreateSelectorLabel(deviceLabel)
 		result[selectorLabel] = "true"
 	}
 
@@ -168,7 +168,7 @@ func createUpdatedDevice(selectedDeployments map[string]bool, device *management
 			deviceCopy.Status.Deployments = append(deviceCopy.Status.Deployments, deployment)
 			delete(selectedDeployments, deployment.Name)
 		} else {
-			delete(deviceCopy.Labels, k4elabels.WorkloadLabel(deployment.Name))
+			delete(deviceCopy.Labels, flottalabels.WorkloadLabel(deployment.Name))
 			deviceUpdated = true
 		}
 	}
@@ -182,7 +182,7 @@ func createUpdatedDevice(selectedDeployments map[string]bool, device *management
 			Name:  name,
 			Phase: managementv1alpha1.Deploying,
 		})
-		deviceCopy.Labels[k4elabels.WorkloadLabel(name)] = "true"
+		deviceCopy.Labels[flottalabels.WorkloadLabel(name)] = "true"
 	}
 
 	if deviceUpdated {

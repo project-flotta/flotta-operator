@@ -52,5 +52,5 @@ spec:
     -  Use user `root` and password `secret` (that configured in grafana instance)
 -  Import the dashboard json
     -  Click on the `+` button and choose `import"
-    -  Upload the json named `k4e-dashboard.json`
+    -  Upload the json named `flotta-dashboard.json`
  
