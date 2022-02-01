@@ -25,10 +25,10 @@ const (
 	clientCertSecretKey = "client.key"
 	clientCertCertKey   = "client.crt"
 
-	certOrganization       = "k4e-operator"
+	certOrganization       = "flotta-operator"
 	certRegisterCN         = "register"
 	certDefaultExpiration  = 1 // years
-	serverCertOrganization = "k4e-operator"
+	serverCertOrganization = "flotta-operator"
 )
 
 // @TODO Add a watcher on the secret if it's manually updated to renew the

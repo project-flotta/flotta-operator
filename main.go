@@ -66,8 +66,8 @@ import (
 
 const (
 	initialDeviceNamespace   = "default"
-	defaultOperatorNamespace = "k4e-operator-system"
-	defaultConfigMapName     = "k4e-operator-manager-config"
+	defaultOperatorNamespace = "flotta-operator-system"
+	defaultConfigMapName     = "flotta-operator-manager-config"
 	logLevelLabel            = "LOG_LEVEL"
 )
 
@@ -77,7 +77,7 @@ var (
 
 	// @TODO read /var/run/secrets/kubernetes.io/serviceaccount/namespace to get
 	// the correct namespace if it's installed in k8s
-	operatorNamespace = "k4e-operator-system"
+	operatorNamespace = "flotta-operator-system"
 )
 
 var Config struct {

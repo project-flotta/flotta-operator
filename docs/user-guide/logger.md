@@ -5,7 +5,7 @@ Admitted values are: 	`debug`, `info`, `warn`, `error`, `dpanic`, `panic`, and `
 Refer to [zapcore docs](https://github.com/uber-go/zap/blob/v1.15.0/zapcore/level.go#L32) for details on each log level.
 
 For example:\
-`kubectl patch cm -n k4e-operator-system k4e-operator-manager-config --type merge --patch '{"data":{"LOG_LEVEL": "debug"}}'`
+`kubectl patch cm -n flotta-operator-system flotta-operator-manager-config --type merge --patch '{"data":{"LOG_LEVEL": "debug"}}'`
 
 In case of:
 -  _Inside the cluster_ run, the pod will be automatically restarted.\

@@ -10,6 +10,6 @@ spec:
     targetPort: yggd
   to:
     kind: Service
-    name: k4e-operator-controller-manager
+    name: flotta-operator-controller-manager
     weight: 100
   wildcardPolicy: None

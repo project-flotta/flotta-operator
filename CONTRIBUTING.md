@@ -128,7 +128,7 @@ to your git command line.
 
 ## Documentation
 
-Currently, all the docs can be found on the k4e-operator project; under the
+Currently, all the docs can be found on the flotta-operator project; under the
 [docs](docs) folder, in there you can find:
 
 - Architecture details

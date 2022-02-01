@@ -31,21 +31,21 @@ To force device re-registration remove EdgeDevice CR from the cluster and `/var/
 
 1. Build and push operator images:
    
-   Run in the k4e-operator repository
+   Run in the flotta-operator repository
    
    `IMG=<image repository and tag> make docker-build docker-push`
 
     for example:
 
-   `IMG=quay.io/jdzon/k4e-operator:latest make docker-build docker-push`
+   `IMG=quay.io/jdzon/flotta-operator:latest make docker-build docker-push`
 2. Deploy the operator:
 
-   Run in the k4e-operator repository
+   Run in the flotta-operator repository
  
    `IMG=<image repository and tag> make install deploy`
-3. Forward k4e-operator ports to allow the agent to communicate with it:
+3. Forward flotta-operator ports to allow the agent to communicate with it:
  
-   `kubectl port-forward service/k4e-operator-controller-manager -n k4e-operator-system 8888 --address 0.0.0.0`
+   `kubectl port-forward service/flotta-operator-controller-manager -n flotta-operator-system 8888 --address 0.0.0.0`
 
 ### yggdrasil
 

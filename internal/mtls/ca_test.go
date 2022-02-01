@@ -446,7 +446,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				c := &x509.Certificate{
 					SerialNumber: big.NewInt(time.Now().Unix()),
 					Subject: pkix.Name{
-						Organization: []string{"K4e-operator"},
+						Organization: []string{"Flotta-operator"},
 					},
 					NotBefore:             time.Now(),
 					NotAfter:              time.Now().AddDate(0, 0, 0),
@@ -546,7 +546,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				c := &x509.Certificate{
 					SerialNumber: big.NewInt(time.Now().Unix()),
 					Subject: pkix.Name{
-						Organization: []string{"K4e-operator"},
+						Organization: []string{"Flotta-operator"},
 						CommonName:   "test-device",
 					},
 					NotBefore:             time.Now(),
@@ -586,7 +586,7 @@ func createRegistrationClientCert(ca *certificate) *certificate {
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().Unix()),
 		Subject: pkix.Name{
-			Organization: []string{"K4e-operator"},
+			Organization: []string{"Flotta-operator"},
 			CommonName:   certRegisterCN,
 		},
 		NotBefore:             time.Now(),
@@ -602,7 +602,7 @@ func createClientCert(ca *certificate) *certificate {
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().Unix()),
 		Subject: pkix.Name{
-			Organization: []string{"K4e-operator"},
+			Organization: []string{"Flotta-operator"},
 			CommonName:   "device-UUID",
 		},
 		NotBefore:             time.Now(),
@@ -634,7 +634,7 @@ func createCACert() *certificate {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().Unix()),
 		Subject: pkix.Name{
-			Organization: []string{"K4e-operator"},
+			Organization: []string{"Flotta-operator"},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(10, 0, 0),
