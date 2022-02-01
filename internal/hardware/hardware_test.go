@@ -3,11 +3,11 @@ package hardware_test
 import (
 	"strings"
 
-	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	"github.com/jakub-dzon/k4e-operator/internal/hardware"
-	"github.com/jakub-dzon/k4e-operator/models"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/hardware"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 var (

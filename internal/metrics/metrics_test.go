@@ -1,7 +1,7 @@
 package metrics_test
 
 import (
-	"github.com/jakub-dzon/k4e-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/metrics"
 	"testing"
 
 	. "github.com/onsi/ginkgo"

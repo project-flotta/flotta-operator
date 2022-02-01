@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
-	"github.com/jakub-dzon/k4e-operator/models"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
+	"github.com/project-flotta/flotta-operator/models"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"

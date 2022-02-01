@@ -14,8 +14,8 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/runtime/security"
 
-	"github.com/jakub-dzon/k4e-operator/restapi/operations"
-	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
+	"github.com/project-flotta/flotta-operator/restapi/operations"
+	"github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 )
 
 type contextKey string

@@ -2,7 +2,7 @@ package heartbeat
 
 import (
 	"context"
-	"github.com/jakub-dzon/k4e-operator/models"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 type Notification struct {

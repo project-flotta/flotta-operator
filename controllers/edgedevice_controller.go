@@ -21,10 +21,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"time"
 
-	"github.com/jakub-dzon/k4e-operator/internal/metrics"
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
-	"github.com/jakub-dzon/k4e-operator/internal/storage"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/storage"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 )
 
 // EdgeDeviceReconciler reconciles a EdgeDevice object

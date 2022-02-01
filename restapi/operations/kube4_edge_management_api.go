@@ -19,7 +19,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
+	"github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 )
 
 // NewKube4EdgeManagementAPI creates a new Kube4EdgeManagement instance

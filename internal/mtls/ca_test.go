@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
-	"github.com/jakub-dzon/k4e-operator/internal/mtls"
+	"github.com/project-flotta/flotta-operator/internal/mtls"
 )
 
 const (

@@ -3,9 +3,9 @@ package hardware
 import (
 	"fmt"
 
-	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	"github.com/jakub-dzon/k4e-operator/internal/utils"
-	"github.com/jakub-dzon/k4e-operator/models"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/utils"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 func MapHardware(hardware *models.HardwareInfo) *v1alpha1.Hardware {

@@ -13,7 +13,7 @@ import (
 	rtclient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/jakub-dzon/k4e-operator/client/yggdrasil"
+	"github.com/project-flotta/flotta-operator/client/yggdrasil"
 )
 
 const (
