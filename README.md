@@ -30,7 +30,7 @@ Run `make run` to start the operator.
  
 ### On OpenShift cluster
 - Deploy the operator: `IMG=<image registry and tag> TARGET=ocp make deploy`.
-- Get HTTP server address by running: `HTTP_SERVER=$(oc get routes flotta-operator-controller-manager -n flotta-operator-system --no-headers -o=custom-columns=HOST:.spec.host)`.
+- Get HTTP server address by running: `HTTP_SERVER=$(oc get routes flotta-operator-controller-manager -n flotta --no-headers -o=custom-columns=HOST:.spec.host)`.
 - Start yggdrasil with from the yggdrasil repository directory: `sudo go run ./cmd/yggd --log-level info --transport http --cert-file /etc/pki/consumer/cert.pem --key-file /etc/pki/consumer/key.pem --client-id-source machine-id --http-server $HTTP_SERVER`.
 
 ### On minikube

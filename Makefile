@@ -52,7 +52,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 
 # Default Flotta-operator  namespace
-FLOTTA_OPERATOR_NAMESPACE ?= "flotta-operator-system"
+FLOTTA_OPERATOR_NAMESPACE ?= "flotta"
 
 # Set quiet mode by default
 Q=@

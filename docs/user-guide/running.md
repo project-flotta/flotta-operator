@@ -45,7 +45,7 @@ To force device re-registration remove EdgeDevice CR from the cluster and `/var/
    `IMG=<image repository and tag> make install deploy`
 3. Forward flotta-operator ports to allow the agent to communicate with it:
  
-   `kubectl port-forward service/flotta-operator-controller-manager -n flotta-operator-system 8888 --address 0.0.0.0`
+   `kubectl port-forward service/flotta-operator-controller-manager -n flotta 8888 --address 0.0.0.0`
 
 ### yggdrasil
 
