@@ -1,4 +1,4 @@
-module github.com/jakub-dzon/k4e-operator
+module github.com/project-flotta/flotta-operator
 
 go 1.16
 

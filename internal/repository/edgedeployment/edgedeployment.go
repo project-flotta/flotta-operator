@@ -4,7 +4,7 @@ import (
 	"context"
 
 	_ "github.com/golang/mock/mockgen/model"
-	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/selection"
 	"sigs.k8s.io/controller-runtime/pkg/client"

@@ -1,8 +1,8 @@
 
 
 
-# Kube4EdgeManagement
-Kube for Edge Management
+# FlottaManagement
+Flotta Edge Management
   
 
 ## Informations
@@ -39,10 +39,10 @@ Device management
 
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
-| GET | /api/k4e-management/v1/control/{device_id}/in | [get control message for device](#get-control-message-for-device) |  |
-| GET | /api/k4e-management/v1/data/{device_id}/in | [get data message for device](#get-data-message-for-device) |  |
-| POST | /api/k4e-management/v1/control/{device_id}/out | [post control message for device](#post-control-message-for-device) |  |
-| POST | /api/k4e-management/v1/data/{device_id}/out | [post data message for device](#post-data-message-for-device) |  |
+| GET | /api/flotta-management/v1/control/{device_id}/in | [get control message for device](#get-control-message-for-device) |  |
+| GET | /api/flotta-management/v1/data/{device_id}/in | [get data message for device](#get-data-message-for-device) |  |
+| POST | /api/flotta-management/v1/control/{device_id}/out | [post control message for device](#post-control-message-for-device) |  |
+| POST | /api/flotta-management/v1/data/{device_id}/out | [post data message for device](#post-data-message-for-device) |  |
   
 
 
@@ -51,7 +51,7 @@ Device management
 ### <span id="get-control-message-for-device"></span> get control message for device (*GetControlMessageForDevice*)
 
 ```
-GET /api/k4e-management/v1/control/{device_id}/in
+GET /api/flotta-management/v1/control/{device_id}/in
 ```
 
 #### Parameters
@@ -104,7 +104,7 @@ Status: Internal Server Error
 ### <span id="get-data-message-for-device"></span> get data message for device (*GetDataMessageForDevice*)
 
 ```
-GET /api/k4e-management/v1/data/{device_id}/in
+GET /api/flotta-management/v1/data/{device_id}/in
 ```
 
 #### Parameters
@@ -157,7 +157,7 @@ Status: Internal Server Error
 ### <span id="post-control-message-for-device"></span> post control message for device (*PostControlMessageForDevice*)
 
 ```
-POST /api/k4e-management/v1/control/{device_id}/out
+POST /api/flotta-management/v1/control/{device_id}/out
 ```
 
 #### Parameters
@@ -207,7 +207,7 @@ Status: Internal Server Error
 ### <span id="post-data-message-for-device"></span> post data message for device (*PostDataMessageForDevice*)
 
 ```
-POST /api/k4e-management/v1/data/{device_id}/out
+POST /api/flotta-management/v1/data/{device_id}/out
 ```
 
 #### Parameters

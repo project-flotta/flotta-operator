@@ -13,7 +13,7 @@ import (
 	rtclient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/jakub-dzon/k4e-operator/client/yggdrasil"
+	"github.com/project-flotta/flotta-operator/client/yggdrasil"
 )
 
 const (
@@ -22,7 +22,7 @@ const (
 	DefaultHost string = "localhost"
 	// DefaultBasePath is the default BasePath
 	// found in Meta (info) section of spec file
-	DefaultBasePath string = "/api/k4e-management/v1"
+	DefaultBasePath string = "/api/flotta-management/v1"
 )
 
 // DefaultSchemes are the default schemes found in Meta (info) section of spec file
@@ -37,8 +37,8 @@ type Config struct {
 	AuthInfo runtime.ClientAuthInfoWriter
 }
 
-// New creates a new kube4 edge management HTTP client.
-func New(c Config) *Kube4EdgeManagement {
+// New creates a new flotta management HTTP client.
+func New(c Config) *FlottaManagement {
 	var (
 		host     = DefaultHost
 		basePath = DefaultBasePath
@@ -56,14 +56,14 @@ func New(c Config) *Kube4EdgeManagement {
 		transport.Transport = c.Transport
 	}
 
-	cli := new(Kube4EdgeManagement)
+	cli := new(FlottaManagement)
 	cli.Transport = transport
 	cli.Yggdrasil = yggdrasil.New(transport, strfmt.Default, c.AuthInfo)
 	return cli
 }
 
-// Kube4EdgeManagement is a client for kube4 edge management
-type Kube4EdgeManagement struct {
+// FlottaManagement is a client for flotta management
+type FlottaManagement struct {
 	Yggdrasil *yggdrasil.Client
 	Transport runtime.ClientTransport
 }

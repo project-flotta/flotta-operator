@@ -1,13 +1,13 @@
 # Building Grafana Dashboard
 
--  Install Grafana from the operatorHub on `k4e-operator-system` namespace
+-  Install Grafana from the operatorHub on `flotta` namespace
 -  Create a Gafana instance
  ```yaml
 apiVersion: integreatly.org/v1alpha1
 kind: Grafana
 metadata:
   name: grafana-example
-  namespace: k4e-operator-system
+  namespace: flotta
 spec:
   config:
     auth:
@@ -21,16 +21,16 @@ spec:
  ``` 
 -  Connecting Prometheus to our Custom Grafana
     -  Grant cluster-monitoring-view cluster role to the  grafana-serviceaccount service account, that was created alongside the Grafana instance\
-       `oc adm policy add-cluster-role-to-user cluster-monitoring-view -z grafana-serviceaccount -n k4e-operator-system`
+       `oc adm policy add-cluster-role-to-user cluster-monitoring-view -z grafana-serviceaccount -n flotta`
     -  Generate Bearer Token:\
-       `oc serviceaccounts get-token grafana-serviceaccount -n k4e-operator-system`
+       `oc serviceaccounts get-token grafana-serviceaccount -n flotta`
     -  Create Grafana Data Source resource and replace the `${BEARER_TOKEN}` with the output of the previous command:\
 ```yaml
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
   name: prometheus-grafanadatasource
-  namespace: k4e-operator-system
+  namespace: flotta
 spec:
   datasources:
     - access: proxy
@@ -52,5 +52,5 @@ spec:
     -  Use user `root` and password `secret` (that configured in grafana instance)
 -  Import the dashboard json
     -  Click on the `+` button and choose `import"
-    -  Upload the json named `k4e-dashboard.json`
+    -  Upload the json named `flotta-dashboard.json`
  

@@ -4,10 +4,10 @@ import (
 	"context"
 	"github.com/go-openapi/errors"
 	"github.com/golang/mock/gomock"
-	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
-	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

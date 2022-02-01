@@ -19,12 +19,12 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
-	"github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
+	"github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 )
 
-// NewKube4EdgeManagementAPI creates a new Kube4EdgeManagement instance
-func NewKube4EdgeManagementAPI(spec *loads.Document) *Kube4EdgeManagementAPI {
-	return &Kube4EdgeManagementAPI{
+// NewFlottaManagementAPI creates a new FlottaManagement instance
+func NewFlottaManagementAPI(spec *loads.Document) *FlottaManagementAPI {
+	return &FlottaManagementAPI{
 		handlers:            make(map[string]map[string]http.Handler),
 		formats:             strfmt.Default,
 		defaultConsumes:     "application/json",
@@ -59,8 +59,8 @@ func NewKube4EdgeManagementAPI(spec *loads.Document) *Kube4EdgeManagementAPI {
 	}
 }
 
-/*Kube4EdgeManagementAPI Kube for Edge Management */
-type Kube4EdgeManagementAPI struct {
+/*FlottaManagementAPI Flotta Edge Management */
+type FlottaManagementAPI struct {
 	spec            *loads.Document
 	context         *middleware.Context
 	handlers        map[string]map[string]http.Handler
@@ -118,52 +118,52 @@ type Kube4EdgeManagementAPI struct {
 }
 
 // UseRedoc for documentation at /docs
-func (o *Kube4EdgeManagementAPI) UseRedoc() {
+func (o *FlottaManagementAPI) UseRedoc() {
 	o.useSwaggerUI = false
 }
 
 // UseSwaggerUI for documentation at /docs
-func (o *Kube4EdgeManagementAPI) UseSwaggerUI() {
+func (o *FlottaManagementAPI) UseSwaggerUI() {
 	o.useSwaggerUI = true
 }
 
 // SetDefaultProduces sets the default produces media type
-func (o *Kube4EdgeManagementAPI) SetDefaultProduces(mediaType string) {
+func (o *FlottaManagementAPI) SetDefaultProduces(mediaType string) {
 	o.defaultProduces = mediaType
 }
 
 // SetDefaultConsumes returns the default consumes media type
-func (o *Kube4EdgeManagementAPI) SetDefaultConsumes(mediaType string) {
+func (o *FlottaManagementAPI) SetDefaultConsumes(mediaType string) {
 	o.defaultConsumes = mediaType
 }
 
 // SetSpec sets a spec that will be served for the clients.
-func (o *Kube4EdgeManagementAPI) SetSpec(spec *loads.Document) {
+func (o *FlottaManagementAPI) SetSpec(spec *loads.Document) {
 	o.spec = spec
 }
 
 // DefaultProduces returns the default produces media type
-func (o *Kube4EdgeManagementAPI) DefaultProduces() string {
+func (o *FlottaManagementAPI) DefaultProduces() string {
 	return o.defaultProduces
 }
 
 // DefaultConsumes returns the default consumes media type
-func (o *Kube4EdgeManagementAPI) DefaultConsumes() string {
+func (o *FlottaManagementAPI) DefaultConsumes() string {
 	return o.defaultConsumes
 }
 
 // Formats returns the registered string formats
-func (o *Kube4EdgeManagementAPI) Formats() strfmt.Registry {
+func (o *FlottaManagementAPI) Formats() strfmt.Registry {
 	return o.formats
 }
 
 // RegisterFormat registers a custom format validator
-func (o *Kube4EdgeManagementAPI) RegisterFormat(name string, format strfmt.Format, validator strfmt.Validator) {
+func (o *FlottaManagementAPI) RegisterFormat(name string, format strfmt.Format, validator strfmt.Validator) {
 	o.formats.Add(name, format, validator)
 }
 
-// Validate validates the registrations in the Kube4EdgeManagementAPI
-func (o *Kube4EdgeManagementAPI) Validate() error {
+// Validate validates the registrations in the FlottaManagementAPI
+func (o *FlottaManagementAPI) Validate() error {
 	var unregistered []string
 
 	if o.JSONConsumer == nil {
@@ -195,23 +195,23 @@ func (o *Kube4EdgeManagementAPI) Validate() error {
 }
 
 // ServeErrorFor gets a error handler for a given operation id
-func (o *Kube4EdgeManagementAPI) ServeErrorFor(operationID string) func(http.ResponseWriter, *http.Request, error) {
+func (o *FlottaManagementAPI) ServeErrorFor(operationID string) func(http.ResponseWriter, *http.Request, error) {
 	return o.ServeError
 }
 
 // AuthenticatorsFor gets the authenticators for the specified security schemes
-func (o *Kube4EdgeManagementAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) map[string]runtime.Authenticator {
+func (o *FlottaManagementAPI) AuthenticatorsFor(schemes map[string]spec.SecurityScheme) map[string]runtime.Authenticator {
 	return nil
 }
 
 // Authorizer returns the registered authorizer
-func (o *Kube4EdgeManagementAPI) Authorizer() runtime.Authorizer {
+func (o *FlottaManagementAPI) Authorizer() runtime.Authorizer {
 	return nil
 }
 
 // ConsumersFor gets the consumers for the specified media types.
 // MIME type parameters are ignored here.
-func (o *Kube4EdgeManagementAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consumer {
+func (o *FlottaManagementAPI) ConsumersFor(mediaTypes []string) map[string]runtime.Consumer {
 	result := make(map[string]runtime.Consumer, len(mediaTypes))
 	for _, mt := range mediaTypes {
 		switch mt {
@@ -228,7 +228,7 @@ func (o *Kube4EdgeManagementAPI) ConsumersFor(mediaTypes []string) map[string]ru
 
 // ProducersFor gets the producers for the specified media types.
 // MIME type parameters are ignored here.
-func (o *Kube4EdgeManagementAPI) ProducersFor(mediaTypes []string) map[string]runtime.Producer {
+func (o *FlottaManagementAPI) ProducersFor(mediaTypes []string) map[string]runtime.Producer {
 	result := make(map[string]runtime.Producer, len(mediaTypes))
 	for _, mt := range mediaTypes {
 		switch mt {
@@ -244,7 +244,7 @@ func (o *Kube4EdgeManagementAPI) ProducersFor(mediaTypes []string) map[string]ru
 }
 
 // HandlerFor gets a http.Handler for the provided operation method and path
-func (o *Kube4EdgeManagementAPI) HandlerFor(method, path string) (http.Handler, bool) {
+func (o *FlottaManagementAPI) HandlerFor(method, path string) (http.Handler, bool) {
 	if o.handlers == nil {
 		return nil, false
 	}
@@ -259,8 +259,8 @@ func (o *Kube4EdgeManagementAPI) HandlerFor(method, path string) (http.Handler, 
 	return h, ok
 }
 
-// Context returns the middleware context for the kube4 edge management API
-func (o *Kube4EdgeManagementAPI) Context() *middleware.Context {
+// Context returns the middleware context for the flotta management API
+func (o *FlottaManagementAPI) Context() *middleware.Context {
 	if o.context == nil {
 		o.context = middleware.NewRoutableContext(o.spec, o, nil)
 	}
@@ -268,7 +268,7 @@ func (o *Kube4EdgeManagementAPI) Context() *middleware.Context {
 	return o.context
 }
 
-func (o *Kube4EdgeManagementAPI) initHandlerCache() {
+func (o *FlottaManagementAPI) initHandlerCache() {
 	o.Context() // don't care about the result, just that the initialization happened
 	if o.handlers == nil {
 		o.handlers = make(map[string]map[string]http.Handler)
@@ -294,7 +294,7 @@ func (o *Kube4EdgeManagementAPI) initHandlerCache() {
 
 // Serve creates a http handler to serve the API over HTTP
 // can be used directly in http.ListenAndServe(":8000", api.Serve(nil))
-func (o *Kube4EdgeManagementAPI) Serve(builder middleware.Builder) http.Handler {
+func (o *FlottaManagementAPI) Serve(builder middleware.Builder) http.Handler {
 	o.Init()
 
 	if o.Middleware != nil {
@@ -307,24 +307,24 @@ func (o *Kube4EdgeManagementAPI) Serve(builder middleware.Builder) http.Handler 
 }
 
 // Init allows you to just initialize the handler cache, you can then recompose the middleware as you see fit
-func (o *Kube4EdgeManagementAPI) Init() {
+func (o *FlottaManagementAPI) Init() {
 	if len(o.handlers) == 0 {
 		o.initHandlerCache()
 	}
 }
 
 // RegisterConsumer allows you to add (or override) a consumer for a media type.
-func (o *Kube4EdgeManagementAPI) RegisterConsumer(mediaType string, consumer runtime.Consumer) {
+func (o *FlottaManagementAPI) RegisterConsumer(mediaType string, consumer runtime.Consumer) {
 	o.customConsumers[mediaType] = consumer
 }
 
 // RegisterProducer allows you to add (or override) a producer for a media type.
-func (o *Kube4EdgeManagementAPI) RegisterProducer(mediaType string, producer runtime.Producer) {
+func (o *FlottaManagementAPI) RegisterProducer(mediaType string, producer runtime.Producer) {
 	o.customProducers[mediaType] = producer
 }
 
 // AddMiddlewareFor adds a http middleware to existing handler
-func (o *Kube4EdgeManagementAPI) AddMiddlewareFor(method, path string, builder middleware.Builder) {
+func (o *FlottaManagementAPI) AddMiddlewareFor(method, path string, builder middleware.Builder) {
 	um := strings.ToUpper(method)
 	if path == "/" {
 		path = ""

@@ -1,12 +1,12 @@
-# Running k4e
+# Running Flotta
 
 The components need to be started in following order:
  - Operator
  - Agent
-   - Install k4e-device-worker
+   - Install flotta-device-worker
    - Run yggdrasil
 
-When yggdrasil with k4e-device-worker installed is started, it registers the device in the Operator -  EdgeDevice CR representing the device is automatically created in the k8s cluster.
+When yggdrasil with flotta-device-worker installed is started, it registers the device in the Operator -  EdgeDevice CR representing the device is automatically created in the k8s cluster.
 
 When your environment is running, you can [deploy your workload](deploying-workloads.md).
 
@@ -24,28 +24,28 @@ To force device re-registration remove EdgeDevice CR from the cluster and `/var/
 #### Prerequisites
 
  - k8s cluster with OpenShift Cluster Storage (or at least NooBaa) to run;
- - Checkout https://github.com/jakub-dzon/k4e-operator
+ - Checkout https://github.com/project-flotta/flotta-operator
  - Make sure that your `oc` or `kubectl` is configured properly to communicate with your cluster
 
 #### Installation
 
 1. Build and push operator images:
    
-   Run in the k4e-operator repository
+   Run in the flotta-operator repository
    
    `IMG=<image repository and tag> make docker-build docker-push`
 
     for example:
 
-   `IMG=quay.io/jdzon/k4e-operator:latest make docker-build docker-push`
+   `IMG=quay.io/jdzon/flotta-operator:latest make docker-build docker-push`
 2. Deploy the operator:
 
-   Run in the k4e-operator repository
+   Run in the flotta-operator repository
  
    `IMG=<image repository and tag> make install deploy`
-3. Forward k4e-operator ports to allow the agent to communicate with it:
+3. Forward flotta-operator ports to allow the agent to communicate with it:
  
-   `kubectl port-forward service/k4e-operator-controller-manager -n k4e-operator-system 8888 --address 0.0.0.0`
+   `kubectl port-forward service/flotta-operator-controller-manager -n flotta 8888 --address 0.0.0.0`
 
 ### yggdrasil
 
@@ -62,7 +62,7 @@ To force device re-registration remove EdgeDevice CR from the cluster and `/var/
 ---
 **Warning**
 
-Following step should be done after k4e-device-worker is installed on the edge device
+Following step should be done after flotta-device-worker is installed on the edge device
 
 ---
 
@@ -70,7 +70,7 @@ Start yggdrasil with from the yggdrasil repository directory:
 
 `sudo go run ./cmd/yggd --log-level trace --transport http --cert-file /etc/pki/consumer/cert.pem --key-file /etc/pki/consumer/key.pem --client-id-source machine-id --http-server <your.k8s-ingress:8888>`
 
-### k4e-device-worker
+### flotta-device-worker
 
 #### Prerequisites
 
@@ -82,7 +82,7 @@ On the build machine:
   - gpgme-devel
   - device-mapper-devel
   - podman
-- Checkout https://github.com/jakub-dzon/k4e-device-worker repository 
+- Checkout https://github.com/project-flotta/flotta-device-worker repository 
 
 On the edge device:
  
@@ -114,7 +114,7 @@ Execute following steps on the build machine:
 
 ##### Installing 
 
-1. Upload <k4e-device-worker repo dir>/bin/device-worker to `/usr/local/libexec/yggdrasil` directory on the edge device
+1. Upload <flotta-device-worker repo dir>/bin/device-worker to `/usr/local/libexec/yggdrasil` directory on the edge device
 2. Make sure that `/usr/local/libexec/yggdrasil/device-worker` is executable
 
 

@@ -28,8 +28,8 @@ BUNDLE_METADATA_OPTS ?= $(BUNDLE_CHANNELS) $(BUNDLE_DEFAULT_CHANNEL)
 # This variable is used to construct full image tags for bundle and catalog images.
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
-# k4e.io/k4e-operator-bundle:$VERSION and k4e.io/k4e-operator-catalog:$VERSION.
-IMAGE_TAG_BASE ?= k4e.io/k4e-operator
+# project-flotta.io/flotta-operator-bundle:$VERSION and project-flotta.io/flotta-operator-catalog:$VERSION.
+IMAGE_TAG_BASE ?= project-flotta.io/flotta-operator
 
 # BUNDLE_IMG defines the image:tag used for the bundle.
 # You can use it as an arg. (E.g make bundle-build BUNDLE_IMG=<some-registry>/<project-name-bundle>:<tag>)
@@ -42,7 +42,7 @@ CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 # Cluster type - k8s/ocp
 TARGET ?= k8s
 # Host name for ingress creation
-HOST ?= k4e-operator.srv
+HOST ?= flotta-operator.srv
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -51,8 +51,8 @@ else
 GOBIN=$(shell go env GOBIN)
 endif
 
-# Default k4e-Operator  namespace
-K4E_OPERATOR_NAMESPACE ?= "k4e-operator-system"
+# Default Flotta-operator  namespace
+FLOTTA_OPERATOR_NAMESPACE ?= "flotta"
 
 # Set quiet mode by default
 Q=@
@@ -134,7 +134,7 @@ build: generate fmt vet ## Build manager binary.
 	go build -mod=vendor -o bin/manager main.go
 
 run: manifests generate fmt vet ## Run a controller from your host.
-	$(Q) kubectl create ns $(K4E_OPERATOR_NAMESPACE) 2> /dev/null || exit 0
+	$(Q) kubectl create ns $(FLOTTA_OPERATOR_NAMESPACE) 2> /dev/null || exit 0
 	OBC_AUTO_CREATE=false ENABLE_WEBHOOKS=false LOG_LEVEL=debug go run -mod=vendor ./main.go
 
 docker-build: ## Build docker image with the manager.
@@ -152,7 +152,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
 deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	kubectl apply -f $(TMP_ODIR)/k4e-operator.yaml
+	kubectl apply -f $(TMP_ODIR)/flotta-operator.yaml
 ifeq ($(TARGET), k8s)
 	minikube addons enable ingress
 endif
@@ -161,7 +161,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 	$(KUSTOMIZE) build config/default | kubectl delete -f -
 
 $(eval TMP_ODIR := $(shell mktemp -d))
-gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into k4e-operator.yaml
+gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into flotta-operator.yaml
 # Add network resources by cluster type
 # TODO: replace this if-else-if with kustomize base and overlays for each cluster-type
 ifeq ($(TARGET), k8s)
@@ -174,7 +174,7 @@ else ifeq ($(TARGET), ocp)
 	@cd config/prometheus && $(KUSTOMIZE) edit add resource monitor.yaml
 endif
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default > $(TMP_ODIR)/k4e-operator.yaml
+	$(KUSTOMIZE) build config/default > $(TMP_ODIR)/flotta-operator.yaml
 # Revert the changes
 ifeq ($(TARGET), k8s)
 	@cd config/network && $(KUSTOMIZE) edit remove resource ingress.yaml
@@ -185,11 +185,11 @@ else ifeq ($(TARGET), ocp)
 	@cd config/prometheus && $(KUSTOMIZE) edit remove resource prometheus_role_binding.yaml
 	@cd config/prometheus && $(KUSTOMIZE) edit remove resource monitor.yaml
 endif
-	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/k4e-operator:latest
-	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/k4e-operator.yaml\033[0m"
+	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/flotta-operator:latest
+	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/flotta-operator.yaml\033[0m"
 
 release: gen-manifests
-	gh release create v$(VERSION) --notes "Release v$(VERSION) of K4E Operator" --title "Release v$(VERSION)" '$(TMP_ODIR)/k4e-operator.yaml# K4E Operator'
+	gh release create v$(VERSION) --notes "Release v$(VERSION) of Flotta Operator" --title "Release v$(VERSION)" '$(TMP_ODIR)/flotta-operator.yaml# Flotta Operator'
 	rm -rf $(TMP_ODIR)
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen

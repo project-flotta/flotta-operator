@@ -30,15 +30,15 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Kube for Edge Management",
-    "title": "Kube4EdgeManagement",
+    "description": "Flotta Edge Management",
+    "title": "FlottaManagement",
     "license": {
       "name": "Apache 2.0",
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
     },
     "version": "1.0.0"
   },
-  "basePath": "/api/k4e-management/v1",
+  "basePath": "/api/flotta-management/v1",
   "paths": {
     "/control/{device_id}/in": {
       "get": {
@@ -941,15 +941,15 @@ func init() {
   ],
   "swagger": "2.0",
   "info": {
-    "description": "Kube for Edge Management",
-    "title": "Kube4EdgeManagement",
+    "description": "Flotta Edge Management",
+    "title": "FlottaManagement",
     "license": {
       "name": "Apache 2.0",
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
     },
     "version": "1.0.0"
   },
-  "basePath": "/api/k4e-management/v1",
+  "basePath": "/api/flotta-management/v1",
   "paths": {
     "/control/{device_id}/in": {
       "get": {

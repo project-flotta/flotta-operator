@@ -10,7 +10,7 @@ import (
 
 	"github.com/go-openapi/runtime"
 
-	"github.com/jakub-dzon/k4e-operator/models"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 // GetControlMessageForDeviceOKCode is the HTTP code returned for type GetControlMessageForDeviceOK

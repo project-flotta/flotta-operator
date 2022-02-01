@@ -6,7 +6,7 @@ be configured.
 ## System metrics
 
 ### Collection frequency
-System metrics collection is enabled by default and the k4e agent will start gathering them when the device is started - 
+System metrics collection is enabled by default and the Flotta agent will start gathering them when the device is started - 
 with default intervals of **60** seconds. Said interval can be customized by setting desired frequency (in seconds) in
 an `EdgeDevice` CR.
 

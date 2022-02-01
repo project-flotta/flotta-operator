@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

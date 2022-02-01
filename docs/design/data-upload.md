@@ -1,7 +1,7 @@
 # Data Upload
 
 ## Design
-K4e agent and Operator provide functionality of uploading contents of on-device directories to control-plane object storage.
+Flotta agent and Operator provide functionality of uploading contents of on-device directories to control-plane object storage.
 User can choose between in-cluster OCS storage or external storage.
 OCS takes precedence over external storage.
 The architecture of that solution is depicted by the diagrams below.
@@ -81,7 +81,7 @@ Go to `Settings` for viewing and editing the region.
 
 ## Get configuration
 
-The k4e agent periodically downloads configuration from the k4e operator and part of that configuration is data paths mapping for data upload - specified in each `EdgeDeployment`:
+The Flotta agent periodically downloads configuration from the Flotta operator and part of that configuration is data paths mapping for data upload - specified in each `EdgeDeployment`:
 ```yaml
 spec:
   data: 
@@ -97,13 +97,13 @@ Each `path` specifies which on-device directory (`source`) should be synchronize
 
 The `/export` directory is shared among containers of one workload (pod), but different workloads (pods) have them separate; each workload has `/export` directory backed by different host path volume. It is added automatically and should not be part of the `EdgeDeployment`.
 
-The device configuration provided by the k4e operator also contains S3 connection details (endpoint URL, bucket name, keys) for connecting to a bucket.
+The device configuration provided by the Flotta operator also contains S3 connection details (endpoint URL, bucket name, keys) for connecting to a bucket.
 
 ### Example
 
 EdgeDeployment:
 ```yaml
-apiVersion: management.k4e.io/v1alpha1
+apiVersion: management.project-flotta.io/v1alpha1
 kind: EdgeDeployment
 metadata:
   name: os-stats
@@ -148,6 +148,6 @@ In this case on-device `/export/stats` directory will be synced to a `statistics
 
 ## Upload files
 
-The k4e agent synchronizes paths specified in the configuration every 15 seconds. Only new or changed files are transferred. 
+The Flotta agent synchronizes paths specified in the configuration every 15 seconds. Only new or changed files are transferred. 
 
 Files removed on the device are not removed from the storage.

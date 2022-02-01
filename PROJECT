@@ -1,28 +1,28 @@
-domain: k4e.io
+domain: project-flotta.io
 layout:
 - go.kubebuilder.io/v3
 plugins:
   manifests.sdk.operatorframework.io/v2: {}
   scorecard.sdk.operatorframework.io/v2: {}
-projectName: k4e-operator
-repo: github.com/jakub-dzon/k4e-operator
+projectName: flotta-operator
+repo: github.com/project-flotta/flotta-operator
 resources:
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: k4e.io
+  domain: project-flotta.io
   group: management
   kind: EdgeDevice
-  path: github.com/jakub-dzon/k4e-operator/api/v1alpha1
+  path: github.com/project-flotta/flotta-operator/api/v1alpha1
   version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: k4e.io
+  domain: project-flotta.io
   group: management
   kind: EdgeDeployment
-  path: github.com/jakub-dzon/k4e-operator/api/v1alpha1
+  path: github.com/project-flotta/flotta-operator/api/v1alpha1
   version: v1alpha1
 version: "3"

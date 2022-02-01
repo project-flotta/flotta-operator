@@ -8,13 +8,13 @@
 
 #### Operator
 
-The k4e operator is a Kubernetes operator that consists of two components:
+The Flotta operator is a Kubernetes operator that consists of two components:
  - controller responsible for reconciling `EdgeDevice` and `EdgeDeployment` CRs;
- - HTTP API that is used by the k4e agent to get expected configuration and to post heartbeat messages. See [HTTP API schema](http-api.md) for more details.
+ - HTTP API that is used by the Flotta agent to get expected configuration and to post heartbeat messages. See [HTTP API schema](http-api.md) for more details.
 
 #### Object Storage
 
-Object Storage is used to store files created by workloads on devices and uploaded using k4e built-in mechanism.
+Object Storage is used to store files created by workloads on devices and uploaded using Flotta built-in mechanism.
 
 Object Bucket Claims provided by OCS and Noobaa and accessible with like S3 buckets. 
 
@@ -23,8 +23,8 @@ See [Data Upload](data-upload.md) for more details.
 #### CRDs
 
 Operator manages two kinds of CRs: 
- - `EdgeDevice` representing physical edge devices; see [the definition](../../config/crd/bases/management.k4e.io_edgedevices.yaml) or [an example](../../config/samples/management_v1alpha1_edgedevice.yaml)
- - `EdgeDeployment` representing workloads that can be scheduled to run on edge devices; see [the definition](../../config/crd/bases/management.k4e.io_edgedeployments.yaml) or [an example](../../config/samples/management_v1alpha1_edgedeployment.yaml)
+ - `EdgeDevice` representing physical edge devices; see [the definition](../../config/crd/bases/management.project-flotta.io_edgedevices.yaml) or [an example](../../config/samples/management_v1alpha1_edgedevice.yaml)
+ - `EdgeDeployment` representing workloads that can be scheduled to run on edge devices; see [the definition](../../config/crd/bases/management.project-flotta.io_edgedeployments.yaml) or [an example](../../config/samples/management_v1alpha1_edgedeployment.yaml)
 
 See [Custom Resource Definitions](crds.md) for more details.
 
@@ -43,7 +43,7 @@ Agent is running constantly on the edge device and responsible for:
 
 Agent is running in two processes:
  - [yggdrasil](https://github.com/jakub-dzon/yggdrasil/) - gateway service responsible for communication with the control plane; dispatches messages to and from the control plane from/to workers (extensions);
- - [device-worker](https://github.com/jakub-dzon/k4e-device-worker) - yggdrasil worker responsible for performing all the logic listed above.
+ - [device-worker](https://github.com/project-flotta/flotta-device-worker) - yggdrasil worker responsible for performing all the logic listed above.
 
 
 ## Workflows
@@ -52,7 +52,7 @@ Agent is running in two processes:
 
 ![](pairing.png)
 
- 1. User boots the edge device with k4e device ISO
+ 1. User boots the edge device with Flotta device ISO
  2. Agent service is started by systemd
  3. Agent sends pairing/registration request containing device's hardware information to the control plane (Operator's HTTP endpoint) 
  4. Operator creates `EdgeDevice` resource representing the registering device

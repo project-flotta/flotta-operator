@@ -7,9 +7,9 @@ import (
 
 // When adding metric names, see https://prometheus.io/docs/practices/naming/#metric-names
 const (
-	EdgeDeviceSuccessfulRegistrationQuery = "k4e_operator_edge_devices_successful_registration"
-	EdgeDeviceFailedRegistrationQuery     = "k4e_operator_edge_devices_failed_registration"
-	EdgeDeviceUnregistrationQuery         = "k4e_operator_edge_devices_unregistration"
+	EdgeDeviceSuccessfulRegistrationQuery = "flotta_operator_edge_devices_successful_registration"
+	EdgeDeviceFailedRegistrationQuery     = "flotta_operator_edge_devices_failed_registration"
+	EdgeDeviceUnregistrationQuery         = "flotta_operator_edge_devices_unregistration"
 )
 
 var (

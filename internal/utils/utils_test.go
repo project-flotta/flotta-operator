@@ -1,11 +1,11 @@
 package utils_test
 
 import (
-	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	"github.com/jakub-dzon/k4e-operator/internal/utils"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/utils"
 	v1 "k8s.io/api/core/v1"
 )
 

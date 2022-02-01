@@ -6,9 +6,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: edgedeployments.management.k4e.io
+  name: edgedeployments.management.project-flotta.io
 spec:
-  group: management.k4e.io
+  group: management.project-flotta.io
   names:
     kind: EdgeDeployment
     listKind: EdgeDeploymentList

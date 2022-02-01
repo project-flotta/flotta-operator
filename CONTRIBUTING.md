@@ -18,7 +18,7 @@ following link:
 
 ## Developer environment
 
-By default, all k4e projects rely on Makefiles, where users can run all the
+By default, all Flotta projects rely on Makefiles, where users can run all the
 workflows operations.
 
 To make it easier, all Makefiles implement a help section to see the actions you
@@ -128,7 +128,7 @@ to your git command line.
 
 ## Documentation
 
-Currently, all the docs can be found on the k4e-operator project; under the
+Currently, all the docs can be found on the flotta-operator project; under the
 [docs](docs) folder, in there you can find:
 
 - Architecture details

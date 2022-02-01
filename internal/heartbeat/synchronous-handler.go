@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/log"

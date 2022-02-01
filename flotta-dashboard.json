@@ -65,14 +65,14 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "k4e_operator_created_obc",
+          "expr": "flotta_operator_created_obc",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
         },
         {
           "exemplar": true,
-          "expr": "k4e_operator_edge_devices_failed_registration",
+          "expr": "flotta_operator_edge_devices_failed_registration",
           "hide": false,
           "interval": "",
           "legendFormat": "",
@@ -80,7 +80,7 @@
         },
         {
           "exemplar": true,
-          "expr": "k4e_operator_edge_devices_successful_registration",
+          "expr": "flotta_operator_edge_devices_successful_registration",
           "hide": false,
           "interval": "",
           "legendFormat": "",
@@ -141,7 +141,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "k4e",
+  "title": "flotta",
   "uid": "jZdnk627k",
   "version": 1
 }

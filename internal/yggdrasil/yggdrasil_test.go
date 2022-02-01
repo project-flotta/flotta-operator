@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jakub-dzon/k4e-operator/internal/configmaps"
-	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 
-	"github.com/jakub-dzon/k4e-operator/internal/images"
-	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
+	"github.com/project-flotta/flotta-operator/internal/images"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/golang/mock/gomock"
@@ -23,14 +23,14 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	"github.com/jakub-dzon/k4e-operator/internal/metrics"
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
-	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
-	"github.com/jakub-dzon/k4e-operator/models"
-	api "github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
-	operations "github.com/jakub-dzon/k4e-operator/restapi/operations/yggdrasil"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
+	"github.com/project-flotta/flotta-operator/models"
+	api "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
+	operations "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 )

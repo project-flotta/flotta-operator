@@ -26,21 +26,21 @@ import (
 	"os"
 	"strings"
 
-	"github.com/jakub-dzon/k4e-operator/internal/configmaps"
-	"github.com/jakub-dzon/k4e-operator/internal/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 
-	"github.com/jakub-dzon/k4e-operator/internal/images"
-	"github.com/jakub-dzon/k4e-operator/internal/k8sclient"
-	"github.com/jakub-dzon/k4e-operator/internal/metrics"
-	"github.com/jakub-dzon/k4e-operator/internal/mtls"
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedeployment"
-	"github.com/jakub-dzon/k4e-operator/internal/repository/edgedevice"
-	"github.com/jakub-dzon/k4e-operator/internal/storage"
-	"github.com/jakub-dzon/k4e-operator/internal/yggdrasil"
-	"github.com/jakub-dzon/k4e-operator/restapi"
-	watchers "github.com/jakub-dzon/k4e-operator/watchers"
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
+	"github.com/project-flotta/flotta-operator/internal/images"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
+	"github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/mtls"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/storage"
+	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
+	"github.com/project-flotta/flotta-operator/restapi"
+	watchers "github.com/project-flotta/flotta-operator/watchers"
 	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -48,10 +48,10 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/util/flowcontrol"
 
-	"github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	managementv1alpha1 "github.com/jakub-dzon/k4e-operator/api/v1alpha1"
-	"github.com/jakub-dzon/k4e-operator/controllers"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/controllers"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -66,8 +66,8 @@ import (
 
 const (
 	initialDeviceNamespace   = "default"
-	defaultOperatorNamespace = "k4e-operator-system"
-	defaultConfigMapName     = "k4e-operator-manager-config"
+	defaultOperatorNamespace = "flotta"
+	defaultConfigMapName     = "flotta-operator-manager-config"
 	logLevelLabel            = "LOG_LEVEL"
 )
 
@@ -77,7 +77,7 @@ var (
 
 	// @TODO read /var/run/secrets/kubernetes.io/serviceaccount/namespace to get
 	// the correct namespace if it's installed in k8s
-	operatorNamespace = "k4e-operator-system"
+	operatorNamespace = "flotta"
 )
 
 var Config struct {
@@ -91,7 +91,7 @@ var Config struct {
 
 	// Domain where TLS certificate listen.
 	// FIXME check default here
-	Domain string `envconfig:"DOMAIN" default:"k4e.com"`
+	Domain string `envconfig:"DOMAIN" default:"project-flotta.io"`
 
 	// If TLS server certificates should work on 127.0.0.1
 	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
@@ -178,7 +178,7 @@ func main() {
 		Port:                   Config.WebhookPort,
 		HealthProbeBindAddress: Config.ProbeAddr,
 		LeaderElection:         Config.EnableLeaderElection,
-		LeaderElectionID:       "b9eebab3.k4e.io",
+		LeaderElectionID:       "b9eebab3.project-flotta.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

@@ -51,7 +51,7 @@ func (o *GetControlMessageForDeviceURL) Build() (*url.URL, error) {
 
 	_basePath := o._basePath
 	if _basePath == "" {
-		_basePath = "/api/k4e-management/v1"
+		_basePath = "/api/flotta-management/v1"
 	}
 	_result.Path = golangswaggerpaths.Join(_basePath, _path)
 

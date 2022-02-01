@@ -1,12 +1,12 @@
 swagger: '2.0'
 info:
-  description: 'Kube for Edge Management'
+  description: 'Flotta Edge Management'
   version: 1.0.0
-  title: Kube4EdgeManagement
+  title: FlottaManagement
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-basePath: /api/k4e-management/v1
+basePath: /api/flotta-management/v1
 tags:
   - name: devices
     description: Device management
