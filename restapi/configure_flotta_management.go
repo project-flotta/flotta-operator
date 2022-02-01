@@ -63,14 +63,14 @@ func Handler(c Config) (http.Handler, error) {
 }
 
 // HandlerAPI returns an http.Handler given the handler configuration
-// and the corresponding *Kube4EdgeManagement instance.
+// and the corresponding *FlottaManagement instance.
 // It mounts all the business logic implementers in the right routing.
-func HandlerAPI(c Config) (http.Handler, *operations.Kube4EdgeManagementAPI, error) {
+func HandlerAPI(c Config) (http.Handler, *operations.FlottaManagementAPI, error) {
 	spec, err := loads.Analyzed(swaggerCopy(SwaggerJSON), "")
 	if err != nil {
 		return nil, nil, fmt.Errorf("analyze swagger: %v", err)
 	}
-	api := operations.NewKube4EdgeManagementAPI(spec)
+	api := operations.NewFlottaManagementAPI(spec)
 	api.ServeError = errors.ServeError
 	api.Logger = c.Logger
 
