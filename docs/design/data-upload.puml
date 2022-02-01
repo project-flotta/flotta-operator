@@ -1,13 +1,13 @@
 @startuml
 
 frame Kubernetes {
-    component "k4e Operator" as operator
+    component "Flotta Operator" as operator
     database "Object Bucket Claim" as buckets
     interface S3
 }
 
 frame "Edge Device" {
-    node "k4e Agent" as deviceAgent
+    node "Flotta Agent" as deviceAgent
 }
 
 buckets -down- S3: API

@@ -3,7 +3,7 @@
 
 frame Kubernetes {
     node Operator {
-      control "k4e controller" as controller
+      control "Flotta controller" as controller
       interface "http  API" as operatorAPI
 
     }

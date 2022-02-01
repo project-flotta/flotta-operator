@@ -6,7 +6,7 @@ title Pairing
 autonumber
 actor User
 
-User -> Device: Boot k4e device ISO
+User -> Device: Boot Flotta device ISO
 Device -> Agent: Start agent
 Agent -> Operator: Send pairing request
 Operator -> "EdgeDevice CR": Create

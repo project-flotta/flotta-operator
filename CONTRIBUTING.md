@@ -18,7 +18,7 @@ following link:
 
 ## Developer environment
 
-By default, all k4e projects rely on Makefiles, where users can run all the
+By default, all Flotta projects rely on Makefiles, where users can run all the
 workflows operations.
 
 To make it easier, all Makefiles implement a help section to see the actions you
