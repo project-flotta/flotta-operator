@@ -5,7 +5,7 @@ metadata:
   name: edgedeployment-viewer-role
 rules:
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedeployments
   verbs:
@@ -13,7 +13,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedeployments/status
   verbs:

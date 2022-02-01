@@ -4,7 +4,7 @@
 
 `EdgeDevice` is a namespaced custom resource that represents registered edge device and its configuration.
 
-* apiVersion: `management.k4e.io/v1alpha1`
+* apiVersion: `management.project-flotta.io/v1alpha1`
 * kind: `EdgeDevice`
 
 ### Specification
@@ -43,7 +43,7 @@ For more information about the `dataObc` property read about the [Data Upload](d
 
 `EdgeDeployment` is a namespaced custom resource that represents workload that should be deployed to edge devices matching criteria specified in the CR.
 
-* apiVersion: `management.k4e.io/v1alpha1`
+* apiVersion: `management.project-flotta.io/v1alpha1`
 * kind: `EdgeDeployment`
 
 ### Specification

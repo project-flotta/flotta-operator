@@ -41,9 +41,9 @@ type EdgeDeviceLabelsReconciler struct {
 	MaxConcurrentReconciles  int
 }
 
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices,verbs=get;watch;patch
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices/status,verbs=get;patch
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments,verbs=list
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices,verbs=get;watch;patch
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices/status,verbs=get;patch
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments,verbs=list
 
 func (r *EdgeDeviceLabelsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx).WithName("labels")

@@ -8,4 +8,4 @@ webhook:
   port: 9443
 leaderElection:
   leaderElect: true
-  resourceName: b9eebab3.k4e.io
+  resourceName: b9eebab3.project-flotta.io

@@ -46,9 +46,9 @@ type EdgeDeviceReconciler struct {
 	MaxConcurrentReconciles int
 }
 
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedevices/finalizers,verbs=update
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices/finalizers,verbs=update
 //+kubebuilder:rbac:groups=objectbucket.io,resources=objectbucketclaims,verbs=get;list;watch;create;update;patch
 //+kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch
 //+kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create

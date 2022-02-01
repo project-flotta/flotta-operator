@@ -54,9 +54,9 @@ type EdgeDeploymentReconciler struct {
 
 type ConcurrentFunc func([]managementv1alpha1.EdgeDevice) []error
 
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=management.k4e.io,resources=edgedeployments/finalizers,verbs=update
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

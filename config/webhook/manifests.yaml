@@ -12,12 +12,12 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-management-k4e-io-v1alpha1-edgedeployment
+      path: /validate-management-project-flotta-io-v1alpha1-edgedeployment
   failurePolicy: Fail
-  name: edgedeploymnet.management.k4e.io
+  name: edgedeploymnet.management.project-flotta.io
   rules:
   - apiGroups:
-    - management.k4e.io
+    - management.project-flotta.io
     apiVersions:
     - v1alpha1
     operations:

@@ -5,7 +5,7 @@ metadata:
   name: edgedeployment-editor-role
 rules:
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedeployments
   verbs:
@@ -17,7 +17,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedeployments/status
   verbs:

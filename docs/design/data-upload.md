@@ -103,7 +103,7 @@ The device configuration provided by the k4e operator also contains S3 connectio
 
 EdgeDeployment:
 ```yaml
-apiVersion: management.k4e.io/v1alpha1
+apiVersion: management.project-flotta.io/v1alpha1
 kind: EdgeDeployment
 metadata:
   name: os-stats

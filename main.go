@@ -178,7 +178,7 @@ func main() {
 		Port:                   Config.WebhookPort,
 		HealthProbeBindAddress: Config.ProbeAddr,
 		LeaderElection:         Config.EnableLeaderElection,
-		LeaderElectionID:       "b9eebab3.k4e.io",
+		LeaderElectionID:       "b9eebab3.project-flotta.io",
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")

@@ -24,7 +24,7 @@ To force device re-registration remove EdgeDevice CR from the cluster and `/var/
 #### Prerequisites
 
  - k8s cluster with OpenShift Cluster Storage (or at least NooBaa) to run;
- - Checkout https://github.com/jakub-dzon/k4e-operator
+ - Checkout https://github.com/project-flotta/flotta-operator
  - Make sure that your `oc` or `kubectl` is configured properly to communicate with your cluster
 
 #### Installation

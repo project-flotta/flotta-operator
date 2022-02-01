@@ -23,8 +23,8 @@ See [Data Upload](data-upload.md) for more details.
 #### CRDs
 
 Operator manages two kinds of CRs: 
- - `EdgeDevice` representing physical edge devices; see [the definition](../../config/crd/bases/management.k4e.io_edgedevices.yaml) or [an example](../../config/samples/management_v1alpha1_edgedevice.yaml)
- - `EdgeDeployment` representing workloads that can be scheduled to run on edge devices; see [the definition](../../config/crd/bases/management.k4e.io_edgedeployments.yaml) or [an example](../../config/samples/management_v1alpha1_edgedeployment.yaml)
+ - `EdgeDevice` representing physical edge devices; see [the definition](../../config/crd/bases/management.project-flotta.io_edgedevices.yaml) or [an example](../../config/samples/management_v1alpha1_edgedevice.yaml)
+ - `EdgeDeployment` representing workloads that can be scheduled to run on edge devices; see [the definition](../../config/crd/bases/management.project-flotta.io_edgedeployments.yaml) or [an example](../../config/samples/management_v1alpha1_edgedeployment.yaml)
 
 See [Custom Resource Definitions](crds.md) for more details.
 

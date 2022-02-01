@@ -31,7 +31,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedeployments
   verbs:
@@ -43,13 +43,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedeployments/finalizers
   verbs:
   - update
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedeployments/status
   verbs:
@@ -57,7 +57,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedevices
   verbs:
@@ -69,13 +69,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedevices/finalizers
   verbs:
   - update
 - apiGroups:
-  - management.k4e.io
+  - management.project-flotta.io
   resources:
   - edgedevices/status
   verbs:

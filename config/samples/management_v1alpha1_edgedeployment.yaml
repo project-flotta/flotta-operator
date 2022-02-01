@@ -1,4 +1,4 @@
-apiVersion: management.k4e.io/v1alpha1
+apiVersion: management.project-flotta.io/v1alpha1
 kind: EdgeDeployment
 metadata:
   name: edgedeployment-sample
