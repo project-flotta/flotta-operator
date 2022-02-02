@@ -570,8 +570,8 @@ func (h *Handler) createSecretList(ctx context.Context, logger logr.Logger, depl
 	for _, deployment := range deployments {
 		podSpec := deployment.Spec.Pod.Spec
 		allContainers := append(podSpec.InitContainers, podSpec.Containers...)
-		for _, container := range allContainers {
-			extractSecretsFromContainer(&container, secretMap)
+		for i := range allContainers {
+			extractSecretsFromContainer(&allContainers[i], secretMap)
 		}
 	}
 

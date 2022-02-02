@@ -18,8 +18,8 @@ import (
 
 const (
 	regClientSecretNameRandomLen = 10
-	regClientSecretNamePrefix    = "reg-client-ca"
-	regClientSecretLabelKey      = "reg-client-ca"
+	regClientSecretNamePrefix    = "reg-client-ca" //#nosec
+	regClientSecretLabelKey      = "reg-client-ca" //#nosec
 
 	YggdrasilRegisterAuth = 1
 	YggdrasilCompleteAuth = 0
