@@ -91,7 +91,8 @@ func (r *EdgeDeviceLabelsReconciler) updateDeployments(ctx context.Context, devi
 			return err
 		}
 
-		for _, deployment := range deployments {
+		for i := range deployments {
+			deployment := deployments[i]
 			if _, ok := selectedDeployments[deployment.Name]; ok {
 				continue
 			}
