@@ -35,8 +35,8 @@ func (cm *configMap) Fetch(ctx context.Context, deployment v1alpha1.EdgeDeployme
 	cmMap := utils.MapType{}
 	podSpec := deployment.Spec.Pod.Spec
 	allContainers := append(podSpec.InitContainers, podSpec.Containers...)
-	for _, container := range allContainers {
-		extractConfigMapsFromEnv(&container, cmMap)
+	for i := range allContainers {
+		extractConfigMapsFromEnv(&allContainers[i], cmMap)
 
 		// Extract info also from volumes:
 		utils.ExtractInfoFromVolume(podSpec.Volumes, cmMap, func(i interface{}) (bool, *bool, string) {

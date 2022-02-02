@@ -20,8 +20,9 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sync"
+
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	"github.com/project-flotta/flotta-operator/internal/labels"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
@@ -220,7 +221,8 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx co
 func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, name string, edgeDevices []managementv1alpha1.EdgeDevice) error {
 	f := func(input []managementv1alpha1.EdgeDevice) []error {
 		var errs []error
-		for _, edgeDevice := range input {
+		for i := range input {
+			edgeDevice := input[i]
 			if !hasDeployment(edgeDevice, name) {
 				deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
 				patch := client.MergeFrom(edgeDevice.DeepCopy())

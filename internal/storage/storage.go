@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"strconv"
 
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	routev1 "github.com/openshift/api/route/v1"
@@ -14,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"k8s.io/utils/net"
 )
 
 type Claimer struct {
@@ -159,7 +160,7 @@ func (c *Claimer) GetExternalStorageConfig(ctx context.Context, device *v1alpha1
 		return nil, fmt.Errorf(missingFieldMessage, "AWS_SECRET_ACCESS_KEY", secretFullName)
 	}
 	caBundle := secret.Data["tls.crt"]
-	bucketPortNumeric, err := strconv.Atoi(bucketPort)
+	bucketPortNumeric, err := net.ParsePort(bucketPort, false)
 	if err != nil {
 		return nil, err
 	}
