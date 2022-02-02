@@ -17,12 +17,34 @@ jobs:
         run: |
           export GO111MODULE=on
           export PATH=$PATH:$(go env GOPATH)/bin
+          # Print cluster info
           kubectl cluster-info
           kubectl get pods -n kube-system
           kubectl wait --for=condition=Ready pods --all -n kube-system
-          make generate
-          make install
-          timeout 1m make run || retVal=$?
+
+          # TODO: Move to Makefile - Cert manager
+          kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.0/cert-manager.yaml
+          kubectl wait --for=condition=Ready pods --all -n cert-manager
+
+          # Deploy flotta operator
+          make build
+          IMG=flotta-operator:latest make docker-build
+          kind load docker-image flotta-operator:latest
+          timeout 1m make deploy IMG=flotta-operator || retVal=$?
           if [ $retVal -ne 124 ]; then
             echo "Make run failed"; exit 1
           fi
+          kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
+          kubectl port-forward deploy/flotta-operator-controller-manager -n flotta --address 0.0.0.0 8888:8888 &
+
+          # Run test
+          make integration-test
+
+          # Export logs
+          kind export logs dist
+      - name: Archive logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: logs
+          path: |
+            dist

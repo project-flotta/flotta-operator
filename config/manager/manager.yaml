@@ -32,6 +32,7 @@ spec:
         - configMapRef:
             name: manager-config
         image: controller:latest
+        imagePullPolicy: IfNotPresent
         name: manager
         ports:
           - containerPort: 8888
