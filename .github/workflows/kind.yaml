@@ -23,5 +23,3 @@ jobs:
           if [ $retVal -ne 124 ]; then
             echo "Make run failed"; exit 1
           fi
-          docker run --privileged -d quay.io/machacekondra/flotta-worker
-          for i in `seq 10`; do kubectl get edgedevices; sleep 5; done
