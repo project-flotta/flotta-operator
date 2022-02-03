@@ -52,7 +52,7 @@ type SystemMetricsConfiguration struct {
 
 	// AllowList defines name and namespace of a ConfigMap containing
 	// list of system metrics that should be scraped
-	AllowList *ObjectRef `json:"allowList,omitempty"`
+	AllowList *NameRef `json:"allowList,omitempty"`
 
 	// Disabled when set to true instructs the device to turn off system metrics collection
 	Disabled bool `json:"disabled,omitempty"`

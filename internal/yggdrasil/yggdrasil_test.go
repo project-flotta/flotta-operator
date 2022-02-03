@@ -1441,10 +1441,7 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("should map system metrics", func() {
 			// given
-			const (
-				allowListName      = "a-name"
-				allowListNamespace = "a-namespace"
-			)
+			const allowListName = "a-name"
 			interval := int32(3600)
 
 			device := getDevice("foo")
@@ -1452,9 +1449,8 @@ var _ = Describe("Yggdrasil", func() {
 				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
 					Interval: interval,
 					Disabled: true,
-					AllowList: &v1alpha1.ObjectRef{
-						Name:      allowListName,
-						Namespace: allowListNamespace,
+					AllowList: &v1alpha1.NameRef{
+						Name: allowListName,
 					},
 				},
 			}
@@ -1465,7 +1461,7 @@ var _ = Describe("Yggdrasil", func() {
 				Times(1)
 
 			allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
-			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, allowListNamespace).
+			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
 				Return(&allowList, nil)
 
 			// when
@@ -1488,22 +1484,18 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("should fail when allow-list generation fails", func() {
 			// given
-			const (
-				allowListName      = "a-name"
-				allowListNamespace = "a-namespace"
-			)
+			const allowListName = "a-name"
 
 			device := getDevice("foo")
 			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
 				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
-					AllowList: &v1alpha1.ObjectRef{
-						Name:      allowListName,
-						Namespace: allowListNamespace,
+					AllowList: &v1alpha1.NameRef{
+						Name: allowListName,
 					},
 				},
 			}
 
-			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, allowListNamespace).
+			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
 				Return(nil, fmt.Errorf("boom!"))
 
 			edgeDeviceRepoMock.EXPECT().
