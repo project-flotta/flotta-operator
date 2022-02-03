@@ -8,6 +8,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/heartbeat"
+	"github.com/project-flotta/flotta-operator/internal/mtls"
 
 	"net/http"
 	"net/url"
@@ -67,6 +68,7 @@ type Handler struct {
 	allowLists             devicemetrics.AllowListGenerator
 	heartbeatHandler       heartbeat.Handler
 	configMaps             configmaps.ConfigMap
+	mtlsConfig             *mtls.TLSConfig
 }
 
 type keyMapType = map[string]interface{}
@@ -75,7 +77,7 @@ type secretMapType = map[string]keyMapType
 func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
 	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder,
 	registryAuth images.RegistryAuthAPI, metrics metrics.Metrics, allowLists devicemetrics.AllowListGenerator,
-	configMaps configmaps.ConfigMap) *Handler {
+	configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig) *Handler {
 	return &Handler{
 		deviceRepository:       deviceRepository,
 		deploymentRepository:   deploymentRepository,
@@ -88,6 +90,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 		allowLists:             allowLists,
 		heartbeatHandler:       heartbeat.NewSynchronousHandler(deviceRepository, recorder),
 		configMaps:             configMaps,
+		mtlsConfig:             mtlsConfig,
 	}
 }
 
@@ -304,22 +307,49 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 	case "registration":
-		_, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
+		// register new edge device
+		contentJson, _ := json.Marshal(msg.Content)
+		registrationInfo := models.RegistrationInfo{}
+		err := json.Unmarshal(contentJson, &registrationInfo)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceBadRequest()
+		}
+		logger.V(1).Info("received registration info", "content", registrationInfo)
+
+		res := models.MessageResponse{
+			Directive: msg.Directive,
+			MessageID: msg.MessageID,
+		}
+		content := models.RegistrationResponse{}
+
+		_, err = h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err == nil {
-			return operations.NewPostDataMessageForDeviceOK()
+			// @TODO remove this IF when MTLS is finished
+			if registrationInfo.CertificateRequest != "" {
+				cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)
+				if err != nil {
+					return operations.NewPostDataMessageForDeviceBadRequest()
+				}
+				content.Certificate = string(cert)
+			}
+			res.Content = content
+			return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 		}
 
 		if !errors.IsNotFound(err) {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-		// register new edge device
-		contentJson, _ := json.Marshal(msg.Content)
-		registrationInfo := models.RegistrationInfo{}
-		err = json.Unmarshal(contentJson, &registrationInfo)
-		if err != nil {
-			return operations.NewPostDataMessageForDeviceBadRequest()
+
+		// @TODO remove this IF when MTLS is finished
+		if registrationInfo.CertificateRequest != "" {
+			cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)
+			if err != nil {
+				return operations.NewPostDataMessageForDeviceBadRequest()
+			}
+			content.Certificate = string(cert)
+			res.Content = content
 		}
-		logger.V(1).Info("received registration info", "content", registrationInfo)
+
 		now := metav1.Now()
 		device := v1alpha1.EdgeDevice{
 			Spec: v1alpha1.EdgeDeviceSpec{
@@ -354,7 +384,8 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		}
 		logger.Info("EdgeDevice created")
 		h.metrics.IncEdgeDeviceSuccessfulRegistration()
-		return operations.NewPostDataMessageForDeviceOK()
+
+		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 	default:
 		logger.Info("received unknown message", "message", msg)
 		return operations.NewPostDataMessageForDeviceBadRequest()

@@ -7,9 +7,12 @@ package yggdrasil
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
+
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 // PostDataMessageForDeviceReader is a Reader for the PostDataMessageForDevice structure.
@@ -72,13 +75,25 @@ func NewPostDataMessageForDeviceOK() *PostDataMessageForDeviceOK {
 Success
 */
 type PostDataMessageForDeviceOK struct {
+	Payload *models.MessageResponse
 }
 
 func (o *PostDataMessageForDeviceOK) Error() string {
-	return fmt.Sprintf("[POST /data/{device_id}/out][%d] postDataMessageForDeviceOK ", 200)
+	return fmt.Sprintf("[POST /data/{device_id}/out][%d] postDataMessageForDeviceOK  %+v", 200, o.Payload)
+}
+
+func (o *PostDataMessageForDeviceOK) GetPayload() *models.MessageResponse {
+	return o.Payload
 }
 
 func (o *PostDataMessageForDeviceOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.MessageResponse)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

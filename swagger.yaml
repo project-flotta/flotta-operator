@@ -70,6 +70,8 @@ paths:
       responses:
         "200":
           description: Success
+          schema:
+            $ref: '#/definitions/message-response'
         "400":
           description: Error
         "401":
@@ -382,12 +384,22 @@ definitions:
         description: Path in the control plane storage
         type: string
 
+  registration-response:
+    type: object
+    properties:
+      certificate:
+        description: "Client certificate to be used in future operations"
+        type: string
+
   registration-info:
     type: object
     properties:
       hardware:
         description: Hardware information
         $ref: '#/definitions/hardware-info'
+      certificate_request:
+        description: "Certificate Signing Request to be signed by flotta-operator CA"
+        type: string
 
   hardware-info:
     type: object
@@ -633,6 +645,16 @@ definitions:
           - failed
       last_upgrade_time:
         type: string
+
+  message-response:
+    type: object
+    properties:
+      message_id:
+        type: string
+      directive:
+        type: string
+      content:
+        description: Content
 
   message:
     type: object
