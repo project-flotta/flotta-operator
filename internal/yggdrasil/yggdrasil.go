@@ -468,14 +468,9 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 	return list, nil
 }
 
-func (h *Handler) getAuthFile(ctx context.Context, imageRegistries *v1alpha1.ImageRegistriesConfiguration, defaultNamespace string) (string, error) {
+func (h *Handler) getAuthFile(ctx context.Context, imageRegistries *v1alpha1.ImageRegistriesConfiguration, namespace string) (string, error) {
 	if imageRegistries != nil {
 		if secretRef := imageRegistries.AuthFileSecret; secretRef != nil {
-			namespace := secretRef.Namespace
-			if secretRef.Namespace == "" {
-				namespace = defaultNamespace
-			}
-
 			authFile, err := h.registryAuthRepository.GetAuthFileFromSecret(ctx, namespace, secretRef.Name)
 			if err != nil {
 				return "", err
