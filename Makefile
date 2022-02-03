@@ -161,7 +161,9 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	kubectl apply -f $(TMP_ODIR)/flotta-operator.yaml
 ifeq ($(TARGET), k8s)
+ifneq (,$(shell which minikube 2>/dev/null))
 	minikube addons enable ingress
+endif
 endif
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
