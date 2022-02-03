@@ -263,7 +263,7 @@ func (h *Handler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice 
 
 		allowListSpec := systemMetrics.AllowList
 		if allowListSpec != nil {
-			allowList, err := h.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, allowListSpec.Namespace)
+			allowList, err := h.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, edgeDevice.Namespace)
 			if err != nil {
 				return nil, err
 			}

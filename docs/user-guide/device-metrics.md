@@ -50,5 +50,4 @@ spec:
     system:
       allowList: 
           name: system-allow-list
-          namespace: devices
 ```

@@ -842,7 +842,7 @@ func (in *SystemMetricsConfiguration) DeepCopyInto(out *SystemMetricsConfigurati
 	*out = *in
 	if in.AllowList != nil {
 		in, out := &in.AllowList, &out.AllowList
-		*out = new(ObjectRef)
+		*out = new(NameRef)
 		**out = **in
 	}
 }
