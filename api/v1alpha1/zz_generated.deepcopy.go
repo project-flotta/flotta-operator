@@ -561,7 +561,7 @@ func (in *ImageRegistriesConfiguration) DeepCopyInto(out *ImageRegistriesConfigu
 	*out = *in
 	if in.AuthFileSecret != nil {
 		in, out := &in.AuthFileSecret, &out.AuthFileSecret
-		*out = new(ObjectRef)
+		*out = new(NameRef)
 		**out = **in
 	}
 }

@@ -641,60 +641,7 @@ var _ = Describe("Yggdrasil", func() {
 					Type: "pod",
 					Pod:  v1alpha1.Pod{},
 					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
-						AuthFileSecret: &v1alpha1.ObjectRef{
-							Name:      "fooSecret",
-							Namespace: "fooNamespace",
-						},
-					},
-				}}
-			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData, nil)
-
-			authFileContent := "authfile-content"
-			registryAuth.EXPECT().
-				GetAuthFileFromSecret(gomock.Any(), gomock.Eq("fooNamespace"), gomock.Eq("fooSecret")).
-				Return(authFileContent, nil)
-
-			// when
-			res := handler.GetDataMessageForDevice(context.TODO(), params)
-
-			// then
-			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
-			config := validateAndGetDeviceConfig(res)
-
-			Expect(config.DeviceID).To(Equal(deviceName))
-			Expect(config.Workloads).To(HaveLen(1))
-			workload := config.Workloads[0]
-			Expect(workload.Name).To(Equal("workload1"))
-			Expect(workload.ImageRegistries).To(Not(BeNil()))
-			Expect(workload.ImageRegistries.AuthFile).To(Equal(authFileContent))
-
-			Expect(eventsRecorder.Events).ToNot(Receive())
-		})
-
-		It("Image registry authfile is included when secret namespace is missing", func() {
-			// given
-			deviceName := "foo"
-			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
-
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
-				Return(device, nil).
-				Times(1)
-
-			deploymentData := &v1alpha1.EdgeDeployment{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      "workload1",
-					Namespace: "default",
-				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
-					Type: "pod",
-					Pod:  v1alpha1.Pod{},
-					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
-						AuthFileSecret: &v1alpha1.ObjectRef{
+						AuthFileSecret: &v1alpha1.NameRef{
 							Name: "fooSecret",
 						},
 					},
@@ -746,9 +693,8 @@ var _ = Describe("Yggdrasil", func() {
 					Type: "pod",
 					Pod:  v1alpha1.Pod{},
 					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
-						AuthFileSecret: &v1alpha1.ObjectRef{
-							Name:      "fooSecret",
-							Namespace: "fooNamespace",
+						AuthFileSecret: &v1alpha1.NameRef{
+							Name: "fooSecret",
 						},
 					},
 				}}
@@ -757,7 +703,7 @@ var _ = Describe("Yggdrasil", func() {
 				Return(deploymentData, nil)
 
 			registryAuth.EXPECT().
-				GetAuthFileFromSecret(gomock.Any(), gomock.Eq("fooNamespace"), gomock.Eq("fooSecret")).
+				GetAuthFileFromSecret(gomock.Any(), gomock.Eq("default"), gomock.Eq("fooSecret")).
 				Return("", fmt.Errorf("failure"))
 
 			// when

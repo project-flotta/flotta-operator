@@ -36,7 +36,7 @@ type EdgeDeploymentSpec struct {
 }
 
 type ImageRegistriesConfiguration struct {
-	AuthFileSecret *ObjectRef `json:"secretRef,omitempty"`
+	AuthFileSecret *NameRef `json:"secretRef,omitempty"`
 }
 
 type MetricsConfigEntity struct {
