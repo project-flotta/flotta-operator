@@ -77,11 +77,6 @@ type NameRef struct {
 	Name string `json:"name"`
 }
 
-type ObjectRef struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace,omitempty"`
-}
-
 type DataConfiguration struct {
 	Paths []DataPath `json:"paths,omitempty"`
 }

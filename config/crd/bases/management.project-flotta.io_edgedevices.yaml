@@ -73,8 +73,8 @@ spec:
                   system:
                     properties:
                       allowList:
-                        description: AllowList defines name and namespace of a ConfigMap
-                          containing list of system metrics that should be scraped
+                        description: AllowList defines name of a ConfigMap containing
+                          list of system metrics that should be scraped
                         properties:
                           name:
                             type: string
@@ -120,18 +120,12 @@ spec:
                       configMapName:
                         description: configMap name
                         type: string
-                      configMapNamespace:
-                        description: configMap namespace
-                        type: string
                       createOBC:
                         description: createOBC. if the configuration above is empty
                           and this bool is true then create OBC
                         type: boolean
                       secretName:
                         description: secret name
-                        type: string
-                      secretNamespace:
-                        description: secret namespace
                         type: string
                     type: object
                 type: object
