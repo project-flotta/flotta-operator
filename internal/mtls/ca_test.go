@@ -28,6 +28,11 @@ import (
 
 const (
 	certRegisterCN = "register" // Important, make a copy here to prevent breaking changes
+
+	serverSecretKey = "server.key"
+	serverCert      = "server.crt"
+
+	HostTLSCertName = "flotta-host-certificate"
 )
 
 var _ = Describe("CA test", func() {
@@ -144,6 +149,112 @@ var _ = Describe("CA test", func() {
 			Expect(err).To(HaveOccurred())
 			Expect(tlsConfig).To(BeNil())
 			Expect(caChain).To(BeNil())
+		})
+
+		It("Server listen certificate is already created", func() {
+			// Given
+			// commands for the following test input:
+			//   openssl genrsa -out server.key 2048
+			//   openssl req -subj "/CN=mytestCERT" -batch -new -x509 -nodes -key server.key -sha256 -days 1024 -out server.pem
+			certPEM := `
+-----BEGIN CERTIFICATE-----
+MIIDCzCCAfOgAwIBAgIUXnsvn8PsplroKq4DcfB1brdfyj0wDQYJKoZIhvcNAQEL
+BQAwFTETMBEGA1UEAwwKbXl0ZXN0Q0VSVDAeFw0yMjAyMDcxNjI5MzVaFw0yNDEx
+MjcxNjI5MzVaMBUxEzARBgNVBAMMCm15dGVzdENFUlQwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQDPSbYIhTCOTrGmFusNPu9i2Dk0YfKUZTb31e4llKky
+4gUIktUX+7wnWGG/7inM7LIOnCKAjTJyKm9OUvH7Kztfv1rXgfShkZ1NXaY6Uz3r
+nX4I8sxGD5OHqxYj3wFMpteqftpB1Xj6exQs50qT8FuB1f/xeM4oREle42ElFeD1
+3BkRYGJs6jgVBCcc+XcBMaK9Vs+Jvhvr08oNpLiRdftT2vY8FnmDkyDAEb9YQT28
++8i0y5wery3VJKbX/30rqtF8C/ePF8A69IzPOiZG1wvC+rEMIpIWEVatIz5sxt7t
+nukwz2Yy8HslZNQq5Ect1GGHNpXR6E/W1oCEQ8trO5JpAgMBAAGjUzBRMB0GA1Ud
+DgQWBBRp0FwTAuzJxWhsRbjVNnTvcoLH+DAfBgNVHSMEGDAWgBRp0FwTAuzJxWhs
+RbjVNnTvcoLH+DAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCj
+SGqGJO2Q8wAX7Ii3yYqmgmav2WQVPRstDg1VEdtJ9O9+VAQ+UvyDyswiVmIBNTwx
+CvLM4+kb1XL5nv2VmtRaRtHYovvTrOENabYkyNBpsIgo6Qs/Gs2LOflyWNoZwaMC
+4jqwrvbDjiLcQNgt5/CxXW6qp2KZQT7TmxrM//PPpAKI6liDiwDAU7wnJNoIcfUA
+5bf/0xs2U+IHbogva4Mi+VX5h3bipZrdNj24bQmKMsM+jhOu6vyxt8SeGBV+J0eZ
+ERVAxkBYLwwM5B1nwWmitWtps27Cd4sN0JWftcImUM8+04OQFslg4R0Rrxa2IpQm
+HiUnRV8I4zbqhxtNPAs+
+-----END CERTIFICATE-----`
+			certKey := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAz0m2CIUwjk6xphbrDT7vYtg5NGHylGU299XuJZSpMuIFCJLV
+F/u8J1hhv+4pzOyyDpwigI0ycipvTlLx+ys7X79a14H0oZGdTV2mOlM9651+CPLM
+Rg+Th6sWI98BTKbXqn7aQdV4+nsULOdKk/BbgdX/8XjOKERJXuNhJRXg9dwZEWBi
+bOo4FQQnHPl3ATGivVbPib4b69PKDaS4kXX7U9r2PBZ5g5MgwBG/WEE9vPvItMuc
+Hq8t1SSm1/99K6rRfAv3jxfAOvSMzzomRtcLwvqxDCKSFhFWrSM+bMbe7Z7pMM9m
+MvB7JWTUKuRHLdRhhzaV0ehP1taAhEPLazuSaQIDAQABAoIBAQDGP5IobfG1eM/w
+sGSXo4RhvbhgP/k4MeEzgNgl+xsjfgUgYQYKzQjzfFToskgqJIpa7LsWxXPkum7/
+staZyIwdk663BCRKTjDqqFFt4OUMrfC3cDcsHoOTsm4XWpYskDkdZ/soEZmFviba
+l069VJjAAUKq2EYbPswJQ2BKjrU7jU+A4F82UVoa0FBZJBXMbthblxoeM2eQb/tV
+e9AxBsGjAnVhslhhPiBacnKTJjfcWTHGQxxuWg1JSmLBj43pebsJq6BT+ppaCXCt
+rzqkLA68qxe2J7iTFAv0xpWyGoxs2/9CpRF92eMs5mz4ml+LM8sLsIy2bF2gl8yD
+91bSkJwBAoGBAOncfqQTn7fnB8aR60ZllNb3Tm5VFdJhFQgqvFSUOSsOtRsnLUa9
+Bq5XlYn8834v6rFq5rnYV/j2f4X+zAEUkig6jB10r3L1XM/3AyxZbl0oHHbiqsCR
+gbyvhsFWKPk7/bM6z6wLMtUGlS5lgWr94zGSBWZoF+VOfXWpAfbepMKBAoGBAOLp
+OYXkiwKyad9d+ad8z2SnyFKcemvobseMpILD3IotH6VjiO1LjDtqLUmQN3jwdk22
+1cw3t4UavBDI/DOmoedkjm3I9FfStMtooL32zuE9Olv9wplZ70OQP28c9nm2Huim
+j96sXmtQwGOdBxwXjasPjtYs7uWncadquyrnawvpAoGBANM83JNeOm3F3EsrsOXk
+iZ3mwsx8RHrEQFghKf4H6N+QqFv/djEoOumtqSB8AIDhzU82bXQ/C6+RED07mo/7
+Qc3enINay8O+B3i9+PrNSRgSTCvCsFPC2vpRXhoytk3yN0X2gHE5qE+tY4EGJPE8
+pUQ4TnJi4fq5fC+UWnbgQtiBAoGAfcQOoet+MMx6addIXFCNEpj8Ku2X3N9DJ08I
+j4HHZr6D38M/TWamHvhGiZNpa5q7t28zKLFpAllDC3qabnZZHktZtfe/lj2u/17K
+WP/GwoiRJBOOHDkAqE33GrrO0b7jesd2zlBzNL/ZIl0SZ7uWRc2luYfGEXuxPr2l
+Z65EYqECgYAPiK3NfvtfsCqeYE+jfxwWjad75TIY/RKd5VCYh2Zu+zw9nej9HesK
+AJVwxMCA6+jCpY3tswEAgQU/sooTq4KhSIiCbnIPIH+nq0P7VLNKLX+NfmLMHg5z
+pNUUZ3cX4jGObCNfSBauHb73kfjGBo+RM2rnjAWqs9FhpnrJPDNT8Q==
+-----END RSA PRIVATE KEY-----
+`
+			secret := corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: namespace,
+					Name:      HostTLSCertName,
+				},
+				Data: map[string][]byte{
+					serverCert:      []byte(certPEM),
+					serverSecretKey: []byte(certKey),
+				},
+			}
+
+			err := k8sClient.Create(context.TODO(), &secret)
+			Expect(err).NotTo(HaveOccurred())
+
+			// when
+			config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
+			tlsConfig, _, err := config.InitCertificates()
+
+			// then
+
+			Expect(err).NotTo(HaveOccurred())
+			Expect(tlsConfig.Certificates).To(HaveLen(1))
+			tlsConfigCert, err := x509.ParseCertificate(tlsConfig.Certificates[0].Certificate[0])
+			Expect(err).NotTo(HaveOccurred())
+			Expect(tlsConfigCert.Issuer.CommonName).To(Equal("mytestCERT"))
+		})
+
+		It("Server cert is invalid, init send error", func() {
+
+			// given
+			secret := corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: namespace,
+					Name:      HostTLSCertName,
+				},
+				Data: map[string][]byte{
+					serverCert:      []byte("XXX"),
+					serverSecretKey: []byte("Invalid"),
+				},
+			}
+
+			err := k8sClient.Create(context.TODO(), &secret)
+			Expect(err).NotTo(HaveOccurred())
+			// when
+
+			config := mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
+			tlsConfig, _, err := config.InitCertificates()
+			// then
+
+			Expect(tlsConfig).To(BeNil())
+			Expect(err).To(HaveOccurred())
 		})
 
 		Context("Registration client", func() {

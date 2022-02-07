@@ -24,36 +24,41 @@ type CertificateGroup struct {
 	PrivKeyPEM *bytes.Buffer
 }
 
-func NewCertificateGroupFromSecret(secretData map[string][]byte) (*CertificateGroup, error) {
+func NewCACertificateGroupFromSecret(secretData map[string][]byte) (*CertificateGroup, error) {
 	certGroup := &CertificateGroup{
-		certPEM:    bytes.NewBuffer(secretData["ca.crt"]),
-		PrivKeyPEM: bytes.NewBuffer(secretData["ca.key"]),
+		certPEM:    bytes.NewBuffer(secretData[caCertCertKey]),
+		PrivKeyPEM: bytes.NewBuffer(secretData[caCertSecretKey]),
 	}
-
-	// @TODO These can be multiple certificate, but we only check one, because is
-	// how we handle right now.
-	block, _ := pem.Decode(certGroup.certPEM.Bytes())
-	if block == nil {
-		return nil, fmt.Errorf("Cannot get CA certificate")
-	}
-	ca, err := x509.ParseCertificate(block.Bytes)
+	err := certGroup.ImportFromPem()
 	if err != nil {
-		return nil, fmt.Errorf("Failing parsing cert: %v", err)
+		return nil, err
 	}
-	block, _ = pem.Decode(certGroup.PrivKeyPEM.Bytes())
+	return certGroup, nil
+}
+
+func (c *CertificateGroup) ImportFromPem() error {
+	block, _ := pem.Decode(c.certPEM.Bytes())
 	if block == nil {
-		return nil, fmt.Errorf("Cannot get CA certificate key")
+		return fmt.Errorf("Cannot get CA certificate")
+	}
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return fmt.Errorf("Failing parsing cert: %v", err)
+	}
+	block, _ = pem.Decode(c.PrivKeyPEM.Bytes())
+	if block == nil {
+		return fmt.Errorf("Cannot get CA certificate key")
 	}
 
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("failing parsing key: %v", err)
+		return fmt.Errorf("failing parsing key: %v", err)
 	}
 
-	certGroup.cert = ca // Not real at all, because this is already signed.
-	certGroup.signedCert = ca
-	certGroup.privKey = key
-	return certGroup, nil
+	c.cert = cert // Not real at all, because this is already signed.
+	c.signedCert = cert
+	c.privKey = key
+	return nil
 }
 
 // CreatePem from the load certificates create the PEM file and stores in local

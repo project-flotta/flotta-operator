@@ -1,6 +1,7 @@
 package mtls
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/x509"
@@ -17,11 +18,16 @@ import (
 )
 
 const (
-	CASecretName = "flotta-ca"
-	providerName = "secret"
+	CASecretName    = "flotta-ca"
+	HostTLSCertName = "flotta-host-certificate"
+	providerName    = "secret"
 
-	caCertSecretKey     = "ca.key"
-	caCertCertKey       = "ca.crt"
+	caCertSecretKey = "ca.key"
+	caCertCertKey   = "ca.crt"
+
+	serverSecretKey = "server.key"
+	serverCert      = "server.crt"
+
 	clientCertSecretKey = "client.key"
 	clientCertCertKey   = "client.crt"
 
@@ -65,7 +71,7 @@ func (config *CASecretProvider) GetCACertificate() (*CertificateGroup, error) {
 	if err == nil {
 		// Certificate is already created, parse it as *certificateGroup and return
 		// it
-		certGroup, err := NewCertificateGroupFromSecret(secret.Data)
+		certGroup, err := NewCACertificateGroupFromSecret(secret.Data)
 		config.latestCA = certGroup
 		return certGroup, err
 	}
@@ -93,6 +99,60 @@ func (config *CASecretProvider) GetCACertificate() (*CertificateGroup, error) {
 
 	config.latestCA = certificateGroup
 	return certificateGroup, err
+}
+
+func (config *CASecretProvider) GetServerCertificate(dnsNames []string, localhostEnabled bool) (*CertificateGroup, error) {
+
+	var secret corev1.Secret
+	err := config.client.Get(context.TODO(), client.ObjectKey{
+		Namespace: config.namespace,
+		Name:      HostTLSCertName,
+	}, &secret)
+
+	if err != nil && !errors.IsNotFound(err) {
+		return nil, fmt.Errorf("cannot get Host TLS cert:%v", err)
+	}
+
+	if err == nil {
+		// Certificate is already created, parse it as *certificateGroup and return
+		// it
+		certGroup := &CertificateGroup{
+			certPEM:    bytes.NewBuffer(secret.Data[serverCert]),
+			PrivKeyPEM: bytes.NewBuffer(secret.Data[serverSecretKey]),
+		}
+
+		if err := certGroup.ImportFromPem(); err != nil {
+			return nil, fmt.Errorf("cannot import server cert from configmap: %v", err)
+		}
+		return certGroup, err
+	}
+
+	CACert, err := config.GetCACertificate()
+	if err != nil {
+		return nil, fmt.Errorf("cannot get Host CA TLS cert:%v", err)
+	}
+
+	cert, err := getServerCertificate(dnsNames, localhostEnabled, CACert)
+	if err != nil {
+		return nil, fmt.Errorf("cannot create host TLS cert:%v", err)
+	}
+
+	secret = corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: config.namespace,
+			Name:      HostTLSCertName,
+		},
+		Data: map[string][]byte{
+			serverCert:      cert.certPEM.Bytes(),
+			serverSecretKey: cert.PrivKeyPEM.Bytes(),
+		},
+	}
+
+	err = config.client.Create(context.TODO(), &secret)
+	if err != nil {
+		return nil, fmt.Errorf("cannot store server cert: %v", err)
+	}
+	return cert, nil
 }
 
 func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[string][]byte, error) {
