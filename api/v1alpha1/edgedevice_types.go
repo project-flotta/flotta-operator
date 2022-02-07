@@ -50,7 +50,7 @@ type SystemMetricsConfiguration struct {
 	// +kubebuilder:default=60
 	Interval int32 `json:"interval,omitempty"`
 
-	// AllowList defines name and namespace of a ConfigMap containing
+	// AllowList defines name of a ConfigMap containing
 	// list of system metrics that should be scraped
 	AllowList *NameRef `json:"allowList,omitempty"`
 
@@ -86,12 +86,8 @@ type OsInformation struct {
 type S3Storage struct {
 	// secret name
 	SecretName string `json:"secretName,omitempty"`
-	// secret namespace
-	SecretNamespace string `json:"secretNamespace,omitempty"`
 	// configMap name
 	ConfigMapName string `json:"configMapName,omitempty"`
-	// configMap namespace
-	ConfigMapNamespace string `json:"configMapNamespace,omitempty"`
 	// createOBC. if the configuration above is empty and this bool is true then create OBC
 	CreateOBC bool `json:"createOBC,omitempty"`
 }

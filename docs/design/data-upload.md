@@ -29,18 +29,18 @@ In order to configure storage for the device you need to do the following:
 - create storage configuration resources
 
 ### Configuring EdgeDevice
-The storage configuration is taken from a user supplied ConfigMap and Secret.
+The storage configuration is taken from a user supplied ConfigMap and Secret. Both resources must be located in the same namespace as the `EdgeDevice`.
 These resources are specified in the 'spec.storage.s3' section.
 Here's an example of EdgeDevice with storage configuration:
 ```yml
+metadata:
+  namespace: edgedevice-namespace
 spec:
   requestTime: "2021-10-19T18:13:04Z",
   storage:
     s3:
       configMapName: "s3configmap-name",
-      configMapNamespace: "s3configmap-namespace",
       secretName: "s3secret-name",
-      secretNamespace: "s3secret-namespace"
 ```
 
 ### Configuration resources
@@ -51,7 +51,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: s3configmap-name
-  namespace: s3configmap-namespace
+  namespace: edgedevice-namespace
 data:
   BUCKET_HOST: play.min.io
   BUCKET_NAME: device-bucket-6
@@ -64,7 +64,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: s3secret-name
-  namespace: s3secret-namespace
+  namespace: edgedevice-namespace
 type: Opaque
 data:
   AWS_ACCESS_KEY_ID: eWRheWFnaTEzNjk=

@@ -117,21 +117,21 @@ func (c *Claimer) GetExternalStorageConfig(ctx context.Context, device *v1alpha1
 		return nil, fmt.Errorf("missing storage in device configuration. Device name: %s", device.Name)
 	}
 	cm := corev1.ConfigMap{}
-	err := c.client.Get(ctx, client.ObjectKey{Namespace: config.ConfigMapNamespace, Name: config.ConfigMapName}, &cm)
+	err := c.client.Get(ctx, client.ObjectKey{Namespace: device.Namespace, Name: config.ConfigMapName}, &cm)
 	if err != nil {
 		return nil, err
 	}
 	secret := corev1.Secret{}
-	err = c.client.Get(ctx, client.ObjectKey{Namespace: config.SecretNamespace, Name: config.SecretName}, &secret)
+	err = c.client.Get(ctx, client.ObjectKey{Namespace: device.Namespace, Name: config.SecretName}, &secret)
 	if err != nil {
 		return nil, err
 	}
 	configMapFullName := types.NamespacedName{
-		Namespace: config.ConfigMapNamespace,
+		Namespace: device.Namespace,
 		Name:      config.ConfigMapName,
 	}.String()
 	secretFullName := types.NamespacedName{
-		Namespace: config.SecretNamespace,
+		Namespace: device.Namespace,
 		Name:      config.SecretName,
 	}.String()
 	missingFieldMessage := "Missing field %s in resource %s"
@@ -179,9 +179,7 @@ func ShouldUseExternalConfig(device *v1alpha1.EdgeDevice) bool {
 	s3Obj := getS3(device)
 	if s3Obj != nil {
 		if s3Obj.ConfigMapName != "" ||
-			s3Obj.ConfigMapNamespace != "" ||
-			s3Obj.SecretName != "" ||
-			s3Obj.SecretNamespace != "" {
+			s3Obj.SecretName != "" {
 			return true
 		}
 	}

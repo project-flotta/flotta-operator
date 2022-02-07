@@ -393,10 +393,8 @@ var _ = Describe("Storage", func() {
 			device = getDevice()
 			storageObj = &v1alpha1.Storage{
 				S3: &v1alpha1.S3Storage{
-					SecretName:         "test",
-					SecretNamespace:    "default",
-					ConfigMapName:      "test",
-					ConfigMapNamespace: "default",
+					SecretName:    "test",
+					ConfigMapName: "test",
 				},
 			}
 			device.Spec.Storage = storageObj
