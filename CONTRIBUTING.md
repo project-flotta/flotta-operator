@@ -52,12 +52,6 @@ Deployment
   undeploy         Undeploy controller from the K8s cluster specified in ~/.kube/config.
   controller-gen   Download controller-gen locally if necessary.
   kustomize        Download kustomize locally if necessary.
-  bundle           Generate bundle manifests and metadata, then validate generated files.
-  bundle-build     Build the bundle image.
-  bundle-push      Push the bundle image.
-  opm              Download opm locally if necessary.
-  catalog-build    Build a catalog image.
-  catalog-push     Push a catalog image.
 ```
 
 The core maintainers are developing this project using the latest Fedora and
