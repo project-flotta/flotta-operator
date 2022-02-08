@@ -37,6 +37,7 @@ type CAProvider interface {
 	GetCACertificate() (*CertificateGroup, error)
 	CreateRegistrationCertificate(name string) (map[string][]byte, error)
 	SignCSR(CSRPem string, commonName string, expiration time.Time) ([]byte, error)
+	GetServerCertificate(dnsNames []string, localhostEnabled bool) (*CertificateGroup, error)
 }
 
 type TLSConfig struct {
@@ -125,7 +126,7 @@ func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, err
 	}
 
 	// We always sign the certificates with the first CA server. I guess that it's normal
-	serverCert, err := getServerCertificate(conf.Domains, conf.LocalhostEnabled, caCerts[0])
+	serverCert, err := conf.caProvider[0].GetServerCertificate(conf.Domains, conf.LocalhostEnabled)
 	if err != nil {
 		return nil, nil, err
 	}
