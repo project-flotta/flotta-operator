@@ -1,7 +1,11 @@
 package mtls_test
 
 import (
+	"bytes"
 	"context"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/tls"
@@ -344,16 +348,46 @@ pNUUZ3cX4jGObCNfSBauHb73kfjGBo+RM2rnjAWqs9FhpnrJPDNT8Q==
 		Context("Sign CSR", func() {
 			var config *mtls.TLSConfig
 
-			BeforeEach(func() {
-				config = mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
-				_, _, err := config.InitCertificates()
-				Expect(err).NotTo(HaveOccurred())
-			})
+			It("Sign valid pem with RSA keys", func() {
+				// given
 
-			It("Sign valid pem", func() {
+				// Due to the CSR is created using RSA SignatureAlgorithm, we need to
+				// pre-upload a RSA keys for the CA.
+				config = mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
+
+				caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
+				Expect(err).To(BeNil(), "Fail on key generation")
+				res := createCACertUsingKey(caPrivKey)
+
+				certPEM := new(bytes.Buffer)
+				keyPem := new(bytes.Buffer)
+				err = pem.Encode(certPEM, &pem.Block{Type: "CERTIFICATE", Bytes: res.certBytes})
+				Expect(err).NotTo(HaveOccurred())
+
+				err = pem.Encode(keyPem, &pem.Block{
+					Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(res.key.(*rsa.PrivateKey)),
+				})
+				Expect(err).NotTo(HaveOccurred())
+
+				secret := corev1.Secret{
+					ObjectMeta: v1.ObjectMeta{
+						Namespace: namespace,
+						Name:      "flotta-ca",
+					},
+					Data: map[string][]byte{
+						"ca.crt": certPEM.Bytes(),
+						"ca.key": keyPem.Bytes(),
+					},
+				}
+
+				err = k8sClient.Create(context.TODO(), &secret)
+				Expect(err).NotTo(HaveOccurred())
+
+				_, _, err = config.InitCertificates()
+				Expect(err).NotTo(HaveOccurred())
+
 				// this csr is created by openssl command, just to make sure that
 				// works.
-				// given
 				csr := `
 -----BEGIN CERTIFICATE REQUEST-----
 MIIBhTCB7wIBADAdMQwwCgYDVQQKEwNrNGUxDTALBgNVBAMTBHRlc3QwgZ8wDQYJ
@@ -365,8 +399,8 @@ ZW5zaW9uMA0GCSqGSIb3DQEBDQUAA4GBAGf6yNp3Cl+74qlNNfhMqiQSrcfMOM4l
 rPQVtIYx6ZBA9q85sqNbUZAGnNzQw6pUj7YEVHwtvj8QBsIau+gkr2dl0nqhfTOV
 uduLP2w/1jLbouiuyjOUFJuSIUjW2Os/7PD+cWbcxE8IrhW5FnR9c1H8JkIfRB0D
 KVwIKwl1tEGP
------END CERTIFICATE REQUEST-----
-`
+-----END CERTIFICATE REQUEST-----`
+
 				// when
 				pemCert, err := config.SignCSR(csr, "test")
 
@@ -382,79 +416,88 @@ KVwIKwl1tEGP
 				Expect(cert.Subject.CommonName).To(Equal("test"), "CommonName was not updated")
 			})
 
-			It("Invalid CSR failed", func() {
-				csr := `
+			Context("With initial config", func() {
+				BeforeEach(func() {
+					config = mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
+					_, _, err := config.InitCertificates()
+					Expect(err).NotTo(HaveOccurred())
+				})
+
+				It("Invalid CSR failed", func() {
+					// given
+					csr := `
 -----BEGIN CERTIFICATE REQUEST-----
 MIIBhTCB7wIBADAdMQwwCgYDVQQKEwNrNGUxDTALBgNVBAMTBHRlc3QwgZ8wDQYJ
 KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 `
-				// when
-				pemCert, err := config.SignCSR(csr, "test")
+					// when
+					pemCert, err := config.SignCSR(csr, "test")
 
-				//  then
-				Expect(err).To(HaveOccurred())
-				Expect(pemCert).To(BeNil())
-			})
-
-			It("Sending a Cert failed", func() {
-				// given
-				givenCert := pem.EncodeToMemory(&pem.Block{
-					Type:  "CERTIFICATE",
-					Bytes: createCACert().certBytes,
+					//  then
+					Expect(err).To(HaveOccurred())
+					Expect(pemCert).To(BeNil())
 				})
 
-				// when
-				pemCert, err := config.SignCSR(string(givenCert), "test")
+				It("Sending a Cert failed", func() {
+					// given
+					givenCert := pem.EncodeToMemory(&pem.Block{
+						Type:  "CERTIFICATE",
+						Bytes: createCACert().certBytes,
+					})
 
-				// then
-				Expect(err).To(HaveOccurred())
-				Expect(pemCert).To(BeNil())
-			})
+					// when
+					pemCert, err := config.SignCSR(string(givenCert), "test")
 
-			It("No valid CA is set", func() {
-				// given
-				config = mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
-				givenCert := pem.EncodeToMemory(&pem.Block{
-					Type:  "CERTIFICATE",
-					Bytes: createCSR(),
+					// then
+					Expect(err).To(HaveOccurred())
+					Expect(pemCert).To(BeNil())
 				})
 
-				// when
-				pemCert, err := config.SignCSR(string(givenCert), "test")
+				It("No valid CA is set", func() {
+					// given
+					config = mtls.NewMTLSConfig(k8sClient, namespace, dnsNames, false)
+					givenCert := pem.EncodeToMemory(&pem.Block{
+						Type:  "CERTIFICATE",
+						Bytes: createCSR(),
+					})
 
-				// then
-				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("Cannot get CA certificate"))
-				Expect(pemCert).To(BeNil())
-			})
+					// when
+					pemCert, err := config.SignCSR(string(givenCert), "test")
 
-			It("It's getting the correct certification expire", func() {
-				// given
-				givenCert := pem.EncodeToMemory(&pem.Block{
-					Type:  "CERTIFICATE REQUEST",
-					Bytes: createCSR(),
+					// then
+					Expect(err).To(HaveOccurred())
+					Expect(err.Error()).To(Equal("Cannot get CA certificate"))
+					Expect(pemCert).To(BeNil())
 				})
 
-				err := config.SetClientExpiration(1)
-				Expect(err).NotTo(HaveOccurred())
+				It("It's getting the correct certification expire", func() {
+					// given
+					givenCert := pem.EncodeToMemory(&pem.Block{
+						Type:  "CERTIFICATE REQUEST",
+						Bytes: createCSR(),
+					})
 
-				date := time.Now().AddDate(0, 0, 1)
-				// when
+					err := config.SetClientExpiration(1)
+					Expect(err).NotTo(HaveOccurred())
 
-				pemCert, err := config.SignCSR(string(givenCert), "test")
-				// then
+					date := time.Now().AddDate(0, 0, 1)
+					// when
 
-				Expect(err).NotTo(HaveOccurred())
-				Expect(pemCert).NotTo(BeNil())
+					pemCert, err := config.SignCSR(string(givenCert), "test")
+					// then
 
-				block, _ := pem.Decode(pemCert)
-				Expect(block).NotTo(BeNil())
+					Expect(err).NotTo(HaveOccurred())
+					Expect(pemCert).NotTo(BeNil())
 
-				cert, err := x509.ParseCertificate(block.Bytes)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(cert.NotAfter.Year()).To(Equal(date.Year()))
-				Expect(cert.NotAfter.Month()).To(Equal(date.Month()))
-				Expect(cert.NotAfter.Day()).To(Equal(date.Day()))
+					block, _ := pem.Decode(pemCert)
+					Expect(block).NotTo(BeNil())
+
+					cert, err := x509.ParseCertificate(block.Bytes)
+					Expect(err).NotTo(HaveOccurred())
+					Expect(cert.NotAfter.Year()).To(Equal(date.Year()))
+					Expect(cert.NotAfter.Month()).To(Equal(date.Month()))
+					Expect(cert.NotAfter.Day()).To(Equal(date.Day()))
+				})
 			})
 		})
 	})
@@ -688,7 +731,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 
 type certificate struct {
 	cert       *x509.Certificate
-	key        *rsa.PrivateKey
+	key        crypto.Signer
 	certBytes  []byte
 	signedCert *x509.Certificate
 }
@@ -726,7 +769,7 @@ func createClientCert(ca *certificate) *certificate {
 }
 
 func createGivenClientCert(cert *x509.Certificate, ca *certificate) *certificate {
-	certKey, err := rsa.GenerateKey(rand.Reader, 1024)
+	certKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	ExpectWithOffset(1, err).To(BeNil(), "Fail on key generation")
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, ca.cert, &certKey.PublicKey, ca.key)
@@ -742,6 +785,13 @@ func createGivenClientCert(cert *x509.Certificate, ca *certificate) *certificate
 }
 
 func createCACert() *certificate {
+	caPrivKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	ExpectWithOffset(1, err).To(BeNil(), "Fail on key generation")
+	return createCACertUsingKey(caPrivKey)
+}
+
+func createCACertUsingKey(key crypto.Signer) *certificate {
+
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().Unix()),
 		Subject: pkix.Name{
@@ -754,20 +804,18 @@ func createCACert() *certificate {
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 	}
-	caPrivKey, err := rsa.GenerateKey(rand.Reader, 1024)
-	ExpectWithOffset(1, err).To(BeNil(), "Fail on key generation")
 
-	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
+	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, key.Public(), key)
 	ExpectWithOffset(1, err).To(BeNil(), "Fail on sign generation")
 
 	signedCert, err := x509.ParseCertificate(caBytes)
 	ExpectWithOffset(1, err).To(BeNil(), "Fail on parsing certificate")
 
-	return &certificate{ca, caPrivKey, caBytes, signedCert}
+	return &certificate{ca, key, caBytes, signedCert}
 }
 
 func createCSR() []byte {
-	keys, err := rsa.GenerateKey(rand.Reader, 1024)
+	keys, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Cannot create key")
 	var csrTemplate = x509.CertificateRequest{
 		Version: 0,
@@ -775,7 +823,7 @@ func createCSR() []byte {
 			CommonName:   "test",
 			Organization: []string{"flotta"},
 		},
-		SignatureAlgorithm: x509.SHA512WithRSA,
+		SignatureAlgorithm: x509.ECDSAWithSHA256,
 	}
 	// step: generate the csr request
 	csrCertificate, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, keys)

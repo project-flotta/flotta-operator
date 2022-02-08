@@ -72,6 +72,9 @@ func (config *CASecretProvider) GetCACertificate() (*CertificateGroup, error) {
 		// Certificate is already created, parse it as *certificateGroup and return
 		// it
 		certGroup, err := NewCACertificateGroupFromSecret(secret.Data)
+		if err != nil {
+			return nil, err
+		}
 		config.latestCA = certGroup
 		return certGroup, err
 	}
@@ -204,7 +207,7 @@ func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expira
 	// one maybe it's an attack.
 	decodecCert, _ := pem.Decode([]byte(CSRPem))
 	if decodecCert == nil {
-		return nil, fmt.Errorf("Cannot decode CSR certificate")
+		return nil, fmt.Errorf("cannot decode CSR certificate")
 	}
 
 	CSR, err := x509.ParseCertificateRequest(decodecCert.Bytes)
