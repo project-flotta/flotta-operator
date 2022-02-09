@@ -234,6 +234,10 @@ POST /api/flotta-management/v1/data/{device_id}/out
 Status: OK
 
 ###### <span id="post-data-message-for-device-200-schema"></span> Schema
+   
+  
+
+[MessageResponse](#message-response)
 
 ##### <span id="post-data-message-for-device-400"></span> 400 - Error
 Status: Bad Request
@@ -628,6 +632,23 @@ Status: Internal Server Error
 
 
 
+### <span id="message-response"></span> message-response
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| content | [interface{}](#interface)| `interface{}` |  | | Content |  |
+| directive | string| `string` |  | |  |  |
+| message_id | string| `string` |  | |  |  |
+
+
+
 ### <span id="metrics"></span> metrics
 
 
@@ -728,7 +749,23 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| certificate_request | string| `string` |  | | Certificate Signing Request to be signed by flotta-operator CA |  |
 | hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | | Hardware information |  |
+
+
+
+### <span id="registration-response"></span> registration-response
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| certificate | string| `string` |  | | Client certificate to be used in future operations |  |
 
 
 

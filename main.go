@@ -288,6 +288,7 @@ func main() {
 			metricsObj,
 			devicemetrics.NewAllowListGenerator(k8sClient),
 			configmaps.NewConfigMap(k8sClient),
+			mtlsConfig,
 		)
 
 		h, err := restapi.Handler(restapi.Config{

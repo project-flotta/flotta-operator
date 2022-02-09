@@ -181,7 +181,10 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/message-response"
+            }
           },
           "400": {
             "description": "Error"
@@ -654,6 +657,20 @@ func init() {
         }
       }
     },
+    "message-response": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "description": "Content"
+        },
+        "directive": {
+          "type": "string"
+        },
+        "message_id": {
+          "type": "string"
+        }
+      }
+    },
     "metrics": {
       "type": "object",
       "properties": {
@@ -744,9 +761,22 @@ func init() {
     "registration-info": {
       "type": "object",
       "properties": {
+        "certificate_request": {
+          "description": "Certificate Signing Request to be signed by flotta-operator CA",
+          "type": "string"
+        },
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
+        }
+      }
+    },
+    "registration-response": {
+      "type": "object",
+      "properties": {
+        "certificate": {
+          "description": "Client certificate to be used in future operations",
+          "type": "string"
         }
       }
     },
@@ -1092,7 +1122,10 @@ func init() {
         ],
         "responses": {
           "200": {
-            "description": "Success"
+            "description": "Success",
+            "schema": {
+              "$ref": "#/definitions/message-response"
+            }
           },
           "400": {
             "description": "Error"
@@ -1566,6 +1599,20 @@ func init() {
         }
       }
     },
+    "message-response": {
+      "type": "object",
+      "properties": {
+        "content": {
+          "description": "Content"
+        },
+        "directive": {
+          "type": "string"
+        },
+        "message_id": {
+          "type": "string"
+        }
+      }
+    },
     "metrics": {
       "type": "object",
       "properties": {
@@ -1656,9 +1703,22 @@ func init() {
     "registration-info": {
       "type": "object",
       "properties": {
+        "certificate_request": {
+          "description": "Certificate Signing Request to be signed by flotta-operator CA",
+          "type": "string"
+        },
         "hardware": {
           "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
+        }
+      }
+    },
+    "registration-response": {
+      "type": "object",
+      "properties": {
+        "certificate": {
+          "description": "Client certificate to be used in future operations",
+          "type": "string"
         }
       }
     },

@@ -16,6 +16,9 @@ import (
 // swagger:model registration-info
 type RegistrationInfo struct {
 
+	// Certificate Signing Request to be signed by flotta-operator CA
+	CertificateRequest string `json:"certificate_request,omitempty"`
+
 	// Hardware information
 	Hardware *HardwareInfo `json:"hardware,omitempty"`
 }

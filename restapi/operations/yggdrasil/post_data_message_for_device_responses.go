@@ -9,6 +9,8 @@ import (
 	"net/http"
 
 	"github.com/go-openapi/runtime"
+
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 // PostDataMessageForDeviceOKCode is the HTTP code returned for type PostDataMessageForDeviceOK
@@ -19,6 +21,11 @@ const PostDataMessageForDeviceOKCode int = 200
 swagger:response postDataMessageForDeviceOK
 */
 type PostDataMessageForDeviceOK struct {
+
+	/*
+	  In: Body
+	*/
+	Payload *models.MessageResponse `json:"body,omitempty"`
 }
 
 // NewPostDataMessageForDeviceOK creates PostDataMessageForDeviceOK with default headers values
@@ -27,12 +34,27 @@ func NewPostDataMessageForDeviceOK() *PostDataMessageForDeviceOK {
 	return &PostDataMessageForDeviceOK{}
 }
 
+// WithPayload adds the payload to the post data message for device o k response
+func (o *PostDataMessageForDeviceOK) WithPayload(payload *models.MessageResponse) *PostDataMessageForDeviceOK {
+	o.Payload = payload
+	return o
+}
+
+// SetPayload sets the payload to the post data message for device o k response
+func (o *PostDataMessageForDeviceOK) SetPayload(payload *models.MessageResponse) {
+	o.Payload = payload
+}
+
 // WriteResponse to the client
 func (o *PostDataMessageForDeviceOK) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
 
-	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
-
 	rw.WriteHeader(200)
+	if o.Payload != nil {
+		payload := o.Payload
+		if err := producer.Produce(rw, payload); err != nil {
+			panic(err) // let the recovery middleware deal with this
+		}
+	}
 }
 
 // PostDataMessageForDeviceBadRequestCode is the HTTP code returned for type PostDataMessageForDeviceBadRequest
