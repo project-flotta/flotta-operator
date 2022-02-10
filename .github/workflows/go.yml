@@ -43,7 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          "echo 'Coverage status: ${{ needs.build.outputs.coverage }}'; exit ${{ needs.build.outputs.coverage > 45 && '0' || '1' }}"
+          echo 'Coverage status: ${{ needs.build.outputs.coverage }}'
+          if [ "$TEST" -lt "80" ]; then echo "Min coverage failed"; exit 1; fi
   Lint:
     name: Lint code
     runs-on: ubuntu-latest

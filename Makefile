@@ -96,6 +96,9 @@ test-fast:
 	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test  $(TEST_PACKAGES) -coverprofile cover.out --v -ginkgo.v -ginkgo.progress
 
 test-create-coverage:
+	sed -i '/mock_/d' cover.out
+	sed -i '/zz_generated/d' cover.out
+	go tool cover -func cover.out
 	go tool cover --html=cover.out -o coverage.html
 
 test-coverage:
