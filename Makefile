@@ -17,6 +17,9 @@ HOST ?= flotta-operator.srv
 # Docker command to use, can be podman
 DOCKER ?= docker
 
+# Kubectl command
+KUBECTL ?= kubectl
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -88,12 +91,17 @@ gosec: ## Run gosec locally
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet test-fast ## Run tests.
 
+integration-test:
+	make ginkgo
+	$(DOCKER) pull quay.io/project-flotta/edgedevice
+	$(GINKGO) -focus=$(FOCUS) run test/e2e
+
 TEST_PACKAGES := ./...
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test-fast:
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test  $(TEST_PACKAGES) -coverprofile cover.out --v -ginkgo.v -ginkgo.progress
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); go test  $(TEST_PACKAGES) -coverprofile cover.out --v -ginkgo.v -ginkgo.progress -ginkgo.skip e2e
 
 test-create-coverage:
 	sed -i '/mock_/d' cover.out
@@ -135,7 +143,7 @@ deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.ku
 	kubectl apply -f $(TMP_ODIR)/flotta-operator.yaml
 ifeq ($(TARGET), k8s)
 ifneq (,$(shell which minikube 2>/dev/null))
-	minikube addons enable ingress
+	minikube addons enable ingress || true
 endif
 endif
 
@@ -181,6 +189,10 @@ controller-gen: ## Download controller-gen locally if necessary.
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
 	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+
+GINKGO = $(shell pwd)/bin/ginkgo
+ginkgo: ## Download ginkgo locally if necessary.
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/ginkgo@v1.16.5)
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
