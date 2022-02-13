@@ -22,10 +22,6 @@ jobs:
           kubectl get pods -n kube-system
           kubectl wait --for=condition=Ready pods --all -n kube-system
 
-          # TODO: Move to Makefile - Cert manager
-          kubectl apply -f https://github.com/jetstack/cert-manager/releases/download/v1.7.0/cert-manager.yaml
-          kubectl wait --for=condition=Ready pods --all -n cert-manager
-
           # Deploy flotta operator
           make build
           IMG=flotta-operator:latest make docker-build

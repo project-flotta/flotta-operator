@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: flotta
+
+# Value of this field is prepended to the
+# names of all resources, e.g. a deployment named
+# "wordpress" becomes "alices-wordpress".
+# Note that it should also match with the prefix (text before '-') of the namespace
+# field above.
+namePrefix: flotta-operator-
+
+resources:
+  - ../base
+  - network/route.yaml
+  - prometheus/prometheus_role.yaml
+  - prometheus/prometheus_role_binding.yaml
+  - prometheus/monitor.yaml
