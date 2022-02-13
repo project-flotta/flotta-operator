@@ -1,0 +1,7 @@
+bases:
+  - ../../default
+resources:
+  - network/route.yaml
+  - prometheus/prometheus_role.yaml
+  - prometheus/prometheus_role_binding.yaml
+  - prometheus/monitor.yaml
