@@ -2,7 +2,8 @@
 
 -  Install Grafana from the operatorHub on `flotta` namespace
 -  Create a Gafana instance
- ```yaml
+ ```bash
+kubectl apply -f - <<EOF
 apiVersion: integreatly.org/v1alpha1
 kind: Grafana
 metadata:
@@ -18,14 +19,15 @@ spec:
       admin_user: root
   ingress:
     enabled: true
+EOF
  ``` 
 -  Connecting Prometheus to our Custom Grafana
-    -  Grant cluster-monitoring-view cluster role to the  grafana-serviceaccount service account, that was created alongside the Grafana instance\
+    -  Grant cluster-monitoring-view cluster role to the grafana-serviceaccount service account, that was created alongside the Grafana instance\
        `oc adm policy add-cluster-role-to-user cluster-monitoring-view -z grafana-serviceaccount -n flotta`
-    -  Generate Bearer Token:\
-       `oc serviceaccounts get-token grafana-serviceaccount -n flotta`
-    -  Create Grafana Data Source resource and replace the `${BEARER_TOKEN}` with the output of the previous command:\
-```yaml
+    -  Create Grafana Data Source resource with the token of `grafana-serviceaccount` service account:
+```bash
+BEARER_TOKEN=$(oc serviceaccounts get-token grafana-serviceaccount -n flotta)
+kubectl apply -f - <<EOF
 apiVersion: integreatly.org/v1alpha1
 kind: GrafanaDataSource
 metadata:
@@ -46,11 +48,12 @@ spec:
       type: prometheus
       url: 'https://thanos-querier.openshift-monitoring.svc.cluster.local:9091'
   name: prometheus-grafanadatasource.yaml
+EOF
 ```    
 -  Log into Grafana page:
     -  Networking -> Routes -> select grafana-route -> use the link of 'Location'
     -  Use user `root` and password `secret` (that configured in grafana instance)
 -  Import the dashboard json
-    -  Click on the `+` button and choose `import"
+    -  Click on the `+` button and choose `import`
     -  Upload the json named `flotta-dashboard.json`
  

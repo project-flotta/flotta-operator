@@ -12,5 +12,5 @@ metadata:
   namespace: openshift-monitoring
 data:
   config.yaml: |
-  EOF
+EOF
 ``` 
