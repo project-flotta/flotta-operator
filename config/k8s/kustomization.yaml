@@ -1,0 +1,4 @@
+bases:
+  - ../default
+resources:
+  - network/ingress.yaml

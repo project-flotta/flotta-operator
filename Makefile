@@ -160,6 +160,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	kubectl apply -f $(TMP_ODIR)/flotta-operator.yaml
+	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 ifeq ($(TARGET), k8s)
 	minikube addons enable ingress
 endif
@@ -169,28 +170,16 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 
 $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into flotta-operator.yaml
-# Add network resources by cluster type
-# TODO: replace this if-else-if with kustomize base and overlays for each cluster-type
-ifeq ($(TARGET), k8s)
-	@sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/network/ingress.yaml
-	@cd config/network && $(KUSTOMIZE) edit add resource ingress.yaml
-else ifeq ($(TARGET), ocp)
-	@cd config/network && $(KUSTOMIZE) edit add resource route.yaml
-	@cd config/prometheus && $(KUSTOMIZE) edit add resource prometheus_role.yaml
-	@cd config/prometheus && $(KUSTOMIZE) edit add resource prometheus_role_binding.yaml
-	@cd config/prometheus && $(KUSTOMIZE) edit add resource monitor.yaml
-endif
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-	$(KUSTOMIZE) build config/default > $(TMP_ODIR)/flotta-operator.yaml
+ifeq ($(TARGET), k8s)
+	@sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/k8s/network/ingress.yaml
+	$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/flotta-operator.yaml
+else ifeq ($(TARGET), ocp)
+	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/flotta-operator.yaml
+endif
 # Revert the changes
 ifeq ($(TARGET), k8s)
-	@cd config/network && $(KUSTOMIZE) edit remove resource ingress.yaml
-	@sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/network/ingress.yaml
-else ifeq ($(TARGET), ocp)
-	@cd config/network && $(KUSTOMIZE) edit remove resource route.yaml
-	@cd config/prometheus && $(KUSTOMIZE) edit remove resource prometheus_role.yaml
-	@cd config/prometheus && $(KUSTOMIZE) edit remove resource prometheus_role_binding.yaml
-	@cd config/prometheus && $(KUSTOMIZE) edit remove resource monitor.yaml
+	@sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/k8s/network/ingress.yaml
 endif
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/flotta-operator:latest
 	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/flotta-operator.yaml\033[0m"
