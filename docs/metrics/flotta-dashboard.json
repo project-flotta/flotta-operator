@@ -65,7 +65,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "flotta_operator_created_obc",
+          "expr": "flotta_operator_edge_devices_unregistration",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
