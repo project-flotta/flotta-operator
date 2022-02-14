@@ -9,7 +9,7 @@ IMAGE_TAG_BASE ?= project-flotta.io/flotta-operator
 IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
-# Cluster type - k8s/ocp
+# Cluster type - k8s/ocp/kind
 TARGET ?= k8s
 # Host name for ingress creation
 HOST ?= flotta-operator.srv
@@ -141,12 +141,10 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 
 deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
-	kubectl wait --for=condition=Ready pods --all -n cert-manager
+	kubectl wait --for=condition=Ready pods --all -n cert-manager --timeout=60s
 	kubectl apply -f $(TMP_ODIR)/flotta-operator.yaml
 ifeq ($(TARGET), k8s)
-ifneq (,$(shell which minikube 2>/dev/null))
-	minikube addons enable ingress || true
-endif
+	minikube addons enable ingress
 endif
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
@@ -154,6 +152,8 @@ ifeq ($(TARGET), k8s)
 	$(KUSTOMIZE) build config/k8s | kubectl delete -f -
 else ifeq ($(TARGET), ocp)
 	$(KUSTOMIZE) build config/ocp | kubectl delete -f -
+else ifeq ($(TARGET), kind)
+	$(KUSTOMIZE) build config/kind | kubectl delete -f -
 endif
 	kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 
@@ -166,6 +166,8 @@ ifeq ($(TARGET), k8s)
 	@sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/k8s/network/ingress.yaml
 else ifeq ($(TARGET), ocp)
 	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/flotta-operator.yaml
+else ifeq ($(TARGET), kind)
+	$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/flotta-operator.yaml
 endif
 
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/flotta-operator:latest
