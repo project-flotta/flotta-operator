@@ -2,14 +2,13 @@ FROM quay.io/podman/stable
 
 WORKDIR /project
 
-# Setup Yggdrasil & device-worker repo:
-RUN curl -k https://copr.fedorainfracloud.org/coprs/ondramachacek/yggdrasil/repo/fedora-34/ondramachacek-yggdrasil-fedora-34.repo -o /etc/yum.repos.d/yggd.repo
-RUN curl -k https://copr.fedorainfracloud.org/coprs/eloyocoto/k4e-test/repo/fedora-34/eloyocoto-k4e-test-fedora-34.repo -o /etc/yum.repos.d/flotta-agent.repo && \
-    sed -i 's/\$releasever/34/g' /etc/yum.repos.d/flotta-agent.repo && \
-    sed -i 's/\$basearch/x86_64/g' /etc/yum.repos.d/flotta-agent.repo
+RUN dnf install -y 'dnf-command(copr)'
+RUN dnf copr enable project-flotta/flotta -y
 
 # Yum dependencies
-RUN yum install -y golang openssl procps-ng dmidecode flotta-agent
+RUN dnf update -y \
+  && dnf install -y openssl procps-ng dmidecode nc \
+  yggdrasil flotta-agent node_exporter
 
 # Modify podman configuration
 RUN sed -i s/netns=\"host\"/netns=\"private\"/g /etc/containers/containers.conf && \
@@ -21,13 +20,14 @@ RUN mkdir /etc/pki/consumer && \
     mv cert.pem key.pem /etc/pki/consumer
 
 # Default yggdrasil configuration should be replaced by volume with proper config:
-RUN echo 'key-file = "/etc/pki/consumer/key.pem"' >> /etc/yggdrasil/config.toml && \
+RUN echo "" > /etc/yggdrasil/config.toml && \
+    echo 'key-file = "/etc/pki/consumer/key.pem"' >> /etc/yggdrasil/config.toml && \
     echo 'cert-file = "/etc/pki/consumer/cert.pem"' >> /etc/yggdrasil/config.toml && \
-    echo 'client-id-source = "machine-id"' >> /etc/yggdrasil/config.toml && \
-    echo 'http-server = "172.17.0.1:8888"' >> /etc/yggdrasil/config.toml && \
-    echo 'transport = "http"' >> /etc/yggdrasil/config.toml && \
-    sed -i 's/log-level = "error"/log-level = "trace"/g' /etc/yggdrasil/config.toml
-
+    echo "client-id = \"$(cat /etc/machine-id)\"" >> /etc/yggdrasil/config.toml && \
+    echo 'server = "172.17.0.1:8888"' >> /etc/yggdrasil/config.toml && \
+    echo 'protocol = "http"' >> /etc/yggdrasil/config.toml && \
+    echo 'path-prefix="api/flotta-management/v1"' >> /etc/yggdrasil/config.toml && \
+    echo 'log-level="trace"' >> /etc/yggdrasil/config.toml
 
 # enable yggdrasil service
 RUN systemctl enable yggdrasild.service
