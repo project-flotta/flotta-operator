@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -19,6 +21,8 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 var edgeDeviceResource = schema.GroupVersionResource{Group: "management.project-flotta.io", Version: "v1alpha1", Resource: "edgedevices"}
@@ -36,7 +40,7 @@ type EdgeDevice interface {
 	Unregister() error
 	Get() (*unstructured.Unstructured, error)
 	Remove() error
-	Exec([]string) (string, error)
+	Exec(string) (string, error)
 	WaitForDeploymentState(string, string) error
 }
 
@@ -47,11 +51,7 @@ type edgeDeviceDocker struct {
 	machineId string
 }
 
-func NewEdgeDevice(deviceName string) (EdgeDevice, error) {
-	k8sclient, err := newClient()
-	if err != nil {
-		return nil, err
-	}
+func NewEdgeDevice(k8sclient dynamic.Interface, deviceName string) (EdgeDevice, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
@@ -88,8 +88,8 @@ func (e *edgeDeviceDocker) WaitForDeploymentState(deploymentName string, deploym
 	})
 }
 
-func (e *edgeDeviceDocker) Exec(command []string) (string, error) {
-	resp, err := e.cli.ContainerExecCreate(context.TODO(), e.name, types.ExecConfig{AttachStdout: true, AttachStderr: true, Cmd: command})
+func (e *edgeDeviceDocker) Exec(command string) (string, error) {
+	resp, err := e.cli.ContainerExecCreate(context.TODO(), e.name, types.ExecConfig{AttachStdout: true, AttachStderr: true, Cmd: []string{"/bin/bash", "-c", command}})
 	if err != nil {
 		return "", err
 	}
@@ -103,7 +103,10 @@ func (e *edgeDeviceDocker) Exec(command []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return string(data), nil
+
+	return strings.TrimFunc(string(data), func(r rune) bool {
+		return !unicode.IsGraphic(r)
+	}), nil
 }
 
 func (e *edgeDeviceDocker) Get() (*unstructured.Unstructured, error) {
@@ -182,4 +185,22 @@ func newClient() (dynamic.Interface, error) {
 	}
 
 	return dynClient, nil
+}
+
+func newClientset() (*kubernetes.Clientset, error) {
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	config, err := clientcmd.BuildConfigFromFlags("", path.Join(homedir, ".kube/config"))
+	if err != nil {
+		return nil, err
+	}
+
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return clientset, nil
 }

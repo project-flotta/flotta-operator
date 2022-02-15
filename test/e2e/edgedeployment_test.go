@@ -2,6 +2,8 @@ package e2e_test
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -23,11 +25,7 @@ type edgeDeployment struct {
 	deployment dynamic.NamespaceableResourceInterface
 }
 
-func NewEdgeDeployment() (EdgeDeployment, error) {
-	k8sclient, err := newClient()
-	if err != nil {
-		return nil, err
-	}
+func NewEdgeDeployment(k8sclient dynamic.Interface) (EdgeDeployment, error) {
 	resource := k8sclient.Resource(edgeDeploymentResource)
 	return &edgeDeployment{deployment: resource}, nil
 }
@@ -50,5 +48,27 @@ func (e *edgeDeployment) RemoveAll() error {
 }
 
 func (e *edgeDeployment) Remove(name string) error {
-	return e.deployment.Namespace(Namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	err := e.deployment.Namespace(Namespace).Delete(context.TODO(), name, metav1.DeleteOptions{})
+	if err != nil {
+		return err
+	}
+
+	return e.waitForDeployment(func() bool {
+		if eCr, err := e.Get(name); eCr == nil && err != nil {
+			return true
+		}
+		return false
+	})
+}
+
+func (e *edgeDeployment) waitForDeployment(cond func() bool) error {
+	for i := 0; i <= waitTimeout; i += sleepInterval {
+		if cond() {
+			return nil
+		} else {
+			time.Sleep(time.Duration(sleepInterval) * time.Second)
+		}
+	}
+
+	return fmt.Errorf("Error waiting for edgedeployment")
 }
