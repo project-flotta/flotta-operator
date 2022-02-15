@@ -2,8 +2,9 @@ package yggdrasil_test
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -1959,7 +1960,7 @@ var _ = Describe("Yggdrasil", func() {
 			Context("With certificate", func() {
 
 				createCSR := func() []byte {
-					keys, err := rsa.GenerateKey(rand.Reader, 1024)
+					keys, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 					ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Cannot create key")
 					var csrTemplate = x509.CertificateRequest{
 						Version: 0,
@@ -1967,7 +1968,7 @@ var _ = Describe("Yggdrasil", func() {
 							CommonName:   "test",
 							Organization: []string{"k4e"},
 						},
-						SignatureAlgorithm: x509.SHA512WithRSA,
+						SignatureAlgorithm: x509.ECDSAWithSHA256,
 					}
 					// step: generate the csr request
 					csrCertificate, err := x509.CreateCertificateRequest(rand.Reader, &csrTemplate, keys)
