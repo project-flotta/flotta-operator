@@ -26,11 +26,12 @@ jobs:
           make build
           IMG=flotta-operator:latest make docker-build
           kind load docker-image flotta-operator:latest
-          timeout 1m make deploy IMG=flotta-operator || retVal=$?
+          timeout 2m make deploy IMG=flotta-operator TARGET=kind || retVal=$?
           if [ $retVal -ne 124 ]; then
             echo "Make run failed"; exit 1
           fi
           kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
+          # TODO: add ingress resource to config/kind/kustomization.yaml instead of port forwarding
           kubectl port-forward deploy/flotta-operator-controller-manager -n flotta --address 0.0.0.0 8888:8888 &
 
           # Run test
