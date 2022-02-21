@@ -31,12 +31,32 @@ Run `make run` to start the operator.
 ### On OpenShift cluster
 - Deploy the operator: `IMG=<image registry and tag> TARGET=ocp make deploy`.
 - Get HTTP server address by running: `HTTP_SERVER=$(oc get routes flotta-operator-controller-manager -n flotta --no-headers -o=custom-columns=HOST:.spec.host)`.
-- Start yggdrasil with from the yggdrasil repository directory: `sudo go run ./cmd/yggd --log-level info --transport http --cert-file /etc/pki/consumer/cert.pem --key-file /etc/pki/consumer/key.pem --client-id-source machine-id --http-server $HTTP_SERVER`.
+- Start yggdrasil with from the yggdrasil repository directory: 
+   ```
+   sudo go run ./cmd/yggd \
+     --log-level info \
+     --protocol http \
+     --path-prefix api/flotta-management/v1 \
+     --client-id $(cat /etc/machine-id) \
+     --cert-file /etc/pki/consumer/cert.pem \
+     --key-file /etc/pki/consumer/key.pem \
+     --server $HTTP_SERVER
+   ```
 
 ### On minikube
 - Deploy the operator: `IMG=<image registry and tag> HOST=<host name> TARGET=k8s make deploy`.
 - Add to /etc/hosts: `<minikube ip> <host name>`.
-- Start yggdrasil with from the yggdrasil repository directory: `sudo go run ./cmd/yggd --log-level info --transport http --cert-file /etc/pki/consumer/cert.pem --key-file /etc/pki/consumer/key.pem --client-id-source machine-id --http-server <host name>`.
+- Start yggdrasil with from the yggdrasil repository directory:
+   ```
+   sudo go run ./cmd/yggd \
+     --log-level info \
+     --protocol http \
+     --path-prefix api/flotta-management/v1 \
+     --client-id $(cat /etc/machine-id) \
+     --cert-file /etc/pki/consumer/cert.pem \
+     --key-file /etc/pki/consumer/key.pem \
+     --server <host name>
+   ```
 
 In order to change the verbosity of the logger check out [here](docs/user-guide/logger.md). 
 
