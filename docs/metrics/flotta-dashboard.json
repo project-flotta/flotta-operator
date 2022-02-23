@@ -15,9 +15,25 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 1,
+  "id": null,
+  "uid": null,
   "links": [],
   "panels": [
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 4,
+      "panels": [],
+      "repeat": null,
+      "title": "Devices management",
+      "type": "row"
+    },
     {
       "aliasColors": {},
       "bars": false,
@@ -31,13 +47,13 @@
       "fill": 1,
       "fillGradient": 0,
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "hiddenSeries": false,
-      "id": 2,
+      "id": 6,
       "legend": {
         "avg": false,
         "current": false,
@@ -54,7 +70,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.11",
+      "pluginVersion": "7.5.15",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -65,33 +81,25 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "flotta_operator_edge_devices_unregistration",
+          "expr": "etcd_object_counts{resource=\"edgedevices.management.project-flotta.io\"}",
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "edge devices",
           "refId": "A"
         },
         {
           "exemplar": true,
-          "expr": "flotta_operator_edge_devices_failed_registration",
+          "expr": "etcd_object_counts{resource=\"edgedeployments.management.project-flotta.io\"}",
           "hide": false,
           "interval": "",
-          "legendFormat": "",
+          "legendFormat": "edge deployments",
           "refId": "B"
-        },
-        {
-          "exemplar": true,
-          "expr": "flotta_operator_edge_devices_successful_registration",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "",
-          "refId": "C"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Panel Title",
+      "title": "Flotta objects count",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -127,9 +135,511 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "hiddenSeries": false,
+      "id": 2,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.15",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(flotta_operator_edge_devices_unregistration{namespace=\"flotta\", pod=~\"flotta-operator-controller-manager-.*\", job=~\"flotta-operator-.*\"})",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "unregistered",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(flotta_operator_edge_devices_failed_registration{namespace=\"flotta\", pod=~\"flotta-operator-controller-manager-.*\", job=~\"flotta-operator-.*\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "failed to register",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(flotta_operator_edge_devices_successful_registration{namespace=\"flotta\", pod=~\"flotta-operator-controller-manager-.*\", job=~\"flotta-operator-.*\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "registered",
+          "refId": "C"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Edge devices registration",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 8,
+      "panels": [],
+      "title": "Flotta Operator",
+      "type": "row"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 16,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.15",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(container_memory_usage_bytes{namespace=\"flotta\",pod=~\"flotta.*\"})",
+          "interval": "",
+          "legendFormat": "memory",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Memory",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "hiddenSeries": false,
+      "id": 14,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.15",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(container_cpu_usage_seconds_total{namespace=\"flotta\",pod=~\"flotta.*\"})",
+          "interval": "",
+          "legendFormat": "CPU",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "CPU",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 17
+      },
+      "hiddenSeries": false,
+      "id": 12,
+      "legend": {
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "show": true,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.5.15",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(container_network_transmit_bytes_total{namespace=\"flotta\",pod=~\"flotta.*\"})",
+          "interval": "",
+          "legendFormat": "bytes transmitted",
+          "refId": "A"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(container_network_receive_bytes_total{namespace=\"flotta\",pod=~\"flotta.*\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "bytes received",
+          "refId": "B"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "Transmit Data",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "datasource": "-- Mixed --",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 17
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "text": {},
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.5.15",
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "exemplar": true,
+          "expr": "sum(haproxy_backend_response_errors_total{exported_namespace=\"flotta\"})",
+          "interval": "",
+          "legendFormat": "response errors",
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "exemplar": true,
+          "expr": "sum(haproxy_server_downtime_seconds_total{exported_namespace=\"flotta\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "server downtime",
+          "refId": "B"
+        },
+        {
+          "datasource": "Prometheus",
+          "exemplar": true,
+          "expr": "sum(haproxy_backend_http_average_connect_latency_milliseconds{exported_namespace=\"flotta\"})",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "latency",
+          "refId": "C"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "network",
+      "type": "stat"
     }
   ],
-  "schemaVersion": 27,
+  "refresh": "5s",
+  "schemaVersion": 1,
   "style": "dark",
   "tags": [],
   "templating": {
@@ -142,6 +652,5 @@
   "timepicker": {},
   "timezone": "",
   "title": "flotta",
-  "uid": "jZdnk627k",
-  "version": 1
+  "version": 0
 }
