@@ -317,6 +317,9 @@ func init() {
     "device-configuration-message": {
       "type": "object",
       "properties": {
+        "ansible_playbook": {
+          "type": "string"
+        },
         "configuration": {
           "$ref": "#/definitions/device-configuration"
         },
@@ -1303,6 +1306,9 @@ func init() {
     "device-configuration-message": {
       "type": "object",
       "properties": {
+        "ansible_playbook": {
+          "type": "string"
+        },
         "configuration": {
           "$ref": "#/definitions/device-configuration"
         },
