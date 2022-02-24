@@ -170,5 +170,40 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 				}
 			}),
 		)
+
+		It("reuse container name", func() {
+			// given
+			podSpec.Containers = append(edgeDeployment.Spec.Pod.Spec.Containers,
+				corev1.Container{
+					Name:            "container",
+					Image:           "stam",
+					ImagePullPolicy: corev1.PullAlways,
+				})
+
+			// when
+			err := edgeDeployment.ValidateCreate()
+
+			// then
+			Expect(err).Should(MatchError("name collisions for containers within the same pod spec are not supported.\n" +
+				"container name: 'container' has been reused"))
+		})
+
+		It("reuse init container name", func() {
+			// given
+			podSpec.InitContainers = append(edgeDeployment.Spec.Pod.Spec.Containers,
+				corev1.Container{
+					Name:            "container",
+					Image:           "stam",
+					ImagePullPolicy: corev1.PullAlways,
+				})
+
+			// when
+			err := edgeDeployment.ValidateCreate()
+
+			// then
+			Expect(err).Should(MatchError("name collisions for containers within the same pod spec are not supported.\n" +
+				"container name: 'container' has been reused"))
+		})
+
 	})
 })
