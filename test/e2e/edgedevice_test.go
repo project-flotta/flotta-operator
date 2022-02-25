@@ -150,14 +150,20 @@ func (e *edgeDeviceDocker) waitForDevice(cond func() bool) error {
 
 func (e *edgeDeviceDocker) Register() error {
 	ctx := context.Background()
-	resp, err := e.cli.ContainerCreate(ctx, &container.Config{
-		Image: EdgeDeviceImage, Cmd: []string{fmt.Sprintf("--machine-id=%s", e.machineId)},
-	}, &container.HostConfig{Privileged: true}, nil, nil, e.name)
+	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: EdgeDeviceImage}, &container.HostConfig{Privileged: true}, nil, nil, e.name)
 	if err != nil {
 		return err
 	}
 
 	if err := e.cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+		return err
+	}
+
+	if _, err = e.Exec(fmt.Sprintf("echo 'client-id = \"%v\"' >> /etc/yggdrasil/config.toml", e.machineId)); err != nil {
+		return err
+	}
+
+	if _, err = e.Exec("systemctl start yggdrasild.service"); err != nil {
 		return err
 	}
 
