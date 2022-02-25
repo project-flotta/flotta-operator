@@ -34,9 +34,24 @@ type EdgeDeviceSpec struct {
 	// RequestTime is the time of device registration request
 	RequestTime *metav1.Time `json:"requestTime,omitempty"`
 
-	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
-	Storage   *Storage                `json:"storage,omitempty"`
-	Metrics   *MetricsConfiguration   `json:"metrics,omitempty"`
+	Heartbeat     *HeartbeatConfiguration         `json:"heartbeat,omitempty"`
+	Storage       *Storage                        `json:"storage,omitempty"`
+	Metrics       *MetricsConfiguration           `json:"metrics,omitempty"`
+	LogCollection map[string]*LogCollectionConfig `json:"log_collection,omitempty"`
+}
+
+type LogCollectionConfig struct {
+
+	// Kind is the type of log collection to be used
+	// +kubebuilder:validation:Enum=syslog
+	Kind string `json:"kind,omitempty"`
+
+	// +kubebuilder:default=12
+	// +kubebuilder:validation:Minimum=1
+	BufferSize int32 `json:"buffer_size,omitempty"`
+
+	// SyslogConfig is the pointer to the configMap to be used to load the config
+	SyslogConfig *NameRef `json:"syslog_config,omitempty"`
 }
 
 type MetricsConfiguration struct {

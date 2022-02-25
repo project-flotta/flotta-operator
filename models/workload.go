@@ -25,6 +25,9 @@ type Workload struct {
 	// Image registries configuration
 	ImageRegistries *ImageRegistries `json:"imageRegistries,omitempty"`
 
+	// Log collection target for this workload
+	LogCollection string `json:"log_collection,omitempty"`
+
 	// Metrics endpoint configuration
 	Metrics *Metrics `json:"metrics,omitempty"`
 

@@ -171,6 +171,27 @@ definitions:
       os:
         $ref: '#/definitions/os-information'
         description: OS lifecycle information
+      log-collection:
+        type: object
+        additionalProperties:
+          $ref: '#/definitions/logs-collection-information'
+          description: Log collection information
+
+  logs-collection-information:
+    type: object
+    properties:
+      kind:
+        type: string
+      buffer_size:
+        type: integer
+        format: int32
+      syslog_config:
+        type: object
+        properties:
+          address:
+            type: string
+          protocol:
+            type: string
 
   os-information:
     type: object
@@ -300,6 +321,9 @@ definitions:
       configmaps:
         $ref: '#/definitions/configmap-list'
         description: List of configmaps used by the workload
+      log_collection:
+        type: string
+        description: "Log collection target for this workload"
 
   secret-list:
     type: array
