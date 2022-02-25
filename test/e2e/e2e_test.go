@@ -77,7 +77,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("ls /var/local/yggdrasil/device/ | wc -l")
+			stdout, err := device.Exec("ls /etc/yggdrasil/device/ | wc -l")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("0"))
 		})
@@ -97,9 +97,9 @@ var _ = Describe("e2e", func() {
 
 			// then
 			// properly cleaned ygg dir
-			stdout, err := device.Exec("ls /var/local/yggdrasil/device/ | wc -l")
+			stdout, err := device.Exec("ls /etc/yggdrasil/device/ | wc -l")
 			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("1")) // FIXME: https://github.com/project-flotta/flotta-device-worker/pull/89
+			Expect(stdout).To(Equal("0"))
 
 			// no pods running
 			stdout, err = device.Exec("podman ps --noheading | wc -l")
