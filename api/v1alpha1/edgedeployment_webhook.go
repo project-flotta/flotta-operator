@@ -61,6 +61,7 @@ func (r *EdgeDeployment) validate() error {
 	podSpec := r.Spec.Pod.Spec
 
 	containers := append(podSpec.InitContainers, podSpec.Containers...)
+	containersNames := make(map[string]struct{})
 	for _, container := range containers {
 		if container.Lifecycle != nil {
 			notValidPaths = append(notValidPaths, containersMsg(container, "lifecycle"))
@@ -92,6 +93,13 @@ func (r *EdgeDeployment) validate() error {
 					notValidPaths = append(notValidPaths, envMsg(container, envVar, "resourceFieldRef"))
 				}
 			}
+		}
+
+		if _, ok := containersNames[container.Name]; ok {
+			return fmt.Errorf("name collisions for containers within the same pod spec are not supported.\n" +
+				"container name: '%s' has been reused", container.Name)
+		} else {
+			containersNames[container.Name] = struct{}{}
 		}
 	}
 
