@@ -96,7 +96,7 @@ func (r *EdgeDeployment) validate() error {
 		}
 
 		if _, ok := containersNames[container.Name]; ok {
-			return fmt.Errorf("name collisions for containers within the same pod spec are not supported.\n" +
+			return fmt.Errorf("name collisions for containers within the same pod spec are not supported.\n"+
 				"container name: '%s' has been reused", container.Name)
 		} else {
 			containersNames[container.Name] = struct{}{}
