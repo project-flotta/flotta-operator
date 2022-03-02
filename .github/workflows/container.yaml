@@ -4,7 +4,7 @@ on:
     branches: [ main ]
 
 jobs:
-  kind:
+  container:
     runs-on: ubuntu-latest
     steps:
       - name: Check out proper version of sources
