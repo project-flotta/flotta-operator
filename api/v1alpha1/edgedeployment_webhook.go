@@ -39,7 +39,7 @@ func (r *EdgeDeployment) SetupWebhookWithManager(mgr ctrl.Manager) error {
 This marker is responsible for generating a validating webhook manifest.
 */
 
-//+kubebuilder:webhook:verbs=create;update;delete,path=/validate-management-project-flotta-io-v1alpha1-edgedeployment,mutating=false,failurePolicy=fail,groups=management.project-flotta.io,resources=edgedeployments,versions=v1alpha1,name=edgedeploymnet.management.project-flotta.io,sideEffects=None,admissionReviewVersions=v1
+//+kubebuilder:webhook:verbs=create;update,path=/validate-management-project-flotta-io-v1alpha1-edgedeployment,mutating=false,failurePolicy=fail,groups=management.project-flotta.io,resources=edgedeployments,versions=v1alpha1,name=edgedeployment.management.project-flotta.io,sideEffects=None,admissionReviewVersions=v1
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *EdgeDeployment) ValidateCreate() error {
