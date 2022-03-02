@@ -14,7 +14,7 @@ webhooks:
       namespace: system
       path: /validate-management-project-flotta-io-v1alpha1-edgedeployment
   failurePolicy: Fail
-  name: edgedeploymnet.management.project-flotta.io
+  name: edgedeployment.management.project-flotta.io
   rules:
   - apiGroups:
     - management.project-flotta.io
@@ -23,7 +23,6 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
-    - DELETE
     resources:
     - edgedeployments
   sideEffects: None
