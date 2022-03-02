@@ -23,7 +23,7 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 	patch := client.MergeFrom(edgeDevice.DeepCopy())
 
 	edgeDevice.Status.LastSyncedResourceVersion = heartbeat.Version
-	edgeDevice.Status.LastSeenTime = v1.NewTime(time.Time(heartbeat.Time))
+	edgeDevice.Status.LastSeenTime = v1.NewTime(time.Now())
 	edgeDevice.Status.Phase = heartbeat.Status
 	if heartbeat.Hardware != nil {
 		edgeDevice.Status.Hardware = hardware.MapHardware(heartbeat.Hardware)

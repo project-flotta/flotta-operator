@@ -515,7 +515,6 @@ Status: Internal Server Error
 | events | [][EventInfo](#event-info)| `[]*EventInfo` |  | | Events produced by device worker. |  |
 | hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | | Hardware information |  |
 | status | string| `string` |  | |  |  |
-| time | date-time (formatted string)| `strfmt.DateTime` |  | |  |  |
 | upgrade | [UpgradeStatus](#upgrade-status)| `UpgradeStatus` |  | | Upgrade status |  |
 | version | string| `string` |  | |  |  |
 | workloads | [][WorkloadStatus](#workload-status)| `[]*WorkloadStatus` |  | |  |  |

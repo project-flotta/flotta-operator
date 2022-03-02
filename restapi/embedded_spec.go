@@ -512,10 +512,6 @@ func init() {
             "degraded"
           ]
         },
-        "time": {
-          "type": "string",
-          "format": "date-time"
-        },
         "upgrade": {
           "description": "Upgrade status",
           "$ref": "#/definitions/upgrade-status"
@@ -1453,10 +1449,6 @@ func init() {
             "up",
             "degraded"
           ]
-        },
-        "time": {
-          "type": "string",
-          "format": "date-time"
         },
         "upgrade": {
           "description": "Upgrade status",
