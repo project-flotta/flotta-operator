@@ -295,6 +295,13 @@ func init() {
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
         },
+        "log-collection": {
+          "type": "object",
+          "additionalProperties": {
+            "description": "Log collection information",
+            "$ref": "#/definitions/logs-collection-information"
+          }
+        },
         "metrics": {
           "$ref": "#/definitions/metrics-configuration"
         },
@@ -606,6 +613,29 @@ func init() {
         }
       }
     },
+    "logs-collection-information": {
+      "type": "object",
+      "properties": {
+        "buffer_size": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "syslog_config": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "protocol": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "memory": {
       "type": "object",
       "properties": {
@@ -899,6 +929,10 @@ func init() {
           "description": "Image registries configuration",
           "$ref": "#/definitions/image-registries"
         },
+        "log_collection": {
+          "description": "Log collection target for this workload",
+          "type": "string"
+        },
         "metrics": {
           "description": "Metrics endpoint configuration",
           "$ref": "#/definitions/metrics"
@@ -1143,6 +1177,17 @@ func init() {
     }
   },
   "definitions": {
+    "LogsCollectionInformationSyslogConfig": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "protocol": {
+          "type": "string"
+        }
+      }
+    },
     "boot": {
       "type": "object",
       "properties": {
@@ -1231,6 +1276,13 @@ func init() {
       "properties": {
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
+        },
+        "log-collection": {
+          "type": "object",
+          "additionalProperties": {
+            "description": "Log collection information",
+            "$ref": "#/definitions/logs-collection-information"
+          }
         },
         "metrics": {
           "$ref": "#/definitions/metrics-configuration"
@@ -1544,6 +1596,29 @@ func init() {
         }
       }
     },
+    "logs-collection-information": {
+      "type": "object",
+      "properties": {
+        "buffer_size": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "syslog_config": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "type": "string"
+            },
+            "protocol": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
     "memory": {
       "type": "object",
       "properties": {
@@ -1836,6 +1911,10 @@ func init() {
         "imageRegistries": {
           "description": "Image registries configuration",
           "$ref": "#/definitions/image-registries"
+        },
+        "log_collection": {
+          "description": "Log collection target for this workload",
+          "type": "string"
         },
         "metrics": {
           "description": "Metrics endpoint configuration",

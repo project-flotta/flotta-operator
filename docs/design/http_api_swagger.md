@@ -371,6 +371,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | heartbeat | [HeartbeatConfiguration](#heartbeat-configuration)| `HeartbeatConfiguration` |  | |  |  |
+| log-collection | map of [LogsCollectionInformation](#logs-collection-information)| `map[string]LogsCollectionInformation` |  | |  |  |
 | metrics | [MetricsConfiguration](#metrics-configuration)| `MetricsConfiguration` |  | |  |  |
 | os | [OsInformation](#os-information)| `OsInformation` |  | | OS lifecycle information |  |
 | storage | [StorageConfiguration](#storage-configuration)| `StorageConfiguration` |  | |  |  |
@@ -590,6 +591,41 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | sync_duration | integer| `int64` |  | | 99th percentile of fsync duration in milliseconds |  |
+
+
+
+### <span id="logs-collection-information"></span> logs-collection-information
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| buffer_size | int32 (formatted integer)| `int32` |  | |  |  |
+| kind | string| `string` |  | |  |  |
+| syslog_config | [LogsCollectionInformationSyslogConfig](#logs-collection-information-syslog-config)| `LogsCollectionInformationSyslogConfig` |  | |  |  |
+
+
+
+#### Inlined models
+
+**<span id="logs-collection-information-syslog-config"></span> LogsCollectionInformationSyslogConfig**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| address | string| `string` |  | |  |  |
+| protocol | string| `string` |  | |  |  |
 
 
 
@@ -893,6 +929,7 @@ Status: Internal Server Error
 | configmaps | [ConfigmapList](#configmap-list)| `ConfigmapList` |  | | List of configmaps used by the workload |  |
 | data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | | Configuration for data transfer |  |
 | imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | | Image registries configuration |  |
+| log_collection | string| `string` |  | | Log collection target for this workload |  |
 | metrics | [Metrics](#metrics)| `Metrics` |  | | Metrics endpoint configuration |  |
 | name | string| `string` |  | | Name of the workload |  |
 | specification | string| `string` |  | |  |  |

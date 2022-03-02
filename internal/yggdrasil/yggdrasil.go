@@ -229,6 +229,12 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
 
+	dc.Configuration.LogCollection, err = h.getDeviceLogConfig(ctx, edgeDevice)
+	if err != nil {
+		logger.Error(err, "failed getting device log configuration")
+		return operations.NewGetDataMessageForDeviceInternalServerError()
+	}
+
 	// TODO: Network optimization: Decide whether there is a need to return any payload based on difference between last applied configuration and current state in the cluster.
 	message := models.Message{
 		Type:      models.MessageTypeData,
@@ -443,6 +449,7 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 			Name:          deployment.Name,
 			Specification: string(podSpec),
 			Data:          data,
+			LogCollection: spec.LogCollection,
 		}
 		authFile, err := h.getAuthFile(ctx, spec.ImageRegistries, deployment.Namespace)
 		if err != nil {
@@ -674,4 +681,50 @@ func extractSecretsFromEnv(env []corev1.EnvVar, secretMap secretMapType) {
 			}
 		}
 	}
+}
+
+func (h *Handler) getDeviceLogConfig(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) (map[string]models.LogsCollectionInformation, error) {
+	if len(edgeDevice.Spec.LogCollection) == 0 {
+		return nil, nil
+	}
+
+	res := map[string]models.LogsCollectionInformation{}
+	for key, val := range edgeDevice.Spec.LogCollection {
+		logConfig := models.LogsCollectionInformation{
+			BufferSize: val.BufferSize,
+			Kind:       val.Kind,
+		}
+		if val.SyslogConfig != nil {
+			syslogConfig, err := h.getDeviceSyslogLogConfig(ctx, edgeDevice, val)
+			if err != nil {
+				return nil, err
+			}
+			logConfig.SyslogConfig = syslogConfig
+		}
+		res[key] = logConfig
+	}
+	return res, nil
+}
+
+func (h *Handler) getDeviceSyslogLogConfig(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, val *v1alpha1.LogCollectionConfig) (*models.LogsCollectionInformationSyslogConfig, error) {
+	cm := corev1.ConfigMap{}
+	err := h.client.Get(ctx,
+		client.ObjectKey{Namespace: edgeDevice.Namespace, Name: val.SyslogConfig.Name},
+		&cm)
+	if err != nil {
+		return nil, fmt.Errorf("cannot get syslogconfig from configmap %s: %v", val.SyslogConfig.Name, err)
+	}
+	proto := "tcp"
+	if cmproto, ok := cm.Data["Protocol"]; ok {
+		if cmproto == "tcp" || cmproto == "udp" {
+			proto = cmproto
+		} else {
+			return nil, fmt.Errorf("Protocol '%s' is not valid for syslog server", proto)
+		}
+	}
+
+	return &models.LogsCollectionInformationSyslogConfig{
+		Address:  cm.Data["Address"],
+		Protocol: proto,
+	}, nil
 }

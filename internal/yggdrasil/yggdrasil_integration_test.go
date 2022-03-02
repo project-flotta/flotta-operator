@@ -493,6 +493,150 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(workload.ImageRegistries).To(BeNil())
 		})
 
+		Context("Logs", func() {
+
+			var (
+				deviceName string = "foo"
+				device     *v1alpha1.EdgeDevice
+				deploy     *v1alpha1.EdgeDeployment
+			)
+
+			getDeployment := func(name string, ns string) *v1alpha1.EdgeDeployment {
+				return &v1alpha1.EdgeDeployment{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      name,
+						Namespace: ns,
+					},
+					Spec: v1alpha1.EdgeDeploymentSpec{
+						Type: "pod",
+						Pod:  v1alpha1.Pod{},
+					},
+				}
+			}
+
+			BeforeEach(func() {
+				deviceName = "foo"
+				device = getDevice(deviceName)
+				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				deploy = getDeployment("workload1", testNamespace)
+				deployRepoMock.EXPECT().
+					Read(gomock.Any(), "workload1", testNamespace).
+					Return(deploy, nil)
+
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
+			})
+
+			It("LogCollection is defined as expected", func() {
+
+				// given
+				Mockk8sClient.EXPECT().Get(
+					gomock.Any(),
+					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
+					gomock.Any()).
+					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
+						obj.(*corev1.ConfigMap).Data = map[string]string{
+							"Address": "127.0.0.1:512",
+						}
+					}).
+					Return(nil).
+					Times(1)
+
+				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
+					"syslog": {
+						Kind:         "syslog",
+						BufferSize:   10,
+						SyslogConfig: &v1alpha1.NameRef{Name: "syslog-config"},
+					},
+				}
+				deploy.Spec.LogCollection = "syslog"
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+
+				// Device Log config
+				Expect(config.Configuration.LogCollection).To(HaveKey("syslog"))
+				logConfig := config.Configuration.LogCollection["syslog"]
+				Expect(logConfig.Kind).To(Equal("syslog"))
+				Expect(logConfig.BufferSize).To(Equal(int32(10)))
+				Expect(logConfig.SyslogConfig.Address).To(Equal("127.0.0.1:512"))
+				Expect(logConfig.SyslogConfig.Protocol).To(Equal("tcp"))
+
+				Expect(config.Workloads).To(HaveLen(1))
+				workload := config.Workloads[0]
+				Expect(workload.Name).To(Equal("workload1"))
+				Expect(workload.LogCollection).To(Equal("syslog"))
+				Expect(workload.ImageRegistries).To(BeNil())
+			})
+
+			It("CM with invalid protocol", func() {
+
+				// given
+				Mockk8sClient.EXPECT().Get(
+					gomock.Any(),
+					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
+					gomock.Any()).
+					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
+						obj.(*corev1.ConfigMap).Data = map[string]string{
+							"Address":  "127.0.0.1:512",
+							"Protocol": "invalid",
+						}
+					}).
+					Return(nil).
+					Times(1)
+
+				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
+					"syslog": {
+						Kind:         "syslog",
+						BufferSize:   10,
+						SyslogConfig: &v1alpha1.NameRef{Name: "syslog-config"},
+					},
+				}
+				deploy.Spec.LogCollection = "syslog"
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+
+				Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
+			})
+
+			It("No valid cm", func() {
+
+				// given
+				Mockk8sClient.EXPECT().Get(
+					gomock.Any(),
+					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
+					gomock.Any()).
+					Return(fmt.Errorf("Invalid error")).
+					Times(1)
+
+				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
+					"syslog": {
+						Kind:         "syslog",
+						BufferSize:   10,
+						SyslogConfig: &v1alpha1.NameRef{Name: "syslog-config"},
+					},
+				}
+				deploy.Spec.LogCollection = "syslog"
+				// when
+				res := handler.GetDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
+			})
+		})
+
 		Context("Metrics", func() {
 			var (
 				deviceName    string = "foo"

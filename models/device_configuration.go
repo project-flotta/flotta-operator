@@ -9,6 +9,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // DeviceConfiguration device configuration
@@ -18,6 +19,9 @@ type DeviceConfiguration struct {
 
 	// heartbeat
 	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
+
+	// log collection
+	LogCollection map[string]LogsCollectionInformation `json:"log-collection,omitempty"`
 
 	// metrics
 	Metrics *MetricsConfiguration `json:"metrics,omitempty"`
@@ -34,6 +38,10 @@ func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateHeartbeat(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateLogCollection(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -68,6 +76,28 @@ func (m *DeviceConfiguration) validateHeartbeat(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) validateLogCollection(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.LogCollection) { // not required
+		return nil
+	}
+
+	for k := range m.LogCollection {
+
+		if err := validate.Required("log-collection"+"."+k, "body", m.LogCollection[k]); err != nil {
+			return err
+		}
+		if val, ok := m.LogCollection[k]; ok {
+			if err := val.Validate(formats); err != nil {
+				return err
+			}
+		}
+
 	}
 
 	return nil

@@ -33,6 +33,11 @@ type EdgeDeploymentSpec struct {
 	Data            *DataConfiguration             `json:"data,omitempty"`
 	ImageRegistries *ImageRegistriesConfiguration  `json:"imageRegistries,omitempty"`
 	Metrics         *ContainerMetricsConfiguration `json:"metrics,omitempty"`
+
+	// LogCollection is the logCollection property to be used to collect logs
+	// from this endpoint. This key is what is defined on the edgedevice
+	// logCollection property
+	LogCollection string `json:"log_collection,omitempty"`
 }
 
 type ImageRegistriesConfiguration struct {
