@@ -142,7 +142,7 @@ uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified 
 deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 	kubectl wait --for=condition=Ready pods --all -n cert-manager --timeout=60s
-	kubectl apply -f $(TMP_ODIR)/flotta-operator.yaml
+	kubectl apply -f $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 ifeq ($(TARGET), k8s)
 	minikube addons enable ingress
 endif
@@ -158,23 +158,25 @@ endif
 	kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 
 $(eval TMP_ODIR := $(shell mktemp -d))
-gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into flotta-operator.yaml
+gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into $(TARGET)-flotta-operator.yaml
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 ifeq ($(TARGET), k8s)
 	@sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/k8s/network/ingress.yaml
-	$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/flotta-operator.yaml
+	$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 	@sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/k8s/network/ingress.yaml
 else ifeq ($(TARGET), ocp)
-	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/flotta-operator.yaml
+	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 else ifeq ($(TARGET), kind)
-	$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/flotta-operator.yaml
+	$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 endif
 
 	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/flotta-operator:latest
-	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/flotta-operator.yaml\033[0m"
+	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml\033[0m"
 
-release: gen-manifests
-	gh release create v$(VERSION) --notes "Release v$(VERSION) of Flotta Operator" --title "Release v$(VERSION)" '$(TMP_ODIR)/flotta-operator.yaml# Flotta Operator'
+release:
+	TARGET=ocp gen-manifests
+	TARGET=k8s gen-manifests
+	gh release create v$(VERSION) --notes "Release v$(VERSION) of Flotta Operator" --title "Release v$(VERSION)" '$(TMP_ODIR)/ocp-flotta-operator.yaml# Flotta Operator for OCP' '$(TMP_ODIR)/k8s-flotta-operator.yaml# Flotta Operator for kubernetes'
 	rm -rf $(TMP_ODIR)
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
