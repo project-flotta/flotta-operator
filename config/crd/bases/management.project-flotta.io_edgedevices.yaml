@@ -51,6 +51,7 @@ spec:
                   periodSeconds:
                     description: period seconds
                     format: int64
+                    minimum: 1
                     type: integer
                 type: object
               metrics:
