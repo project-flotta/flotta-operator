@@ -122,6 +122,7 @@ type HeartbeatConfiguration struct {
 	HardwareProfile *HardwareProfileConfiguration `json:"hardwareProfile,omitempty"`
 
 	// period seconds
+	// +kubebuilder:validation:Minimum=1
 	PeriodSeconds int64 `json:"periodSeconds,omitempty"`
 }
 
