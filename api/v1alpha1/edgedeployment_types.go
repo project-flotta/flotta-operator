@@ -37,7 +37,7 @@ type EdgeDeploymentSpec struct {
 	// LogCollection is the logCollection property to be used to collect logs
 	// from this endpoint. This key is what is defined on the edgedevice
 	// logCollection property
-	LogCollection string `json:"log_collection,omitempty"`
+	LogCollection string `json:"logCollection,omitempty"`
 }
 
 type ImageRegistriesConfiguration struct {
