@@ -37,7 +37,7 @@ type EdgeDeviceSpec struct {
 	Heartbeat     *HeartbeatConfiguration         `json:"heartbeat,omitempty"`
 	Storage       *Storage                        `json:"storage,omitempty"`
 	Metrics       *MetricsConfiguration           `json:"metrics,omitempty"`
-	LogCollection map[string]*LogCollectionConfig `json:"log_collection,omitempty"`
+	LogCollection map[string]*LogCollectionConfig `json:"logCollection,omitempty"`
 }
 
 type LogCollectionConfig struct {
@@ -48,10 +48,10 @@ type LogCollectionConfig struct {
 
 	// +kubebuilder:default=12
 	// +kubebuilder:validation:Minimum=1
-	BufferSize int32 `json:"buffer_size,omitempty"`
+	BufferSize int32 `json:"bufferSize,omitempty"`
 
 	// SyslogConfig is the pointer to the configMap to be used to load the config
-	SyslogConfig *NameRef `json:"syslog_config,omitempty"`
+	SyslogConfig *NameRef `json:"syslogConfig,omitempty"`
 }
 
 type MetricsConfiguration struct {

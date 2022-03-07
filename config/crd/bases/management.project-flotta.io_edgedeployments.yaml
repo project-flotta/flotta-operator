@@ -110,7 +110,7 @@ spec:
                     - name
                     type: object
                 type: object
-              log_collection:
+              logCollection:
                 description: LogCollection is the logCollection property to be used
                   to collect logs from this endpoint. This key is what is defined
                   on the edgedevice logCollection property
