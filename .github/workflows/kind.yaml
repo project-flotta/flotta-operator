@@ -37,10 +37,15 @@ jobs:
           # Run test
           make integration-test
 
-          # Export logs
+      # collect logs always just in case the test fails
+      - name: Collect all logs
+        if: always()
+        run: |
           kind export logs dist
+
       - name: Archive logs
         uses: actions/upload-artifact@v2
+        if: always()
         with:
           name: logs
           path: |
