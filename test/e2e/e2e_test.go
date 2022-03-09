@@ -40,6 +40,10 @@ var _ = Describe("e2e", func() {
 
 	})
 
+	AfterFailed(func() {
+		device.DumpLogs()
+	})
+
 	AfterEach(func() {
 		_ = deployment.RemoveAll()
 		_ = device.Unregister()

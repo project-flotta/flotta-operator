@@ -11,3 +11,14 @@ func TestE2e(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "E2e Suite")
 }
+
+// AfterFailed is a function that it's called on JustAfterEach to run a
+// function if the test fail. For example, retrieving logs.
+func AfterFailed(body func()) {
+	JustAfterEach(func() {
+		if CurrentGinkgoTestDescription().Failed {
+			By("Running AfterFailed function")
+			body()
+		}
+	})
+}

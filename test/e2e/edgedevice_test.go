@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/google/uuid"
+	"github.com/onsi/ginkgo"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -40,6 +41,7 @@ type EdgeDevice interface {
 	Unregister() error
 	Get() (*unstructured.Unstructured, error)
 	Remove() error
+	DumpLogs(extraCommands ...string)
 	Exec(string) (string, error)
 	WaitForDeploymentState(string, string) error
 }
@@ -109,6 +111,26 @@ func (e *edgeDeviceDocker) Exec(command string) (string, error) {
 	}), nil
 }
 
+func (e *edgeDeviceDocker) DumpLogs(extraCommands ...string) {
+	commands := []string{
+		"journalctl -u podman",
+		"journalctl -u yggdrasild",
+		"ps aux",
+		"systemctl status podman",
+		"systemctl status yggdrasild",
+	}
+	commands = append(commands, extraCommands...)
+
+	for _, cmd := range commands {
+		output, err := e.Exec(cmd)
+		if err != nil {
+			fmt.Printf("Error: Failed to retrieve logs for command '%s': %v \n", cmd, err)
+		}
+		ginkgo.GinkgoT().Logf("Command: %s \n Output:\n %s\n", cmd, output)
+
+	}
+}
+
 func (e *edgeDeviceDocker) Get() (*unstructured.Unstructured, error) {
 	device, err := e.device.Namespace(Namespace).Get(context.TODO(), e.machineId, metav1.GetOptions{})
 	if err != nil {
@@ -160,6 +182,10 @@ func (e *edgeDeviceDocker) Register() error {
 	}
 
 	if _, err = e.Exec(fmt.Sprintf("echo 'client-id = \"%v\"' >> /etc/yggdrasil/config.toml", e.machineId)); err != nil {
+		return err
+	}
+
+	if _, err = e.Exec("systemctl start podman"); err != nil {
 		return err
 	}
 
