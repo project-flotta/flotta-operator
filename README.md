@@ -58,6 +58,6 @@ Run `make run` to start the operator.
      --server <host name>
    ```
 
-In order to change the verbosity of the logger check out [here](docs/user-guide/logger.md). 
+In order to change the verbosity of the logger check out [here](docs/user-guide/logger.md).
 
 For additional resources check out: [metrics](docs/metrics/metrics.md), [grafana dashboard](docs/metrics/grafana.md), [device metrics](docs/user-guide/device-metrics.md), [image registries](docs/user-guide/image-registries-auth.md).
