@@ -8,7 +8,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/heartbeat"
-	"github.com/project-flotta/flotta-operator/internal/mtls"
+	"github.com/project-flotta/flotta-operator/pkg/mtls"
 
 	"net/http"
 	"net/url"

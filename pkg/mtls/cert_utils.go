@@ -28,13 +28,13 @@ type CertificateGroup struct {
 	signedCert *x509.Certificate
 	privKey    crypto.PrivateKey
 	certBytes  []byte
-	certPEM    *bytes.Buffer
+	CertPEM    *bytes.Buffer
 	PrivKeyPEM *bytes.Buffer
 }
 
 func NewCACertificateGroupFromSecret(secretData map[string][]byte) (*CertificateGroup, error) {
 	certGroup := &CertificateGroup{
-		certPEM:    bytes.NewBuffer(secretData[caCertCertKey]),
+		CertPEM:    bytes.NewBuffer(secretData[caCertCertKey]),
 		PrivKeyPEM: bytes.NewBuffer(secretData[caCertSecretKey]),
 	}
 	err := certGroup.ImportFromPem()
@@ -45,7 +45,7 @@ func NewCACertificateGroupFromSecret(secretData map[string][]byte) (*Certificate
 }
 
 func (c *CertificateGroup) ImportFromPem() error {
-	block, _ := pem.Decode(c.certPEM.Bytes())
+	block, _ := pem.Decode(c.CertPEM.Bytes())
 	if block == nil {
 		return fmt.Errorf("Cannot get CA certificate")
 	}
@@ -101,7 +101,7 @@ func (c *CertificateGroup) CreatePem() error {
 	if err != nil {
 		return fmt.Errorf("Cannot marshal to PEM: %v", err)
 	}
-	c.certPEM = caPEM
+	c.CertPEM = caPEM
 	c.PrivKeyPEM = privKeyPEM
 	return nil
 }
@@ -156,7 +156,7 @@ func (c *CertificateGroup) parseSignedCertificate() error {
 
 // GetCertificate returns the certificate Group in tls.Certificate format.
 func (c *CertificateGroup) GetCertificate() (tls.Certificate, error) {
-	return tls.X509KeyPair(c.certPEM.Bytes(), c.PrivKeyPEM.Bytes())
+	return tls.X509KeyPair(c.CertPEM.Bytes(), c.PrivKeyPEM.Bytes())
 }
 
 func (c *CertificateGroup) GetCert() *x509.Certificate {

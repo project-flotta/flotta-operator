@@ -114,7 +114,7 @@ func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, err
 
 		caCerts = append(caCerts, caCert)
 		CACertChain = append(CACertChain, caCert.GetCert())
-		caCertPool.AppendCertsFromPEM(caCert.certPEM.Bytes())
+		caCertPool.AppendCertsFromPEM(caCert.CertPEM.Bytes())
 	}
 
 	if errors != nil {
