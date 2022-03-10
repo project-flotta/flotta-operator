@@ -26,6 +26,10 @@ import (
 
 var _ = Describe("Controllers", func() {
 
+	const (
+		namespace = "test"
+	)
+
 	var (
 		edgeDeploymentReconciler *controllers.EdgeDeploymentReconciler
 		mockCtrl                 *gomock.Controller
@@ -64,7 +68,7 @@ var _ = Describe("Controllers", func() {
 		req = ctrl.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      "test",
-				Namespace: "test",
+				Namespace: namespace,
 			},
 		}
 	})
@@ -78,7 +82,7 @@ var _ = Describe("Controllers", func() {
 		return &v1alpha1.EdgeDevice{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      name,
-				Namespace: "test",
+				Namespace: namespace,
 			},
 			Spec: v1alpha1.EdgeDeviceSpec{
 				RequestTime: &v1.Time{},
@@ -122,7 +126,7 @@ var _ = Describe("Controllers", func() {
 				deploymentData = &v1alpha1.EdgeDeployment{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "test",
-						Namespace: "test",
+						Namespace: namespace,
 					},
 					Spec: v1alpha1.EdgeDeploymentSpec{
 						DeviceSelector: &v1.LabelSelector{
@@ -183,7 +187,7 @@ var _ = Describe("Controllers", func() {
 				deploymentData = &v1alpha1.EdgeDeployment{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
-						Namespace:  "test",
+						Namespace:  namespace,
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 						Labels:     map[string]string{labels.CreateSelectorLabel("test"): "true"},
 					},
@@ -206,7 +210,7 @@ var _ = Describe("Controllers", func() {
 
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return(nil, fmt.Errorf("err")).
 					Times(1)
 				// when
@@ -224,9 +228,14 @@ var _ = Describe("Controllers", func() {
 					"notfound")
 
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{}, ReturnErr).
-					Times(2)
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
+					Return([]v1alpha1.EdgeDevice{}, ReturnErr).
+					Times(1)
 
 				// when
 				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
@@ -239,7 +248,7 @@ var _ = Describe("Controllers", func() {
 			It("cannot retrieve edgedevices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{}, fmt.Errorf("Invalid")).
 					Times(1)
 
@@ -254,9 +263,14 @@ var _ = Describe("Controllers", func() {
 			It("Add deployments to devices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*device}, nil).
-					Times(2)
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
+					Return([]v1alpha1.EdgeDevice{*device}, nil).
+					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -293,15 +307,15 @@ var _ = Describe("Controllers", func() {
 				}
 
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
-					Do(func(ctx context.Context, selector *metav1.LabelSelector, namespace string) {
-						Expect(selector.MatchLabels).To(Equal(map[string]string{"workload/test": "true"}))
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
+					Do(func(ctx context.Context, name, namespace string) {
+						Expect(name).To(Equal("test"))
 					}).
 					Return([]v1alpha1.EdgeDevice{*device, *deviceToDelete}, nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Do(func(ctx context.Context, selector *metav1.LabelSelector, namespace string) {
 						Expect(selector).To(Equal(deploymentData.Spec.DeviceSelector))
 					}).
@@ -355,7 +369,7 @@ var _ = Describe("Controllers", func() {
 				deploymentData = &v1alpha1.EdgeDeployment{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
-						Namespace:  "test",
+						Namespace:  namespace,
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 						Labels:     map[string]string{labels.CreateSelectorLabel(labels.DeviceNameLabel): "test"},
 					},
@@ -375,7 +389,7 @@ var _ = Describe("Controllers", func() {
 			It("Cannot get edgedevices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return(nil, fmt.Errorf("err")).
 					Times(1)
 				// when
@@ -393,7 +407,7 @@ var _ = Describe("Controllers", func() {
 					"notfound")
 
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{}, ReturnErr).
 					Times(1)
 
@@ -413,7 +427,7 @@ var _ = Describe("Controllers", func() {
 			It("cannot retrieve edgedevices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{}, fmt.Errorf("Invalid")).
 					Times(1)
 
@@ -428,7 +442,7 @@ var _ = Describe("Controllers", func() {
 			It("Add deployments to devices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*device}, nil).
 					Times(1)
 
@@ -475,7 +489,7 @@ var _ = Describe("Controllers", func() {
 				deploymentData = &v1alpha1.EdgeDeployment{
 					ObjectMeta: v1.ObjectMeta{
 						Name:              "test",
-						Namespace:         "test",
+						Namespace:         namespace,
 						Finalizers:        []string{controllers.YggdrasilDeviceReferenceFinalizer},
 						DeletionTimestamp: &v1.Time{Time: time.Now()},
 						Labels:            map[string]string{labels.CreateSelectorLabel("test"): "true"},
@@ -510,12 +524,12 @@ var _ = Describe("Controllers", func() {
 			It("works as expected", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*fooDevice}, nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*barDevice}, nil).
 					Times(1)
 
@@ -553,12 +567,12 @@ var _ = Describe("Controllers", func() {
 			It("Failed to remove workload label", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*fooDevice}, nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*barDevice}, nil).
 					Times(1)
 
@@ -597,12 +611,12 @@ var _ = Describe("Controllers", func() {
 			It("Failed to remove finalizer label", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*fooDevice}, nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{*barDevice}, nil).
 					Times(1)
 
@@ -674,7 +688,7 @@ var _ = Describe("Controllers", func() {
 				deploymentData = &v1alpha1.EdgeDeployment{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
-						Namespace:  "test",
+						Namespace:  namespace,
 						Labels:     map[string]string{labels.CreateSelectorLabel("test"): "true"},
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 					},
@@ -705,11 +719,11 @@ var _ = Describe("Controllers", func() {
 			It("Add deployment to devices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{}, nil).
 					Times(1)
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Return(devices, nil).
 					Times(1)
 
@@ -736,11 +750,11 @@ var _ = Describe("Controllers", func() {
 					}
 				}
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{}, nil).
 					Times(1)
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Return(devices, nil).
 					Times(1)
 
@@ -770,11 +784,11 @@ var _ = Describe("Controllers", func() {
 					}
 				}
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
 					Return(devices, nil).
 					Times(1)
 				edgeDeviceRepoMock.EXPECT().
-					ListForSelector(gomock.Any(), gomock.Any(), gomock.Any()).
+					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Return([]v1alpha1.EdgeDevice{}, nil).
 					Times(1)
 
@@ -808,7 +822,7 @@ var _ = Describe("Controllers", func() {
 				deploymentData = &v1alpha1.EdgeDeployment{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
-						Namespace:  "test",
+						Namespace:  namespace,
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 					},
 					Spec: v1alpha1.EdgeDeploymentSpec{

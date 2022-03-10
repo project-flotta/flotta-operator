@@ -1,26 +1,28 @@
 package labels
 
-import "strings"
+import (
+	"strings"
+)
 
 const (
 	DeviceNameLabel     = "devicename"
 	DoesNotExistLabel   = "doesnotexist"
-	workloadLabelPrefix = "workload/"
-	selectorLabelPrefix = "selector/"
+	WorkloadLabelPrefix = "workload/"
+	SelectorLabelPrefix = "selector/"
 )
 
 func WorkloadLabel(workloadName string) string {
-	return workloadLabelPrefix + workloadName
+	return WorkloadLabelPrefix + workloadName
 }
 
 func IsWorkloadLabel(label string) bool {
-	return strings.HasPrefix(label, workloadLabelPrefix)
+	return strings.HasPrefix(label, WorkloadLabelPrefix)
 }
 
 func IsSelectorLabel(label string) bool {
-	return strings.HasPrefix(label, selectorLabelPrefix)
+	return strings.HasPrefix(label, SelectorLabelPrefix)
 }
 
 func CreateSelectorLabel(label string) string {
-	return selectorLabelPrefix + label
+	return SelectorLabelPrefix + label
 }

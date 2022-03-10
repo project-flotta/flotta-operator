@@ -2,11 +2,9 @@ package edgedeployment
 
 import (
 	"context"
-
 	_ "github.com/golang/mock/mockgen/model"
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/selection"
+	indexer "github.com/project-flotta/flotta-operator/internal/repository"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -58,12 +56,10 @@ func (r *CRRespository) RemoveFinalizer(ctx context.Context, edgeDeployment *v1a
 
 func (r *CRRespository) ListByLabel(ctx context.Context, labelName, labelValue string, namespace string) ([]v1alpha1.EdgeDeployment, error) {
 	edgeDeployments := v1alpha1.EdgeDeploymentList{}
-	requirement, err := labels.NewRequirement(labelName, selection.Equals, []string{labelValue})
-	if err != nil {
-		return nil, err
-	}
-	selector := labels.NewSelector().Add(*requirement)
-	err = r.client.List(ctx, &edgeDeployments, client.MatchingLabelsSelector{Selector: selector}, client.InNamespace(namespace))
+	err := r.client.List(ctx, &edgeDeployments,
+		client.MatchingFields{indexer.DeploymentByDeviceIndexKey: indexer.CreateDeploymentIndexKey(labelName, labelValue)},
+		client.InNamespace(namespace),
+	)
 	if err != nil {
 		return nil, err
 	}

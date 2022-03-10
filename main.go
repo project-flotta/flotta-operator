@@ -28,6 +28,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
+	indexer "github.com/project-flotta/flotta-operator/internal/repository"
 
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
@@ -52,15 +53,15 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/controllers"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -185,6 +186,7 @@ func main() {
 		os.Exit(1)
 	}
 
+	addIndexersToCache(mgr)
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
 	edgeDeploymentRepository := edgedeployment.NewEdgeDeploymentRepository(mgr.GetClient())
 	claimer := storage.NewClaimer(mgr.GetClient())
@@ -352,6 +354,20 @@ func main() {
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
+		os.Exit(1)
+	}
+}
+
+func addIndexersToCache(mgr manager.Manager) {
+	ctx := context.Background()
+	err := mgr.GetFieldIndexer().IndexField(ctx, &managementv1alpha1.EdgeDevice{}, indexer.DeviceByWorkloadIndexKey, indexer.DeviceByWorkloadIndexFunc)
+	if err != nil {
+		setupLog.Error(err, "Failed to create indexer for EdgeDevice")
+		os.Exit(1)
+	}
+	err = mgr.GetFieldIndexer().IndexField(ctx, &managementv1alpha1.EdgeDeployment{}, indexer.DeploymentByDeviceIndexKey, indexer.DeploymentByDeviceIndexFunc)
+	if err != nil {
+		setupLog.Error(err, "Failed to create indexer for EdgeDeployment")
 		os.Exit(1)
 	}
 }
