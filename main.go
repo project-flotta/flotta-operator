@@ -303,7 +303,10 @@ func main() {
 					if r.TLS != nil {
 						authType := yggdrasilAPIHandler.GetAuthType(r)
 						if !mtls.VerifyRequest(r, authType, opts, CACertChain) {
-							w.WriteHeader(http.StatusUnauthorized)
+							// w.WriteHeader(http.StatusUnauthorized)
+							// return
+							// @TODO remove this on ECOPROJECT-402
+							h.ServeHTTP(w, r)
 							return
 						}
 					}

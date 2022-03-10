@@ -32,7 +32,7 @@ const (
 	clientCertCertKey   = "client.crt"
 
 	certOrganization       = "flotta-operator"
-	certRegisterCN         = "register"
+	CertRegisterCN         = "register"
 	certDefaultExpiration  = 1 // years
 	serverCertOrganization = "flotta-operator"
 )
@@ -167,7 +167,7 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 	cert := &x509.Certificate{
 		SerialNumber: CACert.cert.SerialNumber,
 		Subject: pkix.Name{
-			CommonName:   certRegisterCN,
+			CommonName:   CertRegisterCN,
 			Organization: []string{certOrganization},
 			SerialNumber: name,
 		},

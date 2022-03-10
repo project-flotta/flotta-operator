@@ -97,7 +97,7 @@ func (c *CertificateGroup) CreatePem() error {
 	if err != nil {
 		return err
 	}
-	privKeyPEM, err := c.marshalKeyToPem()
+	privKeyPEM, err := c.MarshalKeyToPem(c.privKey)
 	if err != nil {
 		return fmt.Errorf("Cannot marshal to PEM: %v", err)
 	}
@@ -106,9 +106,9 @@ func (c *CertificateGroup) CreatePem() error {
 	return nil
 }
 
-func (c *CertificateGroup) marshalKeyToPem() (*bytes.Buffer, error) {
+func (c *CertificateGroup) MarshalKeyToPem(privKey crypto.PrivateKey) (*bytes.Buffer, error) {
 	privKeyPEM := new(bytes.Buffer)
-	switch t := c.privKey.(type) {
+	switch t := privKey.(type) {
 	case *ecdsa.PrivateKey:
 		res, err := x509.MarshalECPrivateKey(t)
 		if err != nil {
@@ -161,6 +161,10 @@ func (c *CertificateGroup) GetCertificate() (tls.Certificate, error) {
 
 func (c *CertificateGroup) GetCert() *x509.Certificate {
 	return c.cert
+}
+
+func (c *CertificateGroup) GetKey() crypto.PrivateKey {
+	return c.privKey
 }
 
 func getCACertificate() (*CertificateGroup, error) {
