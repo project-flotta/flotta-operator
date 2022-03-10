@@ -23,6 +23,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"strings"
 
@@ -41,8 +42,8 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
 	"github.com/project-flotta/flotta-operator/restapi"
 	watchers "github.com/project-flotta/flotta-operator/watchers"
-	"go.uber.org/zap/zapcore"
 
+	"go.uber.org/zap/zapcore"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -62,6 +63,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports
+	_ "net/http/pprof"
+)
+
+var (
+	profileAddress = "localhost:6060"
 )
 
 const (
@@ -122,6 +128,9 @@ var Config struct {
 
 	// MaxConcurrentReconciles is the maximum number of concurrent Reconciles which can be run
 	MaxConcurrentReconciles uint `envconfig:"MAX_CONCURRENT_RECONCILES" default:"3"`
+
+	// EnableProfiling enables profiling
+	EnableProfiling bool `envconfig:"ENABLE_PROFILING" default:"false"`
 }
 
 func init() {
@@ -142,11 +151,24 @@ func init() {
 func main() {
 	err := envconfig.Process("", &Config)
 	setupLog = ctrl.Log.WithName("setup")
-
 	if err != nil {
 		setupLog.Error(err, "unable to process configuration values")
 		os.Exit(1)
 	}
+
+	if Config.EnableProfiling {
+		mux := http.NewServeMux()
+		mux.HandleFunc("/debug/pprof/", pprof.Index)
+		mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+		go func() {
+			log.Println(http.ListenAndServe(":6060", mux))
+		}()
+	}
+
 	if Config.EdgeDeploymentConcurrency == 0 {
 		setupLog.Error(err, "config field EDGEDEPLOYMENT_CONCURRENCY must be greater than 0")
 		os.Exit(1)
