@@ -15,7 +15,7 @@ type Repository interface {
 	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeployment, error)
 	Patch(ctx context.Context, old, new *v1alpha1.EdgeDeployment) error
 	RemoveFinalizer(ctx context.Context, edgeDeployment *v1alpha1.EdgeDeployment, finalizer string) error
-	ListByLabel(ctx context.Context, labelName, labelValue string) ([]v1alpha1.EdgeDeployment, error)
+	ListByLabel(ctx context.Context, labelName, labelValue string, namespace string) ([]v1alpha1.EdgeDeployment, error)
 }
 
 type CRRespository struct {
@@ -56,14 +56,14 @@ func (r *CRRespository) RemoveFinalizer(ctx context.Context, edgeDeployment *v1a
 	return nil
 }
 
-func (r *CRRespository) ListByLabel(ctx context.Context, labelName, labelValue string) ([]v1alpha1.EdgeDeployment, error) {
+func (r *CRRespository) ListByLabel(ctx context.Context, labelName, labelValue string, namespace string) ([]v1alpha1.EdgeDeployment, error) {
 	edgeDeployments := v1alpha1.EdgeDeploymentList{}
 	requirement, err := labels.NewRequirement(labelName, selection.Equals, []string{labelValue})
 	if err != nil {
 		return nil, err
 	}
 	selector := labels.NewSelector().Add(*requirement)
-	err = r.client.List(ctx, &edgeDeployments, client.MatchingLabelsSelector{Selector: selector})
+	err = r.client.List(ctx, &edgeDeployments, client.MatchingLabelsSelector{Selector: selector}, client.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
