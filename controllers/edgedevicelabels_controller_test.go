@@ -23,6 +23,9 @@ import (
 )
 
 var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
+	const (
+		namespace string = "test"
+	)
 	var (
 		mockCtrl                   *gomock.Controller
 		deployRepoMock             *edgedeployment.MockRepository
@@ -31,7 +34,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		req                        = ctrl.Request{
 			NamespacedName: types.NamespacedName{
 				Name:      "test",
-				Namespace: "test",
+				Namespace: namespace,
 			},
 		}
 		device *v1alpha1.EdgeDevice
@@ -41,7 +44,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		return &v1alpha1.EdgeDeployment{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      name,
-				Namespace: "test",
+				Namespace: namespace,
 			},
 			Spec: v1alpha1.EdgeDeploymentSpec{
 				Type: "pod",
@@ -62,7 +65,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		device = &v1alpha1.EdgeDevice{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      "test",
-				Namespace: "test",
+				Namespace: namespace,
 			},
 			Spec: v1alpha1.EdgeDeviceSpec{
 				RequestTime: &v1.Time{},
@@ -130,7 +133,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any()).
+			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
 			Return(nil, fmt.Errorf("test")).
 			Times(1)
 
@@ -159,7 +162,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any()).
+			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
 			Return(deployments, nil).
 			Times(1)
 
@@ -178,7 +181,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any()).
+			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
 			Return(nil, nil).
 			Times(2)
 
@@ -217,11 +220,11 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any(), namespace).
 			Return(nil, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any()).
+			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
 			Return(deploymentList, nil).
 			Times(2)
 		edgeDeviceRepoMock.EXPECT().
@@ -270,11 +273,11 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any(), namespace).
 			Return(deploymentList, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any()).
+			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
 			Return(nil, nil).
 			Times(1)
 
@@ -335,23 +338,23 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any(), namespace).
 			Return([]v1alpha1.EdgeDeployment{*deployment1}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("label1"), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("label1"), gomock.Any(), namespace).
 			Return([]v1alpha1.EdgeDeployment{*deployment2}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DoesNotExistLabel), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DoesNotExistLabel), gomock.Any(), namespace).
 			Return([]v1alpha1.EdgeDeployment{*deployment3}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("exist"), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("exist"), gomock.Any(), namespace).
 			Return([]v1alpha1.EdgeDeployment{*deployment4}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("label2"), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("label2"), gomock.Any(), namespace).
 			Return([]v1alpha1.EdgeDeployment{*deployment5}, nil).
 			Times(1)
 		edgeDeviceRepoMock.EXPECT().
@@ -419,15 +422,15 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("toadd"), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("toadd"), gomock.Any(), namespace).
 			Return([]v1alpha1.EdgeDeployment{*deploymentToAdd}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("tokeep"), gomock.Any()).
+			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("tokeep"), gomock.Any(), namespace).
 			Return([]v1alpha1.EdgeDeployment{*deploymentToKeep}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
-			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any()).
+			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
 			Return(nil, nil).
 			Times(2)
 

@@ -86,7 +86,7 @@ func (r *EdgeDeviceLabelsReconciler) updateDeployments(ctx context.Context, devi
 	selectedDeployments := map[string]bool{} // each deployment we read is here. the value is true if the deployment matches the device
 
 	for selectorLabel, labelValue := range selectorLabels {
-		deployments, err := r.EdgeDeploymentRepository.ListByLabel(ctx, selectorLabel, labelValue)
+		deployments, err := r.EdgeDeploymentRepository.ListByLabel(ctx, selectorLabel, labelValue, device.Namespace)
 		if err != nil {
 			return err
 		}
