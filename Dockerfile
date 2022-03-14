@@ -14,6 +14,7 @@ COPY api/ api/
 COPY controllers/ controllers/
 COPY internal/ internal/
 COPY models/ models/
+COPY pkg/ pkg/
 COPY restapi/ restapi/
 COPY watchers/ watchers/
 # Build

@@ -34,11 +34,11 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/images"
 	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/mtls"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
+	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	"github.com/project-flotta/flotta-operator/restapi"
 	watchers "github.com/project-flotta/flotta-operator/watchers"
 	"go.uber.org/zap/zapcore"
@@ -303,7 +303,10 @@ func main() {
 					if r.TLS != nil {
 						authType := yggdrasilAPIHandler.GetAuthType(r)
 						if !mtls.VerifyRequest(r, authType, opts, CACertChain) {
-							w.WriteHeader(http.StatusUnauthorized)
+							// w.WriteHeader(http.StatusUnauthorized)
+							// return
+							// @TODO remove this on ECOPROJECT-402
+							h.ServeHTTP(w, r)
 							return
 						}
 					}

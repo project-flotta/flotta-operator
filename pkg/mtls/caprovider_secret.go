@@ -32,7 +32,7 @@ const (
 	clientCertCertKey   = "client.crt"
 
 	certOrganization       = "flotta-operator"
-	certRegisterCN         = "register"
+	CertRegisterCN         = "register"
 	certDefaultExpiration  = 1 // years
 	serverCertOrganization = "flotta-operator"
 )
@@ -90,7 +90,7 @@ func (config *CASecretProvider) GetCACertificate() (*CertificateGroup, error) {
 			Name:      CASecretName,
 		},
 		Data: map[string][]byte{
-			caCertCertKey:   certificateGroup.certPEM.Bytes(),
+			caCertCertKey:   certificateGroup.CertPEM.Bytes(),
 			caCertSecretKey: certificateGroup.PrivKeyPEM.Bytes(),
 		},
 	}
@@ -120,7 +120,7 @@ func (config *CASecretProvider) GetServerCertificate(dnsNames []string, localhos
 		// Certificate is already created, parse it as *certificateGroup and return
 		// it
 		certGroup := &CertificateGroup{
-			certPEM:    bytes.NewBuffer(secret.Data[serverCert]),
+			CertPEM:    bytes.NewBuffer(secret.Data[serverCert]),
 			PrivKeyPEM: bytes.NewBuffer(secret.Data[serverSecretKey]),
 		}
 
@@ -146,7 +146,7 @@ func (config *CASecretProvider) GetServerCertificate(dnsNames []string, localhos
 			Name:      HostTLSCertName,
 		},
 		Data: map[string][]byte{
-			serverCert:      cert.certPEM.Bytes(),
+			serverCert:      cert.CertPEM.Bytes(),
 			serverSecretKey: cert.PrivKeyPEM.Bytes(),
 		},
 	}
@@ -167,7 +167,7 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 	cert := &x509.Certificate{
 		SerialNumber: CACert.cert.SerialNumber,
 		Subject: pkix.Name{
-			CommonName:   certRegisterCN,
+			CommonName:   CertRegisterCN,
 			Organization: []string{certOrganization},
 			SerialNumber: name,
 		},
@@ -189,7 +189,7 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 	}
 
 	res := map[string][]byte{
-		clientCertCertKey:   certGroup.certPEM.Bytes(),
+		clientCertCertKey:   certGroup.CertPEM.Bytes(),
 		clientCertSecretKey: certGroup.PrivKeyPEM.Bytes(),
 	}
 	return res, nil

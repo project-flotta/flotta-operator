@@ -114,7 +114,7 @@ func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, err
 
 		caCerts = append(caCerts, caCert)
 		CACertChain = append(CACertChain, caCert.GetCert())
-		caCertPool.AppendCertsFromPEM(caCert.certPEM.Bytes())
+		caCertPool.AppendCertsFromPEM(caCert.CertPEM.Bytes())
 	}
 
 	if errors != nil {
@@ -205,7 +205,7 @@ func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOption
 	}
 
 	for _, cert := range r.TLS.PeerCertificates {
-		if cert.Subject.CommonName == certRegisterCN {
+		if cert.Subject.CommonName == CertRegisterCN {
 			return false
 		}
 		if _, err := cert.Verify(verifyOpts); err != nil {

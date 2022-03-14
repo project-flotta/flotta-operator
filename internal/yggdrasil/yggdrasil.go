@@ -8,7 +8,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/heartbeat"
-	"github.com/project-flotta/flotta-operator/internal/mtls"
+	"github.com/project-flotta/flotta-operator/pkg/mtls"
 
 	"net/http"
 	"net/url"
@@ -345,8 +345,9 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if !errors.IsNotFound(err) {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-
+		// @TODO here the base certificate should be the same CN as DeviceID and only expired.
 		// @TODO remove this IF when MTLS is finished
+		// @TODO remove this lines on ECOPROJECT-402
 		if registrationInfo.CertificateRequest != "" {
 			cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)
 			if err != nil {

@@ -15,7 +15,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/mtls"
+	"github.com/project-flotta/flotta-operator/pkg/mtls"
 
 	"github.com/project-flotta/flotta-operator/internal/images"
 	"github.com/project-flotta/flotta-operator/internal/k8sclient"
