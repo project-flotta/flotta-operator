@@ -91,7 +91,7 @@ gosec: ## Run gosec locally
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: manifests generate fmt vet test-fast ## Run tests.
 
-integration-test: ginkgo
+integration-test: ginkgo get-certs
 	$(DOCKER) pull quay.io/project-flotta/edgedevice
 	$(GINKGO) -focus=$(FOCUS) run test/e2e
 
@@ -115,8 +115,13 @@ vendor:
 	go mod tidy
 	go mod vendor
 
-##@ Build
+get-certs: # Write certificates to /tmp/ folder
+	kubectl get secret -n flotta flotta-ca  -o json | jq '.data."ca.crt"| @base64d' -r >/tmp/ca.pem
+	$(eval REG_SECRET_NAME := $(shell kubectl get secrets -n flotta -l reg-client-ca=true --sort-by=.metadata.creationTimestamp | tail -1 | awk '{print $$1}'))
+	kubectl -n flotta get secret $(REG_SECRET_NAME) -o json | jq -r '.data."client.crt"| @base64d' > /tmp/cert.pem
+	kubectl -n flotta get secret $(REG_SECRET_NAME) -o json | jq -r '.data."client.key"| @base64d' > /tmp/key.pem
 
+##@ Build
 build: generate fmt vet ## Build manager binary.
 	go build -mod=vendor -o bin/manager main.go
 
