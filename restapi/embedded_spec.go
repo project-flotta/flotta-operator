@@ -938,6 +938,13 @@ func init() {
         "imageRegistries": {
           "$ref": "#/definitions/image-registries"
         },
+        "labels": {
+          "description": "Workload labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "log_collection": {
           "description": "Log collection target for this workload",
           "type": "string"
@@ -1937,6 +1944,13 @@ func init() {
         },
         "imageRegistries": {
           "$ref": "#/definitions/image-registries"
+        },
+        "labels": {
+          "description": "Workload labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "log_collection": {
           "description": "Log collection target for this workload",

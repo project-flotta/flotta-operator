@@ -8,6 +8,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/heartbeat"
+	"github.com/project-flotta/flotta-operator/internal/labels"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 
 	"net/http"
@@ -492,6 +493,7 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 		workload := models.Workload{
 			Name:          deployment.Name,
 			Namespace:     deployment.Namespace,
+			Labels:        labels.GetPodmanLabels(deployment.Labels),
 			Specification: string(podSpec),
 			Data:          data,
 			LogCollection: spec.LogCollection,
