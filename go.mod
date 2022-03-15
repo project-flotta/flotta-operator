@@ -21,6 +21,7 @@ require (
 	github.com/hashicorp/go-multierror v1.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/kube-object-storage/lib-bucket-provisioner v0.0.0-20210818162813-3eee31c01875
+	github.com/moby/sys/mount v0.3.1 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.10.3
