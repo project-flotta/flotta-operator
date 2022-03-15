@@ -2,6 +2,7 @@ package heartbeat
 
 import (
 	"context"
+	mtrcs "github.com/project-flotta/flotta-operator/internal/metrics"
 	"time"
 
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
@@ -15,12 +16,13 @@ type SynchronousHandler struct {
 	updater          Updater
 }
 
-func NewSynchronousHandler(deviceRepository edgedevice.Repository, recorder record.EventRecorder) *SynchronousHandler {
+func NewSynchronousHandler(deviceRepository edgedevice.Repository, recorder record.EventRecorder, metrics mtrcs.Metrics) *SynchronousHandler {
 	return &SynchronousHandler{
 		deviceRepository: deviceRepository,
 		updater: Updater{
 			deviceRepository: deviceRepository,
 			recorder:         recorder,
+			metrics:          metrics,
 		},
 	}
 }

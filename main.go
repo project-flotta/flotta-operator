@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/project-flotta/flotta-operator/internal/informers"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -243,6 +244,14 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+
+	informer, err := mgr.GetCache().GetInformer(context.Background(), &managementv1alpha1.EdgeDevice{})
+	if err != nil {
+		setupLog.Error(err, "unable to get EdgeDevice Informer")
+		os.Exit(1)
+	}
+	informer.AddEventHandler(informers.NewEdgeDeviceEventHandler(metricsObj))
+
 	registryAuth := images.NewRegistryAuth(mgr.GetClient())
 	go func() {
 

@@ -1728,6 +1728,10 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil).
 					Times(1)
 
+				metricsMock.EXPECT().
+					RecordEdgeDevicePresence(device.Namespace, device.Name).
+					Times(1)
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -1778,6 +1782,10 @@ var _ = Describe("Yggdrasil", func() {
 						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("workload-1"))
 					}).
 					Return(nil).
+					Times(1)
+
+				metricsMock.EXPECT().
+					RecordEdgeDevicePresence(device.Namespace, device.Name).
 					Times(1)
 
 				params := api.PostDataMessageForDeviceParams{
@@ -1838,6 +1846,10 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil).
 					Times(1)
 
+				metricsMock.EXPECT().
+					RecordEdgeDevicePresence(device.Namespace, device.Name).
+					Times(1)
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -1896,6 +1908,10 @@ var _ = Describe("Yggdrasil", func() {
 					Return(fmt.Errorf("Failed")).
 					Times(4)
 
+				metricsMock.EXPECT().
+					RecordEdgeDevicePresence(device.Namespace, device.Name).
+					AnyTimes()
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -1934,6 +1950,10 @@ var _ = Describe("Yggdrasil", func() {
 					UpdateLabels(gomock.Any(), device, gomock.Any()).
 					Return(nil).
 					Times(1)
+
+				metricsMock.EXPECT().
+					RecordEdgeDevicePresence(device.Namespace, device.Name).
+					AnyTimes()
 
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,

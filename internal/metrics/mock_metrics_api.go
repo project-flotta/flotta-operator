@@ -68,3 +68,39 @@ func (mr *MockMetricsMockRecorder) IncEdgeDeviceUnregistration() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncEdgeDeviceUnregistration", reflect.TypeOf((*MockMetrics)(nil).IncEdgeDeviceUnregistration))
 }
+
+// RecordEdgeDevicePresence mocks base method.
+func (m *MockMetrics) RecordEdgeDevicePresence(namespace, name string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RecordEdgeDevicePresence", namespace, name)
+}
+
+// RecordEdgeDevicePresence indicates an expected call of RecordEdgeDevicePresence.
+func (mr *MockMetricsMockRecorder) RecordEdgeDevicePresence(namespace, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordEdgeDevicePresence", reflect.TypeOf((*MockMetrics)(nil).RecordEdgeDevicePresence), namespace, name)
+}
+
+// RegisterDeviceCounter mocks base method.
+func (m *MockMetrics) RegisterDeviceCounter(namespace, name string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RegisterDeviceCounter", namespace, name)
+}
+
+// RegisterDeviceCounter indicates an expected call of RegisterDeviceCounter.
+func (mr *MockMetricsMockRecorder) RegisterDeviceCounter(namespace, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterDeviceCounter", reflect.TypeOf((*MockMetrics)(nil).RegisterDeviceCounter), namespace, name)
+}
+
+// RemoveDeviceCounter mocks base method.
+func (m *MockMetrics) RemoveDeviceCounter(namespace, name string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RemoveDeviceCounter", namespace, name)
+}
+
+// RemoveDeviceCounter indicates an expected call of RemoveDeviceCounter.
+func (mr *MockMetricsMockRecorder) RemoveDeviceCounter(namespace, name interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveDeviceCounter", reflect.TypeOf((*MockMetrics)(nil).RemoveDeviceCounter), namespace, name)
+}
