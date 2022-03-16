@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 	"unicode"
@@ -13,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 	"github.com/google/uuid"
 	"github.com/onsi/ginkgo"
 
@@ -25,6 +27,17 @@ import (
 
 	"k8s.io/client-go/kubernetes"
 )
+
+var certsPath = "/etc/pki/consumer"
+var CAcertsPath = filepath.Join(certsPath, "ca.pem")
+var ClientCertPath = filepath.Join(certsPath, "cert.pem")
+var ClientKeyPath = filepath.Join(certsPath, "key.pem")
+var testCertificates = []string{CAcertsPath, ClientKeyPath, ClientCertPath}
+var localTestCertificates = []string{
+	"/tmp/ca.pem",
+	"/tmp/cert.pem",
+	"/tmp/key.pem",
+}
 
 var edgeDeviceResource = schema.GroupVersionResource{Group: "management.project-flotta.io", Version: "v1alpha1", Resource: "edgedevices"}
 
@@ -88,6 +101,33 @@ func (e *edgeDeviceDocker) WaitForDeploymentState(deploymentName string, deploym
 
 		return false
 	})
+}
+
+func (e *edgeDeviceDocker) CopyCerts() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	for _, certificatePath := range localTestCertificates {
+		fp, err := archive.Tar(certificatePath, archive.Gzip)
+		if err != nil {
+			return err
+		}
+		err = e.cli.CopyToContainer(ctx, e.name, certsPath, fp, types.CopyToContainerOptions{AllowOverwriteDirWithFile: true})
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, certificatePath := range testCertificates {
+		if _, err := e.Exec(fmt.Sprintf("chmod 660 %s", certificatePath)); err != nil {
+			return err
+		}
+	}
+
+	if _, err := e.Exec(fmt.Sprintf("echo 'ca-root = [\"%v\"]' >> /etc/yggdrasil/config.toml", CAcertsPath)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (e *edgeDeviceDocker) Exec(command string) (string, error) {
@@ -183,6 +223,10 @@ func (e *edgeDeviceDocker) Register() error {
 
 	if _, err = e.Exec(fmt.Sprintf("echo 'client-id = \"%v\"' >> /etc/yggdrasil/config.toml", e.machineId)); err != nil {
 		return err
+	}
+
+	if err := e.CopyCerts(); err != nil {
+		return fmt.Errorf("cannot copy certificates to device: %v", err)
 	}
 
 	if _, err = e.Exec("systemctl start podman"); err != nil {
