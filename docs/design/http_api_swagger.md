@@ -932,6 +932,7 @@ Status: Internal Server Error
 | log_collection | string| `string` |  | | Log collection target for this workload |  |
 | metrics | [Metrics](#metrics)| `Metrics` |  | | Metrics endpoint configuration |  |
 | name | string| `string` |  | | Name of the workload |  |
+| namespace | string| `string` |  | | Namespace of the workload |  |
 | specification | string| `string` |  | |  |  |
 
 

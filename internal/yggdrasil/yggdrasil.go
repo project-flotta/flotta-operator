@@ -448,6 +448,7 @@ func (h *Handler) toWorkloadList(ctx context.Context, logger logr.Logger, deploy
 
 		workload := models.Workload{
 			Name:          deployment.Name,
+			Namespace:     deployment.Namespace,
 			Specification: string(podSpec),
 			Data:          data,
 			LogCollection: spec.LogCollection,
