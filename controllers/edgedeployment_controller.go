@@ -275,8 +275,7 @@ func (r *EdgeDeploymentReconciler) getMatchingEdgeDevices(ctx context.Context, e
 }
 
 func (r *EdgeDeploymentReconciler) getLabelledEdgeDevices(ctx context.Context, name, namespace string) ([]managementv1alpha1.EdgeDevice, error) {
-	selector := metav1.LabelSelector{MatchLabels: map[string]string{labels.WorkloadLabel(name): "true"}}
-	return r.EdgeDeviceRepository.ListForSelector(ctx, &selector, namespace)
+	return r.EdgeDeviceRepository.ListForWorkload(ctx, name, namespace)
 }
 
 func (r *EdgeDeploymentReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {

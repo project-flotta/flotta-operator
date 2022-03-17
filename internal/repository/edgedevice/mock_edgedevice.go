@@ -66,6 +66,21 @@ func (mr *MockRepositoryMockRecorder) ListForSelector(arg0, arg1, arg2 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListForSelector", reflect.TypeOf((*MockRepository)(nil).ListForSelector), arg0, arg1, arg2)
 }
 
+// ListForWorkload mocks base method.
+func (m *MockRepository) ListForWorkload(arg0 context.Context, arg1, arg2 string) ([]v1alpha1.EdgeDevice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListForWorkload", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]v1alpha1.EdgeDevice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListForWorkload indicates an expected call of ListForWorkload.
+func (mr *MockRepositoryMockRecorder) ListForWorkload(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListForWorkload", reflect.TypeOf((*MockRepository)(nil).ListForWorkload), arg0, arg1, arg2)
+}
+
 // Patch mocks base method.
 func (m *MockRepository) Patch(arg0 context.Context, arg1, arg2 *v1alpha1.EdgeDevice) error {
 	m.ctrl.T.Helper()

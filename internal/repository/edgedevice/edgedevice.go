@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	indexer "github.com/project-flotta/flotta-operator/internal/repository"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -17,6 +19,7 @@ type Repository interface {
 	PatchStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) error
 	Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
 	ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error)
+	ListForWorkload(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error)
 	RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error
 	UpdateLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error
 }
@@ -59,6 +62,16 @@ func (r CRRepository) ListForSelector(ctx context.Context, selector *metav1.Labe
 	}
 	var edl v1alpha1.EdgeDeviceList
 	err = r.client.List(ctx, &edl, &options)
+	if err != nil {
+		return nil, err
+	}
+
+	return edl.Items, nil
+}
+
+func (r CRRepository) ListForWorkload(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error) {
+	var edl v1alpha1.EdgeDeviceList
+	err := r.client.List(ctx, &edl, client.MatchingFields{indexer.DeviceByWorkloadIndexKey: name}, client.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}

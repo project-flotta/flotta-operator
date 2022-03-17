@@ -34,7 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
-// EdgeDeviceReconciler reconciles a EdgeDevice object
+// EdgeDeviceLabelsReconciler reconciles a EdgeDevice object
 type EdgeDeviceLabelsReconciler struct {
 	EdgeDeviceRepository     edgedevice.Repository
 	EdgeDeploymentRepository edgedeployment.Repository
