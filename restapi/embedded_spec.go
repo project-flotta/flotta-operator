@@ -941,6 +941,10 @@ func init() {
           "description": "Name of the workload",
           "type": "string"
         },
+        "namespace": {
+          "description": "Namespace of the workload",
+          "type": "string"
+        },
         "specification": {
           "type": "string"
         }
@@ -1922,6 +1926,10 @@ func init() {
         },
         "name": {
           "description": "Name of the workload",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Namespace of the workload",
           "type": "string"
         },
         "specification": {

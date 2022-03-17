@@ -34,6 +34,9 @@ type Workload struct {
 	// Name of the workload
 	Name string `json:"name,omitempty"`
 
+	// Namespace of the workload
+	Namespace string `json:"namespace,omitempty"`
+
 	// specification
 	Specification string `json:"specification,omitempty"`
 }

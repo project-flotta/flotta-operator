@@ -307,6 +307,9 @@ definitions:
       name:
         type: string
         description: Name of the workload
+      namespace:
+        type: string
+        description: Namespace of the workload
       specification:
         type: string
       data:

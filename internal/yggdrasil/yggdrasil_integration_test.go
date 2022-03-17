@@ -491,6 +491,7 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Workloads).To(HaveLen(1))
 			workload := config.Workloads[0]
 			Expect(workload.Name).To(Equal("workload1"))
+			Expect(workload.Namespace).To(Equal("default"))
 			Expect(workload.ImageRegistries).To(BeNil())
 		})
 
