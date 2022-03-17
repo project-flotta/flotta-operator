@@ -212,7 +212,7 @@ func (e *edgeDeviceDocker) waitForDevice(cond func() bool) error {
 
 func (e *edgeDeviceDocker) Register() error {
 	ctx := context.Background()
-	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: EdgeDeviceImage}, &container.HostConfig{Privileged: true}, nil, nil, e.name)
+	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: EdgeDeviceImage}, &container.HostConfig{Privileged: true, ExtraHosts: []string{"project-flotta.io:172.17.0.1"}}, nil, nil, e.name)
 	if err != nil {
 		return err
 	}
