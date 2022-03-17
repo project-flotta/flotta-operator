@@ -45,7 +45,19 @@ To force device re-registration remove EdgeDevice CR from the cluster and `/var/
    `IMG=<image repository and tag> make install deploy`
 3. Forward flotta-operator ports to allow the agent to communicate with it:
  
-   `kubectl port-forward service/flotta-operator-controller-manager -n flotta 8888 --address 0.0.0.0`
+   `kubectl port-forward service/flotta-operator-controller-manager -n flotta 8043 --address 0.0.0.0`
+
+4. Dump the registration cert using the makefile target:
+
+```
+make get-certs
+```
+
+5. For running with Yggdrasil, the certs should have the correct permissions
+```
+sudo chown root:root /tmp/*.pem
+```
+
 
 ### yggdrasil
 
@@ -68,7 +80,31 @@ Following step should be done after flotta-device-worker is installed on the edg
 
 Start yggdrasil with from the yggdrasil repository directory:
 
-`sudo go run ./cmd/yggd --log-level trace --transport http --cert-file /etc/pki/consumer/cert.pem --key-file /etc/pki/consumer/key.pem --client-id-source machine-id --http-server <your.k8s-ingress:8888>`
+`
+sudo yggd \
+  --protocol http \
+  --path-prefix api/flotta-management/v1 \
+  --client-id $(cat /etc/machine-id) \
+  --cert-file /tmp/cert.pem \
+  --key-file /tmp/key.pem \
+  --ca-root /tmp/ca.pem \
+  --socket-addr @yggd \
+  --server 127.0.0.1:8043
+`
+
+When running Yggdrasil, a new edgedevice should be added into the list
+
+```
+kubectl get edgedevices
+```
+
+And the certificate should be renewed, with one that it's specific for that
+device.
+
+```
+make check-certs
+```
+
 
 ### flotta-device-worker
 
