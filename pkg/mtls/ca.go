@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
@@ -14,6 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -26,6 +28,9 @@ const (
 
 	defaultDaysToExpireClientCertificate = 7
 )
+
+// RequestAuthKey is a type to be used on request context and to be validated on verify Request
+type RequestAuthKey string
 
 // CAProvider The main reason to have an interface here is to be able to extend this to
 // future Cert providers, like:
@@ -193,11 +198,14 @@ func isClientCertificateSigned(PeerCertificates []*x509.Certificate, CAChain []*
 // registration endpoint: Any cert signed, even if it's expired.
 // All endpoints: checking that it's valid certificate.
 // @TODO check here the list of rejected certificates.
-func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOptions, CACertChain []*x509.Certificate) bool {
+func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOptions, CACertChain []*x509.Certificate, authzKey RequestAuthKey) bool {
 
 	if len(r.TLS.PeerCertificates) == 0 {
 		return false
 	}
+
+	*r = *r.WithContext(context.WithValue(
+		r.Context(), authzKey, strings.ToLower(r.TLS.PeerCertificates[0].Subject.CommonName)))
 
 	if verifyType == YggdrasilRegisterAuth {
 		res := isClientCertificateSigned(r.TLS.PeerCertificates, CACertChain)
@@ -208,8 +216,9 @@ func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOption
 		if cert.Subject.CommonName == CertRegisterCN {
 			return false
 		}
+
 		if _, err := cert.Verify(verifyOpts); err != nil {
-			// TODO log debug here with the error. Can be too verbose.
+			log.Log.V(5).Info("Failed to verify client cert: %v", err)
 			return false
 		}
 	}
