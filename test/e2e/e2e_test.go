@@ -49,7 +49,6 @@ var _ = Describe("e2e", func() {
 		_ = device.Unregister()
 		_ = device.Remove()
 	})
-
 	Context("Sanity", func() {
 		It("Deploy valid edgedeployment to registered device", func() {
 			// given
@@ -247,6 +246,44 @@ var _ = Describe("e2e", func() {
 
 			err = clientset.CoreV1().ConfigMaps(Namespace).Delete(context.TODO(), "myconfigmap", metav1.DeleteOptions{})
 			Expect(err).To(BeNil())
+		})
+	})
+
+	Context("Network issues", func() {
+		conformanceTest := func() {
+			// when
+			_, err = deployment.Create(edgedeployemntDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			Expect(err).To(BeNil())
+
+			// then
+			// Check the edgedevice report proper state of workload:
+			err = device.WaitForDeploymentState("nginx", "Running")
+			Expect(err).To(BeNil())
+
+			// Check the nginx is serving content:
+			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
+			Expect(err).To(BeNil())
+			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
+		}
+
+		It("Packets delayed 200ms", func() {
+			// given
+			err := device.Register(
+				"dnf install iproute -y",
+				"tc qdisc add dev eth0 root netem delay 200ms")
+			Expect(err).To(BeNil())
+
+			conformanceTest()
+		})
+
+		It("Some packets drops", func() {
+			// given
+			err := device.Register(
+				"dnf install iproute -y",
+				"tc qdisc add dev eth0 root netem loss 10%")
+			Expect(err).To(BeNil())
+
+			conformanceTest()
 		})
 	})
 })

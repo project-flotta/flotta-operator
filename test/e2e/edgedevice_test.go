@@ -50,7 +50,7 @@ const (
 
 type EdgeDevice interface {
 	GetId() string
-	Register() error
+	Register(cmds ...string) error
 	Unregister() error
 	Get() (*unstructured.Unstructured, error)
 	Remove() error
@@ -210,7 +210,10 @@ func (e *edgeDeviceDocker) waitForDevice(cond func() bool) error {
 	return fmt.Errorf("Error waiting for edgedevice %v[%v]", e.name, e.machineId)
 }
 
-func (e *edgeDeviceDocker) Register() error {
+// Register register the endgedevice with the operator API. A set of commands
+// can be used to execute just before the registration happens. The main use
+// case is to add something needed for the test, like network-latency.
+func (e *edgeDeviceDocker) Register(cmds ...string) error {
 	ctx := context.Background()
 	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: EdgeDeviceImage}, &container.HostConfig{Privileged: true, ExtraHosts: []string{"project-flotta.io:172.17.0.1"}}, nil, nil, e.name)
 	if err != nil {
@@ -219,6 +222,12 @@ func (e *edgeDeviceDocker) Register() error {
 
 	if err := e.cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return err
+	}
+
+	for _, cmd := range cmds {
+		if _, err = e.Exec(cmd); err != nil {
+			return fmt.Errorf("Cannot execute register command '%s': %v", cmd, err)
+		}
 	}
 
 	if _, err = e.Exec(fmt.Sprintf("echo 'client-id = \"%v\"' >> /etc/yggdrasil/config.toml", e.machineId)); err != nil {
