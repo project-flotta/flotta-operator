@@ -1721,7 +1721,7 @@ var _ = Describe("Yggdrasil", func() {
 				edgeDeviceRepoMock.EXPECT().
 					PatchStatus(gomock.Any(), device, gomock.Any()).
 					Return(nil).
-					Times(1)
+					Times(0)
 
 				edgeDeviceRepoMock.EXPECT().
 					UpdateLabels(gomock.Any(), device, gomock.Any()).
@@ -1783,6 +1783,64 @@ var _ = Describe("Yggdrasil", func() {
 					}).
 					Return(nil).
 					Times(1)
+
+				metricsMock.EXPECT().
+					RecordEdgeDevicePresence(device.Namespace, device.Name).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content:   content,
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(context.TODO(), params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
+			})
+
+			It("Don't patch status for no changes", func() {
+				// given
+				content := models.Heartbeat{
+					Status:  "running",
+					Version: "1",
+					Workloads: []*models.WorkloadStatus{
+						{Name: "workload-1", Status: "running"}},
+					Hardware: &models.HardwareInfo{
+						Hostname: "test-hostname",
+					},
+				}
+				device.Status.Phase = content.Status
+				device.Status.Deployments = []v1alpha1.Deployment{{
+					Name:  "workload-1",
+					Phase: "running",
+				}}
+				device.Status.LastSyncedResourceVersion = content.Version
+				device.Status.Hardware = &v1alpha1.Hardware{
+					Hostname:   content.Hardware.Hostname,
+					Disks:      []*v1alpha1.Disk{},
+					Interfaces: []*v1alpha1.Interface{},
+					Gpus:       []*v1alpha1.Gpu{},
+				}
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					UpdateLabels(gomock.Any(), device, gomock.Any()).
+					Return(nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					PatchStatus(gomock.Any(), device, gomock.Any()).
+					Return(nil).
+					Times(0)
 
 				metricsMock.EXPECT().
 					RecordEdgeDevicePresence(device.Namespace, device.Name).
@@ -1896,15 +1954,23 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Fail on update device status", func() {
 				// given
+				content := models.Heartbeat{
+					Version: "1",
+				}
+
 				// updateDeviceStatus try to patch the status 4 times, and Read the
 				// device from repo too.
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
-					Return(device, nil).
+					DoAndReturn(func(_, _, _ interface{}) (*v1alpha1.EdgeDevice, error) {
+						return device.DeepCopy(), nil
+					}).
 					Times(4)
 
+				patched := device.DeepCopy()
+				patched.Status.LastSyncedResourceVersion = content.Version
 				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), device, gomock.Any()).
+					PatchStatus(gomock.Any(), patched, gomock.Any()).
 					Return(fmt.Errorf("Failed")).
 					Times(4)
 
@@ -1916,6 +1982,7 @@ var _ = Describe("Yggdrasil", func() {
 					DeviceID: deviceName,
 					Message: &models.Message{
 						Directive: directiveName,
+						Content:   content,
 					},
 				}
 
@@ -1930,24 +1997,31 @@ var _ = Describe("Yggdrasil", func() {
 				// given
 				// updateDeviceStatus try to patch the status 4 times, and Read the
 				// device from repo too, in this case will retry 2 times.
+				content := models.Heartbeat{
+					Version: "1",
+				}
 
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
-					Return(device, nil).
+					DoAndReturn(func(_, _, _ interface{}) (*v1alpha1.EdgeDevice, error) {
+						return device.DeepCopy(), nil
+					}).
 					Times(4)
 
+				patched := device.DeepCopy()
+				patched.Status.LastSyncedResourceVersion = content.Version
 				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), device, gomock.Any()).
+					PatchStatus(gomock.Any(), patched, gomock.Any()).
 					Return(fmt.Errorf("Failed")).
 					Times(3)
 
 				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), device, gomock.Any()).
+					PatchStatus(gomock.Any(), patched, gomock.Any()).
 					Return(nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
-					UpdateLabels(gomock.Any(), device, gomock.Any()).
+					UpdateLabels(gomock.Any(), patched, gomock.Any()).
 					Return(nil).
 					Times(1)
 
@@ -1959,6 +2033,7 @@ var _ = Describe("Yggdrasil", func() {
 					DeviceID: deviceName,
 					Message: &models.Message{
 						Directive: directiveName,
+						Content:   content,
 					},
 				}
 
