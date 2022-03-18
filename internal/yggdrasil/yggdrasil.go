@@ -363,6 +363,14 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		_, err = h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err == nil {
+
+			if !IsOwnDevice(ctx, deviceID) {
+				// At this moment, the registration certificate it's no longer valid,
+				// because the CR is already created, and need to be a device
+				// certificate.
+				return operations.NewPostDataMessageForDeviceForbidden()
+			}
+
 			// @TODO remove this IF when MTLS is finished
 			if registrationInfo.CertificateRequest != "" {
 				cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)

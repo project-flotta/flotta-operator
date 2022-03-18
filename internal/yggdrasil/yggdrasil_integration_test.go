@@ -2215,6 +2215,31 @@ var _ = Describe("Yggdrasil", func() {
 					Expect(data.Payload.Content).NotTo(BeNil())
 				})
 
+				It("Device is already register, and send a CSR to renew with invalid cert", func() {
+					// given
+					edgeDeviceRepoMock.EXPECT().
+						Read(gomock.Any(), deviceName, testNamespace).
+						Return(device, nil).
+						Times(1)
+
+					params := api.PostDataMessageForDeviceParams{
+						DeviceID: deviceName,
+						Message: &models.Message{
+							Directive: directiveName,
+							Content: models.RegistrationInfo{
+								CertificateRequest: string(givenCert),
+								Hardware:           nil,
+							},
+						},
+					}
+
+					// when
+					res := handler.PostDataMessageForDevice(context.TODO(), params)
+
+					// then
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceForbidden{}))
+				})
+
 				It("Device is not registered, and send a valid CSR", func() {
 
 					// given
