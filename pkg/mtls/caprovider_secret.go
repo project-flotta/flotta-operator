@@ -225,7 +225,7 @@ func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expira
 		NotBefore:          time.Now().AddDate(0, 0, -1), // 1 day before for time drift issues
 		NotAfter:           expiration,
 		KeyUsage:           x509.KeyUsageDigitalSignature,
-		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		ExtKeyUsage:        []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 	}
 
 	// We always make sure that commonName is the device one, so noone can try to
