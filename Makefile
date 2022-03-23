@@ -194,7 +194,7 @@ kustomize: ## Download kustomize locally if necessary.
 GINKGO = $(shell pwd)/bin/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.
 ifeq (, $(shell which ginkgo))
-	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2)
+	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@v2.1.3)
 endif
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
