@@ -1,8 +1,7 @@
 package v1alpha1_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -102,7 +101,8 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		table.DescribeTable("test all invalid fields", func(editEdgeDeployment func()) {
+		DescribeTable("test all invalid fields", func(editEdgeDeployment func()) {
+
 			// given
 			editEdgeDeployment()
 
@@ -114,32 +114,32 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 			Expect(errCreate).To(HaveOccurred())
 			Expect(errUpdate).To(HaveOccurred())
 		},
-			table.Entry("container.lifecycle", func() {
+			Entry("container.lifecycle", func() {
 				podSpec.Containers[0].Lifecycle = &corev1.Lifecycle{}
 			}),
-			table.Entry("container.livenessProbe", func() {
+			Entry("container.livenessProbe", func() {
 				podSpec.Containers[0].LivenessProbe = &corev1.Probe{}
 			}),
-			table.Entry("container.readinessProbe", func() {
+			Entry("container.readinessProbe", func() {
 				podSpec.Containers[0].ReadinessProbe = &corev1.Probe{}
 			}),
-			table.Entry("container.startupProbe", func() {
+			Entry("container.startupProbe", func() {
 				podSpec.Containers[0].StartupProbe = &corev1.Probe{}
 			}),
-			table.Entry("container.volumeDevices", func() {
+			Entry("container.volumeDevices", func() {
 				podSpec.Containers[0].VolumeDevices = []corev1.VolumeDevice{{}}
 			}),
-			table.Entry("container.resources.limits", func() {
+			Entry("container.resources.limits", func() {
 				podSpec.Containers[0].Resources.Limits = corev1.ResourceList{
 					corev1.ResourceCPU: *resource.NewQuantity(0, resource.BinarySI),
 				}
 			}),
-			table.Entry("container.resources.requests", func() {
+			Entry("container.resources.requests", func() {
 				podSpec.Containers[0].Resources.Requests = corev1.ResourceList{
 					corev1.ResourceCPU: *resource.NewQuantity(0, resource.BinarySI),
 				}
 			}),
-			table.Entry("container.env.valueFrom.fieldRef", func() {
+			Entry("container.env.valueFrom.fieldRef", func() {
 				podSpec.Containers[0].Env = []corev1.EnvVar{
 					{
 						Name: "var",
@@ -149,7 +149,7 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 					},
 				}
 			}),
-			table.Entry("container.env.valueFrom.resourceFieldRef", func() {
+			Entry("container.env.valueFrom.resourceFieldRef", func() {
 				podSpec.Containers[0].Env = []corev1.EnvVar{
 					{
 						Name: "var",
@@ -159,7 +159,7 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 					},
 				}
 			}),
-			table.Entry("volumes", func() {
+			Entry("volumes", func() {
 				podSpec.Volumes = []corev1.Volume{
 					{
 						Name: "volume",

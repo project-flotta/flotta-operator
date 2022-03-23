@@ -7,8 +7,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 
@@ -438,7 +437,7 @@ var _ = Describe("Storage", func() {
 			Expect(result).To(BeNil())
 		})
 
-		table.DescribeTable("missing ConfigMap field",
+		DescribeTable("missing ConfigMap field",
 			func(fieldName string) {
 				//given
 				cmData := getCmData()
@@ -453,13 +452,13 @@ var _ = Describe("Storage", func() {
 				Expect(err).ToNot(BeNil())
 				Expect(result).To(BeNil())
 			},
-			table.Entry("BUCKET_HOST", "BUCKET_HOST"),
-			table.Entry("BUCKET_PORT", "BUCKET_PORT"),
-			table.Entry("BUCKET_NAME", "BUCKET_NAME"),
-			table.Entry("BUCKET_REGION", "BUCKET_REGION"),
+			Entry("BUCKET_HOST", "BUCKET_HOST"),
+			Entry("BUCKET_PORT", "BUCKET_PORT"),
+			Entry("BUCKET_NAME", "BUCKET_NAME"),
+			Entry("BUCKET_REGION", "BUCKET_REGION"),
 		)
 
-		table.DescribeTable("missing Secret field",
+		DescribeTable("missing Secret field",
 			func(fieldName string, optional bool) {
 				//given
 				secretData := getSecretData()
@@ -479,9 +478,9 @@ var _ = Describe("Storage", func() {
 					Expect(result).To(BeNil())
 				}
 			},
-			table.Entry("AWS_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID", false),
-			table.Entry("AWS_SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY", false),
-			table.Entry("tls.crt", "tls.crt", true),
+			Entry("AWS_ACCESS_KEY_ID", "AWS_ACCESS_KEY_ID", false),
+			Entry("AWS_SECRET_ACCESS_KEY", "AWS_SECRET_ACCESS_KEY", false),
+			Entry("tls.crt", "tls.crt", true),
 		)
 
 		It("success", func() {

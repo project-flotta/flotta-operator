@@ -23,8 +23,9 @@ require (
 	github.com/kube-object-storage/lib-bucket-provisioner v0.0.0-20210818162813-3eee31c01875
 	github.com/moby/sys/mount v0.3.1 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.10.3
+	github.com/onsi/ginkgo v1.16.4
+	github.com/onsi/ginkgo/v2 v2.1.3
+	github.com/onsi/gomega v1.18.1
 	github.com/openshift/api v3.9.0+incompatible
 	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/client_model v0.2.0
