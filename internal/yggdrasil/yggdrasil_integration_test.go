@@ -22,8 +22,7 @@ import (
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/golang/mock/gomock"
-	. "github.com/onsi/ginkgo"
-	"github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1250,7 +1249,8 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				},
 			}
-			table.DescribeTable("Test table", func(podData *v1alpha1.Pod) {
+
+			DescribeTable("Test table", func(podData *v1alpha1.Pod) {
 				// given
 				deviceName := "foo"
 				device := getDevice(deviceName)
@@ -1292,9 +1292,9 @@ var _ = Describe("Yggdrasil", func() {
 				// then
 				Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
 			},
-				table.Entry("missing secret key", &podData1),
-				table.Entry("partially optional secret key - mandatory appears first", &podData2),
-				table.Entry("partially optional secret key - optional appears first", &podData3),
+				Entry("missing secret key", &podData1),
+				Entry("partially optional secret key - mandatory appears first", &podData2),
+				Entry("partially optional secret key - optional appears first", &podData3),
 			)
 		})
 
