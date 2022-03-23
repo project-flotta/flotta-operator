@@ -842,6 +842,43 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(config.Workloads[0].Metrics).To(BeNil())
 			})
 
+			It("receiver empty configuration", func() {
+				// given
+				device.Status.Deployments = nil
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+				Expect(config.Configuration.Metrics).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.Receiver).To(Equal(yggdrasil.GetDefaultMetricsReceiver()))
+			})
+
+			It("receiver full configuration", func() {
+				// given
+				device.Status.Deployments = nil
+				metricsReceiverConfig := &v1alpha1.MetricsReceiverConfiguration{
+					URL:               "http://metricsreceiver.io:19291/api/v1/receive",
+					RequestNumSamples: 1000,
+					TimeoutSeconds:    32,
+				}
+				expectedConfig := (*models.MetricsReceiverConfiguration)(metricsReceiverConfig)
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					ReceiverConfiguration: metricsReceiverConfig,
+				}
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+				Expect(config.Configuration.Metrics).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.Receiver).To(Equal(expectedConfig))
+			})
+
 		})
 
 		It("Image registry authfile is included", func() {

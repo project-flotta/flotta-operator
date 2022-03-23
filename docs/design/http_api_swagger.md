@@ -775,8 +775,26 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| receiver | [MetricsReceiverConfiguration](#metrics-receiver-configuration)| `MetricsReceiverConfiguration` |  | |  |  |
 | retention | [MetricsRetention](#metrics-retention)| `MetricsRetention` |  | |  |  |
 | system | [SystemMetricsConfiguration](#system-metrics-configuration)| `SystemMetricsConfiguration` |  | |  |  |
+
+
+
+### <span id="metrics-receiver-configuration"></span> metrics-receiver-configuration
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| request_num_samples | integer| `int64` |  | |  |  |
+| timeout_seconds | integer| `int64` |  | |  |  |
+| url | string| `string` |  | |  |  |
 
 
 

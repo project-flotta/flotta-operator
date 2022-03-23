@@ -753,11 +753,28 @@ func init() {
       "description": "Defines metrics configuration for the device",
       "type": "object",
       "properties": {
+        "receiver": {
+          "$ref": "#/definitions/metrics-receiver-configuration"
+        },
         "retention": {
           "$ref": "#/definitions/metrics-retention"
         },
         "system": {
           "$ref": "#/definitions/system-metrics-configuration"
+        }
+      }
+    },
+    "metrics-receiver-configuration": {
+      "type": "object",
+      "properties": {
+        "request_num_samples": {
+          "type": "integer"
+        },
+        "timeout_seconds": {
+          "type": "integer"
+        },
+        "url": {
+          "type": "string"
         }
       }
     },
@@ -1760,11 +1777,28 @@ func init() {
       "description": "Defines metrics configuration for the device",
       "type": "object",
       "properties": {
+        "receiver": {
+          "$ref": "#/definitions/metrics-receiver-configuration"
+        },
         "retention": {
           "$ref": "#/definitions/metrics-retention"
         },
         "system": {
           "$ref": "#/definitions/system-metrics-configuration"
+        }
+      }
+    },
+    "metrics-receiver-configuration": {
+      "type": "object",
+      "properties": {
+        "request_num_samples": {
+          "type": "integer"
+        },
+        "timeout_seconds": {
+          "type": "integer"
+        },
+        "url": {
+          "type": "string"
         }
       }
     },

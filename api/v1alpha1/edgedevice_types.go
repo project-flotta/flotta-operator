@@ -40,6 +40,12 @@ type EdgeDeviceSpec struct {
 	LogCollection map[string]*LogCollectionConfig `json:"logCollection,omitempty"`
 }
 
+type MetricsReceiverConfiguration struct {
+	RequestNumSamples int64  `json:"requestNumSamples,omitempty"`
+	TimeoutSeconds    int64  `json:"timeoutSeconds,omitempty"`
+	URL               string `json:"url,omitempty"`
+}
+
 type LogCollectionConfig struct {
 
 	// Kind is the type of log collection to be used
@@ -55,8 +61,9 @@ type LogCollectionConfig struct {
 }
 
 type MetricsConfiguration struct {
-	Retention     *Retention                  `json:"retention,omitempty"`
-	SystemMetrics *SystemMetricsConfiguration `json:"system,omitempty"`
+	Retention             *Retention                    `json:"retention,omitempty"`
+	SystemMetrics         *SystemMetricsConfiguration   `json:"system,omitempty"`
+	ReceiverConfiguration *MetricsReceiverConfiguration `json:"receiverConfiguration,omitempty"`
 }
 
 type SystemMetricsConfiguration struct {
