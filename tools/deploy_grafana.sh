@@ -102,8 +102,8 @@ spec:
      disable_signout_menu: true
    auth.anonymous: {}
    security:
-     admin_password: secret
-     admin_user: root
+     admin_password: admin
+     admin_user: admin
  ingress:
    enabled: true
 EOF
@@ -145,7 +145,8 @@ spec:
   name: prometheus-grafanadatasource.yaml
 EOF
 
-GRAFANA_API="https://root:secret@$(kubectl get routes -n flotta grafana-route --no-headers -o=custom-columns=HOST:.spec.host)/api"
+GRAFANA_URL=$(kubectl get routes -n flotta grafana-route --no-headers -o=custom-columns=HOST:.spec.host)
+GRAFANA_API="https://admin:admin@${GRAFANA_URL}/api"
 echo "Waiting for Grafana server to be ready at $GRAFANA_API"
 count=0
 until [[ count -gt 20 ]]
@@ -161,15 +162,18 @@ do
   fi
 done
 
+# the purpose of this sleep is to let grafana handler be ready. without it, the creation of the dashboard is reported as
+# successful but nothing is actually created
+sleep 20
+
 request_body=$(mktemp)
 cat <<EOF >> $request_body
 {
   "dashboard": $(cat $FLOTTA_DASHBOARD),
-  "folderId": 0,
   "overwrite": true
 }
 EOF
-
-# Import flotta dashboard
 curl -s -X POST --insecure -H "Content-Type: application/json" -d @$request_body "$GRAFANA_API/dashboards/import"
+
 echo $'\n'"Grafana dashboard imported"
+echo -e "Grafana dashboard URL:\033[92m https://$GRAFANA_URL\033[0m"
