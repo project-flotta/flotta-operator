@@ -390,9 +390,6 @@ spec:
                 - gpus
                 - interfaces
                 type: object
-              lastSeenTime:
-                format: date-time
-                type: string
               lastSyncedResourceVersion:
                 type: string
               phase:

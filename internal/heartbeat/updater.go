@@ -2,6 +2,8 @@ package heartbeat
 
 import (
 	"context"
+	mtrcs "github.com/project-flotta/flotta-operator/internal/metrics"
+	"reflect"
 	"time"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
@@ -17,13 +19,16 @@ import (
 type Updater struct {
 	deviceRepository edgedevice.Repository
 	recorder         record.EventRecorder
+	metrics          mtrcs.Metrics
 }
 
 func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, heartbeat *models.Heartbeat) error {
-	patch := client.MergeFrom(edgeDevice.DeepCopy())
+	u.metrics.RecordEdgeDevicePresence(edgeDevice.Namespace, edgeDevice.Name)
+
+	edgeDeviceCopy := edgeDevice.DeepCopy()
+	patch := client.MergeFrom(edgeDeviceCopy)
 
 	edgeDevice.Status.LastSyncedResourceVersion = heartbeat.Version
-	edgeDevice.Status.LastSeenTime = v1.NewTime(time.Now())
 	edgeDevice.Status.Phase = heartbeat.Status
 	if heartbeat.Hardware != nil {
 		edgeDevice.Status.Hardware = hardware.MapHardware(heartbeat.Hardware)
@@ -32,8 +37,10 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 	edgeDevice.Status.Deployments = deployments
 	edgeDevice.Status.UpgradeInformation = (*v1alpha1.UpgradeInformation)(heartbeat.Upgrade)
 
-	err := u.deviceRepository.PatchStatus(ctx, edgeDevice, &patch)
-	return err
+	if !reflect.DeepEqual(edgeDevice.Status, edgeDeviceCopy.Status) {
+		return u.deviceRepository.PatchStatus(ctx, edgeDevice, &patch)
+	}
+	return nil
 }
 
 func (u *Updater) updateLabels(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, heartbeat *models.Heartbeat) error {

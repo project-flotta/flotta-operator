@@ -88,7 +88,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 		registryAuthRepository: registryAuth,
 		metrics:                metrics,
 		allowLists:             allowLists,
-		heartbeatHandler:       heartbeat.NewSynchronousHandler(deviceRepository, recorder),
+		heartbeatHandler:       heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics),
 		configMaps:             configMaps,
 		mtlsConfig:             mtlsConfig,
 	}

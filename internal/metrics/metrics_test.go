@@ -2,6 +2,7 @@ package metrics_test
 
 import (
 	"github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -80,5 +81,104 @@ var _ = Describe("Metrics", func() {
 			//then
 			validateMetric(metrics.EdgeDeviceFailedRegistrationQuery, numberOfEdgeDevicesFailedToRegisterValue)
 		})
+
+		It("has heartbeat metric registered", func() {
+			// given
+			name := "the-name-1"
+			namespace := "the-namespace-1"
+
+			// when
+			m.RegisterDeviceCounter(namespace, name)
+
+			// then
+			err := ctrlmetrics.Registry.Register(prometheus.NewCounter(
+				prometheus.CounterOpts{
+					Name: metrics.EdgeDeviceHeartbeatQuery,
+					ConstLabels: prometheus.Labels{
+						"deviceNamespace": namespace,
+						"deviceID":        name,
+					},
+				}))
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(BeAssignableToTypeOf(prometheus.AlreadyRegisteredError{}))
+		})
+
+		It("can have heartbeat metric registered multiple times", func() {
+			// given
+			name := "the-name-2"
+			namespace := "the-namespace-2"
+
+			// when
+			m.RegisterDeviceCounter(namespace, name)
+			m.RegisterDeviceCounter(namespace, name)
+			m.RegisterDeviceCounter(namespace, name)
+
+			// then
+			err := ctrlmetrics.Registry.Register(prometheus.NewCounter(
+				prometheus.CounterOpts{
+					Name: metrics.EdgeDeviceHeartbeatQuery,
+					ConstLabels: prometheus.Labels{
+						"deviceNamespace": namespace,
+						"deviceID":        name,
+					},
+				}))
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(BeAssignableToTypeOf(prometheus.AlreadyRegisteredError{}))
+		})
+
+		It("has heartbeat metric unregistered", func() {
+			// given
+			name := "the-name-3"
+			namespace := "the-namespace-3"
+			m.RegisterDeviceCounter(namespace, name)
+
+			// when
+			m.RemoveDeviceCounter(namespace, name)
+
+			// then
+			err := ctrlmetrics.Registry.Register(prometheus.NewCounter(
+				prometheus.CounterOpts{
+					Name: metrics.EdgeDeviceHeartbeatQuery,
+					ConstLabels: prometheus.Labels{
+						"deviceNamespace": namespace,
+						"deviceID":        name,
+					},
+				}))
+			Expect(err).ToNot(HaveOccurred())
+		})
+
+		It("records heartbeat presence", func() {
+			// given
+			name := "the-name-4"
+			namespace := "the-namespace-4"
+
+			// when
+			m.RecordEdgeDevicePresence(namespace, name)
+
+			// then
+			data, err := ctrlmetrics.Registry.Gather()
+			Expect(err).NotTo(HaveOccurred())
+
+			mf := findMetric(data, metrics.EdgeDeviceHeartbeatQuery)
+			Expect(m).NotTo(BeNil())
+
+			for _, m := range mf.Metric {
+				if hasLabel(m, "deviceID", name) && hasLabel(m, "deviceNamespace", namespace) {
+					Expect(*m.Counter.Value).To(BeEquivalentTo(1))
+					return
+				}
+			}
+
+			Fail("Metric not found")
+		})
 	})
 })
+
+func hasLabel(metric *dto.Metric, key, value string) bool {
+	for _, l := range metric.Label {
+		if *l.Name == key && *l.Value == value {
+			return true
+		}
+	}
+	return false
+}
