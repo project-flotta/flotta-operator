@@ -158,6 +158,8 @@ definitions:
       secrets:
         $ref: '#/definitions/secret-list'
         description: List of secrets used by the workloads
+      ansible_playbook:
+        type: string
 
   device-configuration:
     type: object

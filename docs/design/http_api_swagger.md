@@ -389,6 +389,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| ansible_playbook | string| `string` |  | |  |  |
 | configuration | [DeviceConfiguration](#device-configuration)| `DeviceConfiguration` |  | |  |  |
 | device_id | string| `string` |  | | Device identifier |  |
 | secrets | [SecretList](#secret-list)| `SecretList` |  | | List of secrets used by the workloads |  |
