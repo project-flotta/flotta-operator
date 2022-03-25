@@ -28,6 +28,278 @@
         "x": 0,
         "y": 0
       },
+      "id": 38,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": null,
+                "filterable": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value (lastNotNull)"
+                },
+                "properties": [
+                  {
+                    "id": "custom.displayMode",
+                    "value": "color-text"
+                  },
+                  {
+                    "id": "displayName",
+                    "value": "Presence"
+                  },
+                  {
+                    "id": "thresholds",
+                    "value": {
+                      "mode": "absolute",
+                      "steps": [
+                        {
+                          "color": "dark-red",
+                          "value": null
+                        },
+                        {
+                          "color": "dark-green",
+                          "value": 1
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "mappings",
+                    "value": [
+                      {
+                        "from": "",
+                        "id": 1,
+                        "text": "Away",
+                        "to": "",
+                        "type": 1,
+                        "value": "0"
+                      },
+                      {
+                        "from": "",
+                        "id": 2,
+                        "text": "Present",
+                        "to": "",
+                        "type": 1,
+                        "value": "1"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 1
+          },
+          "id": 127,
+          "options": {
+            "showHeader": true
+          },
+          "pluginVersion": "7.5.15",
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "ceil(sum by(deviceID, namespace)(rate(flotta_operator_edge_devices_heartbeat{job=~\"flotta.+\"}[2m])))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "All devices",
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": {}
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "container": true,
+                  "endpoint": true,
+                  "exported_namespace": true,
+                  "instance": true,
+                  "job": true,
+                  "pod": true,
+                  "prometheus": true,
+                  "service": true
+                },
+                "indexByName": {},
+                "renameByName": {}
+              }
+            },
+            {
+              "id": "groupBy",
+              "options": {
+                "fields": {
+                  "Value": {
+                    "aggregations": [
+                      "lastNotNull"
+                    ],
+                    "operation": "aggregate"
+                  },
+                  "deviceID": {
+                    "aggregations": [],
+                    "operation": "groupby"
+                  },
+                  "namespace": {
+                    "aggregations": [],
+                    "operation": "groupby"
+                  }
+                }
+              }
+            },
+            {
+              "id": "sortBy",
+              "options": {
+                "fields": {},
+                "sort": [
+                  {
+                    "field": "Value (last)"
+                  }
+                ]
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 1
+          },
+          "hiddenSeries": false,
+          "id": 125,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.5.15",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "exemplar": true,
+              "expr": "ceil(sum by(deviceID, namespace)(rate(flotta_operator_edge_devices_heartbeat{job=~\"flotta.+\"}[2m])))",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "All Devices - plot",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        }
+      ],
+      "title": "Connected Edge Devices",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
       "id": 4,
       "panels": [
         {
@@ -46,7 +318,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 1
+            "y": 2
           },
           "hiddenSeries": false,
           "id": 6,
@@ -150,7 +422,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 1
+            "y": 2
           },
           "hiddenSeries": false,
           "id": 2,
@@ -258,7 +530,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 1
+        "y": 2
       },
       "id": 8,
       "panels": [
@@ -272,7 +544,7 @@
             "h": 2,
             "w": 3,
             "x": 0,
-            "y": 2
+            "y": 3
           },
           "id": 18,
           "options": {
@@ -304,7 +576,7 @@
             "h": 10,
             "w": 8,
             "x": 4,
-            "y": 2
+            "y": 3
           },
           "hiddenSeries": false,
           "id": 22,
@@ -403,7 +675,7 @@
             "h": 2,
             "w": 4,
             "x": 12,
-            "y": 2
+            "y": 3
           },
           "id": 24,
           "options": {
@@ -436,7 +708,7 @@
             "h": 10,
             "w": 8,
             "x": 16,
-            "y": 2
+            "y": 3
           },
           "hiddenSeries": false,
           "id": 28,
@@ -569,7 +841,7 @@
             "h": 6,
             "w": 4,
             "x": 0,
-            "y": 4
+            "y": 5
           },
           "id": 20,
           "links": [],
@@ -649,7 +921,7 @@
             "h": 6,
             "w": 4,
             "x": 12,
-            "y": 4
+            "y": 5
           },
           "id": 26,
           "interval": "",
@@ -712,7 +984,7 @@
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 12
+            "y": 13
           },
           "hiddenSeries": false,
           "id": 30,
@@ -820,7 +1092,7 @@
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 12
+            "y": 13
           },
           "hiddenSeries": false,
           "id": 32,
@@ -928,7 +1200,7 @@
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 12
+            "y": 13
           },
           "hiddenSeries": false,
           "id": 34,
@@ -1037,7 +1309,7 @@
             "h": 13,
             "w": 12,
             "x": 0,
-            "y": 20
+            "y": 21
           },
           "hiddenSeries": false,
           "id": 36,
@@ -1194,7 +1466,7 @@
             "h": 7,
             "w": 12,
             "x": 12,
-            "y": 20
+            "y": 21
           },
           "id": 10,
           "options": {
