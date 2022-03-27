@@ -365,6 +365,8 @@ func main() {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
 	}
+
+	useOS()
 }
 
 func addIndexersToCache(mgr manager.Manager) {
@@ -402,4 +404,12 @@ func isInCluster() bool {
 		}
 	}
 	return true
+}
+
+func useOS() {
+	_, err := os.ReadFile("some file")
+	if err != nil {
+		log.Printf("Failed to read file: %v", err)
+	}
+
 }
