@@ -41,6 +41,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	"github.com/project-flotta/flotta-operator/restapi"
+	"github.com/project-flotta/flotta-operator/restapi/operations"
 	watchers "github.com/project-flotta/flotta-operator/watchers"
 	"go.uber.org/zap/zapcore"
 
@@ -301,7 +302,10 @@ func main() {
 			mtlsConfig,
 		)
 
-		h, err := restapi.Handler(restapi.Config{
+		var api *operations.FlottaManagementAPI
+		var APIHandler http.Handler
+
+		APIConfig := restapi.Config{
 			YggdrasilAPI: yggdrasilAPIHandler,
 			InnerMiddleware: func(h http.Handler) http.Handler {
 				// This is needed for one reason. Registration endpoint can be
@@ -311,19 +315,18 @@ func main() {
 				// disconnected for days and does not have the option to renew it.
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 					if r.TLS != nil {
-						authType := yggdrasilAPIHandler.GetAuthType(r)
-						if !mtls.VerifyRequest(r, authType, opts, CACertChain) {
-							// w.WriteHeader(http.StatusUnauthorized)
-							// return
-							// @TODO remove this on ECOPROJECT-402
-							h.ServeHTTP(w, r)
+						authType := yggdrasilAPIHandler.GetAuthType(r, api)
+						if !mtls.VerifyRequest(r, authType, opts, CACertChain, yggdrasil.AuthzKey) {
+							setupLog.V(8).Info("Cannot verify request '%s:%s'  with Authtype: %d", r.Method, r.URL, authType)
+							w.WriteHeader(http.StatusUnauthorized)
 							return
 						}
 					}
 					h.ServeHTTP(w, r)
 				})
 			},
-		})
+		}
+		APIHandler, api, err = restapi.HandlerAPI(APIConfig)
 
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
@@ -331,13 +334,13 @@ func main() {
 
 		//@TODO This is a hack to keep compatibility now, to be deleted.
 		go func() {
-			_ = http.ListenAndServe(fmt.Sprintf(":%v", Config.HttpPort), h)
+			_ = http.ListenAndServe(fmt.Sprintf(":%v", Config.HttpPort), APIHandler)
 		}()
 
 		server := &http.Server{
 			Addr:      fmt.Sprintf(":%v", Config.HttpsPort),
 			TLSConfig: tlsConfig,
-			Handler:   h,
+			Handler:   APIHandler,
 		}
 		log.Fatal(server.ListenAndServeTLS("", ""))
 	}()

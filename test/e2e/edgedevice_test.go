@@ -156,6 +156,7 @@ func (e *edgeDeviceDocker) DumpLogs(extraCommands ...string) {
 		"journalctl -u podman",
 		"journalctl -u yggdrasild",
 		"ps aux",
+		"podman ps -a",
 		"systemctl status podman",
 		"systemctl status yggdrasild",
 	}

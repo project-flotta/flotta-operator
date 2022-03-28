@@ -11,7 +11,6 @@ import (
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 
 	"net/http"
-	"net/url"
 	"strings"
 
 	"time"
@@ -32,6 +31,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/storage"
 	"github.com/project-flotta/flotta-operator/internal/utils"
 	"github.com/project-flotta/flotta-operator/models"
+	apioperations "github.com/project-flotta/flotta-operator/restapi/operations"
 	"github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 	operations "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 	corev1 "k8s.io/api/core/v1"
@@ -43,10 +43,12 @@ import (
 )
 
 const (
-	YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
-	YggdrasilWorkloadFinalizer   = "yggdrasil-workload-finalizer"
-	YggdrasilRegisterAuth        = 1
-	YggdrasilCompleteAuth        = 0
+	YggdrasilConnectionFinalizer                         = "yggdrasil-connection-finalizer"
+	YggdrasilWorkloadFinalizer                           = "yggdrasil-workload-finalizer"
+	YggdrasilRegisterAuth                                = 1
+	YggdrasilCompleteAuth                                = 0
+	AuthzKey                         mtls.RequestAuthKey = "APIAuthzkey"
+	YggrasilAPIRegistrationOperation                     = "PostDataMessageForDevice"
 )
 
 var (
@@ -94,26 +96,45 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 	}
 }
 
-func isRegistrationURL(url *url.URL) bool {
-	parts := strings.Split(url.Path, "/")
-	if len(parts) == 0 {
+func IsOwnDevice(ctx context.Context, deviceID string) bool {
+	if deviceID == "" {
 		return false
 	}
 
-	last := parts[len(parts)-1]
-	return last == "registration"
+	val, ok := ctx.Value(AuthzKey).(string)
+	if !ok {
+		return false
+	}
+	return val == strings.ToLower(deviceID)
 }
 
-func (h *Handler) GetAuthType(r *http.Request) int {
+// GetAuthType returns the kind of the authz that need to happen on the API call, the options are:
+// YggdrasilCompleteAuth: need to be a valid client certificate and not expired.
+// YggdrasilRegisterAuth: it is only valid for registering action.
+func (h *Handler) GetAuthType(r *http.Request, api *apioperations.FlottaManagementAPI) int {
 	res := YggdrasilCompleteAuth
-	if isRegistrationURL(r.URL) {
-		res = YggdrasilRegisterAuth
+	if api == nil {
+		return res
+	}
+
+	route, _, matches := api.Context().RouteInfo(r)
+	if !matches {
+		return res
+	}
+
+	if route != nil && route.Operation != nil {
+		if route.Operation.ID == YggrasilAPIRegistrationOperation {
+			return YggdrasilRegisterAuth
+		}
 	}
 	return res
 }
 
 func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
+	if !IsOwnDevice(ctx, deviceID) {
+		return operations.NewGetControlMessageForDeviceForbidden()
+	}
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 	if err != nil {
@@ -141,6 +162,9 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 
 func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
+	if !IsOwnDevice(ctx, deviceID) {
+		return operations.NewGetDataMessageForDeviceForbidden()
+	}
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 	if err != nil {
@@ -284,6 +308,10 @@ func (h *Handler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice 
 }
 
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {
+	deviceID := params.DeviceID
+	if !IsOwnDevice(ctx, deviceID) {
+		return operations.NewPostDataMessageForDeviceForbidden()
+	}
 	return operations.NewPostControlMessageForDeviceOK()
 }
 
@@ -291,6 +319,11 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 	deviceID := params.DeviceID
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
 	msg := params.Message
+	if msg.Directive != "registration" {
+		if !IsOwnDevice(ctx, deviceID) {
+			return operations.NewPostDataMessageForDeviceForbidden()
+		}
+	}
 	switch msg.Directive {
 	case "heartbeat":
 		hb := models.Heartbeat{}
@@ -330,6 +363,14 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		_, err = h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err == nil {
+
+			if !IsOwnDevice(ctx, deviceID) {
+				// At this moment, the registration certificate it's no longer valid,
+				// because the CR is already created, and need to be a device
+				// certificate.
+				return operations.NewPostDataMessageForDeviceForbidden()
+			}
+
 			// @TODO remove this IF when MTLS is finished
 			if registrationInfo.CertificateRequest != "" {
 				cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)

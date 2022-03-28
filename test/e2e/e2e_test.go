@@ -62,7 +62,7 @@ var _ = Describe("e2e", func() {
 			// then
 			// Check the edgedevice report proper state of workload:
 			err = device.WaitForDeploymentState("nginx", "Running")
-			Expect(err).To(BeNil())
+			Expect(err).To(BeNil(), "cannot get deployment status for nginx workload")
 
 			// Check the nginx is serving content:
 			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
@@ -258,7 +258,7 @@ var _ = Describe("e2e", func() {
 			// then
 			// Check the edgedevice report proper state of workload:
 			err = device.WaitForDeploymentState("nginx", "Running")
-			Expect(err).To(BeNil())
+			Expect(err).To(BeNil(), "cannot get deployment status for nginx workload")
 
 			// Check the nginx is serving content:
 			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
