@@ -166,14 +166,6 @@ done
 # successful but nothing is actually created
 sleep 20
 
-request_body=$(mktemp)
-cat <<EOF >> $request_body
-{
-  "dashboard": $(cat $FLOTTA_DASHBOARD),
-  "overwrite": true
-}
-EOF
-curl -s -X POST --insecure -H "Content-Type: application/json" -d @$request_body "$GRAFANA_API/dashboards/import"
+$(dirname $0)/import_grafana_dashboards.sh -d $FLOTTA_DASHBOARD -g $GRAFANA_API
 
-echo $'\n'"Grafana dashboard imported"
 echo -e "Grafana dashboard URL:\033[92m https://$GRAFANA_URL\033[0m"
