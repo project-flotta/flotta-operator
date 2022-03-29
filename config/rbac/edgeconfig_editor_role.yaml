@@ -1,0 +1,24 @@
+# permissions for end users to edit edgeconfigs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: edgeconfig-editor-role
+rules:
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgeconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgeconfigs/status
+  verbs:
+  - get

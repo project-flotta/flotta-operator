@@ -29,6 +29,8 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/images"
@@ -46,7 +48,6 @@ import (
 	"github.com/project-flotta/flotta-operator/restapi"
 	"github.com/project-flotta/flotta-operator/restapi/operations"
 	watchers "github.com/project-flotta/flotta-operator/watchers"
-	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -54,9 +55,6 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/controllers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -66,6 +64,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -237,7 +239,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeWorkload")
 		os.Exit(1)
 	}
-
+	if err = (&controllers.EdgeConfigReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "EdgeConfig")
+		os.Exit(1)
+	}
 	// webhooks
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&v1alpha1.EdgeWorkload{}).SetupWebhookWithManager(mgr); err != nil {
