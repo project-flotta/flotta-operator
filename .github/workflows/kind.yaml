@@ -23,6 +23,7 @@ jobs:
           kubectl wait --for=condition=Ready pods --all -n kube-system
 
           # Deploy flotta operator
+          sed -i 's/LOG_LEVEL=info/LOG_LEVEL=debug/g' config/manager/controller_manager_config.properties
           make build
           IMG=flotta-operator:latest make docker-build
           kind load docker-image flotta-operator:latest
