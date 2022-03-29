@@ -246,6 +246,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeConfig")
 		os.Exit(1)
 	}
+	if err = (&controllers.PlaybookExecutionReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PlaybookExecution")
+		os.Exit(1)
+	}
 	// webhooks
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		if err = (&v1alpha1.EdgeWorkload{}).SetupWebhookWithManager(mgr); err != nil {

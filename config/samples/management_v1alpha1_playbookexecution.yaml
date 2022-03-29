@@ -1,0 +1,6 @@
+apiVersion: management.project-flotta.io/v1alpha1
+kind: PlaybookExecution
+metadata:
+  name: playbookexecution-sample
+spec:
+  # TODO(user): Add fields here

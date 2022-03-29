@@ -1,0 +1,24 @@
+# permissions for end users to edit playbookexecutions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: playbookexecution-editor-role
+rules:
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - playbookexecutions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - playbookexecutions/status
+  verbs:
+  - get
