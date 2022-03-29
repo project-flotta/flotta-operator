@@ -317,7 +317,7 @@ func main() {
 					if r.TLS != nil {
 						authType := yggdrasilAPIHandler.GetAuthType(r, api)
 						if !mtls.VerifyRequest(r, authType, opts, CACertChain, yggdrasil.AuthzKey) {
-							setupLog.V(8).Info("Cannot verify request '%s:%s'  with Authtype: %d", r.Method, r.URL, authType)
+							setupLog.V(0).Info("Cannot verify request:", "authType", authType, "method", r.Method, "url", r.URL)
 							w.WriteHeader(http.StatusUnauthorized)
 							return
 						}

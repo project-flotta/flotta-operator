@@ -365,6 +365,8 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err == nil {
 
 			if !IsOwnDevice(ctx, deviceID) {
+				authKeyVal, _ := ctx.Value(AuthzKey).(string)
+				logger.V(0).Info("Device tries to re-register with an invalid certificate", "certcn", authKeyVal)
 				// At this moment, the registration certificate it's no longer valid,
 				// because the CR is already created, and need to be a device
 				// certificate.
