@@ -1,0 +1,7 @@
+apiVersion: management.project-flotta.io/v1alpha1
+kind: EdgeDeviceGroup
+metadata:
+  name: edgedevicegroup-sample
+spec:
+  # Add fields here
+  foo: bar
