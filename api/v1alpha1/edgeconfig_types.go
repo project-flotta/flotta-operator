@@ -29,14 +29,104 @@ type EdgeConfigSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of EdgeConfig. Edit edgeconfig_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	EdgePlaybook *EdgePlaybookSpec `json:"edgePlaybook,omitempty"`
 }
 
 // EdgeConfigStatus defines the observed state of EdgeConfig
 type EdgeConfigStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Important: Run "make" to regenerate code after modifying this file.
+	EdgePlaybookStatus *EdgePlaybookStatus `json:"edgePlaybookStatus,omitempty"`
 }
+
+// EdgePlaybookSpec defines the desired state of EdgePlaybook
+type EdgePlaybookSpec struct {
+	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+	// Important: Run "make" to regenerate code after modifying this file
+
+	DeviceSelector *metav1.LabelSelector `json:"deviceSelector,omitempty"`
+	// The ansible playbook command to execute
+	AnsiblePlaybookCmd *AnsiblePlaybookCmd `json:"ansiblePlaybookCmd,omitempty"`
+	//Execution strategy for each playbook
+	ExecutionStrategy map[string]ExecutionStrategy `json:"playbooksPriorityMap,omitempty"`
+}
+
+// EdgePlaybookStatus defines the observed state of EdgePlaybook
+type EdgePlaybookStatus struct {
+	Condition                 EdgePlaybookCondition `json:"condition,omitempty"`
+	LastSeenTime              metav1.Time           `json:"lastSeenTime,omitempty"`
+	LastSyncedResourceVersion string                `json:"lastSyncedResourceVersion,omitempty"`
+}
+
+type AnsiblePlaybookCmd struct {
+	// username who execute the playbook
+	User string `json:"user,omitempty"`
+	// the ansible's playbooks list with priority to be used
+	// +kubebuilder:validation:MinProperties=1
+	Playbooks map[string]Playbook `json:"playbooksPriorityMap,omitempty"`
+	// the ansible's playbook options for each playbook
+	Options map[string]*AnsibleOptions `json:"ansibleOptions,omitempty"`
+	// the ansible's playbook privilege escalation options for each playbook
+	PrivilegeEscalationOptions map[string]*PrivilegeEscalationOptions `json:"privilegeEscalationOptions,omitempty"`
+}
+
+type ExecutionStrategy string
+
+const (
+	StopAtFailuire    ExecutionStrategy = "Stop at first failure"
+	ContinueOnFailure ExecutionStrategy = "Continue on failure"
+)
+
+type AnsibleOptions struct {
+	// don't make any changes; instead, try to predict some of the changes that may occur
+	Check bool `json:"check,omitempty"`
+}
+
+type PrivilegeEscalationOptions struct {
+	Become bool `json:"become,omitempty"`
+	// +kubebuilder:validation:Enum=sudo;su
+	BecomeMethod string `json:"becomeMethod,omitempty"`
+	BecomeUser   string `json:"becomeUser,omitempty"`
+}
+
+type Playbook struct {
+	// Link to an arichived playbook content (tar.gz)
+	URL string `json:"url"`
+	// The connection timeout on ansible-playbook
+	Timeout uint64 `json:"timeout,omitempty"`
+	// TODO: Enum like linux capabilities ?
+	// The required privelege level necessary to execute the playbook
+	RequiredPrivilegeLevel []string `json:"requiredPrivilegeLevel,omitempty"`
+}
+
+type EdgePlaybookCondition struct {
+	Type   EdgePlaybookConditionType   `json:"type" description:"type of EdgePlaybookCondition condition"`
+	Status EdgePlaybookConditionStatus `json:"status" description:"status of the condition, one of True, False, Unknown"`
+
+	// +optional
+	Reason *string `json:"reason,omitempty" description:"one-word CamelCase reason for the condition's last transition"`
+	// +optional
+	Message *string `json:"message,omitempty" description:"human-readable message indicating details about last transition"`
+	// +optional
+	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty" description:"last time the condition transit from one status to another"`
+}
+
+type EdgePlaybookConditionType string
+
+const (
+	TargetVerification EdgePlaybookConditionType = "TargetVerification"
+	PlaybookDeploying  EdgePlaybookConditionType = "Deploying"
+	PlaybookExecuting  EdgePlaybookConditionType = "Executing"
+	Completed          EdgePlaybookConditionType = "Completed"
+)
+
+type EdgePlaybookConditionStatus string
+
+const (
+	EdgePlaybookConditionStatusTrue    EdgePlaybookConditionStatus = "True"
+	EdgePlaybookConditionStatusFalse   EdgePlaybookConditionStatus = "False"
+	EdgePlaybookConditionStatusUnknown EdgePlaybookConditionStatus = "Unknown"
+)
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -48,6 +138,11 @@ type EdgeConfig struct {
 
 	Spec   EdgeConfigSpec   `json:"spec,omitempty"`
 	Status EdgeConfigStatus `json:"status,omitempty"`
+
+	DeviceSelector *metav1.LabelSelector `json:"deviceSelector,omitempty"`
+
+	// The ansible playbook command to execute
+	EdgePlaybook EdgePlaybookSpec `json:"edgePlaybook,omitempty"`
 }
 
 //+kubebuilder:object:root=true
