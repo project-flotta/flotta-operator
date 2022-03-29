@@ -43,6 +43,8 @@ jobs:
       - name: Collect all logs
         if: always()
         run: |
+          # Just dump the secrets to debug later
+          kubectl get secrets -n flotta -o json
           kind export logs dist
 
       - name: Archive logs
