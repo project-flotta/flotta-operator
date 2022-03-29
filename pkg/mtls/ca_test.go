@@ -537,10 +537,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 			}
 
 			// when
-			res := mtls.VerifyRequest(r, 0, opts, CAChain, yggdrasil.AuthzKey)
+			res, err := mtls.VerifyRequest(r, 0, opts, CAChain, yggdrasil.AuthzKey)
 
 			// then
 			Expect(res).To(BeFalse())
+			Expect(err).To(BeAssignableToTypeOf(&mtls.NoClientCertSendError{}))
 		})
 
 		Context("Registration Auth", func() {
@@ -558,10 +559,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("Peer certificate is invalid", func() {
@@ -574,10 +576,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeFalse())
+				Expect(err).To(BeAssignableToTypeOf(&mtls.RegisterClientVerifyError{}))
 			})
 
 			It("Last CA certificate is valid", func() {
@@ -590,10 +593,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("Expired certificate is valid", func() {
@@ -618,10 +622,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 		})
@@ -641,10 +646,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeFalse())
+				Expect(err).To(BeAssignableToTypeOf(&mtls.InvalidCertificateKindError{}))
 			})
 
 			It("Certificate is correct", func() {
@@ -657,10 +663,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("Invalid certificate is rejected", func() {
@@ -674,10 +681,12 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeFalse())
+				Expect(err).To(BeAssignableToTypeOf(&mtls.ClientCertificateVerifyError{}))
+
 			})
 
 			It("Certificate valid with any CA position on the store.", func() {
@@ -690,10 +699,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeTrue())
+				Expect(err).NotTo(HaveOccurred())
 			})
 
 			It("Expired certificate is not working", func() {
@@ -719,10 +729,11 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
 
 				// then
 				Expect(res).To(BeFalse())
+				Expect(err).To(BeAssignableToTypeOf(&mtls.ClientCertificateVerifyError{}))
 			})
 
 		})
