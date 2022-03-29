@@ -25,18 +25,29 @@ import (
 
 // PlaybookExecutionSpec defines the desired state of PlaybookExecution
 type PlaybookExecutionSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of PlaybookExecution. Edit playbookexecution_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	ExecutionStrategy ExecutionStrategy `json:"executionStrategy"`
+	// +kubebuilder:validation:Minimum=0
+	// +kubebuilder:validation:Default=0
+	ExecutionAttempt uint8 `json:"executionAttempt,omitempty" description:"the number of times the playbook has been executed" default:"0"`
+	// RunnerEvents     *models.AnsibleRunnerJobEventYaml `json:"runnerEvents,omitempty"`
+	// Events results.AnsiblePlaybookJSONResults `json:"events,omitempty"`
 }
 
 // PlaybookExecutionStatus defines the observed state of PlaybookExecution
 type PlaybookExecutionStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Condition                 ExecutionPlaybookCondition `json:"condition,omitempty"`
+	LastSeenTime              metav1.Time                `json:"lastSeenTime,omitempty"`
+	LastSyncedResourceVersion string                     `json:"lastSyncedResourceVersion,omitempty"`
+	Completed                 bool                       `json:"completed,omitempty" description:"execution status, one of True, False"`
 }
+
+type ExecutionPlaybookCondition string
+
+const (
+	ExecutionPlaybookDeploying EdgePlaybookConditionType = "ExecutionPlaybookDeploying"
+	ExecutionPlaybookRunning   EdgePlaybookConditionType = "ExecutionPlaybookRunning"
+	ExecutionPlaybookCompleted EdgePlaybookConditionType = "ExecutionPlaybookCompleted"
+)
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

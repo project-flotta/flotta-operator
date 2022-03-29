@@ -36,13 +36,26 @@ spec:
           spec:
             description: PlaybookExecutionSpec defines the desired state of PlaybookExecution
             properties:
-              foo:
-                description: Foo is an example field of PlaybookExecution. Edit playbookexecution_types.go
-                  to remove/update
+              executionAttempt:
+                minimum: 0
+                type: integer
+              executionStrategy:
                 type: string
+            required:
+            - executionStrategy
             type: object
           status:
             description: PlaybookExecutionStatus defines the observed state of PlaybookExecution
+            properties:
+              completed:
+                type: boolean
+              condition:
+                type: string
+              lastSeenTime:
+                format: date-time
+                type: string
+              lastSyncedResourceVersion:
+                type: string
             type: object
         type: object
     served: true
