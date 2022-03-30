@@ -174,7 +174,7 @@ else ifeq ($(TARGET), kind)
 	$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 endif
 
-	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/jdzon/flotta-operator:latest
+	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/flotta-operator/flotta-operator:latest
 	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml\033[0m"
 
 release:
