@@ -206,6 +206,9 @@ func getCACertificate() (*CertificateGroup, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Cannot parse PEM certificate: %v", err)
 	}
+
+	// Just pushed the signed cert, so PubkeyAlgo is present on the cert
+	certificateBundle.cert = certificateBundle.signedCert
 	return &certificateBundle, nil
 }
 
