@@ -3,6 +3,10 @@ info:
   description: 'Flotta Edge Management'
   version: 1.0.0
   title: FlottaManagement
+  contact: 
+    name: Flotta flotta 
+    url: https://github.com/project-flotta
+    email: flotta@redhat.com
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -10,6 +14,8 @@ basePath: /api/flotta-management/v1
 tags:
   - name: devices
     description: Device management
+  - name: yggdrasil
+    description: Client daemon that establishes a receiving queue for instructions to be sent to the system via a broker
 
 schemes:
   - http
@@ -28,6 +34,7 @@ securityDefinitions:
 paths:
   /data/{device_id}/in:
     get:
+      description: Returns the device expected configuration
       operationId: GetDataMessageForDevice
       tags:
         - yggdrasil
@@ -53,6 +60,7 @@ paths:
 
   /data/{device_id}/out:
     post:
+      description: Endpoint used by the agent to send information to operator
       operationId: PostDataMessageForDevice
       tags:
         - yggdrasil
@@ -85,6 +93,7 @@ paths:
 
   /control/{device_id}/in:
     get:
+      description: Return device control commands
       operationId: GetControlMessageForDevice
       tags:
         - yggdrasil
@@ -110,6 +119,7 @@ paths:
 
   /control/{device_id}/out:
     post:
+      description: Set device control commands
       operationId: PostControlMessageForDevice
       tags:
         - yggdrasil
@@ -149,7 +159,6 @@ definitions:
         $ref: '#/definitions/device-configuration'
       workloads:
         $ref: '#/definitions/workload-list'
-        description: List of workloads deployed to the device
       workloads_monitoring_interval:
         type: integer
         minimum: 0
@@ -157,7 +166,6 @@ definitions:
         description: Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed
       secrets:
         $ref: '#/definitions/secret-list'
-        description: List of secrets used by the workloads
       ansible_playbook:
         type: string
 
@@ -172,14 +180,13 @@ definitions:
         $ref: '#/definitions/metrics-configuration'
       os:
         $ref: '#/definitions/os-information'
-        description: OS lifecycle information
       log-collection:
         type: object
         additionalProperties:
           $ref: '#/definitions/logs-collection-information'
-          description: Log collection information
 
   logs-collection-information:
+    description: Log collection information
     type: object
     properties:
       kind:
@@ -196,6 +203,7 @@ definitions:
             type: string
 
   os-information:
+    description: OS lifecycle information
     type: object
     properties:
       commit_id:
@@ -257,13 +265,12 @@ definitions:
     type: object
     properties:
       retention:
-        description: Defines metrics data retention limits
         $ref: '#/definitions/metrics-retention'
       system:
-        description: System metrics gathering configuration
         $ref: '#/definitions/system-metrics-configuration'
 
   metrics-retention:
+    description: Defines metrics data retention limits
     type: object
     properties:
       max_mib:
@@ -276,22 +283,22 @@ definitions:
         format: int32
 
   system-metrics-configuration:
+    description: System metrics gathering configuration
     type: object
     properties:
       interval:
-        type: integer
         description: Interval(in seconds) to scrape metrics endpoint.
+        type: integer
         format: int32
       allow_list:
-        description: Specification of system metrics to be collected
         $ref: '#/definitions/metrics-allow-list'
       disabled:
-        type: boolean
         description: When true, turns system metrics collection off. False by default.
+        type: boolean
 
   metrics-allow-list:
+    description: Specification of system metrics to be collected
     type: object
-    description: Specification of metrics to be collected
     properties:
       names:
         type: array
@@ -299,6 +306,7 @@ definitions:
           type: string
 
   workload-list:
+    description: List of workloads deployed to the device
     type: array
     items:
       $ref: '#/definitions/workload'
@@ -307,51 +315,50 @@ definitions:
     type: object
     properties:
       name:
-        type: string
         description: Name of the workload
-      namespace:
         type: string
+      namespace:
         description: Namespace of the workload
+        type: string
       specification:
         type: string
       data:
-        description: Configuration for data transfer
         $ref: '#/definitions/data-configuration'
       imageRegistries:
-        description: Image registries configuration
         $ref: '#/definitions/image-registries'
       metrics:
-        description: Metrics endpoint configuration
         $ref: '#/definitions/metrics'
       configmaps:
         $ref: '#/definitions/configmap-list'
-        description: List of configmaps used by the workload
       log_collection:
-        type: string
         description: "Log collection target for this workload"
+        type: string
 
   secret-list:
+    description: List of secrets used by the workloads
     type: array
     items:
       $ref: '#/definitions/secret'
 
   configmap-list:
+    description: List of configmaps used by the workload
     type: array
     items:
-      type: string
       description: ConfigMap kubernetes yaml specification
+      type: string
 
   secret:
     type: object
     properties:
       name:
-        type: string
         description: Name of the secret
+        type: string
       data:
         description: The secret's data section in JSON format
         type: string
 
   metrics:
+    description: Metrics endpoint configuration
     type: object
     properties:
       path:
@@ -361,19 +368,18 @@ definitions:
         type: integer
         format: int32
       allow_list:
-        description: Specification of system metrics to be collected
         $ref: '#/definitions/metrics-allow-list'
       interval:
+        description: Interval(in seconds) to scrape metrics endpoint.
         type: integer
         format: int32
-        description: Interval(in seconds) to scrape metrics endpoint.
       containers:
         type: object
         additionalProperties:
-          description: Metrics container configuration
           $ref: '#/definitions/container-metrics'
 
   container-metrics:
+    description: Metrics container configuration
     type: object
     properties:
       disabled:
@@ -387,14 +393,16 @@ definitions:
         format: int32
 
   image-registries:
+    description: Image registries configuration
     type: object
     properties:
       authFile:
-        type: string
         description:
           Image registries authfile created by executing `podman login` or `docker login` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.
+        type: string
 
   data-configuration:
+    description: Configuration for data transfer
     type: object
     properties:
       paths:
@@ -424,13 +432,13 @@ definitions:
     type: object
     properties:
       hardware:
-        description: Hardware information
         $ref: '#/definitions/hardware-info'
       certificate_request:
         description: "Certificate Signing Request to be signed by flotta-operator CA"
         type: string
 
   hardware-info:
+    description: Hardware information
     type: object
     properties:
       hostname:
@@ -494,8 +502,8 @@ definitions:
     type: object
     properties:
       id:
-        type: string
         description: Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise
+        type: string
       drive_type:
         type: string
       vendor:
@@ -507,8 +515,8 @@ definitions:
       hctl:
         type: string
       by_path:
-        type: string
         description: by-path is the shortest physical path to the device
+        type: string
       by_id:
         type: string
         description: by-id is the World Wide Number of the device which guaranteed to be unique for every storage device
@@ -523,8 +531,8 @@ definitions:
       bootable:
         type: boolean
       is_installation_media:
-        type: boolean
         description: Whether the disk appears to be an installation media or not
+        type: boolean
       smart:
         type: string
       io_perf:
@@ -534,8 +542,8 @@ definitions:
     type: object
     properties:
       sync_duration:
-        type: integer
         description: 99th percentile of fsync duration in milliseconds
+        type: integer
 
   boot:
     type: object
@@ -555,8 +563,8 @@ definitions:
       manufacturer:
         type: string
       virtual:
-        type: boolean
         description: Whether the machine appears to be a virtual machine or not
+        type: boolean
 
   memory:
     type: object
@@ -586,46 +594,20 @@ definitions:
     type: object
     properties:
       vendor:
-        type: string
         description: The name of the device vendor (for example "Intel Corporation")
+        type: string
       vendor_id:
-        type: string
         description: ID of the vendor (for example "8086")
+        type: string
       device_id:
-        type: string
         description: ID of the device (for example "3ea0")
+        type: string
       name:
-        type: string
         description: Product name of the device (for example "UHD Graphics 620 (Whiskey Lake)")
+        type: string
       address:
-        type: string
         description: Device address (for example "0000:00:02.0")
-
-  heartbeat:
-    type: object
-    properties:
-      status:
         type: string
-        enum:
-          - up
-          - degraded
-      version:
-        type: string
-      workloads:
-        type: array
-        items:
-          $ref: '#/definitions/workload-status'
-      upgrade:
-        description: Upgrade status
-        $ref: '#/definitions/upgrade-status'
-      hardware:
-        description: Hardware information
-        $ref: '#/definitions/hardware-info'
-      events:
-        description: Events produced by device worker.
-        type: array
-        items:
-          $ref: '#/definitions/event-info'
 
   event-info:
     type: object
@@ -660,6 +642,7 @@ definitions:
           - stopped
 
   upgrade-status:
+    description: Upgrade status
     type: object
     properties:
       current_commit_ID:
