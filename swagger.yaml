@@ -34,7 +34,7 @@ securityDefinitions:
 paths:
   /data/{device_id}/in:
     get:
-      description: Returns the device expected configuration
+      description: Get data message for device API
       operationId: GetDataMessageForDevice
       tags:
         - yggdrasil
@@ -60,7 +60,7 @@ paths:
 
   /data/{device_id}/out:
     post:
-      description: Endpoint used by the agent to send information to operator
+      description: Post data message for device API
       operationId: PostDataMessageForDevice
       tags:
         - yggdrasil
@@ -93,7 +93,7 @@ paths:
 
   /control/{device_id}/in:
     get:
-      description: Return device control commands
+      description: Get control message for device API
       operationId: GetControlMessageForDevice
       tags:
         - yggdrasil
@@ -119,7 +119,7 @@ paths:
 
   /control/{device_id}/out:
     post:
-      description: Set device control commands
+      description: Post control message for device API
       operationId: PostControlMessageForDevice
       tags:
         - yggdrasil

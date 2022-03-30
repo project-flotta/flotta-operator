@@ -10,7 +10,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ContainerMetrics container metrics
+// ContainerMetrics Metrics container configuration
 //
 // swagger:model container-metrics
 type ContainerMetrics struct {

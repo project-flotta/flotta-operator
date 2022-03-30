@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// SecretList secret list
+// SecretList List of secrets used by the workloads
 //
 // swagger:model secret-list
 type SecretList []*Secret

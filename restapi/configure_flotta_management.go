@@ -26,12 +26,16 @@ const AuthKey contextKey = "Auth"
 
 /* YggdrasilAPI  */
 type YggdrasilAPI interface {
+	/* GetControlMessageForDevice Get control message for device API */
 	GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder
 
+	/* GetDataMessageForDevice Get data message for device API */
 	GetDataMessageForDevice(ctx context.Context, params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder
 
+	/* PostControlMessageForDevice Post control message for device API */
 	PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder
 
+	/* PostDataMessageForDevice Post data message for device API */
 	PostDataMessageForDevice(ctx context.Context, params yggdrasil.PostDataMessageForDeviceParams) middleware.Responder
 }
 

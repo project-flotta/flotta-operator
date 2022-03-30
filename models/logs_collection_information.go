@@ -11,7 +11,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// LogsCollectionInformation logs collection information
+// LogsCollectionInformation Log collection information
 //
 // swagger:model logs-collection-information
 type LogsCollectionInformation struct {

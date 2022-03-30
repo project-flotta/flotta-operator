@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// HardwareInfo hardware info
+// HardwareInfo Hardware information
 //
 // swagger:model hardware-info
 type HardwareInfo struct {

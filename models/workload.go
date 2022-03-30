@@ -16,19 +16,19 @@ import (
 // swagger:model workload
 type Workload struct {
 
-	// List of configmaps used by the workload
+	// configmaps
 	Configmaps ConfigmapList `json:"configmaps,omitempty"`
 
-	// Configuration for data transfer
+	// data
 	Data *DataConfiguration `json:"data,omitempty"`
 
-	// Image registries configuration
+	// image registries
 	ImageRegistries *ImageRegistries `json:"imageRegistries,omitempty"`
 
 	// Log collection target for this workload
 	LogCollection string `json:"log_collection,omitempty"`
 
-	// Metrics endpoint configuration
+	// metrics
 	Metrics *Metrics `json:"metrics,omitempty"`
 
 	// Name of the workload

@@ -26,7 +26,7 @@ type DeviceConfiguration struct {
 	// metrics
 	Metrics *MetricsConfiguration `json:"metrics,omitempty"`
 
-	// OS lifecycle information
+	// os
 	Os *OsInformation `json:"os,omitempty"`
 
 	// storage

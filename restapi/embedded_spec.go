@@ -32,6 +32,11 @@ func init() {
   "info": {
     "description": "Flotta Edge Management",
     "title": "FlottaManagement",
+    "contact": {
+      "name": "Flotta flotta",
+      "url": "https://github.com/project-flotta",
+      "email": "flotta@redhat.com"
+    },
     "license": {
       "name": "Apache 2.0",
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -42,6 +47,7 @@ func init() {
   "paths": {
     "/control/{device_id}/in": {
       "get": {
+        "description": "Get control message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -79,6 +85,7 @@ func init() {
     },
     "/control/{device_id}/out": {
       "post": {
+        "description": "Post control message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -121,6 +128,7 @@ func init() {
     },
     "/data/{device_id}/in": {
       "get": {
+        "description": "Get data message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -158,6 +166,7 @@ func init() {
     },
     "/data/{device_id}/out": {
       "post": {
+        "description": "Post data message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -218,6 +227,7 @@ func init() {
       }
     },
     "configmap-list": {
+      "description": "List of configmaps used by the workload",
       "type": "array",
       "items": {
         "description": "ConfigMap kubernetes yaml specification",
@@ -225,6 +235,7 @@ func init() {
       }
     },
     "container-metrics": {
+      "description": "Metrics container configuration",
       "type": "object",
       "properties": {
         "disabled": {
@@ -265,6 +276,7 @@ func init() {
       }
     },
     "data-configuration": {
+      "description": "Configuration for data transfer",
       "type": "object",
       "properties": {
         "paths": {
@@ -298,7 +310,6 @@ func init() {
         "log-collection": {
           "type": "object",
           "additionalProperties": {
-            "description": "Log collection information",
             "$ref": "#/definitions/logs-collection-information"
           }
         },
@@ -306,7 +317,6 @@ func init() {
           "$ref": "#/definitions/metrics-configuration"
         },
         "os": {
-          "description": "OS lifecycle information",
           "$ref": "#/definitions/os-information"
         },
         "storage": {
@@ -328,14 +338,12 @@ func init() {
           "type": "string"
         },
         "secrets": {
-          "description": "List of secrets used by the workloads",
           "$ref": "#/definitions/secret-list"
         },
         "version": {
           "type": "string"
         },
         "workloads": {
-          "description": "List of workloads deployed to the device",
           "$ref": "#/definitions/workload-list"
         },
         "workloads_monitoring_interval": {
@@ -449,6 +457,7 @@ func init() {
       }
     },
     "hardware-info": {
+      "description": "Hardware information",
       "type": "object",
       "properties": {
         "boot": {
@@ -501,42 +510,6 @@ func init() {
         }
       }
     },
-    "heartbeat": {
-      "type": "object",
-      "properties": {
-        "events": {
-          "description": "Events produced by device worker.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/event-info"
-          }
-        },
-        "hardware": {
-          "description": "Hardware information",
-          "$ref": "#/definitions/hardware-info"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "up",
-            "degraded"
-          ]
-        },
-        "upgrade": {
-          "description": "Upgrade status",
-          "$ref": "#/definitions/upgrade-status"
-        },
-        "version": {
-          "type": "string"
-        },
-        "workloads": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/workload-status"
-          }
-        }
-      }
-    },
     "heartbeat-configuration": {
       "type": "object",
       "properties": {
@@ -549,6 +522,7 @@ func init() {
       }
     },
     "image-registries": {
+      "description": "Image registries configuration",
       "type": "object",
       "properties": {
         "authFile": {
@@ -617,6 +591,7 @@ func init() {
       }
     },
     "logs-collection-information": {
+      "description": "Log collection information",
       "type": "object",
       "properties": {
         "buffer_size": {
@@ -701,16 +676,15 @@ func init() {
       }
     },
     "metrics": {
+      "description": "Metrics endpoint configuration",
       "type": "object",
       "properties": {
         "allow_list": {
-          "description": "Specification of system metrics to be collected",
           "$ref": "#/definitions/metrics-allow-list"
         },
         "containers": {
           "type": "object",
           "additionalProperties": {
-            "description": "Metrics container configuration",
             "$ref": "#/definitions/container-metrics"
           }
         },
@@ -730,7 +704,7 @@ func init() {
       }
     },
     "metrics-allow-list": {
-      "description": "Specification of metrics to be collected",
+      "description": "Specification of system metrics to be collected",
       "type": "object",
       "properties": {
         "names": {
@@ -746,16 +720,15 @@ func init() {
       "type": "object",
       "properties": {
         "retention": {
-          "description": "Defines metrics data retention limits",
           "$ref": "#/definitions/metrics-retention"
         },
         "system": {
-          "description": "System metrics gathering configuration",
           "$ref": "#/definitions/system-metrics-configuration"
         }
       }
     },
     "metrics-retention": {
+      "description": "Defines metrics data retention limits",
       "type": "object",
       "properties": {
         "max_hours": {
@@ -771,6 +744,7 @@ func init() {
       }
     },
     "os-information": {
+      "description": "OS lifecycle information",
       "type": "object",
       "properties": {
         "automatically_upgrade": {
@@ -795,7 +769,6 @@ func init() {
           "type": "string"
         },
         "hardware": {
-          "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
         }
       }
@@ -850,6 +823,7 @@ func init() {
       }
     },
     "secret-list": {
+      "description": "List of secrets used by the workloads",
       "type": "array",
       "items": {
         "$ref": "#/definitions/secret"
@@ -864,10 +838,10 @@ func init() {
       }
     },
     "system-metrics-configuration": {
+      "description": "System metrics gathering configuration",
       "type": "object",
       "properties": {
         "allow_list": {
-          "description": "Specification of system metrics to be collected",
           "$ref": "#/definitions/metrics-allow-list"
         },
         "disabled": {
@@ -900,6 +874,7 @@ func init() {
       }
     },
     "upgrade-status": {
+      "description": "Upgrade status",
       "type": "object",
       "properties": {
         "current_commit_ID": {
@@ -921,15 +896,12 @@ func init() {
       "type": "object",
       "properties": {
         "configmaps": {
-          "description": "List of configmaps used by the workload",
           "$ref": "#/definitions/configmap-list"
         },
         "data": {
-          "description": "Configuration for data transfer",
           "$ref": "#/definitions/data-configuration"
         },
         "imageRegistries": {
-          "description": "Image registries configuration",
           "$ref": "#/definitions/image-registries"
         },
         "log_collection": {
@@ -937,7 +909,6 @@ func init() {
           "type": "string"
         },
         "metrics": {
-          "description": "Metrics endpoint configuration",
           "$ref": "#/definitions/metrics"
         },
         "name": {
@@ -954,6 +925,7 @@ func init() {
       }
     },
     "workload-list": {
+      "description": "List of workloads deployed to the device",
       "type": "array",
       "items": {
         "$ref": "#/definitions/workload"
@@ -992,6 +964,10 @@ func init() {
     {
       "description": "Device management",
       "name": "devices"
+    },
+    {
+      "description": "Client daemon that establishes a receiving queue for instructions to be sent to the system via a broker",
+      "name": "yggdrasil"
     }
   ]
 }`))
@@ -1010,6 +986,11 @@ func init() {
   "info": {
     "description": "Flotta Edge Management",
     "title": "FlottaManagement",
+    "contact": {
+      "name": "Flotta flotta",
+      "url": "https://github.com/project-flotta",
+      "email": "flotta@redhat.com"
+    },
     "license": {
       "name": "Apache 2.0",
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -1020,6 +1001,7 @@ func init() {
   "paths": {
     "/control/{device_id}/in": {
       "get": {
+        "description": "Get control message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -1057,6 +1039,7 @@ func init() {
     },
     "/control/{device_id}/out": {
       "post": {
+        "description": "Post control message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -1099,6 +1082,7 @@ func init() {
     },
     "/data/{device_id}/in": {
       "get": {
+        "description": "Get data message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -1136,6 +1120,7 @@ func init() {
     },
     "/data/{device_id}/out": {
       "post": {
+        "description": "Post data message for device API",
         "tags": [
           "yggdrasil"
         ],
@@ -1207,6 +1192,7 @@ func init() {
       }
     },
     "configmap-list": {
+      "description": "List of configmaps used by the workload",
       "type": "array",
       "items": {
         "description": "ConfigMap kubernetes yaml specification",
@@ -1214,6 +1200,7 @@ func init() {
       }
     },
     "container-metrics": {
+      "description": "Metrics container configuration",
       "type": "object",
       "properties": {
         "disabled": {
@@ -1254,6 +1241,7 @@ func init() {
       }
     },
     "data-configuration": {
+      "description": "Configuration for data transfer",
       "type": "object",
       "properties": {
         "paths": {
@@ -1287,7 +1275,6 @@ func init() {
         "log-collection": {
           "type": "object",
           "additionalProperties": {
-            "description": "Log collection information",
             "$ref": "#/definitions/logs-collection-information"
           }
         },
@@ -1295,7 +1282,6 @@ func init() {
           "$ref": "#/definitions/metrics-configuration"
         },
         "os": {
-          "description": "OS lifecycle information",
           "$ref": "#/definitions/os-information"
         },
         "storage": {
@@ -1317,14 +1303,12 @@ func init() {
           "type": "string"
         },
         "secrets": {
-          "description": "List of secrets used by the workloads",
           "$ref": "#/definitions/secret-list"
         },
         "version": {
           "type": "string"
         },
         "workloads": {
-          "description": "List of workloads deployed to the device",
           "$ref": "#/definitions/workload-list"
         },
         "workloads_monitoring_interval": {
@@ -1439,6 +1423,7 @@ func init() {
       }
     },
     "hardware-info": {
+      "description": "Hardware information",
       "type": "object",
       "properties": {
         "boot": {
@@ -1491,42 +1476,6 @@ func init() {
         }
       }
     },
-    "heartbeat": {
-      "type": "object",
-      "properties": {
-        "events": {
-          "description": "Events produced by device worker.",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/event-info"
-          }
-        },
-        "hardware": {
-          "description": "Hardware information",
-          "$ref": "#/definitions/hardware-info"
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "up",
-            "degraded"
-          ]
-        },
-        "upgrade": {
-          "description": "Upgrade status",
-          "$ref": "#/definitions/upgrade-status"
-        },
-        "version": {
-          "type": "string"
-        },
-        "workloads": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/workload-status"
-          }
-        }
-      }
-    },
     "heartbeat-configuration": {
       "type": "object",
       "properties": {
@@ -1539,6 +1488,7 @@ func init() {
       }
     },
     "image-registries": {
+      "description": "Image registries configuration",
       "type": "object",
       "properties": {
         "authFile": {
@@ -1607,6 +1557,7 @@ func init() {
       }
     },
     "logs-collection-information": {
+      "description": "Log collection information",
       "type": "object",
       "properties": {
         "buffer_size": {
@@ -1691,16 +1642,15 @@ func init() {
       }
     },
     "metrics": {
+      "description": "Metrics endpoint configuration",
       "type": "object",
       "properties": {
         "allow_list": {
-          "description": "Specification of system metrics to be collected",
           "$ref": "#/definitions/metrics-allow-list"
         },
         "containers": {
           "type": "object",
           "additionalProperties": {
-            "description": "Metrics container configuration",
             "$ref": "#/definitions/container-metrics"
           }
         },
@@ -1720,7 +1670,7 @@ func init() {
       }
     },
     "metrics-allow-list": {
-      "description": "Specification of metrics to be collected",
+      "description": "Specification of system metrics to be collected",
       "type": "object",
       "properties": {
         "names": {
@@ -1736,16 +1686,15 @@ func init() {
       "type": "object",
       "properties": {
         "retention": {
-          "description": "Defines metrics data retention limits",
           "$ref": "#/definitions/metrics-retention"
         },
         "system": {
-          "description": "System metrics gathering configuration",
           "$ref": "#/definitions/system-metrics-configuration"
         }
       }
     },
     "metrics-retention": {
+      "description": "Defines metrics data retention limits",
       "type": "object",
       "properties": {
         "max_hours": {
@@ -1761,6 +1710,7 @@ func init() {
       }
     },
     "os-information": {
+      "description": "OS lifecycle information",
       "type": "object",
       "properties": {
         "automatically_upgrade": {
@@ -1785,7 +1735,6 @@ func init() {
           "type": "string"
         },
         "hardware": {
-          "description": "Hardware information",
           "$ref": "#/definitions/hardware-info"
         }
       }
@@ -1840,6 +1789,7 @@ func init() {
       }
     },
     "secret-list": {
+      "description": "List of secrets used by the workloads",
       "type": "array",
       "items": {
         "$ref": "#/definitions/secret"
@@ -1854,10 +1804,10 @@ func init() {
       }
     },
     "system-metrics-configuration": {
+      "description": "System metrics gathering configuration",
       "type": "object",
       "properties": {
         "allow_list": {
-          "description": "Specification of system metrics to be collected",
           "$ref": "#/definitions/metrics-allow-list"
         },
         "disabled": {
@@ -1890,6 +1840,7 @@ func init() {
       }
     },
     "upgrade-status": {
+      "description": "Upgrade status",
       "type": "object",
       "properties": {
         "current_commit_ID": {
@@ -1911,15 +1862,12 @@ func init() {
       "type": "object",
       "properties": {
         "configmaps": {
-          "description": "List of configmaps used by the workload",
           "$ref": "#/definitions/configmap-list"
         },
         "data": {
-          "description": "Configuration for data transfer",
           "$ref": "#/definitions/data-configuration"
         },
         "imageRegistries": {
-          "description": "Image registries configuration",
           "$ref": "#/definitions/image-registries"
         },
         "log_collection": {
@@ -1927,7 +1875,6 @@ func init() {
           "type": "string"
         },
         "metrics": {
-          "description": "Metrics endpoint configuration",
           "$ref": "#/definitions/metrics"
         },
         "name": {
@@ -1944,6 +1891,7 @@ func init() {
       }
     },
     "workload-list": {
+      "description": "List of workloads deployed to the device",
       "type": "array",
       "items": {
         "$ref": "#/definitions/workload"
@@ -1982,6 +1930,10 @@ func init() {
     {
       "description": "Device management",
       "name": "devices"
+    },
+    {
+      "description": "Client daemon that establishes a receiving queue for instructions to be sent to the system via a broker",
+      "name": "yggdrasil"
     }
   ]
 }`))

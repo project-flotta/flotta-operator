@@ -15,11 +15,19 @@ Flotta Edge Management
 
 [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
 
+### Contact
+
+Flotta flotta flotta@redhat.com https://github.com/project-flotta
+
 ## Tags
 
   ### <span id="tag-devices"></span>devices
 
 Device management
+
+  ### <span id="tag-yggdrasil"></span>yggdrasil
+
+Client daemon that establishes a receiving queue for instructions to be sent to the system via a broker
 
 ## Content negotiation
 
@@ -37,6 +45,8 @@ Device management
 
 ###  yggdrasil
 
+  
+
 | Method  | URI     | Name   | Summary |
 |---------|---------|--------|---------|
 | GET | /api/flotta-management/v1/control/{device_id}/in | [get control message for device](#get-control-message-for-device) |  |
@@ -53,6 +63,8 @@ Device management
 ```
 GET /api/flotta-management/v1/control/{device_id}/in
 ```
+
+Get control message for device API
 
 #### Parameters
 
@@ -107,6 +119,8 @@ Status: Internal Server Error
 GET /api/flotta-management/v1/data/{device_id}/in
 ```
 
+Get data message for device API
+
 #### Parameters
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
@@ -160,6 +174,8 @@ Status: Internal Server Error
 POST /api/flotta-management/v1/control/{device_id}/out
 ```
 
+Post control message for device API
+
 #### Parameters
 
 | Name | Source | Type | Go type | Separator | Required | Default | Description |
@@ -209,6 +225,8 @@ Status: Internal Server Error
 ```
 POST /api/flotta-management/v1/data/{device_id}/out
 ```
+
+Post data message for device API
 
 #### Parameters
 
@@ -285,14 +303,20 @@ Status: Internal Server Error
 ### <span id="configmap-list"></span> configmap-list
 
 
+> List of configmaps used by the workload
   
+
+
 
 []string
 
 ### <span id="container-metrics"></span> container-metrics
 
 
+> Metrics container configuration
   
+
+
 
 
 
@@ -328,7 +352,10 @@ Status: Internal Server Error
 ### <span id="data-configuration"></span> data-configuration
 
 
+> Configuration for data transfer
   
+
+
 
 
 
@@ -373,7 +400,7 @@ Status: Internal Server Error
 | heartbeat | [HeartbeatConfiguration](#heartbeat-configuration)| `HeartbeatConfiguration` |  | |  |  |
 | log-collection | map of [LogsCollectionInformation](#logs-collection-information)| `map[string]LogsCollectionInformation` |  | |  |  |
 | metrics | [MetricsConfiguration](#metrics-configuration)| `MetricsConfiguration` |  | |  |  |
-| os | [OsInformation](#os-information)| `OsInformation` |  | | OS lifecycle information |  |
+| os | [OsInformation](#os-information)| `OsInformation` |  | |  |  |
 | storage | [StorageConfiguration](#storage-configuration)| `StorageConfiguration` |  | |  |  |
 
 
@@ -392,9 +419,9 @@ Status: Internal Server Error
 | ansible_playbook | string| `string` |  | |  |  |
 | configuration | [DeviceConfiguration](#device-configuration)| `DeviceConfiguration` |  | |  |  |
 | device_id | string| `string` |  | | Device identifier |  |
-| secrets | [SecretList](#secret-list)| `SecretList` |  | | List of secrets used by the workloads |  |
+| secrets | [SecretList](#secret-list)| `SecretList` |  | |  |  |
 | version | string| `string` |  | |  |  |
-| workloads | [WorkloadList](#workload-list)| `WorkloadList` |  | | List of workloads deployed to the device |  |
+| workloads | [WorkloadList](#workload-list)| `WorkloadList` |  | |  |  |
 | workloads_monitoring_interval | integer| `int64` |  | | Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed |  |
 
 
@@ -468,7 +495,10 @@ Status: Internal Server Error
 ### <span id="hardware-info"></span> hardware-info
 
 
+> Hardware information
   
+
+
 
 
 
@@ -503,26 +533,6 @@ Status: Internal Server Error
 
 
 
-### <span id="heartbeat"></span> heartbeat
-
-
-  
-
-
-
-**Properties**
-
-| Name | Type | Go type | Required | Default | Description | Example |
-|------|------|---------|:--------:| ------- |-------------|---------|
-| events | [][EventInfo](#event-info)| `[]*EventInfo` |  | | Events produced by device worker. |  |
-| hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | | Hardware information |  |
-| status | string| `string` |  | |  |  |
-| upgrade | [UpgradeStatus](#upgrade-status)| `UpgradeStatus` |  | | Upgrade status |  |
-| version | string| `string` |  | |  |  |
-| workloads | [][WorkloadStatus](#workload-status)| `[]*WorkloadStatus` |  | |  |  |
-
-
-
 ### <span id="heartbeat-configuration"></span> heartbeat-configuration
 
 
@@ -542,7 +552,10 @@ Status: Internal Server Error
 ### <span id="image-registries"></span> image-registries
 
 
+> Image registries configuration
   
+
+
 
 
 
@@ -598,7 +611,10 @@ Status: Internal Server Error
 ### <span id="logs-collection-information"></span> logs-collection-information
 
 
+> Log collection information
   
+
+
 
 
 
@@ -688,7 +704,10 @@ Status: Internal Server Error
 ### <span id="metrics"></span> metrics
 
 
+> Metrics endpoint configuration
   
+
+
 
 
 
@@ -696,7 +715,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| allow_list | [MetricsAllowList](#metrics-allow-list)| `MetricsAllowList` |  | | Specification of system metrics to be collected |  |
+| allow_list | [MetricsAllowList](#metrics-allow-list)| `MetricsAllowList` |  | |  |  |
 | containers | map of [ContainerMetrics](#container-metrics)| `map[string]ContainerMetrics` |  | |  |  |
 | interval | int32 (formatted integer)| `int32` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
 | path | string| `string` |  | | Path to use when retrieving metrics |  |
@@ -707,7 +726,7 @@ Status: Internal Server Error
 ### <span id="metrics-allow-list"></span> metrics-allow-list
 
 
-> Specification of metrics to be collected
+> Specification of system metrics to be collected
   
 
 
@@ -736,15 +755,18 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| retention | [MetricsRetention](#metrics-retention)| `MetricsRetention` |  | | Defines metrics data retention limits |  |
-| system | [SystemMetricsConfiguration](#system-metrics-configuration)| `SystemMetricsConfiguration` |  | | System metrics gathering configuration |  |
+| retention | [MetricsRetention](#metrics-retention)| `MetricsRetention` |  | |  |  |
+| system | [SystemMetricsConfiguration](#system-metrics-configuration)| `SystemMetricsConfiguration` |  | |  |  |
 
 
 
 ### <span id="metrics-retention"></span> metrics-retention
 
 
+> Defines metrics data retention limits
   
+
+
 
 
 
@@ -760,7 +782,10 @@ Status: Internal Server Error
 ### <span id="os-information"></span> os-information
 
 
+> OS lifecycle information
   
+
+
 
 
 
@@ -786,7 +811,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | certificate_request | string| `string` |  | | Certificate Signing Request to be signed by flotta-operator CA |  |
-| hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | | Hardware information |  |
+| hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | |  |  |
 
 
 
@@ -845,7 +870,10 @@ Status: Internal Server Error
 ### <span id="secret-list"></span> secret-list
 
 
+> List of secrets used by the workloads
   
+
+
 
 [][Secret](#secret)
 
@@ -867,7 +895,10 @@ Status: Internal Server Error
 ### <span id="system-metrics-configuration"></span> system-metrics-configuration
 
 
+> System metrics gathering configuration
   
+
+
 
 
 
@@ -875,7 +906,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| allow_list | [MetricsAllowList](#metrics-allow-list)| `MetricsAllowList` |  | | Specification of system metrics to be collected |  |
+| allow_list | [MetricsAllowList](#metrics-allow-list)| `MetricsAllowList` |  | |  |  |
 | disabled | boolean| `bool` |  | | When true, turns system metrics collection off. False by default. |  |
 | interval | int32 (formatted integer)| `int32` |  | | Interval(in seconds) to scrape metrics endpoint. |  |
 
@@ -902,7 +933,10 @@ Status: Internal Server Error
 ### <span id="upgrade-status"></span> upgrade-status
 
 
+> Upgrade status
   
+
+
 
 
 
@@ -927,11 +961,11 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| configmaps | [ConfigmapList](#configmap-list)| `ConfigmapList` |  | | List of configmaps used by the workload |  |
-| data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | | Configuration for data transfer |  |
-| imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | | Image registries configuration |  |
+| configmaps | [ConfigmapList](#configmap-list)| `ConfigmapList` |  | |  |  |
+| data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | |  |  |
+| imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | |  |  |
 | log_collection | string| `string` |  | | Log collection target for this workload |  |
-| metrics | [Metrics](#metrics)| `Metrics` |  | | Metrics endpoint configuration |  |
+| metrics | [Metrics](#metrics)| `Metrics` |  | |  |  |
 | name | string| `string` |  | | Name of the workload |  |
 | namespace | string| `string` |  | | Namespace of the workload |  |
 | specification | string| `string` |  | |  |  |
@@ -941,7 +975,10 @@ Status: Internal Server Error
 ### <span id="workload-list"></span> workload-list
 
 
+> List of workloads deployed to the device
   
+
+
 
 [][Workload](#workload)
 

@@ -18,16 +18,16 @@ import (
 // API is the interface of the yggdrasil client
 type API interface {
 	/*
-	   GetControlMessageForDevice get control message for device API*/
+	   GetControlMessageForDevice Get control message for device API*/
 	GetControlMessageForDevice(ctx context.Context, params *GetControlMessageForDeviceParams) (*GetControlMessageForDeviceOK, error)
 	/*
-	   GetDataMessageForDevice get data message for device API*/
+	   GetDataMessageForDevice Get data message for device API*/
 	GetDataMessageForDevice(ctx context.Context, params *GetDataMessageForDeviceParams) (*GetDataMessageForDeviceOK, error)
 	/*
-	   PostControlMessageForDevice post control message for device API*/
+	   PostControlMessageForDevice Post control message for device API*/
 	PostControlMessageForDevice(ctx context.Context, params *PostControlMessageForDeviceParams) (*PostControlMessageForDeviceOK, error)
 	/*
-	   PostDataMessageForDevice post data message for device API*/
+	   PostDataMessageForDevice Post data message for device API*/
 	PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, error)
 }
 
@@ -50,7 +50,7 @@ type Client struct {
 }
 
 /*
-GetControlMessageForDevice get control message for device API
+GetControlMessageForDevice Get control message for device API
 */
 func (a *Client) GetControlMessageForDevice(ctx context.Context, params *GetControlMessageForDeviceParams) (*GetControlMessageForDeviceOK, error) {
 
@@ -74,7 +74,7 @@ func (a *Client) GetControlMessageForDevice(ctx context.Context, params *GetCont
 }
 
 /*
-GetDataMessageForDevice get data message for device API
+GetDataMessageForDevice Get data message for device API
 */
 func (a *Client) GetDataMessageForDevice(ctx context.Context, params *GetDataMessageForDeviceParams) (*GetDataMessageForDeviceOK, error) {
 
@@ -98,7 +98,7 @@ func (a *Client) GetDataMessageForDevice(ctx context.Context, params *GetDataMes
 }
 
 /*
-PostControlMessageForDevice post control message for device API
+PostControlMessageForDevice Post control message for device API
 */
 func (a *Client) PostControlMessageForDevice(ctx context.Context, params *PostControlMessageForDeviceParams) (*PostControlMessageForDeviceOK, error) {
 
@@ -122,7 +122,7 @@ func (a *Client) PostControlMessageForDevice(ctx context.Context, params *PostCo
 }
 
 /*
-PostDataMessageForDevice post data message for device API
+PostDataMessageForDevice Post data message for device API
 */
 func (a *Client) PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, error) {
 

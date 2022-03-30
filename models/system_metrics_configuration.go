@@ -11,12 +11,12 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// SystemMetricsConfiguration system metrics configuration
+// SystemMetricsConfiguration System metrics gathering configuration
 //
 // swagger:model system-metrics-configuration
 type SystemMetricsConfiguration struct {
 
-	// Specification of system metrics to be collected
+	// allow list
 	AllowList *MetricsAllowList `json:"allow_list,omitempty"`
 
 	// When true, turns system metrics collection off. False by default.

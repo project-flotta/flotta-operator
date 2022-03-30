@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// DataConfiguration data configuration
+// DataConfiguration Configuration for data transfer
 //
 // swagger:model data-configuration
 type DataConfiguration struct {

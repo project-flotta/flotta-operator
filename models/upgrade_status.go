@@ -14,7 +14,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// UpgradeStatus upgrade status
+// UpgradeStatus Upgrade status
 //
 // swagger:model upgrade-status
 type UpgradeStatus struct {

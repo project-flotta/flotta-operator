@@ -31,7 +31,7 @@ func NewPostDataMessageForDevice(ctx *middleware.Context, handler PostDataMessag
 
 /*PostDataMessageForDevice swagger:route POST /data/{device_id}/out yggdrasil postDataMessageForDevice
 
-PostDataMessageForDevice post data message for device API
+Post data message for device API
 
 */
 type PostDataMessageForDevice struct {
