@@ -3,7 +3,7 @@ package e2e_test
 import (
 	"testing"
 
-	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
@@ -16,7 +16,7 @@ func TestE2e(t *testing.T) {
 // function if the test fail. For example, retrieving logs.
 func AfterFailed(body func()) {
 	JustAfterEach(func() {
-		if CurrentGinkgoTestDescription().Failed {
+		if CurrentSpecReport().Failed() {
 			By("Running AfterFailed function")
 			body()
 		}
