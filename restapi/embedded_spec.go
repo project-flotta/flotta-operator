@@ -1000,7 +1000,7 @@ func init() {
       "name": "devices"
     },
     {
-      "description": "Client daemon that establishes a receiving queue for instructions to be sent to the system via a broker",
+      "description": "API to communicate with Yggdrasil daemon over HTTP",
       "name": "yggdrasil"
     }
   ]
@@ -2000,7 +2000,7 @@ func init() {
       "name": "devices"
     },
     {
-      "description": "Client daemon that establishes a receiving queue for instructions to be sent to the system via a broker",
+      "description": "API to communicate with Yggdrasil daemon over HTTP",
       "name": "yggdrasil"
     }
   ]

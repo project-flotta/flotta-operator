@@ -27,7 +27,7 @@ Device management
 
   ### <span id="tag-yggdrasil"></span>yggdrasil
 
-Client daemon that establishes a receiving queue for instructions to be sent to the system via a broker
+API to communicate with Yggdrasil daemon over HTTP
 
 ## Content negotiation
 
