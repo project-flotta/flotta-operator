@@ -198,7 +198,7 @@ ifeq (, $(shell which ginkgo))
 endif
 
 validate-swagger: ## Validate swagger
-	$(DOCKER) run -t -it --rm -v $(PWD)/.spectral.yaml:/tmp/.spectral.yaml:z -v $(PWD)/swagger.yaml:/tmp/swagger.yaml:z stoplight/spectral lint --ruleset "/tmp/.spectral.yaml" /tmp/swagger.yaml
+	$(DOCKER) run --rm -v $(PWD)/.spectral.yaml:/tmp/.spectral.yaml:z -v $(PWD)/swagger.yaml:/tmp/swagger.yaml:z stoplight/spectral lint --ruleset "/tmp/.spectral.yaml" /tmp/swagger.yaml
 
 # go-get-tool will 'go get' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
