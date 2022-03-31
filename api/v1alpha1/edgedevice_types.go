@@ -107,15 +107,6 @@ type S3Storage struct {
 	CreateOBC bool `json:"createOBC,omitempty"`
 }
 
-type DeviceConfiguration struct {
-
-	// heartbeat
-	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
-
-	// storage
-	Storage *StorageConfiguration `json:"storage,omitempty"`
-}
-
 type HeartbeatConfiguration struct {
 
 	// hardware profile
@@ -134,20 +125,6 @@ type HardwareProfileConfiguration struct {
 	// scope
 	// Enum: [full delta]
 	Scope string `json:"scope,omitempty"`
-}
-
-type StorageConfiguration struct {
-	// s3 storage configuration
-	S3 *S3StorageConfiguration `json:"s3,omitempty"`
-}
-
-type S3StorageConfiguration struct {
-	BucketHost         string `json:"bucketHost,omitempty"`
-	BucketPort         int32  `json:"bucketPort,omitempty"`
-	BucketName         string `json:"bucketName,omitempty"`
-	BucketRegion       string `json:"bucketRegion,omitempty"`
-	AWSAccessKey       string `json:"awsAccessKeyId,omitempty"`
-	AWSSecretAccessKey string `json:"awsSecretAccessKey,omitempty"`
 }
 
 // EdgeDeviceStatus defines the observed state of EdgeDevice
