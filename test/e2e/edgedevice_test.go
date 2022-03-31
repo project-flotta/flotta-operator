@@ -57,6 +57,7 @@ type EdgeDevice interface {
 	DumpLogs(extraCommands ...string)
 	Exec(string) (string, error)
 	WaitForDeploymentState(string, string) error
+	ValidateNoDataRaceInLogs(extraCommands ...string) (bool, error)
 }
 
 type edgeDeviceDocker struct {
@@ -151,7 +152,9 @@ func (e *edgeDeviceDocker) Exec(command string) (string, error) {
 	}), nil
 }
 
-func (e *edgeDeviceDocker) DumpLogs(extraCommands ...string) {
+func (e *edgeDeviceDocker) GetLogs(extraCommands ...string) (map[string]string, error) {
+	var err error
+	logsMap := make(map[string]string)
 	commands := []string{
 		"journalctl -u podman",
 		"journalctl -u yggdrasild",
@@ -165,10 +168,21 @@ func (e *edgeDeviceDocker) DumpLogs(extraCommands ...string) {
 	for _, cmd := range commands {
 		output, err := e.Exec(cmd)
 		if err != nil {
-			fmt.Printf("Error: Failed to retrieve logs for command '%s': %v \n", cmd, err)
+			ginkgo.GinkgoT().Logf("Error: Failed to retrieve logs for command '%s': %v \n", cmd, err)
 		}
-		ginkgo.GinkgoT().Logf("Command: %s \n Output:\n %s\n", cmd, output)
+		logsMap[cmd] = output
+	}
 
+	return logsMap, err
+}
+
+func (e *edgeDeviceDocker) DumpLogs(extraCommands ...string) {
+	logsMap, err := e.GetLogs(extraCommands...)
+	if err != nil {
+		ginkgo.GinkgoT().Logf("Error: GetLogs failed: %v \n", err)
+	}
+	for cmd, output := range logsMap {
+		ginkgo.GinkgoT().Logf("Command: %s \n Output:\n %s\n", cmd, output)
 	}
 }
 
@@ -253,6 +267,23 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 		}
 		return false
 	})
+}
+
+func (e *edgeDeviceDocker) ValidateNoDataRaceInLogs(extraCommands ...string) (bool, error) {
+	logsMap, err := e.GetLogs(extraCommands...)
+	if err != nil {
+		ginkgo.GinkgoT().Logf("Error: GetLogs failed: %v \n", err)
+		return false, err
+	}
+
+	foundDataRace := false
+	for _, output := range logsMap {
+		if strings.Contains(output, "WARNING: DATA RACE") {
+			foundDataRace = true
+		}
+	}
+
+	return !foundDataRace, nil
 }
 
 func newClient() (dynamic.Interface, error) {
