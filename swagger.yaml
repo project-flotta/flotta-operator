@@ -609,6 +609,30 @@ definitions:
         description: Device address (for example "0000:00:02.0")
         type: string
 
+  heartbeat:
+    type: object
+    properties:
+      status:
+        type: string
+        enum:
+          - up
+          - degraded
+      version:
+        type: string
+      workloads:
+        type: array
+        items:
+          $ref: '#/definitions/workload-status'
+      upgrade:
+        $ref: '#/definitions/upgrade-status'
+      hardware:
+        $ref: '#/definitions/hardware-info'
+      events:
+        description: Events produced by device worker.
+        type: array
+        items:
+          $ref: '#/definitions/event-info'
+
   event-info:
     type: object
     properties:
