@@ -71,7 +71,7 @@ ifeq (, $(shell which mockgen))
 endif
 	@exit
 
-generate: generate-tools controller-gen generate-from-swagger ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
+generate: generate-tools controller-gen validate-swagger generate-from-swagger ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 	go generate ./...
 

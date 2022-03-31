@@ -510,6 +510,40 @@ func init() {
         }
       }
     },
+    "heartbeat": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "description": "Events produced by device worker.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event-info"
+          }
+        },
+        "hardware": {
+          "$ref": "#/definitions/hardware-info"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "up",
+            "degraded"
+          ]
+        },
+        "upgrade": {
+          "$ref": "#/definitions/upgrade-status"
+        },
+        "version": {
+          "type": "string"
+        },
+        "workloads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workload-status"
+          }
+        }
+      }
+    },
     "heartbeat-configuration": {
       "type": "object",
       "properties": {
@@ -1473,6 +1507,40 @@ func init() {
             "full",
             "delta"
           ]
+        }
+      }
+    },
+    "heartbeat": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "description": "Events produced by device worker.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/event-info"
+          }
+        },
+        "hardware": {
+          "$ref": "#/definitions/hardware-info"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "up",
+            "degraded"
+          ]
+        },
+        "upgrade": {
+          "$ref": "#/definitions/upgrade-status"
+        },
+        "version": {
+          "type": "string"
+        },
+        "workloads": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workload-status"
+          }
         }
       }
     },

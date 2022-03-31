@@ -533,6 +533,26 @@ Status: Internal Server Error
 
 
 
+### <span id="heartbeat"></span> heartbeat
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| events | [][EventInfo](#event-info)| `[]*EventInfo` |  | | Events produced by device worker. |  |
+| hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | |  |  |
+| status | string| `string` |  | |  |  |
+| upgrade | [UpgradeStatus](#upgrade-status)| `UpgradeStatus` |  | |  |  |
+| version | string| `string` |  | |  |  |
+| workloads | [][WorkloadStatus](#workload-status)| `[]*WorkloadStatus` |  | |  |  |
+
+
+
 ### <span id="heartbeat-configuration"></span> heartbeat-configuration
 
 
