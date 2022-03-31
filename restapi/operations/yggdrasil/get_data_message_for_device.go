@@ -31,7 +31,7 @@ func NewGetDataMessageForDevice(ctx *middleware.Context, handler GetDataMessageF
 
 /*GetDataMessageForDevice swagger:route GET /data/{device_id}/in yggdrasil getDataMessageForDevice
 
-GetDataMessageForDevice get data message for device API
+Get data message for device API
 
 */
 type GetDataMessageForDevice struct {

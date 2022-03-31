@@ -12,12 +12,12 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// Metrics metrics
+// Metrics Metrics endpoint configuration
 //
 // swagger:model metrics
 type Metrics struct {
 
-	// Specification of system metrics to be collected
+	// allow list
 	AllowList *MetricsAllowList `json:"allow_list,omitempty"`
 
 	// containers

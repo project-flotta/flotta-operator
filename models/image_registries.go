@@ -10,7 +10,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// ImageRegistries image registries
+// ImageRegistries Image registries configuration
 //
 // swagger:model image-registries
 type ImageRegistries struct {

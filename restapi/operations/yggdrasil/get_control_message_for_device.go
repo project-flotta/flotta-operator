@@ -31,7 +31,7 @@ func NewGetControlMessageForDevice(ctx *middleware.Context, handler GetControlMe
 
 /*GetControlMessageForDevice swagger:route GET /control/{device_id}/in yggdrasil getControlMessageForDevice
 
-GetControlMessageForDevice get control message for device API
+Get control message for device API
 
 */
 type GetControlMessageForDevice struct {

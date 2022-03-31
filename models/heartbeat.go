@@ -23,14 +23,14 @@ type Heartbeat struct {
 	// Events produced by device worker.
 	Events []*EventInfo `json:"events"`
 
-	// Hardware information
+	// hardware
 	Hardware *HardwareInfo `json:"hardware,omitempty"`
 
 	// status
 	// Enum: [up degraded]
 	Status string `json:"status,omitempty"`
 
-	// Upgrade status
+	// upgrade
 	Upgrade *UpgradeStatus `json:"upgrade,omitempty"`
 
 	// version

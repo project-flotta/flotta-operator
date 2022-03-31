@@ -10,7 +10,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// OsInformation os information
+// OsInformation OS lifecycle information
 //
 // swagger:model os-information
 type OsInformation struct {

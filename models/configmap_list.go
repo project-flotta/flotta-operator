@@ -9,7 +9,7 @@ import (
 	"github.com/go-openapi/strfmt"
 )
 
-// ConfigmapList configmap list
+// ConfigmapList List of configmaps used by the workload
 //
 // swagger:model configmap-list
 type ConfigmapList []string

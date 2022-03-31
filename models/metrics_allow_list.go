@@ -10,7 +10,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// MetricsAllowList Specification of metrics to be collected
+// MetricsAllowList Specification of system metrics to be collected
 //
 // swagger:model metrics-allow-list
 type MetricsAllowList struct {

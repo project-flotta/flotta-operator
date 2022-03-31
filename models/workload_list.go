@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// WorkloadList workload list
+// WorkloadList List of workloads deployed to the device
 //
 // swagger:model workload-list
 type WorkloadList []*Workload

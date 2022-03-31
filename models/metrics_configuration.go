@@ -16,10 +16,10 @@ import (
 // swagger:model metrics-configuration
 type MetricsConfiguration struct {
 
-	// Defines metrics data retention limits
+	// retention
 	Retention *MetricsRetention `json:"retention,omitempty"`
 
-	// System metrics gathering configuration
+	// system
 	System *SystemMetricsConfiguration `json:"system,omitempty"`
 }
 

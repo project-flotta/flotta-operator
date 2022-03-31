@@ -26,13 +26,13 @@ type DeviceConfigurationMessage struct {
 	// Device identifier
 	DeviceID string `json:"device_id,omitempty"`
 
-	// List of secrets used by the workloads
+	// secrets
 	Secrets SecretList `json:"secrets,omitempty"`
 
 	// version
 	Version string `json:"version,omitempty"`
 
-	// List of workloads deployed to the device
+	// workloads
 	Workloads WorkloadList `json:"workloads,omitempty"`
 
 	// Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed

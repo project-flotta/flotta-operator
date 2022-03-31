@@ -10,7 +10,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// MetricsRetention metrics retention
+// MetricsRetention Defines metrics data retention limits
 //
 // swagger:model metrics-retention
 type MetricsRetention struct {
