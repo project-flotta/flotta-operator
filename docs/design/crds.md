@@ -17,6 +17,30 @@ spec:
       include: true # Specifies whether the hardware should be sent at all
       scope: full # Specifies how much information should be provided; "full" - everything; "delta" - only changes compared to the previous updated
   requestTime: "2021-09-22T08:35:25Z" # Time of the device registration request
+  metrics:
+    retention:
+    maxMiB: 200 # Specifies how much disk space should be used for storing persisted metrics on the device
+    maxHours: 24 # Specifies how long should persisted metrics be stored on the device disk
+    system:
+    interval: 60 # Interval in seconds with which the device system metrics should be collected
+    allowList:
+    name: allow-list-map # Defines name of a ConfigMap containing list of system metrics that should be scraped
+    disabled: true #  When set to true instructs the device to turn off system metrics collection
+  osInformation:
+    automaticallyUpgrade: true # Flag defining whether OS upgrade should be performed automatically when the commitID changes
+    commitID: 0305686e69d673cb15ad459990fab4a3e4c5aba1 # Commit ID of desired OS ostree version for the device
+    hostedObjectsURL: http://images.project-flotta.io # URL of the hosted commits web server
+  storage:
+    s3:
+    secretName: common-s3-secret # Name of the secret containing S3 API access credentials
+    configMapName: common-s3-config #Name of a config map containing S3 API access configuration options
+    createOBC: false # Flag defining whether the OBC should be automatically created for the device (if this feature is disabled for the operator)
+  logCollection:
+    syslog:
+    kind: syslog # Kind of a log collection system. Currently, only `syslog` is available
+    bufferSize: 12 # Size of a log sending buffer in kilobytes
+    syslogConfig:
+    name: syslog-config-map # Name of a config map containing syslog connection configuration
 ```
 
 ### Status
@@ -82,3 +106,47 @@ Go to this document to read about the [Data Upload](data-upload.md) feature.
 * only `volumes[].hostPath` and `volumes[].persistentVolumeClaim` volume types are supported
 * `volumes[].hostPath.CharDevice` and `volumes[].hostPath.BlockDevice` `hostPath` volume subtypes are not supported
 * **TBD**
+
+## EdgeDeviceGroup
+
+`EdgeDeviceGroup` is a namespaced custom resource that represents edge device configuration that can be assigned to multiple devices at the same time and allows for centralized configuration management.
+
+* apiVersion: `management.project-flotta.io/v1alpha1`
+* kind: `EdgeDeviceGroup`
+
+### Specification
+
+`EdgeDeviceGroup` specification is a copy of selected parts of `EdgeDevice` specification.
+
+```yaml
+spec:
+  heartbeat:
+    periodSeconds: 5 # Interval in seconds with which the heartbeat messages should be sent from the agent 
+    hardwareProfile: # Defines the scope of hardware information sent with the heartbeat messages; currently unused
+      include: true # Specifies whether the hardware should be sent at all
+      scope: full # Specifies how much information should be provided; "full" - everything; "delta" - only changes compared to the previous updated
+  metrics:
+    retention:
+      maxMiB: 200 # Specifies how much disk space should be used for storing persisted metrics on the device
+      maxHours: 24 # Specifies how long should persisted metrics be stored on the device disk
+    system:
+      interval: 60 # Interval in seconds with which the device system metrics should be collected
+      allowList:
+        name: allow-list-map # Defines name of a ConfigMap containing list of system metrics that should be scraped
+        disabled: true #  When set to true instructs the device to turn off system metrics collection
+  osInformation:
+    automaticallyUpgrade: true # Flag defining whether OS upgrade should be performed automatically when the commitID changes
+    commitID: 0305686e69d673cb15ad459990fab4a3e4c5aba1 # Commit ID of desired OS ostree version for the device
+    hostedObjectsURL: http://images.project-flotta.io # URL of the hosted commits web server
+  storage:
+    s3:
+      secretName: common-s3-secret # Name of the secret containing S3 API access credentials
+      configMapName: common-s3-config #Name of a config map containing S3 API access configuration options
+      createOBC: false # Flag defining whether the OBC should be automatically created for the device (if this feature is disabled for the operator)
+  logCollection:
+    syslog:
+      kind: syslog # Kind of a log collection system. Currently, only `syslog` is available
+      bufferSize: 12 # Size of a log sending buffer in kilobytes
+      syslogConfig: 
+        name: syslog-config-map # Name of a config map containing syslog connection configuration
+```
