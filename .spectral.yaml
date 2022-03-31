@@ -1,1 +1,4 @@
 extends: spectral:oas
+rules:
+  oas2-unused-definition: off
+  oas2-api-host: off  
