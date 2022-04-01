@@ -28,8 +28,10 @@ type EdgeConfigSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of EdgeConfig. Edit edgeconfig_types.go to remove/update
+	// The ansible playbook command to execute
 	EdgePlaybook *EdgePlaybookSpec `json:"edgePlaybook,omitempty"`
+
+	//TODO: Add EdgeDeviceGroup. Depends on https://github.com/project-flotta/flotta-operator/pull/161
 }
 
 // EdgeConfigStatus defines the observed state of EdgeConfig
@@ -44,7 +46,6 @@ type EdgePlaybookSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	DeviceSelector *metav1.LabelSelector `json:"deviceSelector,omitempty"`
 	// The ansible playbook command to execute
 	AnsiblePlaybookCmd *AnsiblePlaybookCmd `json:"ansiblePlaybookCmd,omitempty"`
 	//Execution strategy for each playbook
@@ -138,11 +139,6 @@ type EdgeConfig struct {
 
 	Spec   EdgeConfigSpec   `json:"spec,omitempty"`
 	Status EdgeConfigStatus `json:"status,omitempty"`
-
-	DeviceSelector *metav1.LabelSelector `json:"deviceSelector,omitempty"`
-
-	// The ansible playbook command to execute
-	EdgePlaybook EdgePlaybookSpec `json:"edgePlaybook,omitempty"`
 }
 
 //+kubebuilder:object:root=true
