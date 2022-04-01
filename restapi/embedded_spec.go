@@ -560,7 +560,7 @@ func init() {
       "type": "object",
       "properties": {
         "authFile": {
-          "description": "Image registries authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json).\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub\ndescribes how the file can be created and how it is structured.\n",
+          "description": "Image registries authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.",
           "type": "string"
         }
       }
@@ -1560,7 +1560,7 @@ func init() {
       "type": "object",
       "properties": {
         "authFile": {
-          "description": "Image registries authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json).\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub\ndescribes how the file can be created and how it is structured.\n",
+          "description": "Image registries authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.",
           "type": "string"
         }
       }

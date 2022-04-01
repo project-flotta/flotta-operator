@@ -2,7 +2,6 @@
 extends: default
 
 rules:
-  # 80 chars should be enough, but don't fail if a line is longer
   line-length:
     max: 140
     level: warning
@@ -10,6 +9,7 @@ rules:
       .github/workflows/go.yml
       config/crd/bases/
       config/test/crd/
+      swagger.yaml
   empty-lines:
     max: 1
     ignore: |

@@ -15,10 +15,7 @@ import (
 // swagger:model image-registries
 type ImageRegistries struct {
 
-	// Image registries authfile created by executing `podman login` or `docker login` (i.e. ~/.docker/config.json).
-	// https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub
-	// describes how the file can be created and how it is structured.
-	//
+	// Image registries authfile created by executing `podman login` or `docker login` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.
 	AuthFile string `json:"authFile,omitempty"`
 }
 
