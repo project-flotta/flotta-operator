@@ -204,6 +204,5 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 			Expect(err).Should(MatchError("name collisions for containers within the same pod spec are not supported.\n" +
 				"container name: 'container' has been reused"))
 		})
-
 	})
 })

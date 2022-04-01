@@ -320,6 +320,11 @@ definitions:
       namespace:
         description: Namespace of the workload
         type: string
+      labels:
+        type: object
+        description: Workload labels
+        additionalProperties:
+          type: string
       specification:
         type: string
       data:

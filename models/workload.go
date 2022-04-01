@@ -25,6 +25,9 @@ type Workload struct {
 	// image registries
 	ImageRegistries *ImageRegistries `json:"imageRegistries,omitempty"`
 
+	// Workload labels
+	Labels map[string]string `json:"labels,omitempty"`
+
 	// Log collection target for this workload
 	LogCollection string `json:"log_collection,omitempty"`
 
