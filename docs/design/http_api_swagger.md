@@ -981,12 +981,12 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
-| configmaps | [ConfigmapList](#configmap-list)| `ConfigmapList` |  | | List of configmaps used by the workload |  |
-| data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | | Configuration for data transfer |  |
-| imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | | Image registries configuration |  |
-| labels | map of string| `map[string]string` |  | | Workload labels | Workload labels |
+| configmaps | [ConfigmapList](#configmap-list)| `ConfigmapList` |  | |  |  |
+| data | [DataConfiguration](#data-configuration)| `DataConfiguration` |  | |  |  |
+| imageRegistries | [ImageRegistries](#image-registries)| `ImageRegistries` |  | |  |  |
+| labels | map of string| `map[string]string` |  | | Workload labels |  |
 | log_collection | string| `string` |  | | Log collection target for this workload |  |
-| metrics | [Metrics](#metrics)| `Metrics` |  | | Metrics endpoint configuration |  |
+| metrics | [Metrics](#metrics)| `Metrics` |  | |  |  |
 | name | string| `string` |  | | Name of the workload |  |
 | namespace | string| `string` |  | | Namespace of the workload |  |
 | specification | string| `string` |  | |  |  |
