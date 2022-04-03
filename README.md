@@ -6,6 +6,9 @@
 When the CRDs are present in the cluster, the operator can either be run outside or inside the cluster.
 
 ## Prerequisites/Dependencies
+### Go
+The operator requires Go `1.16`, Go `1.18` is not supported yet.
+
 ### podman
 This project relies strongly on Podman. It is used in the edge devices and also in the operator.
 Supported Podman version is `3.4.4`
