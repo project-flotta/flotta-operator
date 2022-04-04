@@ -83,6 +83,17 @@ spec:
               metrics:
                 description: Metrics contain metric collection and upload configuration
                 properties:
+                  receiverConfiguration:
+                    properties:
+                      requestNumSamples:
+                        format: int64
+                        type: integer
+                      timeoutSeconds:
+                        format: int64
+                        type: integer
+                      url:
+                        type: string
+                    type: object
                   retention:
                     properties:
                       maxHours:
