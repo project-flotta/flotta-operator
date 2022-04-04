@@ -16,6 +16,9 @@ import (
 // swagger:model metrics-configuration
 type MetricsConfiguration struct {
 
+	// receiver
+	Receiver *MetricsReceiverConfiguration `json:"receiver,omitempty"`
+
 	// retention
 	Retention *MetricsRetention `json:"retention,omitempty"`
 
@@ -26,6 +29,10 @@ type MetricsConfiguration struct {
 // Validate validates this metrics configuration
 func (m *MetricsConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateReceiver(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateRetention(formats); err != nil {
 		res = append(res, err)
@@ -38,6 +45,24 @@ func (m *MetricsConfiguration) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *MetricsConfiguration) validateReceiver(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Receiver) { // not required
+		return nil
+	}
+
+	if m.Receiver != nil {
+		if err := m.Receiver.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("receiver")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

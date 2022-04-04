@@ -80,6 +80,17 @@ spec:
                 type: object
               metrics:
                 properties:
+                  receiverConfiguration:
+                    properties:
+                      requestNumSamples:
+                        format: int64
+                        type: integer
+                      timeoutSeconds:
+                        format: int64
+                        type: integer
+                      url:
+                        type: string
+                    type: object
                   retention:
                     properties:
                       maxHours:

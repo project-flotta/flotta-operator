@@ -185,6 +185,16 @@ definitions:
         additionalProperties:
           $ref: '#/definitions/logs-collection-information'
 
+  metrics-receiver-configuration:
+    type: object
+    properties:
+      url:
+        type: string
+      timeout_seconds:
+        type: integer
+      request_num_samples:
+        type: integer
+
   logs-collection-information:
     description: Log collection information
     type: object
@@ -268,6 +278,8 @@ definitions:
         $ref: '#/definitions/metrics-retention'
       system:
         $ref: '#/definitions/system-metrics-configuration'
+      receiver:
+        $ref: '#/definitions/metrics-receiver-configuration'
 
   metrics-retention:
     description: Defines metrics data retention limits

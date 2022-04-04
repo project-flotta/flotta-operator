@@ -273,12 +273,14 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 }
 
 func (h *Handler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) (*models.MetricsConfiguration, error) {
-	metricsConfigSpec := edgeDevice.Spec.Metrics
-	if metricsConfigSpec == nil {
-		return nil, nil
+	metricsConfig := models.MetricsConfiguration{
+		Receiver: h.getMetricsReceiverConfiguration(edgeDevice),
 	}
 
-	var metricsConfig models.MetricsConfiguration
+	metricsConfigSpec := edgeDevice.Spec.Metrics
+	if metricsConfigSpec == nil {
+		return &metricsConfig, nil
+	}
 
 	retention := metricsConfigSpec.Retention
 	if retention != nil {
@@ -774,4 +776,30 @@ func (h *Handler) getDeviceSyslogLogConfig(ctx context.Context, edgeDevice *v1al
 		Address:  cm.Data["Address"],
 		Protocol: proto,
 	}, nil
+}
+
+func GetDefaultMetricsReceiver() *models.MetricsReceiverConfiguration {
+	return &models.MetricsReceiverConfiguration{
+		RequestNumSamples: 30000,
+		TimeoutSeconds:    10,
+	}
+}
+
+func (h *Handler) getMetricsReceiverConfiguration(device *v1alpha1.EdgeDevice) *models.MetricsReceiverConfiguration {
+	result := GetDefaultMetricsReceiver()
+
+	if device != nil && device.Spec.Metrics != nil {
+		receiverConfig := device.Spec.Metrics.ReceiverConfiguration
+		if receiverConfig != nil {
+			if receiverConfig.TimeoutSeconds > 0 {
+				result.TimeoutSeconds = receiverConfig.TimeoutSeconds
+			}
+			if receiverConfig.RequestNumSamples > 0 {
+				result.RequestNumSamples = receiverConfig.RequestNumSamples
+			}
+			result.URL = receiverConfig.URL
+		}
+	}
+
+	return result
 }
