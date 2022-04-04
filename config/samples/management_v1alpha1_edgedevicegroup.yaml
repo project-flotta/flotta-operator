@@ -1,0 +1,23 @@
+apiVersion: management.project-flotta.io/v1alpha1
+kind: EdgeDeviceGroup
+metadata:
+  name: edgedevicegroup-sample
+spec:
+  heartbeat:
+    periodSeconds: 15
+  metrics:
+    system:
+      interval: 60
+  osInformation:
+    automaticallyUpgrade: true
+    commitID: 0305686e69d673cb15ad459990fab4a3e4c5aba1
+  storage:
+    s3:
+      secretName: common-s3-secret
+      configMapName: common-s3-config
+      createOBC: false
+  logCollection:
+    syslog:
+      kind: syslog
+      syslogConfig:
+        name: syslog-config-map

@@ -25,4 +25,12 @@ resources:
   kind: EdgeDeployment
   path: github.com/project-flotta/flotta-operator/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: project-flotta.io
+  group: management
+  kind: EdgeDeviceGroup
+  path: github.com/project-flotta/flotta-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

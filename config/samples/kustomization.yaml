@@ -2,4 +2,5 @@
 resources:
 - management_v1alpha1_edgedevice.yaml
 - management_v1alpha1_edgedeployment.yaml
+- management_v1alpha1_edgedevicegroup.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
