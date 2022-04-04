@@ -792,6 +792,7 @@ Status: Internal Server Error
 
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
+| caCert | string| `string` |  | |  |  |
 | request_num_samples | integer| `int64` |  | |  |  |
 | timeout_seconds | integer| `int64` |  | |  |  |
 | url | string| `string` |  | |  |  |

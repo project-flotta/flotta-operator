@@ -3,6 +3,7 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/heartbeat"

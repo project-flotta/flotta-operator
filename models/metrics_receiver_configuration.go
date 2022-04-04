@@ -15,6 +15,9 @@ import (
 // swagger:model metrics-receiver-configuration
 type MetricsReceiverConfiguration struct {
 
+	// ca cert
+	CaCert string `json:"caCert,omitempty"`
+
 	// request num samples
 	RequestNumSamples int64 `json:"request_num_samples,omitempty"`
 

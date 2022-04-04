@@ -85,6 +85,8 @@ spec:
                 properties:
                   receiverConfiguration:
                     properties:
+                      caSecretName:
+                        type: string
                       requestNumSamples:
                         format: int64
                         type: integer

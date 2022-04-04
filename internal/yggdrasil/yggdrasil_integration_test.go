@@ -9,10 +9,11 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
@@ -683,11 +684,13 @@ var _ = Describe("Yggdrasil", func() {
 
 		Context("Metrics", func() {
 			var (
-				deviceName    string = "foo"
-				deviceCtx     context.Context
-				device        *v1alpha1.EdgeDevice
-				allowList     = models.MetricsAllowList{Names: []string{"foo", "bar"}}
-				allowListName = "foo"
+				deviceName      string = "foo"
+				deviceCtx       context.Context
+				device          *v1alpha1.EdgeDevice
+				allowList       = models.MetricsAllowList{Names: []string{"foo", "bar"}}
+				allowListName   = "foo"
+				caSecretName    = "test"
+				caSecretKeyName = "ca.crt"
 			)
 
 			BeforeEach(func() {
@@ -861,13 +864,55 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("receiver full configuration", func() {
 				// given
+				caContent := "test"
 				device.Status.Deployments = nil
 				metricsReceiverConfig := &v1alpha1.MetricsReceiverConfiguration{
-					URL:               "http://metricsreceiver.io:19291/api/v1/receive",
+					URL:               "https://metricsreceiver.io:19291/api/v1/receive",
+					RequestNumSamples: 1000,
+					TimeoutSeconds:    32,
+					CaSecretName:      caSecretName,
+				}
+				expectedConfig := &models.MetricsReceiverConfiguration{
+					CaCert:            caContent,
+					RequestNumSamples: metricsReceiverConfig.RequestNumSamples,
+					TimeoutSeconds:    metricsReceiverConfig.TimeoutSeconds,
+					URL:               metricsReceiverConfig.URL,
+				}
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					ReceiverConfiguration: metricsReceiverConfig,
+				}
+				secretKey := client.ObjectKey{Namespace: testNamespace, Name: caSecretName}
+				Mockk8sClient.EXPECT().Get(gomock.Any(), secretKey, gomock.Any()).
+					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
+						Expect(obj).To(BeAssignableToTypeOf(&corev1.Secret{}))
+						secret := obj.(*corev1.Secret)
+						secret.Data = map[string][]byte{caSecretKeyName: []byte(caContent)}
+					}).
+					Return(nil).Times(1)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+				Expect(config.Configuration.Metrics).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.Receiver).To(Equal(expectedConfig))
+			})
+
+			It("receiver empty secret", func() {
+				// given
+				device.Status.Deployments = nil
+				metricsReceiverConfig := &v1alpha1.MetricsReceiverConfiguration{
+					URL:               "https://metricsreceiver.io:19291/api/v1/receive",
 					RequestNumSamples: 1000,
 					TimeoutSeconds:    32,
 				}
-				expectedConfig := (*models.MetricsReceiverConfiguration)(metricsReceiverConfig)
+				expectedConfig := &models.MetricsReceiverConfiguration{
+					RequestNumSamples: metricsReceiverConfig.RequestNumSamples,
+					TimeoutSeconds:    metricsReceiverConfig.TimeoutSeconds,
+					URL:               metricsReceiverConfig.URL,
+				}
 				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
 					ReceiverConfiguration: metricsReceiverConfig,
 				}
@@ -880,6 +925,27 @@ var _ = Describe("Yggdrasil", func() {
 				config := validateAndGetDeviceConfig(res)
 				Expect(config.Configuration.Metrics).ToNot(BeNil())
 				Expect(config.Configuration.Metrics.Receiver).To(Equal(expectedConfig))
+			})
+
+			It("receiver error reading secret", func() {
+				// given
+				device.Status.Deployments = nil
+				metricsReceiverConfig := &v1alpha1.MetricsReceiverConfiguration{
+					URL:               "https://metricsreceiver.io:19291/api/v1/receive",
+					RequestNumSamples: 1000,
+					TimeoutSeconds:    32,
+					CaSecretName:      caSecretName,
+				}
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					ReceiverConfiguration: metricsReceiverConfig,
+				}
+				Mockk8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(errorNotFound).Times(1)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
 			})
 
 		})

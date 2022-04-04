@@ -767,6 +767,9 @@ func init() {
     "metrics-receiver-configuration": {
       "type": "object",
       "properties": {
+        "caCert": {
+          "type": "string"
+        },
         "request_num_samples": {
           "type": "integer"
         },
@@ -1791,6 +1794,9 @@ func init() {
     "metrics-receiver-configuration": {
       "type": "object",
       "properties": {
+        "caCert": {
+          "type": "string"
+        },
         "request_num_samples": {
           "type": "integer"
         },
