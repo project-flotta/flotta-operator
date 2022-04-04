@@ -57,6 +57,30 @@ func (o *PostDataMessageForDeviceOK) WriteResponse(rw http.ResponseWriter, produ
 	}
 }
 
+// PostDataMessageForDeviceAlreadyReportedCode is the HTTP code returned for type PostDataMessageForDeviceAlreadyReported
+const PostDataMessageForDeviceAlreadyReportedCode int = 208
+
+/*PostDataMessageForDeviceAlreadyReported Already Reported
+
+swagger:response postDataMessageForDeviceAlreadyReported
+*/
+type PostDataMessageForDeviceAlreadyReported struct {
+}
+
+// NewPostDataMessageForDeviceAlreadyReported creates PostDataMessageForDeviceAlreadyReported with default headers values
+func NewPostDataMessageForDeviceAlreadyReported() *PostDataMessageForDeviceAlreadyReported {
+
+	return &PostDataMessageForDeviceAlreadyReported{}
+}
+
+// WriteResponse to the client
+func (o *PostDataMessageForDeviceAlreadyReported) WriteResponse(rw http.ResponseWriter, producer runtime.Producer) {
+
+	rw.Header().Del(runtime.HeaderContentType) //Remove Content-Type on empty responses
+
+	rw.WriteHeader(208)
+}
+
 // PostDataMessageForDeviceBadRequestCode is the HTTP code returned for type PostDataMessageForDeviceBadRequest
 const PostDataMessageForDeviceBadRequestCode int = 400
 

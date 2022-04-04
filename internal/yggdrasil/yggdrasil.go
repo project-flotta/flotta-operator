@@ -25,6 +25,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/images"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 	"github.com/project-flotta/flotta-operator/internal/utils"
@@ -56,29 +57,31 @@ var (
 )
 
 type Handler struct {
-	deviceRepository       edgedevice.Repository
-	workloadRepository     edgeworkload.Repository
-	initialNamespace       string
-	metrics                metrics.Metrics
-	heartbeatHandler       heartbeat.Handler
-	mtlsConfig             *mtls.TLSConfig
-	configurationAssembler configurationAssembler
+	edgedeviceSignedRequestRepository edgedevicesignedrequest.Repository
+	deviceRepository                  edgedevice.Repository
+	workloadRepository                edgeworkload.Repository
+	initialNamespace                  string
+	metrics                           metrics.Metrics
+	heartbeatHandler                  heartbeat.Handler
+	mtlsConfig                        *mtls.TLSConfig
+	configurationAssembler            configurationAssembler
 }
 
 type keyMapType = map[string]interface{}
 type secretMapType = map[string]keyMapType
 
-func NewYggdrasilHandler(deviceRepository edgedevice.Repository, workloadRepository edgeworkload.Repository,
+func NewYggdrasilHandler(deviceSignedRequestRepository edgedevicesignedrequest.Repository, deviceRepository edgedevice.Repository, workloadRepository edgeworkload.Repository,
 	groupRepository edgedeviceset.Repository, claimer *storage.Claimer, k8sClient k8sclient.K8sClient,
 	initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
 	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig) *Handler {
 	return &Handler{
-		deviceRepository:   deviceRepository,
-		workloadRepository: workloadRepository,
-		initialNamespace:   initialNamespace,
-		metrics:            metrics,
-		heartbeatHandler:   heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics),
-		mtlsConfig:         mtlsConfig,
+		edgedeviceSignedRequestRepository: deviceSignedRequestRepository,
+		deviceRepository:                  deviceRepository,
+		workloadRepository:                workloadRepository,
+		initialNamespace:                  initialNamespace,
+		metrics:                           metrics,
+		heartbeatHandler:                  heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics),
+		mtlsConfig:                        mtlsConfig,
 		configurationAssembler: configurationAssembler{
 			allowLists:             allowLists,
 			claimer:                claimer,
@@ -209,7 +212,10 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 	deviceID := params.DeviceID
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
 	msg := params.Message
-	if msg.Directive != "registration" {
+	switch msg.Directive {
+	case "registration", "enrolment":
+		break
+	default:
 		if !IsOwnDevice(ctx, deviceID) {
 			return operations.NewPostDataMessageForDeviceForbidden()
 		}
@@ -235,6 +241,47 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			logger.Error(err, "Device not found")
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
+	case "enrolment":
+		contentJson, _ := json.Marshal(msg.Content)
+		enrolmentInfo := models.EnrolmentInfo{}
+		err := json.Unmarshal(contentJson, &enrolmentInfo)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceBadRequest()
+		}
+		logger.V(1).Info("received registration info", "content", enrolmentInfo)
+
+		_, err = h.deviceRepository.Read(ctx, deviceID, *enrolmentInfo.TargetNamespace)
+		if err == nil {
+			// Device is already created.
+			return operations.NewPostDataMessageForDeviceAlreadyReported()
+		}
+
+		_, err = h.edgedeviceSignedRequestRepository.Read(ctx, deviceID, h.initialNamespace)
+		if err == nil {
+			// Is already created, but not approved
+			return operations.NewPostDataMessageForDeviceOK()
+		}
+
+		edsr := &v1alpha1.EdgeDeviceSignedRequest{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      deviceID,
+				Namespace: h.initialNamespace,
+			},
+			Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
+				TargetNamespace: *enrolmentInfo.TargetNamespace,
+				Approved:        false,
+				Features: &v1alpha1.Features{
+					Hardware: hardware.MapHardware(enrolmentInfo.Features.Hardware),
+				},
+			},
+		}
+
+		err = h.edgedeviceSignedRequestRepository.Create(ctx, edsr)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceBadRequest()
+		}
+		return operations.NewPostDataMessageForDeviceOK()
 	case "registration":
 		// register new edge device
 		contentJson, _ := json.Marshal(msg.Content)
@@ -251,10 +298,14 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		}
 		content := models.RegistrationResponse{}
 
-		_, err = h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
+		dvc, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err == nil {
+			isInit := false
+			if dvc.ObjectMeta.Labels[v1alpha1.EdgeDeviceSignedRequestLabelName] == v1alpha1.EdgeDeviceSignedRequestLabelValue {
+				isInit = true
+			}
 
-			if !IsOwnDevice(ctx, deviceID) {
+			if !isInit && !IsOwnDevice(ctx, deviceID) {
 				authKeyVal, _ := ctx.Value(AuthzKey).(string)
 				logger.V(0).Info("Device tries to re-register with an invalid certificate", "certcn", authKeyVal)
 				// At this moment, the registration certificate it's no longer valid,
@@ -272,6 +323,15 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				content.Certificate = string(cert)
 			}
 			res.Content = content
+
+			if isInit {
+				newdevice := dvc.DeepCopy()
+				delete(newdevice.Labels, v1alpha1.EdgeDeviceSignedRequestLabelName)
+				err = h.deviceRepository.Patch(ctx, dvc, newdevice)
+				if err != nil {
+					logger.Error(err, "cannot update edgedevice labels")
+				}
+			}
 			return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 		}
 

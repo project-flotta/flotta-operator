@@ -20,7 +20,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
+
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -37,6 +37,8 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
@@ -185,10 +187,23 @@ func main() {
 	}
 
 	addIndexersToCache(mgr)
+
+	edgeDeviceSignedRequestRepository := edgedevicesignedrequest.NewEdgedeviceSignedRequestRepository(mgr.GetClient())
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
 	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(mgr.GetClient())
 	claimer := storage.NewClaimer(mgr.GetClient())
 	metricsObj := metrics.New()
+
+	if err = (&controllers.EdgeDeviceSignedRequestReconciler{
+		Client:                            mgr.GetClient(),
+		Scheme:                            mgr.GetScheme(),
+		EdgedeviceSignedRequestRepository: edgeDeviceSignedRequestRepository,
+		EdgeDeviceRepository:              edgeDeviceRepository,
+		MaxConcurrentReconciles:           int(Config.MaxConcurrentReconciles),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "edgedeviceSignedRequest")
+		os.Exit(1)
+	}
 
 	if err = (&controllers.EdgeDeviceReconciler{
 		Client:                  mgr.GetClient(),
@@ -287,6 +302,7 @@ func main() {
 
 		edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(mgr.GetClient())
 		yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
+			edgeDeviceSignedRequestRepository,
 			edgeDeviceRepository,
 			edgeWorkloadRepository,
 			edgeDeviceSetRepository,

@@ -1,0 +1,336 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: edgedevicesignedrequest.management.project-flotta.io
+spec:
+  group: management.project-flotta.io
+  names:
+    kind: EdgeDeviceSignedRequest
+    listKind: EdgeDeviceSignedRequestList
+    plural: edgedevicesignedrequest
+    shortNames:
+    - edsr
+    singular: edgedevicesignedrequest
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: DeviceID
+      jsonPath: .metadata.name
+      name: deviceid
+      type: string
+    - description: Target Namespace to land
+      jsonPath: .spec.target_namespace
+      name: targetNamespace
+      type: string
+    - description: Approved
+      jsonPath: .spec.approved
+      name: Approved
+      type: string
+    - description: Status
+      jsonPath: .status.phase
+      name: Status
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: EdgeDeviceSignedRequest is the Schema for the edgedevice enrolment
+          options
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            properties:
+              approved:
+                default: false
+                description: Approved is set to true if the device should be approved
+                  to register
+                type: boolean
+              features:
+                description: Features lists features that the registering edge device
+                  has
+                properties:
+                  hardware:
+                    description: Hardware defines the hardware that devices has
+                    properties:
+                      boot:
+                        description: boot
+                        properties:
+                          currentBootMode:
+                            description: current boot mode
+                            type: string
+                          pxeInterface:
+                            description: pxe interface
+                            type: string
+                        type: object
+                      cpu:
+                        description: cpu
+                        properties:
+                          architecture:
+                            description: architecture
+                            type: string
+                          count:
+                            description: count
+                            format: int64
+                            type: integer
+                          flags:
+                            description: flags
+                            items:
+                              type: string
+                            type: array
+                          frequency:
+                            description: frequency
+                            type: string
+                          modelName:
+                            description: model name
+                            type: string
+                        required:
+                        - flags
+                        type: object
+                      disks:
+                        description: disks
+                        items:
+                          properties:
+                            bootable:
+                              description: bootable
+                              type: boolean
+                            byId:
+                              description: by-id is the World Wide Number of the device
+                                which guaranteed to be unique for every storage device
+                              type: string
+                            byPath:
+                              description: by-path is the shortest physical path to
+                                the device
+                              type: string
+                            driveType:
+                              description: drive type
+                              type: string
+                            hctl:
+                              description: hctl
+                              type: string
+                            id:
+                              description: Determine the disk's unique identifier
+                                which is the by-id field if it exists and fallback
+                                to the by-path field otherwise
+                              type: string
+                            ioPerf:
+                              description: io perf
+                              properties:
+                                syncDuration:
+                                  description: 99th percentile of fsync duration in
+                                    milliseconds
+                                  format: int64
+                                  type: integer
+                              type: object
+                            isInstallationMedia:
+                              description: Whether the disk appears to be an installation
+                                media or not
+                              type: boolean
+                            model:
+                              description: model
+                              type: string
+                            name:
+                              description: name
+                              type: string
+                            path:
+                              description: path
+                              type: string
+                            serial:
+                              description: serial
+                              type: string
+                            sizeBytes:
+                              description: size bytes
+                              format: int64
+                              type: integer
+                            smart:
+                              description: smart
+                              type: string
+                            vendor:
+                              description: vendor
+                              type: string
+                            wwn:
+                              description: wwn
+                              type: string
+                          type: object
+                        type: array
+                      gpus:
+                        description: gpus
+                        items:
+                          properties:
+                            address:
+                              description: Device address (for example "0000:00:02.0")
+                              type: string
+                            deviceId:
+                              description: ID of the device (for example "3ea0")
+                              type: string
+                            name:
+                              description: Product name of the device (for example
+                                "UHD Graphics 620 (Whiskey Lake)")
+                              type: string
+                            vendor:
+                              description: The name of the device vendor (for example
+                                "Intel Corporation")
+                              type: string
+                            vendorId:
+                              description: ID of the vendor (for example "8086")
+                              type: string
+                          type: object
+                        type: array
+                      hostname:
+                        description: hostname
+                        type: string
+                      interfaces:
+                        description: interfaces
+                        items:
+                          properties:
+                            biosdevname:
+                              description: biosdevname
+                              type: string
+                            clientId:
+                              description: client id
+                              type: string
+                            flags:
+                              description: flags
+                              items:
+                                type: string
+                              type: array
+                            hasCarrier:
+                              description: has carrier
+                              type: boolean
+                            ipv4Addresses:
+                              description: ipv4 addresses
+                              items:
+                                type: string
+                              type: array
+                            ipv6Addresses:
+                              description: ipv6 addresses
+                              items:
+                                type: string
+                              type: array
+                            macAddress:
+                              description: mac address
+                              type: string
+                            mtu:
+                              description: mtu
+                              format: int64
+                              type: integer
+                            name:
+                              description: name
+                              type: string
+                            product:
+                              description: product
+                              type: string
+                            speedMbps:
+                              description: speed mbps
+                              format: int64
+                              type: integer
+                            vendor:
+                              description: vendor
+                              type: string
+                          required:
+                          - flags
+                          type: object
+                        type: array
+                      memory:
+                        description: memory
+                        properties:
+                          physicalBytes:
+                            description: physical bytes
+                            format: int64
+                            type: integer
+                          usableBytes:
+                            description: usable bytes
+                            format: int64
+                            type: integer
+                        type: object
+                      systemVendor:
+                        description: system vendor
+                        properties:
+                          manufacturer:
+                            description: manufacturer
+                            type: string
+                          productName:
+                            description: product name
+                            type: string
+                          serialNumber:
+                            description: serial number
+                            type: string
+                          virtual:
+                            description: Whether the machine appears to be a virtual
+                              machine or not
+                            type: boolean
+                        type: object
+                    required:
+                    - disks
+                    - gpus
+                    - interfaces
+                    type: object
+                  model_name:
+                    description: 'ModelName is the model name from the OS. The output
+                      of: cat /sys/firmware/devicetree/base/model'
+                    type: string
+                type: object
+              target_namespace:
+                description: TargetNamespace is the namespace where device will land
+                type: string
+            required:
+            - target_namespace
+            type: object
+          status:
+            properties:
+              conditions:
+                items:
+                  properties:
+                    lastTransitionTime:
+                      description: The last time the condition transit from one status
+                        to another
+                      format: date-time
+                      type: string
+                    message:
+                      description: A human-readable message indicating details about
+                        last transition
+                      type: string
+                    status:
+                      description: Status of the condition, one of True, False, Unknown
+                      type: string
+                    type:
+                      default: pending
+                      description: Type of status
+                      enum:
+                      - declined
+                      - approved
+                      - pending
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
+            required:
+            - conditions
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

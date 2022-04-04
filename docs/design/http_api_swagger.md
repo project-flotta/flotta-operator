@@ -238,6 +238,7 @@ Post data message for device API
 | Code | Status | Description | Has headers | Schema |
 |------|--------|-------------|:-----------:|--------|
 | [200](#post-data-message-for-device-200) | OK | Success |  | [schema](#post-data-message-for-device-200-schema) |
+| [208](#post-data-message-for-device-208) | Already Reported | Already Reported |  | [schema](#post-data-message-for-device-208-schema) |
 | [400](#post-data-message-for-device-400) | Bad Request | Error |  | [schema](#post-data-message-for-device-400-schema) |
 | [401](#post-data-message-for-device-401) | Unauthorized | Unauthorized |  | [schema](#post-data-message-for-device-401-schema) |
 | [403](#post-data-message-for-device-403) | Forbidden | Forbidden |  | [schema](#post-data-message-for-device-403-schema) |
@@ -255,6 +256,11 @@ Status: OK
   
 
 [MessageResponse](#message-response)
+
+##### <span id="post-data-message-for-device-208"></span> 208 - Already Reported
+Status: Already Reported
+
+###### <span id="post-data-message-for-device-208-schema"></span> Schema
 
 ##### <span id="post-data-message-for-device-400"></span> 400 - Error
 Status: Bad Request
@@ -452,6 +458,40 @@ Status: Internal Server Error
 | smart | string| `string` |  | |  |  |
 | vendor | string| `string` |  | |  |  |
 | wwn | string| `string` |  | |  |  |
+
+
+
+### <span id="enrolment-info"></span> enrolment-info
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| features | [EnrolmentInfoFeatures](#enrolment-info-features)| `EnrolmentInfoFeatures` |  | |  |  |
+| target-namespace | string| `string` |  | `"default"`|  |  |
+
+
+
+#### Inlined models
+
+**<span id="enrolment-info-features"></span> EnrolmentInfoFeatures**
+
+
+  
+
+
+
+**Properties**
+
+| Name | Type | Go type | Required | Default | Description | Example |
+|------|------|---------|:--------:| ------- |-------------|---------|
+| hardware | [HardwareInfo](#hardware-info)| `HardwareInfo` |  | |  |  |
+| modelName | string| `string` |  | |  |  |
 
 
 

@@ -5,6 +5,8 @@ resources:
 - bases/management.project-flotta.io_edgedevices.yaml
 - bases/management.project-flotta.io_edgeworkloads.yaml
 - bases/management.project-flotta.io_edgedevicesets.yaml
+- bases/management.project-flotta.io_edgedevicesignedrequest.yaml
+
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:

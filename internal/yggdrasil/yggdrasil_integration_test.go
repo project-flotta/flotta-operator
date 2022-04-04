@@ -37,6 +37,7 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
 	"github.com/project-flotta/flotta-operator/models"
@@ -61,17 +62,18 @@ const (
 
 var _ = Describe("Yggdrasil", func() {
 	var (
-		mockCtrl           *gomock.Controller
-		deployRepoMock     *edgeworkload.MockRepository
-		edgeDeviceRepoMock *edgedevice.MockRepository
-		deviceSetRepoMock  *edgedeviceset.MockRepository
-		metricsMock        *metrics.MockMetrics
-		registryAuth       *images.MockRegistryAuthAPI
-		handler            *yggdrasil.Handler
-		eventsRecorder     *record.FakeRecorder
-		Mockk8sClient      *k8sclient.MockK8sClient
-		allowListsMock     *devicemetrics.MockAllowListGenerator
-		configMap          *configmaps.MockConfigMap
+		mockCtrl             *gomock.Controller
+		deployRepoMock       *edgeworkload.MockRepository
+		edgeDeviceRepoMock   *edgedevice.MockRepository
+		edgeDeviceSRRepoMock *edgedevicesignedrequest.MockRepository
+		deviceSetRepoMock    *edgedeviceset.MockRepository
+		metricsMock          *metrics.MockMetrics
+		registryAuth         *images.MockRegistryAuthAPI
+		handler              *yggdrasil.Handler
+		eventsRecorder       *record.FakeRecorder
+		Mockk8sClient        *k8sclient.MockK8sClient
+		allowListsMock       *devicemetrics.MockAllowListGenerator
+		configMap            *configmaps.MockConfigMap
 
 		errorNotFound = errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
 		boolTrue      = true
@@ -107,6 +109,7 @@ var _ = Describe("Yggdrasil", func() {
 		deployRepoMock = edgeworkload.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
 		deviceSetRepoMock = edgedeviceset.NewMockRepository(mockCtrl)
+		edgeDeviceSRRepoMock = edgedevicesignedrequest.NewMockRepository(mockCtrl)
 		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
@@ -114,7 +117,7 @@ var _ = Describe("Yggdrasil", func() {
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
 
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, deviceSetRepoMock, nil, Mockk8sClient,
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceSRRepoMock, edgeDeviceRepoMock, deployRepoMock, deviceSetRepoMock, nil, Mockk8sClient,
 			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil)
 	})
 
@@ -2487,6 +2490,142 @@ var _ = Describe("Yggdrasil", func() {
 			})
 		})
 
+		Context("enrolment", func() {
+			var (
+				directiveName   = "enrolment"
+				targetNamespace = "fooNS"
+			)
+
+			It("It's already created", func() {
+				// given
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, targetNamespace).
+					Return(device, nil).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content: models.EnrolmentInfo{
+							Features:        &models.EnrolmentInfoFeatures{},
+							TargetNamespace: &targetNamespace,
+						},
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceAlreadyReported{}))
+			})
+
+			It("Submitted correctly", func() {
+				// given
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, device.Namespace).
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				edgeDeviceSRRepoMock.EXPECT().
+					Create(gomock.Any(), gomock.Any()).
+					Do(func(ctx context.Context, edgedeviceSignedRequest *v1alpha1.EdgeDeviceSignedRequest) error {
+						Expect(edgedeviceSignedRequest.Name).To(Equal(deviceName))
+						Expect(edgedeviceSignedRequest.Spec.TargetNamespace).To(Equal(targetNamespace))
+						return nil
+					}).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, targetNamespace).
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content: models.EnrolmentInfo{
+							Features:        &models.EnrolmentInfoFeatures{},
+							TargetNamespace: &targetNamespace,
+						},
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
+			})
+
+			It("Create edgedevice signer request failed", func() {
+				// given
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, device.Namespace).
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				edgeDeviceSRRepoMock.EXPECT().
+					Create(gomock.Any(), gomock.Any()).
+					Return(fmt.Errorf("failed")).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, targetNamespace).
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content: models.EnrolmentInfo{
+							Features:        &models.EnrolmentInfoFeatures{},
+							TargetNamespace: &targetNamespace,
+						},
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceBadRequest{}))
+			})
+
+			It("edgedevice signer request is already created", func() {
+				// given
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, device.Namespace).
+					Return(nil, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, targetNamespace).
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content: models.EnrolmentInfo{
+							Features:        &models.EnrolmentInfoFeatures{},
+							TargetNamespace: &targetNamespace,
+						},
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
+			})
+		})
+
 		Context("Registration", func() {
 
 			// @TODO: Missing test:
@@ -2520,6 +2659,7 @@ var _ = Describe("Yggdrasil", func() {
 					initKubeConfig()
 					MTLSConfig := mtls.NewMTLSConfig(k8sClient, testNamespace, []string{"foo.com"}, true)
 					handler = yggdrasil.NewYggdrasilHandler(
+						edgeDeviceSRRepoMock,
 						edgeDeviceRepoMock,
 						deployRepoMock,
 						deviceSetRepoMock,
@@ -2810,28 +2950,6 @@ var _ = Describe("Yggdrasil", func() {
 					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceInternalServerError{}))
 				})
 
-			})
-
-			// @TODO to be deleted, will not work without CSR entry
-			It("Device is already registered", func() {
-				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
-					Return(nil, nil).
-					Times(1)
-
-				params := api.PostDataMessageForDeviceParams{
-					DeviceID: deviceName,
-					Message: &models.Message{
-						Directive: directiveName,
-					},
-				}
-
-				// when
-				res := handler.PostDataMessageForDevice(deviceCtx, params)
-
-				// then
-				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
 			})
 
 			It("Read device from repository failed", func() {
