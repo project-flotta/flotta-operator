@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/project-flotta/flotta-operator/internal/k8sclient"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 
 	"github.com/go-openapi/strfmt"
@@ -30,6 +31,7 @@ type configurationAssembler struct {
 	claimer                *storage.Claimer
 	client                 k8sclient.K8sClient
 	configMaps             configmaps.ConfigMap
+	groupRepository        edgedevicegroup.Repository
 	deploymentRepository   edgedeployment.Repository
 	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
@@ -74,24 +76,32 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 		Secrets:       secretList,
 	}
 
-	dc.Configuration.Heartbeat = getHeartbeatConfiguration(edgeDevice)
-
-	if edgeDevice.Spec.OsInformation != nil {
-		dc.Configuration.Os = (*models.OsInformation)(edgeDevice.Spec.OsInformation)
+	var deviceGroup *v1alpha1.EdgeDeviceGroup
+	if deviceGroupName, ok := edgeDevice.Labels["flotta/configured-by"]; ok {
+		logger.V(1).Info("Device uses EdgeDeviceGroup", "edgeDeviceGroup", deviceGroupName)
+		var err error
+		deviceGroup, err = a.groupRepository.Read(ctx, deviceGroupName, edgeDevice.Namespace)
+		if err != nil {
+			logger.Info("Cannot load EdgeDeviceGroup", "edgeDeviceGroup", deviceGroupName)
+			deviceGroup = nil
+		}
 	}
+	dc.Configuration.Heartbeat = getHeartbeatConfiguration(edgeDevice, deviceGroup)
+	dc.Configuration.Os = getOsConfiguration(edgeDevice, deviceGroup)
 
-	err := a.setStorageConfiguration(ctx, edgeDevice, &dc)
+	var err error
+	dc.Configuration.Storage, err = a.getStorageConfiguration(ctx, edgeDevice, deviceGroup)
 	if err != nil {
 		logger.Error(err, "failed to get storage configuration for device")
 	}
 
-	dc.Configuration.Metrics, err = a.getDeviceMetricsConfiguration(ctx, edgeDevice)
+	dc.Configuration.Metrics, err = a.getDeviceMetricsConfiguration(ctx, edgeDevice, deviceGroup)
 	if err != nil {
 		logger.Error(err, "failed getting device metrics configuration")
 		return nil, err
 	}
 
-	dc.Configuration.LogCollection, err = a.getDeviceLogConfig(ctx, edgeDevice)
+	dc.Configuration.LogCollection, err = a.getDeviceLogConfig(ctx, edgeDevice, deviceGroup)
 	if err != nil {
 		logger.Error(err, "failed getting device log configuration")
 		return nil, err
@@ -100,15 +110,32 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 	return &dc, nil
 }
 
-func getHeartbeatConfiguration(edgeDevice *v1alpha1.EdgeDevice) *models.HeartbeatConfiguration {
-	if edgeDevice.Spec.Heartbeat != nil {
+func getOsConfiguration(edgeDevice *v1alpha1.EdgeDevice, deviceGroup *v1alpha1.EdgeDeviceGroup) *models.OsInformation {
+	osInformation := edgeDevice.Spec.OsInformation
+	if deviceGroup != nil {
+		osInformation = deviceGroup.Spec.OsInformation
+	}
+
+	if osInformation == nil {
+		return nil
+	}
+	return (*models.OsInformation)(osInformation)
+}
+
+func getHeartbeatConfiguration(edgeDevice *v1alpha1.EdgeDevice, deviceGroup *v1alpha1.EdgeDeviceGroup) *models.HeartbeatConfiguration {
+	heartbeat := edgeDevice.Spec.Heartbeat
+	if deviceGroup != nil {
+		heartbeat = deviceGroup.Spec.Heartbeat
+	}
+
+	if heartbeat != nil {
 		configuration := models.HeartbeatConfiguration{
-			PeriodSeconds: edgeDevice.Spec.Heartbeat.PeriodSeconds,
+			PeriodSeconds: heartbeat.PeriodSeconds,
 		}
-		if edgeDevice.Spec.Heartbeat.HardwareProfile != nil {
+		if heartbeat.HardwareProfile != nil {
 			configuration.HardwareProfile = &models.HardwareProfileConfiguration{
-				Include: edgeDevice.Spec.Heartbeat.HardwareProfile.Include,
-				Scope:   edgeDevice.Spec.Heartbeat.HardwareProfile.Scope,
+				Include: heartbeat.HardwareProfile.Include,
+				Scope:   heartbeat.HardwareProfile.Scope,
 			}
 		} else {
 			configuration.HardwareProfile = defaultHeartbeatConfiguration.HardwareProfile
@@ -119,33 +146,38 @@ func getHeartbeatConfiguration(edgeDevice *v1alpha1.EdgeDevice) *models.Heartbea
 
 }
 
-func (a *configurationAssembler) setStorageConfiguration(ctx context.Context,
-	edgeDevice *v1alpha1.EdgeDevice, dc *models.DeviceConfigurationMessage) error {
+func (a *configurationAssembler) getStorageConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceGroup *v1alpha1.EdgeDeviceGroup) (*models.StorageConfiguration, error) {
+	storageSpec := edgeDevice.Spec.Storage
+	if deviceGroup != nil {
+		storageSpec = deviceGroup.Spec.Storage
+	}
 
 	var storageConf *models.S3StorageConfiguration
 	var err error
-
 	if edgeDevice.Status.DataOBC != nil && len(*edgeDevice.Status.DataOBC) > 0 {
 		storageConf, err = a.claimer.GetStorageConfiguration(ctx, edgeDevice)
-	} else if storage.ShouldUseExternalConfig(edgeDevice) {
-		storageConf, err = a.claimer.GetExternalStorageConfig(ctx, edgeDevice)
+	} else if storage.ShouldUseExternalConfig(storageSpec) {
+		storageConf, err = a.claimer.GetExternalStorageConfig(ctx, edgeDevice.Namespace, storageSpec)
 	}
 
 	if err == nil && storageConf != nil {
-		dc.Configuration.Storage = &models.StorageConfiguration{
+		return &models.StorageConfiguration{
 			S3: storageConf,
-		}
+		}, nil
 	}
 
-	return err
+	return nil, err
 }
 
-func (a *configurationAssembler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) (*models.MetricsConfiguration, error) {
+func (a *configurationAssembler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceGroup *v1alpha1.EdgeDeviceGroup) (*models.MetricsConfiguration, error) {
+	metricsConfigSpec := edgeDevice.Spec.Metrics
+	if deviceGroup != nil {
+		metricsConfigSpec = deviceGroup.Spec.Metrics
+	}
 	metricsConfig := models.MetricsConfiguration{
-		Receiver: a.getMetricsReceiverConfiguration(edgeDevice),
+		Receiver: a.getMetricsReceiverConfiguration(metricsConfigSpec),
 	}
 
-	metricsConfigSpec := edgeDevice.Spec.Metrics
 	if metricsConfigSpec == nil {
 		return &metricsConfig, nil
 	}
@@ -401,19 +433,24 @@ func extractSecretsFromEnv(env []corev1.EnvVar, secretMap secretMapType) {
 	}
 }
 
-func (a *configurationAssembler) getDeviceLogConfig(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) (map[string]models.LogsCollectionInformation, error) {
-	if len(edgeDevice.Spec.LogCollection) == 0 {
+func (a *configurationAssembler) getDeviceLogConfig(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceGroup *v1alpha1.EdgeDeviceGroup) (map[string]models.LogsCollectionInformation, error) {
+	logCollection := edgeDevice.Spec.LogCollection
+	if deviceGroup != nil {
+		logCollection = deviceGroup.Spec.LogCollection
+	}
+
+	if len(logCollection) == 0 {
 		return nil, nil
 	}
 
 	res := map[string]models.LogsCollectionInformation{}
-	for key, val := range edgeDevice.Spec.LogCollection {
+	for key, val := range logCollection {
 		logConfig := models.LogsCollectionInformation{
 			BufferSize: val.BufferSize,
 			Kind:       val.Kind,
 		}
 		if val.SyslogConfig != nil {
-			syslogConfig, err := a.getDeviceSyslogLogConfig(ctx, edgeDevice, val)
+			syslogConfig, err := a.getDeviceSyslogLogConfig(ctx, edgeDevice.Namespace, val)
 			if err != nil {
 				return nil, err
 			}
@@ -424,10 +461,10 @@ func (a *configurationAssembler) getDeviceLogConfig(ctx context.Context, edgeDev
 	return res, nil
 }
 
-func (a *configurationAssembler) getDeviceSyslogLogConfig(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, val *v1alpha1.LogCollectionConfig) (*models.LogsCollectionInformationSyslogConfig, error) {
+func (a *configurationAssembler) getDeviceSyslogLogConfig(ctx context.Context, namespace string, val *v1alpha1.LogCollectionConfig) (*models.LogsCollectionInformationSyslogConfig, error) {
 	cm := corev1.ConfigMap{}
 	err := a.client.Get(ctx,
-		client.ObjectKey{Namespace: edgeDevice.Namespace, Name: val.SyslogConfig.Name},
+		client.ObjectKey{Namespace: namespace, Name: val.SyslogConfig.Name},
 		&cm)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get syslogconfig from configmap %s: %v", val.SyslogConfig.Name, err)
@@ -454,11 +491,11 @@ func GetDefaultMetricsReceiver() *models.MetricsReceiverConfiguration {
 	}
 }
 
-func (a *configurationAssembler) getMetricsReceiverConfiguration(device *v1alpha1.EdgeDevice) *models.MetricsReceiverConfiguration {
+func (a *configurationAssembler) getMetricsReceiverConfiguration(metrics *v1alpha1.MetricsConfiguration) *models.MetricsReceiverConfiguration {
 	result := GetDefaultMetricsReceiver()
 
-	if device != nil && device.Spec.Metrics != nil {
-		receiverConfig := device.Spec.Metrics.ReceiverConfiguration
+	if metrics != nil {
+		receiverConfig := metrics.ReceiverConfiguration
 		if receiverConfig != nil {
 			if receiverConfig.TimeoutSeconds > 0 {
 				result.TimeoutSeconds = receiverConfig.TimeoutSeconds

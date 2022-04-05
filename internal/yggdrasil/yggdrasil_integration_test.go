@@ -9,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 	"path/filepath"
 	"strings"
 	"time"
@@ -62,6 +63,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl           *gomock.Controller
 		deployRepoMock     *edgedeployment.MockRepository
 		edgeDeviceRepoMock *edgedevice.MockRepository
+		groupRepoMock      *edgedevicegroup.MockRepository
 		metricsMock        *metrics.MockMetrics
 		registryAuth       *images.MockRegistryAuthAPI
 		handler            *yggdrasil.Handler
@@ -103,6 +105,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
+		groupRepoMock = edgedevicegroup.NewMockRepository(mockCtrl)
 		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
@@ -110,8 +113,8 @@ var _ = Describe("Yggdrasil", func() {
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
 
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, Mockk8sClient, testNamespace,
-			eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil)
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, groupRepoMock, nil, Mockk8sClient,
+			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil)
 	})
 
 	AfterEach(func() {
@@ -2199,6 +2202,7 @@ var _ = Describe("Yggdrasil", func() {
 					handler = yggdrasil.NewYggdrasilHandler(
 						edgeDeviceRepoMock,
 						deployRepoMock,
+						groupRepoMock,
 						nil,
 						Mockk8sClient,
 						testNamespace,
