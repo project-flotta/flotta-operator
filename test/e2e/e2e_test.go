@@ -40,15 +40,22 @@ var _ = Describe("e2e", func() {
 
 	})
 
-	AfterFailed(func() {
-		device.DumpLogs()
-	})
-
 	AfterEach(func() {
 		_ = deployment.RemoveAll()
 		_ = device.Unregister()
 		_ = device.Remove()
 	})
+
+	JustAfterEach(func() {
+		isValid, err := device.ValidateNoDataRaceInLogs()
+		Expect(err).NotTo(HaveOccurred())
+		Expect(isValid).To(BeTrue(),"Found data race in logs" )
+	})
+
+	AfterFailed(func() {
+		device.DumpLogs()
+	})
+
 	Context("Sanity", func() {
 		It("Deploy valid edgedeployment to registered device", func() {
 			// given
