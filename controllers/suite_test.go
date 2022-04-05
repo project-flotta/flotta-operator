@@ -91,7 +91,8 @@ var _ = AfterSuite(func() {
 func getK8sManager(cfg *rest.Config) manager.Manager {
 
 	k8sManager, err := ctrl.NewManager(cfg, ctrl.Options{
-		Scheme: scheme.Scheme,
+		MetricsBindAddress: "0",
+		Scheme:             scheme.Scheme,
 	})
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
