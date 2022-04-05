@@ -87,8 +87,8 @@ type PrivilegeEscalationOptions struct {
 }
 
 type Playbook struct {
-	// Link to an arichived playbook content (tar.gz)
-	URL string `json:"url"`
+	// Playbook content
+	Content string `json:"content"`
 	// The connection timeout on ansible-playbook
 	Timeout uint64 `json:"timeout,omitempty"`
 	// TODO: Enum like linux capabilities ?

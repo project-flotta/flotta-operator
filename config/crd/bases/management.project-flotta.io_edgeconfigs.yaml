@@ -58,6 +58,9 @@ spec:
                       playbooksPriorityMap:
                         additionalProperties:
                           properties:
+                            content:
+                              description: Playbook content
+                              type: string
                             requiredPrivilegeLevel:
                               description: 'TODO: Enum like linux capabilities ? The
                                 required privelege level necessary to execute the
@@ -69,11 +72,8 @@ spec:
                               description: The connection timeout on ansible-playbook
                               format: int64
                               type: integer
-                            url:
-                              description: Link to an arichived playbook content (tar.gz)
-                              type: string
                           required:
-                          - url
+                          - content
                           type: object
                         description: the ansible's playbooks list with execution priority
                         minProperties: 1
