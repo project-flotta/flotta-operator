@@ -88,13 +88,14 @@ gosec: ## Run gosec locally
 	$(DOCKER) run --rm -it -v $(PWD):/opt/data/:z docker.io/securego/gosec -exclude-generated /opt/data/...
 
 GO_IMAGE=golang:1.17.8-alpine3.14
+GOIMPORTS_IMAGE=golang.org/x/tools/cmd/goimports@latest
 FILES_LIST=$(shell ls -d */ | grep -v -E "vendor|tools|test|client|restapi|models")
 MODULE_NAME=$(shell head -n 1 go.mod | cut -d '/' -f 3)
 imports: ## fix and format go imports
 	@# Removes blank lines within import block so that goimports does its magic in a deterministic way
 	find $(FILES_LIST) -type f -name "*.go" | xargs -L 1 sed -i '/import (/,/)/{/import (/n;/)/!{/^$$/d}}'
 	$(DOCKER) run --rm -v $(CURDIR):$(CURDIR) -w="$(CURDIR)" $(GO_IMAGE) \
-		sh -c 'go install golang.org/x/tools/cmd/goimports@latest && goimports -w -local github.com/project-flotta $(FILES_LIST) && goimports -w -local github.com/project-flotta/$(MODULE_NAME) $(FILES_LIST)'
+		sh -c 'go install $(GOIMPORTS_IMAGE) && goimports -w -local github.com/project-flotta $(FILES_LIST) && goimports -w -local github.com/project-flotta/$(MODULE_NAME) $(FILES_LIST)'
 
 LINT_IMAGE=golangci/golangci-lint:v1.45.0
 lint: ## Check if the go code is properly written, rules are in .golangci.yml 
