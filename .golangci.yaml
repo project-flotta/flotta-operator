@@ -54,7 +54,6 @@ run:
   # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`, fallback on 1.17
   go: '1.17'
 
-
 # output configuration options
 output:
   # Format: colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
@@ -65,7 +64,7 @@ output:
   # Example: "checkstyle:report.json,colored-line-number"
   #
   # Default: colored-line-number
-  format: colored-line-number 
+  format: colored-line-number
 
   # Print lines of code with issue.
   # Default: true
@@ -189,5 +188,3 @@ linters:
     - style
     - test
     - unused
-
-
