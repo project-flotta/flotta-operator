@@ -1,10 +1,11 @@
+---
 swagger: '2.0'
 info:
   description: 'Flotta Edge Management'
   version: 1.0.0
   title: FlottaManagement
-  contact: 
-    name: Flotta flotta 
+  contact:
+    name: Flotta flotta
     url: https://github.com/project-flotta
     email: flotta@redhat.com
   license:
@@ -519,7 +520,8 @@ definitions:
     type: object
     properties:
       id:
-        description: Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise
+        description:
+          Determine the disk's unique identifier which is the by-id field if it exists and fallback to the by-path field otherwise
         type: string
       drive_type:
         type: string

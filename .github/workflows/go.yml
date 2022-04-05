@@ -1,9 +1,10 @@
+---
 name: Go
-on:
+on:  # yamllint disable-line rule:truthy
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -56,6 +57,15 @@ jobs:
         uses: golangci/golangci-lint-action@v2.5.1
         with:
           args: --timeout=2m
+
+  YamlLint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v2
+      - name: 🚀 Run yamllint
+        run: |
+          yamllint -f github -c .yamllint .
 
   Security-Scanner:
     name: Security Scanner
