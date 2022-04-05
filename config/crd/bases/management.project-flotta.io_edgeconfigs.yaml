@@ -36,6 +36,9 @@ spec:
           spec:
             description: EdgeConfigSpec defines the desired state of EdgeConfig
             properties:
+              edgeDeviceGroupName:
+                description: EdgeDeviceGroupName in which this EdgeConfig is applied
+                type: string
               edgePlaybook:
                 description: The ansible playbook command to execute
                 properties:
@@ -72,8 +75,7 @@ spec:
                           required:
                           - url
                           type: object
-                        description: the ansible's playbooks list with priority to
-                          be used
+                        description: the ansible's playbooks list with execution priority
                         minProperties: 1
                         type: object
                       privilegeEscalationOptions:
@@ -107,9 +109,7 @@ spec:
             description: EdgeConfigStatus defines the observed state of EdgeConfig
             properties:
               edgePlaybookStatus:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file.'
+                description: EdgePlaybookStatus defines the observed state of EdgePlaybook
                 properties:
                   condition:
                     properties:

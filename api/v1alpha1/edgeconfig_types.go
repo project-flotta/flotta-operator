@@ -25,19 +25,15 @@ import (
 
 // EdgeConfigSpec defines the desired state of EdgeConfig
 type EdgeConfigSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
 	// The ansible playbook command to execute
 	EdgePlaybook *EdgePlaybookSpec `json:"edgePlaybook,omitempty"`
 
-	//TODO: Add EdgeDeviceGroup. Depends on https://github.com/project-flotta/flotta-operator/pull/161
+	// EdgeDeviceGroupName in which this EdgeConfig is applied
+	EdgeDeviceGroupName string `json:"edgeDeviceGroupName,omitempty"`
 }
 
 // EdgeConfigStatus defines the observed state of EdgeConfig
 type EdgeConfigStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file.
 	EdgePlaybookStatus *EdgePlaybookStatus `json:"edgePlaybookStatus,omitempty"`
 }
 
@@ -62,7 +58,7 @@ type EdgePlaybookStatus struct {
 type AnsiblePlaybookCmd struct {
 	// username who execute the playbook
 	User string `json:"user,omitempty"`
-	// the ansible's playbooks list with priority to be used
+	// the ansible's playbooks list with execution priority
 	// +kubebuilder:validation:MinProperties=1
 	Playbooks map[string]Playbook `json:"playbooksPriorityMap,omitempty"`
 	// the ansible's playbook options for each playbook
