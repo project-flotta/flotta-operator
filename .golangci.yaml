@@ -50,9 +50,7 @@ run:
   allow-parallel-runners: false
 
   # Define the Go version limit.
-  # Mainly related to generics support in go1.18.
-  # Default: use Go version from the go.mod file, fallback on the env var `GOVERSION`, fallback on 1.17
-  go: '1.17'
+  go: '1.16'
 
 # output configuration options
 output:
@@ -92,99 +90,22 @@ linters:
   # Enable specific linter
   # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
   enable:
-    - asciicheck
-    - bidichk
-    - bodyclose
-    - contextcheck
-    - cyclop
+  # default linter
     - deadcode
-    - depguard
-    - dogsled
-    - dupl
-    - durationcheck
     - errcheck
-    - errname
-    - errorlint
-    - exhaustive
-    - exhaustivestruct
-    - exportloopref
-    - forbidigo
-    - forcetypeassert
-    - funlen
-    - gci
-    - gochecknoglobals
-    - gochecknoinits
-    - gocognit
-    - goconst
-    - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - goerr113
-    - gofmt
-    - gofumpt
-    - goheader
-    - goimports
-    - gomnd
-    - gomoddirectives
-    - gomodguard
-    - goprintffuncname
-    - gosec
     - gosimple
     - govet
-    - ifshort
-    - importas
     - ineffassign
-    - ireturn
-    - lll
-    - makezero
-    - misspell
-    - nakedret
-    - nestif
-    - nilerr
-    - nilnil
-    - nlreturn
-    - noctx
-    - nolintlint
-    - paralleltest
-    - prealloc
-    - predeclared
-    - promlinter
-    - revive
-    - rowserrcheck
-    - sqlclosecheck
     - staticcheck
     - structcheck
-    - stylecheck
-    - tagliatelle
-    - tenv
-    - testpackage
-    - thelper
-    - tparallel
     - typecheck
-    - unconvert
-    - unparam
     - unused
     - varcheck
-    - varnamelen
-    - wastedassign
-    - whitespace
-    - wrapcheck
-    - wsl
-
-  # Enable presets.
-  # https://golangci-lint.run/usage/linters
-  presets:
-    - bugs
-    - comment
-    - complexity
-    - error
-    - format
-    - import
-    - metalinter
-    - module
-    - performance
-    - sql
-    - style
-    - test
-    - unused
+  # additional linters
+    - bodyclose
+    - errorlint
+    - exportloopref
+    - forcetypeassert
+    - nilerr
+    - prealloc
+    - unparam
