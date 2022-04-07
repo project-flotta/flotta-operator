@@ -21,11 +21,11 @@ const (
 var _ = Describe("e2e", func() {
 
 	var (
-		clientset  *kubernetes.Clientset
-		client     dynamic.Interface
-		deployment EdgeDeployment
-		device     EdgeDevice
-		err        error
+		clientset *kubernetes.Clientset
+		client    dynamic.Interface
+		workload  EdgeWorkload
+		device    EdgeDevice
+		err       error
 	)
 
 	BeforeEach(func() {
@@ -35,13 +35,13 @@ var _ = Describe("e2e", func() {
 		Expect(err).To(BeNil())
 		device, err = NewEdgeDevice(client, "edgedevice1")
 		Expect(err).To(BeNil())
-		deployment, err = NewEdgeDeployment(client)
+		workload, err = NewEdgeWorkload(client)
 		Expect(err).To(BeNil())
 
 	})
 
 	AfterEach(func() {
-		_ = deployment.RemoveAll()
+		_ = workload.RemoveAll()
 		_ = device.Unregister()
 		_ = device.Remove()
 	})
@@ -57,19 +57,19 @@ var _ = Describe("e2e", func() {
 	})
 
 	Context("Sanity", func() {
-		It("Deploy valid edgedeployment to registered device", func() {
+		It("Deploy valid edgeworkload to registered device", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
 
 			// when
-			_, err = deployment.Create(edgedeployemntDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			_, err = workload.Create(edgeworkloadDeviceId("nginx", device.GetId(), hostPort, nginxPort))
 			Expect(err).To(BeNil())
 
 			// then
 			// Check the edgedevice report proper state of workload:
-			err = device.WaitForDeploymentState("nginx", "Running")
-			Expect(err).To(BeNil(), "cannot get deployment status for nginx workload")
+			err = device.WaitForWorkloadState("nginx", "Running")
+			Expect(err).To(BeNil(), "cannot get workload status for nginx workload")
 
 			// Check the nginx is serving content:
 			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
@@ -77,7 +77,7 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
 		})
 
-		It("Unregister device without any deployments", func() {
+		It("Unregister device without any workloads", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
@@ -92,13 +92,13 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(Equal("0"))
 		})
 
-		It("Unregister device with running deployments", func() {
+		It("Unregister device with running workloads", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
-			_, err = deployment.Create(edgedeployemntDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			_, err = workload.Create(edgeworkloadDeviceId("nginx", device.GetId(), hostPort, nginxPort))
 			Expect(err).To(BeNil())
-			err = device.WaitForDeploymentState("nginx", "Running")
+			err = device.WaitForWorkloadState("nginx", "Running")
 			Expect(err).To(BeNil())
 
 			// when
@@ -116,24 +116,24 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("0"))
 
-			// EdgeDeployment CR still exists
-			depCr, err := deployment.Get("nginx")
+			// EdgeWorkload CR still exists
+			depCr, err := workload.Get("nginx")
 			Expect(err).To(BeNil())
 			Expect(depCr).ToNot(BeNil())
 		})
 
-		It("Deploy edgedeployment with incorrect label", func() {
+		It("Deploy edgeworkload with incorrect label", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
 
 			// when
 			labels := map[string]string{"label": "yxz"}
-			_, err = deployment.Create(edgedeployemntDeviceLabel("nginx", labels, hostPort, nginxPort))
+			_, err = workload.Create(edgeworkloadDeviceLabel("nginx", labels, hostPort, nginxPort))
 			Expect(err).To(BeNil())
 
 			// then
-			depCr, err := deployment.Get("nginx")
+			depCr, err := workload.Get("nginx")
 			Expect(err).To(BeNil())
 			Expect(depCr).ToNot(BeNil())
 
@@ -151,9 +151,9 @@ var _ = Describe("e2e", func() {
 			// when
 			_, err = device.Exec(fmt.Sprintf("nc -l 127.0.0.1 %d &", hostPort))
 			Expect(err).To(BeNil())
-			_, err = deployment.Create(edgedeployemntDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			_, err = workload.Create(edgeworkloadDeviceId("nginx", device.GetId(), hostPort, nginxPort))
 			Expect(err).To(BeNil())
-			err = device.WaitForDeploymentState("nginx", "Created")
+			err = device.WaitForWorkloadState("nginx", "Created")
 			Expect(err).To(BeNil())
 
 			// then
@@ -162,30 +162,30 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(Equal("failed"))
 		})
 
-		It("Re-create the edgedeployment", func() {
+		It("Re-create the edgeworkload", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
 
 			// when
-			_, err = deployment.Create(edgedeployemntDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			_, err = workload.Create(edgeworkloadDeviceId("nginx", device.GetId(), hostPort, nginxPort))
 			Expect(err).To(BeNil())
-			err = device.WaitForDeploymentState("nginx", "Running")
+			err = device.WaitForWorkloadState("nginx", "Running")
 			Expect(err).To(BeNil())
 
 			// then
 			// remove
-			err = deployment.Remove("nginx")
+			err = workload.Remove("nginx")
 			Expect(err).To(BeNil())
 
 			// re-create the same
-			_, err = deployment.Create(edgedeployemntDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			_, err = workload.Create(edgeworkloadDeviceId("nginx", device.GetId(), hostPort, nginxPort))
 			Expect(err).To(BeNil())
-			err = device.WaitForDeploymentState("nginx", "Running")
+			err = device.WaitForWorkloadState("nginx", "Running")
 			Expect(err).To(BeNil())
 		})
 
-		It("Create edgedeployemnt with env secret", func() {
+		It("Create edgeworkload with env secret", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
@@ -206,10 +206,10 @@ var _ = Describe("e2e", func() {
 			_, err = clientset.CoreV1().Secrets(Namespace).Create(context.TODO(), secret, metav1.CreateOptions{})
 			Expect(err).To(BeNil())
 
-			// create deployemnt
-			_, err = deployment.Create(edgedeployemntWithSecretFromEnv("nginx", device.GetId(), "mysecret"))
+			// create workload
+			_, err = workload.Create(edgeworkloadWithSecretFromEnv("nginx", device.GetId(), "mysecret"))
 			Expect(err).To(BeNil())
-			err = device.WaitForDeploymentState("nginx", "Running")
+			err = device.WaitForWorkloadState("nginx", "Running")
 			Expect(err).To(BeNil())
 
 			// then
@@ -221,7 +221,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 		})
 
-		It("Create edgedeployemnt with env configmap", func() {
+		It("Create edgeworkload with env configmap", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
@@ -241,9 +241,9 @@ var _ = Describe("e2e", func() {
 			_, err = clientset.CoreV1().ConfigMaps(Namespace).Create(context.TODO(), configmap, metav1.CreateOptions{})
 			Expect(err).To(BeNil())
 
-			_, err = deployment.Create(edgedeployemntWithConfigMapFromEnv("nginx", device.GetId(), "myconfigmap"))
+			_, err = workload.Create(edgeworkloadWithConfigMapFromEnv("nginx", device.GetId(), "myconfigmap"))
 			Expect(err).To(BeNil())
-			err = device.WaitForDeploymentState("nginx", "Running")
+			err = device.WaitForWorkloadState("nginx", "Running")
 			Expect(err).To(BeNil())
 
 			// then
@@ -259,13 +259,14 @@ var _ = Describe("e2e", func() {
 	Context("Network issues", func() {
 		conformanceTest := func() {
 			// when
-			_, err = deployment.Create(edgedeployemntDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			_, err = workload.Create(edgeworkloadDeviceId("nginx", device.GetId(), hostPort, nginxPort))
 			Expect(err).To(BeNil())
 
 			// then
 			// Check the edgedevice report proper state of workload:
-			err = device.WaitForDeploymentState("nginx", "Running")
-			Expect(err).To(BeNil(), "cannot get deployment status for nginx workload")
+			err = device.WaitForWorkloadState("nginx", "Running")
+			device.DumpLogs()
+			Expect(err).To(BeNil(), "cannot get workload status for nginx workload")
 
 			// Check the nginx is serving content:
 			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
@@ -295,37 +296,37 @@ var _ = Describe("e2e", func() {
 	})
 })
 
-func edgedeployemntWithSecretFromEnv(name string, device string, secretName string) map[string]interface{} {
-	deployment := edgedeployemnt(name, hostPort, nginxPort, &secretName, nil)
-	deployment["spec"].(map[string]interface{})["device"] = device
-	return deployment
+func edgeworkloadWithSecretFromEnv(name string, device string, secretName string) map[string]interface{} {
+	workload := edgeworkload(name, hostPort, nginxPort, &secretName, nil)
+	workload["spec"].(map[string]interface{})["device"] = device
+	return workload
 }
 
-func edgedeployemntWithConfigMapFromEnv(name string, device string, configMap string) map[string]interface{} {
-	deployment := edgedeployemnt(name, hostPort, nginxPort, nil, &configMap)
-	deployment["spec"].(map[string]interface{})["device"] = device
-	return deployment
+func edgeworkloadWithConfigMapFromEnv(name string, device string, configMap string) map[string]interface{} {
+	workload := edgeworkload(name, hostPort, nginxPort, nil, &configMap)
+	workload["spec"].(map[string]interface{})["device"] = device
+	return workload
 }
 
-func edgedeployemntDeviceId(name string, device string, hostport int, containerport int) map[string]interface{} {
-	deployment := edgedeployemnt(name, hostport, containerport, nil, nil)
-	deployment["spec"].(map[string]interface{})["device"] = device
-	return deployment
+func edgeworkloadDeviceId(name string, device string, hostport int, containerport int) map[string]interface{} {
+	workload := edgeworkload(name, hostport, containerport, nil, nil)
+	workload["spec"].(map[string]interface{})["device"] = device
+	return workload
 }
 
-func edgedeployemntDeviceLabel(name string, labels map[string]string, hostport int, containerport int) map[string]interface{} {
-	deployment := edgedeployemnt(name, hostport, containerport, nil, nil)
-	spec := deployment["spec"].(map[string]interface{})
+func edgeworkloadDeviceLabel(name string, labels map[string]string, hostport int, containerport int) map[string]interface{} {
+	workload := edgeworkload(name, hostport, containerport, nil, nil)
+	spec := workload["spec"].(map[string]interface{})
 	spec["deviceSelector"] = map[string]interface{}{}
 	spec["deviceSelector"].(map[string]interface{})["matchLabels"] = labels
-	return deployment
+	return workload
 }
 
-func edgedeployemnt(name string, hostport int, containerport int, secretRef *string, configRef *string) map[string]interface{} {
-	deployment := map[string]interface{}{}
-	deployment["apiVersion"] = "management.project-flotta.io/v1alpha1"
-	deployment["kind"] = "EdgeDeployment"
-	deployment["metadata"] = map[string]interface{}{
+func edgeworkload(name string, hostport int, containerport int, secretRef *string, configRef *string) map[string]interface{} {
+	workload := map[string]interface{}{}
+	workload["apiVersion"] = "management.project-flotta.io/v1alpha1"
+	workload["kind"] = "EdgeWorkload"
+	workload["metadata"] = map[string]interface{}{
 		"name": name,
 	}
 	containers := []map[string]interface{}{{
@@ -345,7 +346,7 @@ func edgedeployemnt(name string, hostport int, containerport int, secretRef *str
 		containers[0]["envFrom"] = append(envFrom, map[string]interface{}{"configMapRef": map[string]string{"name": *configRef}})
 	}
 
-	deployment["spec"] = map[string]interface{}{
+	workload["spec"] = map[string]interface{}{
 		"type": "pod",
 		"pod": map[string]interface{}{
 			"spec": map[string]interface{}{
@@ -353,5 +354,5 @@ func edgedeployemnt(name string, hostport int, containerport int, secretRef *str
 			},
 		},
 	}
-	return deployment
+	return workload
 }

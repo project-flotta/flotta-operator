@@ -12,8 +12,8 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/controllers"
 	"github.com/project-flotta/flotta-operator/internal/labels"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,14 +31,14 @@ var _ = Describe("Controllers", func() {
 	)
 
 	var (
-		edgeDeploymentReconciler *controllers.EdgeDeploymentReconciler
-		mockCtrl                 *gomock.Controller
-		deployRepoMock           *edgedeployment.MockRepository
-		edgeDeviceRepoMock       *edgedevice.MockRepository
-		cancelContext            context.CancelFunc
-		signalContext            context.Context
-		err                      error
-		req                      ctrl.Request
+		edgeWorkloadReconciler *controllers.EdgeWorkloadReconciler
+		mockCtrl               *gomock.Controller
+		deployRepoMock         *edgeworkload.MockRepository
+		edgeDeviceRepoMock     *edgedevice.MockRepository
+		cancelContext          context.CancelFunc
+		signalContext          context.Context
+		err                    error
+		req                    ctrl.Request
 	)
 
 	BeforeEach(func() {
@@ -46,17 +46,17 @@ var _ = Describe("Controllers", func() {
 		k8sManager := getK8sManager(cfg)
 
 		mockCtrl = gomock.NewController(GinkgoT())
-		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
+		deployRepoMock = edgeworkload.NewMockRepository(mockCtrl)
 
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
 
-		edgeDeploymentReconciler = &controllers.EdgeDeploymentReconciler{
-			Client:                   k8sClient,
-			Scheme:                   k8sManager.GetScheme(),
-			EdgeDeploymentRepository: deployRepoMock,
-			EdgeDeviceRepository:     edgeDeviceRepoMock,
-			Concurrency:              1,
-			ExecuteConcurrent:        controllers.ExecuteConcurrent,
+		edgeWorkloadReconciler = &controllers.EdgeWorkloadReconciler{
+			Client:                 k8sClient,
+			Scheme:                 k8sManager.GetScheme(),
+			EdgeWorkloadRepository: deployRepoMock,
+			EdgeDeviceRepository:   edgeDeviceRepoMock,
+			Concurrency:            1,
+			ExecuteConcurrent:      controllers.ExecuteConcurrent,
 		}
 
 		signalContext, cancelContext = context.WithCancel(context.TODO())
@@ -92,24 +92,24 @@ var _ = Describe("Controllers", func() {
 	}
 
 	Context("Reconcile", func() {
-		It("Return nil if no edgedeployment found", func() {
+		It("Return nil if no edgeworkload found", func() {
 			// given
 			returnErr := errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
 			deployRepoMock.EXPECT().Read(gomock.Any(), req.Name, req.Namespace).Return(nil, returnErr).AnyTimes()
 			// when
-			res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+			res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 			// then
 			Expect(err).NotTo(HaveOccurred())
 			Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 		})
 
-		It("Return error if edgedeployment retrieval failed", func() {
+		It("Return error if edgeworkload retrieval failed", func() {
 			// given
 			deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("Failed")).AnyTimes()
 
 			// when
-			res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+			res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 			// then
 			Expect(err).To(HaveOccurred())
@@ -118,17 +118,17 @@ var _ = Describe("Controllers", func() {
 
 		Context("Finalizers", func() {
 			var (
-				deploymentData *v1alpha1.EdgeDeployment
-				finalizers     = []string{"yggdrasil-device-reference-finalizer"}
+				workloadData *v1alpha1.EdgeWorkload
+				finalizers   = []string{"yggdrasil-device-reference-finalizer"}
 			)
 
 			BeforeEach(func() {
-				deploymentData = &v1alpha1.EdgeDeployment{
+				workloadData = &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "test",
 						Namespace: namespace,
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						DeviceSelector: &v1.LabelSelector{
 							MatchLabels: map[string]string{"test": "test"},
 						},
@@ -138,21 +138,21 @@ var _ = Describe("Controllers", func() {
 						Data:   &v1alpha1.DataConfiguration{},
 					}}
 
-				deployRepoMock.EXPECT().Read(gomock.Any(), deploymentData.Name, deploymentData.Namespace).
-					Return(deploymentData, nil).Times(1)
+				deployRepoMock.EXPECT().Read(gomock.Any(), workloadData.Name, workloadData.Namespace).
+					Return(workloadData, nil).Times(1)
 			})
 
 			It("Added finalizer requeue correctly", func() {
 				// given
-				deployRepoMock.EXPECT().Patch(gomock.Any(), deploymentData, gomock.Any()).
-					Return(nil).Do(func(ctx context.Context, old, new *v1alpha1.EdgeDeployment) {
+				deployRepoMock.EXPECT().Patch(gomock.Any(), workloadData, gomock.Any()).
+					Return(nil).Do(func(ctx context.Context, old, new *v1alpha1.EdgeWorkload) {
 					Expect(new.Finalizers).To(HaveLen(1))
 					Expect(new.Finalizers).To(Equal(finalizers))
 					Expect(old.Finalizers).To(HaveLen(0))
 				}).Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -161,15 +161,15 @@ var _ = Describe("Controllers", func() {
 
 			It("Added finalizer failed requeue with error", func() {
 				// given
-				deployRepoMock.EXPECT().Patch(gomock.Any(), deploymentData, gomock.Any()).
-					Return(nil).Do(func(ctx context.Context, old, new *v1alpha1.EdgeDeployment) {
+				deployRepoMock.EXPECT().Patch(gomock.Any(), workloadData, gomock.Any()).
+					Return(nil).Do(func(ctx context.Context, old, new *v1alpha1.EdgeWorkload) {
 					Expect(new.Finalizers).To(HaveLen(1))
 					Expect(new.Finalizers).To(Equal(finalizers))
 					Expect(old.Finalizers).To(HaveLen(0))
 				}).Return(fmt.Errorf("error")).Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).To(HaveOccurred())
@@ -179,19 +179,19 @@ var _ = Describe("Controllers", func() {
 
 		Context("devices selector section", func() {
 			var (
-				deploymentData *v1alpha1.EdgeDeployment
-				device         *v1alpha1.EdgeDevice
+				workloadData *v1alpha1.EdgeWorkload
+				device       *v1alpha1.EdgeDevice
 			)
 
 			BeforeEach(func() {
-				deploymentData = &v1alpha1.EdgeDeployment{
+				workloadData = &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
 						Namespace:  namespace,
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 						Labels:     map[string]string{labels.CreateSelectorLabel("test"): "true"},
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						DeviceSelector: &v1.LabelSelector{
 							MatchLabels: map[string]string{"test": "test"},
 						},
@@ -201,7 +201,7 @@ var _ = Describe("Controllers", func() {
 					}}
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(deploymentData, nil).Times(1)
+					Return(workloadData, nil).Times(1)
 
 				device = getDevice("testdevice")
 			})
@@ -214,7 +214,7 @@ var _ = Describe("Controllers", func() {
 					Return(nil, fmt.Errorf("err")).
 					Times(1)
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).To(HaveOccurred())
@@ -238,7 +238,7 @@ var _ = Describe("Controllers", func() {
 					Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -253,14 +253,14 @@ var _ = Describe("Controllers", func() {
 					Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).To(HaveOccurred())
 				Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
 			})
 
-			It("Add deployments to devices", func() {
+			It("Add workloads to devices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
 					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
@@ -275,7 +275,7 @@ var _ = Describe("Controllers", func() {
 				edgeDeviceRepoMock.EXPECT().
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
 					}).
 					Return(nil).
 					Times(1)
@@ -289,19 +289,19 @@ var _ = Describe("Controllers", func() {
 					Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
 				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 			})
 
-			It("Only correct devices got deployments", func() {
+			It("Only correct devices got workloads", func() {
 				// When  running workloads, the Reconcile got all edgedevices that have
 				// the label workload/name and all matching devices. If one device does
 				// not apply, it'll remove the workload labels
 				deviceToDelete := getDevice("todelete")
-				deviceToDelete.Status.Deployments = []v1alpha1.Deployment{
+				deviceToDelete.Status.Workloads = []v1alpha1.Workload{
 					{Name: "test"},
 					{Name: "otherWorkload"},
 				}
@@ -317,7 +317,7 @@ var _ = Describe("Controllers", func() {
 				edgeDeviceRepoMock.EXPECT().
 					ListForSelector(gomock.Any(), gomock.Any(), namespace).
 					Do(func(ctx context.Context, selector *metav1.LabelSelector, namespace string) {
-						Expect(selector).To(Equal(deploymentData.Spec.DeviceSelector))
+						Expect(selector).To(Equal(workloadData.Spec.DeviceSelector))
 					}).
 					Return([]v1alpha1.EdgeDevice{*device}, nil).
 					Times(1)
@@ -326,7 +326,7 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("testdevice"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
 					}).
 					Return(nil).
 					Times(1)
@@ -335,8 +335,8 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("todelete"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
-						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("otherWorkload"))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads[0].Name).To(Equal("otherWorkload"))
 					}).
 					Return(nil).
 					Times(1)
@@ -350,7 +350,7 @@ var _ = Describe("Controllers", func() {
 					Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -361,19 +361,19 @@ var _ = Describe("Controllers", func() {
 		Context("using device selector", func() {
 
 			var (
-				deploymentData *v1alpha1.EdgeDeployment
-				device         *v1alpha1.EdgeDevice
+				workloadData *v1alpha1.EdgeWorkload
+				device       *v1alpha1.EdgeDevice
 			)
 
 			BeforeEach(func() {
-				deploymentData = &v1alpha1.EdgeDeployment{
+				workloadData = &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
 						Namespace:  namespace,
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 						Labels:     map[string]string{labels.CreateSelectorLabel(labels.DeviceNameLabel): "test"},
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						Device: "test",
 						Type:   "test",
 						Pod:    v1alpha1.Pod{},
@@ -381,7 +381,7 @@ var _ = Describe("Controllers", func() {
 					}}
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(deploymentData, nil).Times(1)
+					Return(workloadData, nil).Times(1)
 
 				device = getDevice("testdevice")
 			})
@@ -393,7 +393,7 @@ var _ = Describe("Controllers", func() {
 					Return(nil, fmt.Errorf("err")).
 					Times(1)
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).To(HaveOccurred())
@@ -417,7 +417,7 @@ var _ = Describe("Controllers", func() {
 					Times(1)
 
 					// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -432,14 +432,14 @@ var _ = Describe("Controllers", func() {
 					Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).To(HaveOccurred())
 				Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
 			})
 
-			It("Add deployments to devices", func() {
+			It("Add workloads to devices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
 					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
@@ -454,7 +454,7 @@ var _ = Describe("Controllers", func() {
 				edgeDeviceRepoMock.EXPECT().
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
 					}).
 					Return(nil).
 					Times(1)
@@ -468,7 +468,7 @@ var _ = Describe("Controllers", func() {
 					Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -480,13 +480,13 @@ var _ = Describe("Controllers", func() {
 		Context("Remove", func() {
 
 			var (
-				deploymentData *v1alpha1.EdgeDeployment
-				fooDevice      *v1alpha1.EdgeDevice
-				barDevice      *v1alpha1.EdgeDevice
+				workloadData *v1alpha1.EdgeWorkload
+				fooDevice    *v1alpha1.EdgeDevice
+				barDevice    *v1alpha1.EdgeDevice
 			)
 
 			BeforeEach(func() {
-				deploymentData = &v1alpha1.EdgeDeployment{
+				workloadData = &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:              "test",
 						Namespace:         namespace,
@@ -494,7 +494,7 @@ var _ = Describe("Controllers", func() {
 						DeletionTimestamp: &v1.Time{Time: time.Now()},
 						Labels:            map[string]string{labels.CreateSelectorLabel("test"): "true"},
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						DeviceSelector: &v1.LabelSelector{
 							MatchLabels: map[string]string{"test": "test"},
 						},
@@ -504,18 +504,18 @@ var _ = Describe("Controllers", func() {
 					}}
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(deploymentData, nil).Times(1)
+					Return(workloadData, nil).Times(1)
 				deployRepoMock.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil).AnyTimes()
 
 				fooDevice = getDevice("foo")
-				fooDevice.Status.Deployments = []v1alpha1.Deployment{
+				fooDevice.Status.Workloads = []v1alpha1.Workload{
 					{Name: "test"},
 					{Name: "otherWorkload"},
 				}
 
 				barDevice = getDevice("bar")
-				barDevice.Status.Deployments = []v1alpha1.Deployment{
+				barDevice.Status.Workloads = []v1alpha1.Workload{
 					{Name: "test"},
 				}
 
@@ -537,7 +537,7 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("bar"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(0))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
 					}).
 					Return(nil).
 					Times(1)
@@ -546,8 +546,8 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("foo"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
-						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("otherWorkload"))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads[0].Name).To(Equal("otherWorkload"))
 					}).
 					Return(nil).
 					Times(1)
@@ -557,7 +557,7 @@ var _ = Describe("Controllers", func() {
 					Return(nil).Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -580,7 +580,7 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("bar"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(0))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
 					}).
 					Return(fmt.Errorf("FAILED")).
 					Times(1)
@@ -590,8 +590,8 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("foo"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
-						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("otherWorkload"))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads[0].Name).To(Equal("otherWorkload"))
 					}).
 					Return(nil).
 					Times(1)
@@ -601,7 +601,7 @@ var _ = Describe("Controllers", func() {
 					Return(nil).Times(0)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).To(HaveOccurred())
@@ -624,7 +624,7 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("bar"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(0))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
 					}).
 					Return(nil).
 					Times(1)
@@ -633,8 +633,8 @@ var _ = Describe("Controllers", func() {
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal("foo"))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
-						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("otherWorkload"))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads[0].Name).To(Equal("otherWorkload"))
 					}).
 					Return(nil).
 					Times(1)
@@ -644,7 +644,7 @@ var _ = Describe("Controllers", func() {
 					Return(fmt.Errorf("Failed")).Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).To(HaveOccurred())
@@ -653,13 +653,13 @@ var _ = Describe("Controllers", func() {
 		})
 		Context("Concurrency", func() {
 			var (
-				deploymentData *v1alpha1.EdgeDeployment
-				devices        []v1alpha1.EdgeDevice
-				numDevices     = 100
-				concurrency    = 7
-				expectedSplit  = map[int]int{15: 2, 14: 5}
-				actualSplit    map[int]int
-				syncMap        = sync.Mutex{}
+				workloadData  *v1alpha1.EdgeWorkload
+				devices       []v1alpha1.EdgeDevice
+				numDevices    = 100
+				concurrency   = 7
+				expectedSplit = map[int]int{15: 2, 14: 5}
+				actualSplit   map[int]int
+				syncMap       = sync.Mutex{}
 			)
 			executeConcurrent := func(concurrency uint, f controllers.ConcurrentFunc, devices []v1alpha1.EdgeDevice) []error {
 				if len(devices) == 0 {
@@ -685,14 +685,14 @@ var _ = Describe("Controllers", func() {
 			}
 
 			BeforeEach(func() {
-				deploymentData = &v1alpha1.EdgeDeployment{
+				workloadData = &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
 						Namespace:  namespace,
 						Labels:     map[string]string{labels.CreateSelectorLabel("test"): "true"},
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						DeviceSelector: &v1.LabelSelector{
 							MatchLabels: map[string]string{"test": "test"},
 						},
@@ -702,7 +702,7 @@ var _ = Describe("Controllers", func() {
 					}}
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(deploymentData, nil).Times(1)
+					Return(workloadData, nil).Times(1)
 				deployRepoMock.EXPECT().Patch(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(nil).AnyTimes()
 
@@ -712,11 +712,11 @@ var _ = Describe("Controllers", func() {
 				}
 
 				actualSplit = map[int]int{}
-				edgeDeploymentReconciler.Concurrency = uint(concurrency)
-				edgeDeploymentReconciler.ExecuteConcurrent = executeConcurrent
+				edgeWorkloadReconciler.Concurrency = uint(concurrency)
+				edgeWorkloadReconciler.ExecuteConcurrent = executeConcurrent
 			})
 
-			It("Add deployment to devices", func() {
+			It("Add workload to devices", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
 					ListForWorkload(gomock.Any(), gomock.Any(), namespace).
@@ -733,7 +733,7 @@ var _ = Describe("Controllers", func() {
 					Times(numDevices)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -741,11 +741,11 @@ var _ = Describe("Controllers", func() {
 				Expect(actualSplit).To(Equal(expectedSplit))
 			})
 
-			It("Delete deployment", func() {
+			It("Delete workload", func() {
 				// given
-				deploymentData.ObjectMeta.DeletionTimestamp = &v1.Time{Time: time.Now()}
+				workloadData.ObjectMeta.DeletionTimestamp = &v1.Time{Time: time.Now()}
 				for _, d := range devices {
-					d.Status.Deployments = []v1alpha1.Deployment{
+					d.Status.Workloads = []v1alpha1.Workload{
 						{Name: "test"},
 					}
 				}
@@ -768,7 +768,7 @@ var _ = Describe("Controllers", func() {
 					Return(nil).Times(1)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -776,10 +776,10 @@ var _ = Describe("Controllers", func() {
 				Expect(actualSplit).To(Equal(expectedSplit))
 			})
 
-			It("Remove deployment from non matching devices", func() {
+			It("Remove workload from non matching devices", func() {
 				// given
 				for _, d := range devices {
-					d.Status.Deployments = []v1alpha1.Deployment{
+					d.Status.Workloads = []v1alpha1.Workload{
 						{Name: "test"},
 					}
 				}
@@ -798,7 +798,7 @@ var _ = Describe("Controllers", func() {
 					Times(numDevices)
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -808,7 +808,7 @@ var _ = Describe("Controllers", func() {
 		})
 		Context("Selector labels", func() {
 			var (
-				deploymentData         *v1alpha1.EdgeDeployment
+				workloadData           *v1alpha1.EdgeWorkload
 				expectedSelectorLabels map[string]string
 			)
 
@@ -819,13 +819,13 @@ var _ = Describe("Controllers", func() {
 					labels.CreateSelectorLabel("matchexp2"):              "true",
 					labels.CreateSelectorLabel(labels.DoesNotExistLabel): "true",
 				}
-				deploymentData = &v1alpha1.EdgeDeployment{
+				workloadData = &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:       "test",
 						Namespace:  namespace,
 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						DeviceSelector: &v1.LabelSelector{
 							MatchLabels: map[string]string{"matchlabel1": "matchlabel1"},
 							MatchExpressions: []v1.LabelSelectorRequirement{
@@ -849,34 +849,34 @@ var _ = Describe("Controllers", func() {
 					}}
 
 				deployRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(deploymentData, nil).Times(1)
+					Return(workloadData, nil).Times(1)
 
 				deployRepoMock.EXPECT().
 					Patch(gomock.Any(), gomock.Any(), gomock.Any()).
-					Do(func(ctx context.Context, old, new *v1alpha1.EdgeDeployment) {
+					Do(func(ctx context.Context, old, new *v1alpha1.EdgeWorkload) {
 						Expect(new.Labels).To(Equal(expectedSelectorLabels))
 					}).Times(1)
 			})
-			It("New EdgeDeployment", func() {
+			It("New EdgeWorkload", func() {
 				// given
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
 				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 			})
 
-			It("Updated EdgeDeployment", func() {
+			It("Updated EdgeWorkload", func() {
 				// given
-				deploymentData.Labels = map[string]string{
+				workloadData.Labels = map[string]string{
 					labels.CreateSelectorLabel("todelete1"): "true",
 					labels.CreateSelectorLabel("todelete2"): "true",
 				}
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -885,13 +885,13 @@ var _ = Describe("Controllers", func() {
 
 			It("Device name label", func() {
 				// given
-				deploymentData.Spec.Device = "test"
+				workloadData.Spec.Device = "test"
 				expectedSelectorLabels = map[string]string{
 					labels.CreateSelectorLabel(labels.DeviceNameLabel): "test",
 				}
 
 				// when
-				res, err := edgeDeploymentReconciler.Reconcile(context.TODO(), req)
+				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
 				Expect(err).NotTo(HaveOccurred())

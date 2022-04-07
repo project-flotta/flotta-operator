@@ -11,18 +11,18 @@ import (
 
 var _ = Describe("Index functions", func() {
 
-	Context("Index func of edge deployment", func() {
+	Context("Index func of edge workload", func() {
 		It("Creates keys by selector labels only", func() {
 			// given
-			deployment := managementv1alpha1.EdgeDeployment{}
-			deployment.Labels = map[string]string{
+			workload := managementv1alpha1.EdgeWorkload{}
+			workload.Labels = map[string]string{
 				"foo":                                    "bar",
 				flottalabels.SelectorLabelPrefix + "abc": "123",
 				flottalabels.SelectorLabelPrefix + flottalabels.DeviceNameLabel: "xyz",
 			}
 
 			// when
-			keys := indexer.DeploymentByDeviceIndexFunc(&deployment)
+			keys := indexer.WorkloadByDeviceIndexFunc(&workload)
 
 			// then
 			Expect(keys).To(HaveLen(2))

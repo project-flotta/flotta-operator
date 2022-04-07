@@ -10,19 +10,19 @@ import (
 )
 
 const (
-	// DeploymentByDeviceIndexKey is the name of the indexer for deployments by device
-	DeploymentByDeviceIndexKey = "deployment-by-device"
+	// WorkloadByDeviceIndexKey is the name of the indexer for workloads by device
+	WorkloadByDeviceIndexKey = "workload-by-device"
 
 	// DeviceByWorkloadIndexKey is the key of the indexer for devices by workload
 	DeviceByWorkloadIndexKey = "device-by-workload"
 )
 
-func DeploymentByDeviceIndexFunc(obj ctrlruntimeclient.Object) []string {
-	deployment := obj.(*v1alpha1.EdgeDeployment)
+func WorkloadByDeviceIndexFunc(obj ctrlruntimeclient.Object) []string {
+	workload := obj.(*v1alpha1.EdgeWorkload)
 	var keys []string
-	for name, value := range deployment.Labels {
+	for name, value := range workload.Labels {
 		if flottalabels.IsSelectorLabel(name) {
-			keys = append(keys, CreateDeploymentIndexKey(name, value))
+			keys = append(keys, CreateWorkloadIndexKey(name, value))
 		}
 	}
 	return keys
@@ -45,9 +45,9 @@ func CreateDeviceIndexKey(label string) string {
 	return strings.TrimPrefix(label, labels.WorkloadLabelPrefix)
 }
 
-// CreateDeploymentIndexKey creates a key for the deployment index
+// CreateWorkloadIndexKey creates a key for the workload index
 // The key is of the form: device or label
-func CreateDeploymentIndexKey(label, value string) string {
+func CreateWorkloadIndexKey(label, value string) string {
 	suffix := strings.TrimPrefix(label, labels.SelectorLabelPrefix)
 	if suffix == labels.DeviceNameLabel {
 		return value

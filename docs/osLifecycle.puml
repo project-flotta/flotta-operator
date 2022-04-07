@@ -8,7 +8,7 @@ frame Kubernetes {
       interface "http  API" as operatorAPI
     }
 
-    file "EdgeDeployment CR" as deployment
+    file "EdgeWorkload CR" as workload
     file "EdgeDevice CR" as deviceCR
 }
 
@@ -29,9 +29,9 @@ frame HostedImages {
 }
 
 
-deviceCR o-- deployment
+deviceCR o-- workload
 
-Operator -[dashed]-> deployment: process
+Operator -[dashed]-> workload: process
 Operator -[dashed]-> deviceCR: process
 
 user -[#blue]-> imageUrl : (1) Add new image (2) get new commit hash

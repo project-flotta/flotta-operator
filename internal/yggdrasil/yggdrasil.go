@@ -24,8 +24,8 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/hardware"
 	"github.com/project-flotta/flotta-operator/internal/images"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 	"github.com/project-flotta/flotta-operator/internal/utils"
 	"github.com/project-flotta/flotta-operator/models"
@@ -57,7 +57,7 @@ var (
 
 type Handler struct {
 	deviceRepository       edgedevice.Repository
-	deploymentRepository   edgedeployment.Repository
+	workloadRepository     edgeworkload.Repository
 	initialNamespace       string
 	metrics                metrics.Metrics
 	heartbeatHandler       heartbeat.Handler
@@ -68,23 +68,23 @@ type Handler struct {
 type keyMapType = map[string]interface{}
 type secretMapType = map[string]keyMapType
 
-func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
+func NewYggdrasilHandler(deviceRepository edgedevice.Repository, workloadRepository edgeworkload.Repository,
 	groupRepository edgedevicegroup.Repository, claimer *storage.Claimer, k8sClient k8sclient.K8sClient,
 	initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
 	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig) *Handler {
 	return &Handler{
-		deviceRepository:     deviceRepository,
-		deploymentRepository: deploymentRepository,
-		initialNamespace:     initialNamespace,
-		metrics:              metrics,
-		heartbeatHandler:     heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics),
-		mtlsConfig:           mtlsConfig,
+		deviceRepository:   deviceRepository,
+		workloadRepository: workloadRepository,
+		initialNamespace:   initialNamespace,
+		metrics:            metrics,
+		heartbeatHandler:   heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics),
+		mtlsConfig:         mtlsConfig,
 		configurationAssembler: configurationAssembler{
 			allowLists:             allowLists,
 			claimer:                claimer,
 			client:                 k8sClient,
 			configMaps:             configMaps,
-			deploymentRepository:   deploymentRepository,
+			workloadRepository:     workloadRepository,
 			groupRepository:        groupRepository,
 			recorder:               recorder,
 			registryAuthRepository: registryAuth},

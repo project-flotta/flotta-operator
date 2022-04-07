@@ -26,8 +26,8 @@ import (
 
 	"github.com/project-flotta/flotta-operator/internal/labels"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,39 +41,39 @@ import (
 
 const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"
 
-// EdgeDeploymentReconciler reconciles a EdgeDeployment object
-type EdgeDeploymentReconciler struct {
+// EdgeWorkloadReconciler reconciles a EdgeWorkload object
+type EdgeWorkloadReconciler struct {
 	client.Client
-	Scheme                   *runtime.Scheme
-	EdgeDeploymentRepository edgedeployment.Repository
-	EdgeDeviceRepository     edgedevice.Repository
-	Concurrency              uint
-	ExecuteConcurrent        func(uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
-	Metrics                  metrics.Metrics
-	MaxConcurrentReconciles  int
+	Scheme                  *runtime.Scheme
+	EdgeWorkloadRepository  edgeworkload.Repository
+	EdgeDeviceRepository    edgedevice.Repository
+	Concurrency             uint
+	ExecuteConcurrent       func(uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
+	Metrics                 metrics.Metrics
+	MaxConcurrentReconciles int
 }
 
 type ConcurrentFunc func([]managementv1alpha1.EdgeDevice) []error
 
-//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments/finalizers,verbs=update
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeworkloads,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeworkloads/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeworkloads/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the EdgeDeployment object against the actual cluster state, and then
+// the EdgeWorkload object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
-func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *EdgeWorkloadReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling", "edgeDeployment", req)
+	logger.Info("Reconciling", "edgeWorkload", req)
 
 	// your logic here
-	edgeDeployment, err := r.EdgeDeploymentRepository.Read(ctx, req.Name, req.Namespace)
+	edgeWorkload, err := r.EdgeWorkloadRepository.Read(ctx, req.Name, req.Namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -81,18 +81,18 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if edgeDeployment.DeletionTimestamp == nil && !utils.HasFinalizer(&edgeDeployment.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
-		deploymentCopy := edgeDeployment.DeepCopy()
-		deploymentCopy.Finalizers = []string{YggdrasilDeviceReferenceFinalizer}
-		err := r.EdgeDeploymentRepository.Patch(ctx, edgeDeployment, deploymentCopy)
+	if edgeWorkload.DeletionTimestamp == nil && !utils.HasFinalizer(&edgeWorkload.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
+		WorkloadCopy := edgeWorkload.DeepCopy()
+		WorkloadCopy.Finalizers = []string{YggdrasilDeviceReferenceFinalizer}
+		err := r.EdgeWorkloadRepository.Patch(ctx, edgeWorkload, WorkloadCopy)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	if edgeDeployment.DeletionTimestamp == nil {
-		updated, err := r.updateLabelsFromSelector(ctx, edgeDeployment)
+	if edgeWorkload.DeletionTimestamp == nil {
+		updated, err := r.updateLabelsFromSelector(ctx, edgeWorkload)
 		if err != nil {
 			return ctrl.Result{Requeue: true}, err
 		}
@@ -104,25 +104,25 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 	}
 
-	labelledDevices, err := r.getLabelledEdgeDevices(ctx, edgeDeployment.Name, edgeDeployment.Namespace)
+	labelledDevices, err := r.getLabelledEdgeDevices(ctx, edgeWorkload.Name, edgeWorkload.Namespace)
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			logger.Error(err, "Cannot retrieve labelled Edge Deployments", "edgeDeployment", edgeDeployment.Name, "namespace", edgeDeployment.Namespace)
+			logger.Error(err, "Cannot retrieve labelled Edge Workloads", "edgeWorkload", edgeWorkload.Name, "namespace", edgeWorkload.Namespace)
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
-	edgeDevices, err := r.getMatchingEdgeDevices(ctx, edgeDeployment)
+	edgeDevices, err := r.getMatchingEdgeDevices(ctx, edgeWorkload)
 	if err != nil {
 		if !errors.IsNotFound(err) {
-			logger.Error(err, "Cannot retrieve Edge Deployments")
+			logger.Error(err, "Cannot retrieve Edge Workloads")
 			return ctrl.Result{Requeue: true}, err
 		}
 	}
 
-	if edgeDeployment.DeletionTimestamp != nil {
-		if utils.HasFinalizer(&edgeDeployment.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
+	if edgeWorkload.DeletionTimestamp != nil {
+		if utils.HasFinalizer(&edgeWorkload.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
 			matchingAndLabelledDevices := merge(edgeDevices, labelledDevices)
-			err = r.finalizeRemoval(ctx, matchingAndLabelledDevices, edgeDeployment)
+			err = r.finalizeRemoval(ctx, matchingAndLabelledDevices, edgeWorkload)
 			if err != nil {
 				return ctrl.Result{Requeue: true}, err
 			}
@@ -130,12 +130,12 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
-	err = r.addDeploymentsToDevices(ctx, edgeDeployment.Name, edgeDevices)
+	err = r.addWorkloadsToDevices(ctx, edgeWorkload.Name, edgeDevices)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	err = r.removeDeploymentFromNonMatchingDevices(ctx, edgeDeployment.Name, edgeDevices, labelledDevices)
+	err = r.removeWorkloadFromNonMatchingDevices(ctx, edgeWorkload.Name, edgeDevices, labelledDevices)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -143,21 +143,21 @@ func (r *EdgeDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{}, nil
 }
 
-func (r *EdgeDeploymentReconciler) finalizeRemoval(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeDeployment *managementv1alpha1.EdgeDeployment) error {
+func (r *EdgeWorkloadReconciler) finalizeRemoval(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeWorkload *managementv1alpha1.EdgeWorkload) error {
 	f := func(input []managementv1alpha1.EdgeDevice) []error {
-		return r.removeDeploymentFromDevices(ctx, input, edgeDeployment.Name)
+		return r.removeWorkloadFromDevices(ctx, input, edgeWorkload.Name)
 	}
 	errs := r.executeConcurrent(ctx, f, edgeDevices)
 	if len(errs) != 0 {
 		return fmt.Errorf(mergeErrorMessages(errs))
 	}
-	return r.EdgeDeploymentRepository.RemoveFinalizer(ctx, edgeDeployment, YggdrasilDeviceReferenceFinalizer)
+	return r.EdgeWorkloadRepository.RemoveFinalizer(ctx, edgeWorkload, YggdrasilDeviceReferenceFinalizer)
 }
 
-func (r *EdgeDeploymentReconciler) removeDeploymentFromDevices(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeDeployment string) []error {
+func (r *EdgeWorkloadReconciler) removeWorkloadFromDevices(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeWorkload string) []error {
 	var errs []error
 	for _, edgeDevice := range edgeDevices {
-		err := r.removeDeploymentFromDevice(ctx, edgeDeployment, edgeDevice)
+		err := r.removeWorkloadFromDevice(ctx, edgeWorkload, edgeDevice)
 		if err != nil {
 			errs = append(errs, err)
 		}
@@ -165,15 +165,15 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromDevices(ctx context.Conte
 	return errs
 }
 
-func (r *EdgeDeploymentReconciler) removeDeploymentFromDevice(ctx context.Context, name string, edgeDevice managementv1alpha1.EdgeDevice) error {
-	var newDeployments []managementv1alpha1.Deployment
-	for _, deployment := range edgeDevice.Status.Deployments {
-		if deployment.Name != name {
-			newDeployments = append(newDeployments, deployment)
+func (r *EdgeWorkloadReconciler) removeWorkloadFromDevice(ctx context.Context, name string, edgeDevice managementv1alpha1.EdgeDevice) error {
+	var newWorkloads []managementv1alpha1.Workload
+	for _, Workload := range edgeDevice.Status.Workloads {
+		if Workload.Name != name {
+			newWorkloads = append(newWorkloads, Workload)
 		}
 	}
 	patch := client.MergeFrom(edgeDevice.DeepCopy())
-	edgeDevice.Status.Deployments = newDeployments
+	edgeDevice.Status.Workloads = newWorkloads
 	err := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
 	if err != nil {
 		return err
@@ -190,7 +190,7 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromDevice(ctx context.Contex
 	return nil
 }
 
-func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx context.Context, name string, matchingDevices, labelledDevices []managementv1alpha1.EdgeDevice) error {
+func (r *EdgeWorkloadReconciler) removeWorkloadFromNonMatchingDevices(ctx context.Context, name string, matchingDevices, labelledDevices []managementv1alpha1.EdgeDevice) error {
 	matchingDevicesMap := make(map[string]struct{})
 	for _, device := range matchingDevices {
 		matchingDevicesMap[device.Name] = struct{}{}
@@ -200,7 +200,7 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx co
 		var errs []error
 		for _, device := range input {
 			if _, ok := matchingDevicesMap[device.Name]; !ok {
-				err := r.removeDeploymentFromDevice(ctx, name, device)
+				err := r.removeWorkloadFromDevice(ctx, name, device)
 				if err != nil {
 					errs = append(errs, err)
 					continue
@@ -218,22 +218,22 @@ func (r *EdgeDeploymentReconciler) removeDeploymentFromNonMatchingDevices(ctx co
 	return nil
 }
 
-func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, name string, edgeDevices []managementv1alpha1.EdgeDevice) error {
+func (r *EdgeWorkloadReconciler) addWorkloadsToDevices(ctx context.Context, name string, edgeDevices []managementv1alpha1.EdgeDevice) error {
 	f := func(input []managementv1alpha1.EdgeDevice) []error {
 		var errs []error
 		for i := range input {
 			edgeDevice := input[i]
-			if !hasDeployment(edgeDevice, name) {
-				deploymentStatus := managementv1alpha1.Deployment{Name: name, Phase: managementv1alpha1.Deploying}
+			if !hasWorkload(edgeDevice, name) {
+				WorkloadStatus := managementv1alpha1.Workload{Name: name, Phase: managementv1alpha1.Deploying}
 				patch := client.MergeFrom(edgeDevice.DeepCopy())
-				edgeDevice.Status.Deployments = append(edgeDevice.Status.Deployments, deploymentStatus)
+				edgeDevice.Status.Workloads = append(edgeDevice.Status.Workloads, WorkloadStatus)
 				err := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
 				if err != nil {
 					errs = append(errs, err)
 					continue
 				}
 			}
-			if !hasLabelForDeployment(edgeDevice, name) {
+			if !hasLabelForWorkload(edgeDevice, name) {
 				deviceCopy := edgeDevice.DeepCopy()
 				if deviceCopy.Labels == nil {
 					deviceCopy.Labels = make(map[string]string)
@@ -256,16 +256,16 @@ func (r *EdgeDeploymentReconciler) addDeploymentsToDevices(ctx context.Context, 
 	return nil
 }
 
-func (r *EdgeDeploymentReconciler) getMatchingEdgeDevices(ctx context.Context, edgeDeployment *managementv1alpha1.EdgeDeployment) ([]managementv1alpha1.EdgeDevice, error) {
+func (r *EdgeWorkloadReconciler) getMatchingEdgeDevices(ctx context.Context, edgeWorkload *managementv1alpha1.EdgeWorkload) ([]managementv1alpha1.EdgeDevice, error) {
 	var edgeDevices []managementv1alpha1.EdgeDevice
-	if edgeDeployment.Spec.Device != "" {
-		edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, edgeDeployment.Spec.Device, edgeDeployment.Namespace)
+	if edgeWorkload.Spec.Device != "" {
+		edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, edgeWorkload.Spec.Device, edgeWorkload.Namespace)
 		if err != nil {
 			return nil, err
 		}
 		edgeDevices = append(edgeDevices, *edgeDevice)
-	} else if edgeDeployment.Spec.DeviceSelector != nil {
-		ed, err := r.EdgeDeviceRepository.ListForSelector(ctx, edgeDeployment.Spec.DeviceSelector, edgeDeployment.Namespace)
+	} else if edgeWorkload.Spec.DeviceSelector != nil {
+		ed, err := r.EdgeDeviceRepository.ListForSelector(ctx, edgeWorkload.Spec.DeviceSelector, edgeWorkload.Namespace)
 		if err != nil {
 			return nil, err
 		}
@@ -274,11 +274,11 @@ func (r *EdgeDeploymentReconciler) getMatchingEdgeDevices(ctx context.Context, e
 	return edgeDevices, nil
 }
 
-func (r *EdgeDeploymentReconciler) getLabelledEdgeDevices(ctx context.Context, name, namespace string) ([]managementv1alpha1.EdgeDevice, error) {
+func (r *EdgeWorkloadReconciler) getLabelledEdgeDevices(ctx context.Context, name, namespace string) ([]managementv1alpha1.EdgeDevice, error) {
 	return r.EdgeDeviceRepository.ListForWorkload(ctx, name, namespace)
 }
 
-func (r *EdgeDeploymentReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+func (r *EdgeWorkloadReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
 	var errs []error
 	if r.Concurrency == 1 {
 		errs = f(edgeDevices)
@@ -289,9 +289,9 @@ func (r *EdgeDeploymentReconciler) executeConcurrent(ctx context.Context, f Conc
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *EdgeDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *EdgeWorkloadReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&managementv1alpha1.EdgeDeployment{}).
+		For(&managementv1alpha1.EdgeWorkload{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: r.MaxConcurrentReconciles}).
 		Complete(r)
 }
@@ -320,14 +320,14 @@ func ExecuteConcurrent(concurrency uint, f ConcurrentFunc, edgeDevices []managem
 	return result
 }
 
-func hasLabelForDeployment(edgeDevice managementv1alpha1.EdgeDevice, deploymentName string) bool {
-	_, exists := edgeDevice.Labels[labels.WorkloadLabel(deploymentName)]
+func hasLabelForWorkload(edgeDevice managementv1alpha1.EdgeDevice, WorkloadName string) bool {
+	_, exists := edgeDevice.Labels[labels.WorkloadLabel(WorkloadName)]
 	return exists
 }
 
-func hasDeployment(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
-	for _, deployment := range edgeDevice.Status.Deployments {
-		if deployment.Name == name {
+func hasWorkload(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
+	for _, Workload := range edgeDevice.Status.Workloads {
+		if Workload.Name == name {
 			return true
 		}
 	}
@@ -386,48 +386,48 @@ func splitEdgeDevices(edgeDevices []managementv1alpha1.EdgeDevice, splitSize uin
 	return result
 }
 
-func (r *EdgeDeploymentReconciler) updateLabelsFromSelector(ctx context.Context, edgeDeployment *managementv1alpha1.EdgeDeployment) (bool, error) {
-	edgeDeploymentCopy := edgeDeployment.DeepCopy()
-	UpdateSelectorLabels(edgeDeploymentCopy)
-	newLabels := edgeDeploymentCopy.Labels
+func (r *EdgeWorkloadReconciler) updateLabelsFromSelector(ctx context.Context, edgeWorkload *managementv1alpha1.EdgeWorkload) (bool, error) {
+	edgeWorkloadCopy := edgeWorkload.DeepCopy()
+	UpdateSelectorLabels(edgeWorkloadCopy)
+	newLabels := edgeWorkloadCopy.Labels
 
-	if (len(newLabels) == 0 && edgeDeployment.Labels == nil) || reflect.DeepEqual(newLabels, edgeDeployment.Labels) {
+	if (len(newLabels) == 0 && edgeWorkload.Labels == nil) || reflect.DeepEqual(newLabels, edgeWorkload.Labels) {
 		return false, nil
 	}
 
-	err := r.EdgeDeploymentRepository.Patch(ctx, edgeDeployment, edgeDeploymentCopy)
+	err := r.EdgeWorkloadRepository.Patch(ctx, edgeWorkload, edgeWorkloadCopy)
 	return true, err
 }
 
-func UpdateSelectorLabels(edgeDeployments ...*managementv1alpha1.EdgeDeployment) {
-	for _, edgeDeployment := range edgeDeployments {
-		deploymentLabels := edgeDeployment.Labels
-		if deploymentLabels == nil {
-			deploymentLabels = map[string]string{}
-			edgeDeployment.Labels = deploymentLabels
+func UpdateSelectorLabels(edgeWorkloads ...*managementv1alpha1.EdgeWorkload) {
+	for _, edgeWorkload := range edgeWorkloads {
+		workloadLabels := edgeWorkload.Labels
+		if workloadLabels == nil {
+			workloadLabels = map[string]string{}
+			edgeWorkload.Labels = workloadLabels
 		}
-		for label := range deploymentLabels {
+		for label := range workloadLabels {
 			if labels.IsSelectorLabel(label) {
-				delete(deploymentLabels, label)
+				delete(workloadLabels, label)
 			}
 		}
-		if edgeDeployment.Spec.Device != "" {
+		if edgeWorkload.Spec.Device != "" {
 			selectorLabel := labels.CreateSelectorLabel(labels.DeviceNameLabel)
-			deploymentLabels[selectorLabel] = edgeDeployment.Spec.Device
+			workloadLabels[selectorLabel] = edgeWorkload.Spec.Device
 		} else {
-			labelSelector := edgeDeployment.Spec.DeviceSelector
+			labelSelector := edgeWorkload.Spec.DeviceSelector
 			if labelSelector != nil {
 				for label := range labelSelector.MatchLabels {
 					selectorLabel := labels.CreateSelectorLabel(label)
-					deploymentLabels[selectorLabel] = "true"
+					workloadLabels[selectorLabel] = "true"
 				}
 				for _, requirement := range labelSelector.MatchExpressions {
 					if requirement.Operator == metav1.LabelSelectorOpDoesNotExist {
 						selectorLabel := labels.CreateSelectorLabel(labels.DoesNotExistLabel)
-						deploymentLabels[selectorLabel] = "true"
+						workloadLabels[selectorLabel] = "true"
 					} else {
 						selectorLabel := labels.CreateSelectorLabel(requirement.Key)
-						deploymentLabels[selectorLabel] = "true"
+						workloadLabels[selectorLabel] = "true"
 					}
 				}
 			}

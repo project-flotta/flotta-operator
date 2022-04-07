@@ -3,7 +3,7 @@
 Auto update containers according to their auto-update policy.
 
 Auto-update looks up containers with a specified `io.containers.autoupdate` label. This label is set by the `flotta-operator`.
-Flotta-operator looks up labels on `EdgeDeployments` CR prefixed by `podman/` string. If such label is found it's propageted to
+Flotta-operator looks up labels on `EdgeWorkloads` CR prefixed by `podman/` string. If such label is found it's propageted to
 the podman pod and containers.
 
 If  the  label  is  present  and set to registry, Podman reaches out to the corresponding registry to check if the image has been updated. The label image is an alternative to registry maintained for
@@ -14,10 +14,10 @@ If `ImageRegistries.AuthFileSecret` is defined, Podman reaches out to the corres
 
 Edgedevice start the `podman-auto-update.timer` which is responsible for executing the `podman-auto-update.service`. This unit is triggered daily.
 
-To create a Edgedeployment with auto-update feature enabled define following label:
+To create a Edgeworkload with auto-update feature enabled define following label:
 ```yaml
 apiVersion: management.project-flotta.io/v1alpha1
-kind: EdgeDeployment
+kind: EdgeWorkload
 metadata:
   name: nginx
   labels:

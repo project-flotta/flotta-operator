@@ -37,7 +37,7 @@ func (m *MockConfigMap) EXPECT() *MockConfigMapMockRecorder {
 }
 
 // Fetch mocks base method.
-func (m *MockConfigMap) Fetch(arg0 context.Context, arg1 v1alpha1.EdgeDeployment, arg2 string) (models.ConfigmapList, error) {
+func (m *MockConfigMap) Fetch(arg0 context.Context, arg1 v1alpha1.EdgeWorkload, arg2 string) (models.ConfigmapList, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Fetch", arg0, arg1, arg2)
 	ret0, _ := ret[0].(models.ConfigmapList)

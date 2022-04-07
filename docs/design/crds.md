@@ -51,8 +51,8 @@ status:
   lastSeenTime: "2021-09-23T09:27:50Z" # Time of tha last heartbeat message
   lastSyncedResourceVersion: "13040122" # Version of configuration applied on the device as reported in the latest heartbeat message 
   phase: up # phase of edge device's lifecycle
-  deployments: # list of workloads deployed to the device
-    - name: nginx # name of the workload (corresponds to EdgeDeployment CR in the same namespace)
+  workloads: # list of workloads deployed to the device
+    - name: nginx # name of the workload (corresponds to EdgeWorkload CR in the same namespace)
       phase: Running # workload status (Deploying, Running, Created, etc.);
       lastTransitionTime: "2021-09-23T09:27:50Z" # last time when state of the workload changed  
       lastDataUpload: "2021-09-23T09:27:30Z" # time of the latest successful data upload for the workload 
@@ -63,12 +63,12 @@ status:
 ```
 For more information about the `dataObc` property read about the [Data Upload](data-upload.md) feature.
 
-## EdgeDeployment
+## EdgeWorkload
 
-`EdgeDeployment` is a namespaced custom resource that represents workload that should be deployed to edge devices matching criteria specified in the CR.
+`EdgeWorkload` is a namespaced custom resource that represents workload that should be deployed to edge devices matching criteria specified in the CR.
 
 * apiVersion: `management.project-flotta.io/v1alpha1`
-* kind: `EdgeDeployment`
+* kind: `EdgeWorkload`
 
 ### Specification
 
@@ -81,7 +81,7 @@ spec:
       - key: dc
         operator: In
         value: [home]
-  type: pod # type of the deployment; currently only pod is supported
+  type: pod # type of the workload; currently only pod is supported
   data: # See below for details
     paths:
       - source: stats # well-known "/export" container directory sub-path (/export/stats in this case) that should be periodically uploaded to the control plane   

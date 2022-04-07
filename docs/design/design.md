@@ -9,7 +9,7 @@
 #### Operator
 
 The Flotta operator is a Kubernetes operator that consists of two components:
- - controller responsible for reconciling `EdgeDevice` and `EdgeDeployment` CRs;
+ - controller responsible for reconciling `EdgeDevice` and `EdgeWorkload` CRs;
  - HTTP API that is used by the Flotta agent to get expected configuration and to post heartbeat messages. See [HTTP API schema](http-api.md) for more details.
 
 #### Object Storage
@@ -24,7 +24,7 @@ See [Data Upload](data-upload.md) for more details.
 
 Operator manages two kinds of CRs: 
  - `EdgeDevice` representing physical edge devices; see [the definition](../../config/crd/bases/management.project-flotta.io_edgedevices.yaml) or [an example](../../config/samples/management_v1alpha1_edgedevice.yaml)
- - `EdgeDeployment` representing workloads that can be scheduled to run on edge devices; see [the definition](../../config/crd/bases/management.project-flotta.io_edgedeployments.yaml) or [an example](../../config/samples/management_v1alpha1_edgedeployment.yaml)
+ - `EdgeWorkload` representing workloads that can be scheduled to run on edge devices; see [the definition](../../config/crd/bases/management.project-flotta.io_edgeworkloads.yaml) or [an example](../../config/samples/management_v1alpha1_edgeworkload.yaml)
 
 See [Custom Resource Definitions](crds.md) for more details.
 
@@ -138,7 +138,7 @@ end
  9. Agent schedules workload data directories monitoring
  10. Agent schedules periodical heartbeat messages
 
-### Worklad deployment workflow
+### Workload deployment workflow
 
 ![](workload_deployment.png)
 

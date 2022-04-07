@@ -33,8 +33,8 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 	if heartbeat.Hardware != nil {
 		edgeDevice.Status.Hardware = hardware.MapHardware(heartbeat.Hardware)
 	}
-	deployments := updateDeploymentStatuses(edgeDevice.Status.Deployments, heartbeat.Workloads)
-	edgeDevice.Status.Deployments = deployments
+	deployments := updateDeploymentStatuses(edgeDevice.Status.Workloads, heartbeat.Workloads)
+	edgeDevice.Status.Workloads = deployments
 	edgeDevice.Status.UpgradeInformation = (*v1alpha1.UpgradeInformation)(heartbeat.Upgrade)
 
 	if !reflect.DeepEqual(edgeDevice.Status, edgeDeviceCopy.Status) {
@@ -61,24 +61,24 @@ func (u *Updater) processEvents(edgeDevice *v1alpha1.EdgeDevice, events []*model
 	}
 }
 
-func updateDeploymentStatuses(oldDeployments []v1alpha1.Deployment, workloads []*models.WorkloadStatus) []v1alpha1.Deployment {
-	deploymentMap := make(map[string]v1alpha1.Deployment)
-	for _, deploymentStatus := range oldDeployments {
-		deploymentMap[deploymentStatus.Name] = deploymentStatus
+func updateDeploymentStatuses(oldWorkloads []v1alpha1.Workload, workloads []*models.WorkloadStatus) []v1alpha1.Workload {
+	edgeWorkloadMap := make(map[string]v1alpha1.Workload)
+	for _, workloadStatus := range oldWorkloads {
+		edgeWorkloadMap[workloadStatus.Name] = workloadStatus
 	}
 	for _, status := range workloads {
-		if deployment, ok := deploymentMap[status.Name]; ok {
-			if string(deployment.Phase) != status.Status {
-				deployment.Phase = v1alpha1.EdgeDeploymentPhase(status.Status)
-				deployment.LastTransitionTime = v1.Now()
+		if edgeWorkload, ok := edgeWorkloadMap[status.Name]; ok {
+			if string(edgeWorkload.Phase) != status.Status {
+				edgeWorkload.Phase = v1alpha1.EdgeWorkloadPhase(status.Status)
+				edgeWorkload.LastTransitionTime = v1.Now()
 			}
-			deployment.LastDataUpload = v1.NewTime(time.Time(status.LastDataUpload))
-			deploymentMap[status.Name] = deployment
+			edgeWorkload.LastDataUpload = v1.NewTime(time.Time(status.LastDataUpload))
+			edgeWorkloadMap[status.Name] = edgeWorkload
 		}
 	}
-	var deployments []v1alpha1.Deployment
-	for _, deployment := range deploymentMap {
-		deployments = append(deployments, deployment)
+	var edgeWorkloads []v1alpha1.Workload
+	for _, edgeWorkload := range edgeWorkloadMap {
+		edgeWorkloads = append(edgeWorkloads, edgeWorkload)
 	}
-	return deployments
+	return edgeWorkloads
 }

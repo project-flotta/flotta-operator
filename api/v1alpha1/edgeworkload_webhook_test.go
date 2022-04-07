@@ -8,14 +8,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-var _ = Describe("EdgeDeployment Webhook", func() {
+var _ = Describe("EdgeWorkload Webhook", func() {
 	var (
-		edgeDeployment v1alpha1.EdgeDeployment
-		podSpec        *corev1.PodSpec
+		edgeWorkload v1alpha1.EdgeWorkload
+		podSpec      *corev1.PodSpec
 	)
 	BeforeEach(func() {
-		edgeDeployment = v1alpha1.EdgeDeployment{
-			Spec: v1alpha1.EdgeDeploymentSpec{
+		edgeWorkload = v1alpha1.EdgeWorkload{
+			Spec: v1alpha1.EdgeWorkloadSpec{
 				Pod: v1alpha1.Pod{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
@@ -58,13 +58,13 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 				},
 			},
 		}
-		podSpec = &edgeDeployment.Spec.Pod.Spec
+		podSpec = &edgeWorkload.Spec.Pod.Spec
 	})
 
-	Context("EdgeDeployment validating webhook", func() {
+	Context("EdgeWorkload validating webhook", func() {
 		It("delete should always succeed", func() {
 			// given
-			podSpec.Volumes = append(edgeDeployment.Spec.Pod.Spec.Volumes,
+			podSpec.Volumes = append(edgeWorkload.Spec.Pod.Spec.Volumes,
 				corev1.Volume{
 					Name: "volume",
 					VolumeSource: corev1.VolumeSource{
@@ -75,40 +75,40 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 				})
 
 			// when
-			err := edgeDeployment.ValidateDelete()
+			err := edgeWorkload.ValidateDelete()
 
 			// then
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("create valid EdgeDeployment", func() {
+		It("create valid EdgeWorkload", func() {
 			// given
 
 			// when
-			err := edgeDeployment.ValidateCreate()
+			err := edgeWorkload.ValidateCreate()
 
 			// then
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("update valid EdgeDeployment", func() {
+		It("update valid EdgeWorkload", func() {
 			// given
 
 			// when
-			err := edgeDeployment.ValidateUpdate(nil)
+			err := edgeWorkload.ValidateUpdate(nil)
 
 			// then
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		DescribeTable("test all invalid fields", func(editEdgeDeployment func()) {
+		DescribeTable("test all invalid fields", func(editEdgeWorkload func()) {
 
 			// given
-			editEdgeDeployment()
+			editEdgeWorkload()
 
 			// when
-			errCreate := edgeDeployment.ValidateCreate()
-			errUpdate := edgeDeployment.ValidateUpdate(nil)
+			errCreate := edgeWorkload.ValidateCreate()
+			errUpdate := edgeWorkload.ValidateUpdate(nil)
 
 			// then
 			Expect(errCreate).To(HaveOccurred())
@@ -173,7 +173,7 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 
 		It("reuse container name", func() {
 			// given
-			podSpec.Containers = append(edgeDeployment.Spec.Pod.Spec.Containers,
+			podSpec.Containers = append(edgeWorkload.Spec.Pod.Spec.Containers,
 				corev1.Container{
 					Name:            "container",
 					Image:           "stam",
@@ -181,7 +181,7 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 				})
 
 			// when
-			err := edgeDeployment.ValidateCreate()
+			err := edgeWorkload.ValidateCreate()
 
 			// then
 			Expect(err).Should(MatchError("name collisions for containers within the same pod spec are not supported.\n" +
@@ -190,7 +190,7 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 
 		It("reuse init container name", func() {
 			// given
-			podSpec.InitContainers = append(edgeDeployment.Spec.Pod.Spec.Containers,
+			podSpec.InitContainers = append(edgeWorkload.Spec.Pod.Spec.Containers,
 				corev1.Container{
 					Name:            "container",
 					Image:           "stam",
@@ -198,7 +198,7 @@ var _ = Describe("EdgeDeployment Webhook", func() {
 				})
 
 			// when
-			err := edgeDeployment.ValidateCreate()
+			err := edgeWorkload.ValidateCreate()
 
 			// then
 			Expect(err).Should(MatchError("name collisions for containers within the same pod spec are not supported.\n" +

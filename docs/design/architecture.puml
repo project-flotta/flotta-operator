@@ -7,7 +7,7 @@ frame Kubernetes {
       interface "http  API" as operatorAPI
 
     }
-    file "EdgeDeployment CR" as deployment
+    file "EdgeWorkload CR" as workload
     file "EdgeDevice CR" as deviceCR
     database "Object Storage" as objectStore
 }
@@ -17,9 +17,9 @@ node Device {
     control Podman
     collections Workloads
 }
-deviceCR o-- deployment
+deviceCR o-- workload
 
-Operator -[dashed]-> deployment: process
+Operator -[dashed]-> workload: process
 Operator -[dashed]-> deviceCR: process
 Operator -left-> objectStore: provision
 

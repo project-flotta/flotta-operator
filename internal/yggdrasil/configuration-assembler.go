@@ -13,7 +13,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/images"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
@@ -34,7 +34,7 @@ type configurationAssembler struct {
 	client                 k8sclient.K8sClient
 	configMaps             configmaps.ConfigMap
 	groupRepository        edgedevicegroup.Repository
-	deploymentRepository   edgedeployment.Repository
+	workloadRepository     edgeworkload.Repository
 	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 }
@@ -43,29 +43,29 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 	var workloadList models.WorkloadList
 	var secretList models.SecretList
 	if edgeDevice.DeletionTimestamp == nil {
-		var edgeDeployments []v1alpha1.EdgeDeployment
+		var edgeWorkloads []v1alpha1.EdgeWorkload
 
-		for _, deployment := range edgeDevice.Status.Deployments {
-			edgeDeployment, err := a.deploymentRepository.Read(ctx, deployment.Name, edgeDevice.Namespace)
+		for _, workload := range edgeDevice.Status.Workloads {
+			edgeWorkload, err := a.workloadRepository.Read(ctx, workload.Name, edgeDevice.Namespace)
 			if err != nil {
 				if !errors.IsNotFound(err) {
-					logger.Error(err, "cannot retrieve Edge Deployments")
+					logger.Error(err, "cannot retrieve Edge Workloads")
 					return nil, err
 				}
 				continue
 			}
-			if edgeDeployment.DeletionTimestamp == nil {
-				edgeDeployments = append(edgeDeployments, *edgeDeployment)
+			if edgeWorkload.DeletionTimestamp == nil {
+				edgeWorkloads = append(edgeWorkloads, *edgeWorkload)
 			}
 		}
 		var err error
-		workloadList, err = a.toWorkloadList(ctx, logger, edgeDeployments, edgeDevice)
+		workloadList, err = a.toWorkloadList(ctx, logger, edgeWorkloads, edgeDevice)
 		if err != nil {
 			return nil, err
 		}
-		secretList, err = a.createSecretList(ctx, logger, edgeDeployments, edgeDevice)
+		secretList, err = a.createSecretList(ctx, logger, edgeWorkloads, edgeDevice)
 		if err != nil {
-			logger.Error(err, "failed reading secrets for device deployments")
+			logger.Error(err, "failed reading secrets for device workloads")
 			return nil, err
 		}
 	}
@@ -218,16 +218,16 @@ func (a *configurationAssembler) getDeviceMetricsConfiguration(ctx context.Conte
 	return &metricsConfig, nil
 }
 
-func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger logr.Logger, deployments []v1alpha1.EdgeDeployment, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
+func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger logr.Logger, edgeworkloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
 	list := models.WorkloadList{}
-	for _, deployment := range deployments {
-		if deployment.DeletionTimestamp != nil {
+	for _, edgeworkload := range edgeworkloads {
+		if edgeworkload.DeletionTimestamp != nil {
 			continue
 		}
-		spec := deployment.Spec
+		spec := edgeworkload.Spec
 		podSpec, err := yaml.Marshal(spec.Pod.Spec)
 		if err != nil {
-			logger.Error(err, "cannot marshal pod specification", "deployment name", deployment.Name)
+			logger.Error(err, "cannot marshal pod specification", "edgeworkload name", edgeworkload.Name)
 			continue
 		}
 		var data *models.DataConfiguration
@@ -240,16 +240,16 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger logr
 		}
 
 		workload := models.Workload{
-			Name:          deployment.Name,
-			Namespace:     deployment.Namespace,
-			Labels:        labels.GetPodmanLabels(deployment.Labels),
+			Name:          edgeworkload.Name,
+			Namespace:     edgeworkload.Namespace,
+			Labels:        labels.GetPodmanLabels(edgeworkload.Labels),
 			Specification: string(podSpec),
 			Data:          data,
 			LogCollection: spec.LogCollection,
 		}
-		authFile, err := a.getAuthFile(ctx, spec.ImageRegistries, deployment.Namespace)
+		authFile, err := a.getAuthFile(ctx, spec.ImageRegistries, edgeworkload.Namespace)
 		if err != nil {
-			msg := fmt.Sprintf("Auth file secret %s used by deployment %s/%s is missing", spec.ImageRegistries.AuthFileSecret.Name, deployment.Namespace, deployment.Name)
+			msg := fmt.Sprintf("Auth file secret %s used by edgeworkload %s/%s is missing", spec.ImageRegistries.AuthFileSecret.Name, edgeworkload.Namespace, edgeworkload.Name)
 			a.recorder.Event(device, corev1.EventTypeWarning, "Misconfiguration", msg)
 			logger.Error(err, msg)
 			return nil, err
@@ -269,9 +269,9 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger logr
 			}
 
 			if allowListSpec := spec.Metrics.AllowList; allowListSpec != nil {
-				allowList, err := a.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, deployment.Namespace)
+				allowList, err := a.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, edgeworkload.Namespace)
 				if err != nil {
-					return nil, fmt.Errorf("Cannot get AllowList Metrics Confimap for %v: %v", deployment.Name, err)
+					return nil, fmt.Errorf("Cannot get AllowList Metrics Confimap for %v: %v", edgeworkload.Name, err)
 				}
 				workload.Metrics.AllowList = allowList
 			}
@@ -291,7 +291,7 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger logr
 			}
 		}
 
-		configmapList, err := a.configMaps.Fetch(ctx, deployment, device.Namespace)
+		configmapList, err := a.configMaps.Fetch(ctx, edgeworkload, device.Namespace)
 		if err != nil {
 			logger.Error(err, "Faled to fetch configmaps")
 			return nil, err
@@ -315,13 +315,13 @@ func (a *configurationAssembler) getAuthFile(ctx context.Context, imageRegistrie
 	return "", nil
 }
 
-func (a *configurationAssembler) createSecretList(ctx context.Context, logger logr.Logger, deployments []v1alpha1.EdgeDeployment, device *v1alpha1.EdgeDevice) (models.SecretList, error) {
+func (a *configurationAssembler) createSecretList(ctx context.Context, logger logr.Logger, workloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.SecretList, error) {
 	list := models.SecretList{}
 
 	// create map of secret names and keys
 	secretMap := secretMapType{}
-	for _, deployment := range deployments {
-		podSpec := deployment.Spec.Pod.Spec
+	for _, workload := range workloads {
+		podSpec := workload.Spec.Pod.Spec
 		allContainers := append(podSpec.InitContainers, podSpec.Containers...)
 		for i := range allContainers {
 			extractSecretsFromContainer(&allContainers[i], secretMap)

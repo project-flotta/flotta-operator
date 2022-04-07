@@ -84,10 +84,10 @@
             },
             {
               "exemplar": true,
-              "expr": "etcd_object_counts{resource=\"edgedeployments.management.project-flotta.io\"}",
+              "expr": "etcd_object_counts{resource=\"edgeworkloads.management.project-flotta.io\"}",
               "hide": false,
               "interval": "",
-              "legendFormat": "edge deployments",
+              "legendFormat": "edge workloads",
               "refId": "B"
             }
           ],

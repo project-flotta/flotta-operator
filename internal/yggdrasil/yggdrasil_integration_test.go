@@ -36,8 +36,8 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
 	"github.com/project-flotta/flotta-operator/models"
 	api "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
@@ -62,7 +62,7 @@ const (
 var _ = Describe("Yggdrasil", func() {
 	var (
 		mockCtrl           *gomock.Controller
-		deployRepoMock     *edgedeployment.MockRepository
+		deployRepoMock     *edgeworkload.MockRepository
 		edgeDeviceRepoMock *edgedevice.MockRepository
 		groupRepoMock      *edgedevicegroup.MockRepository
 		metricsMock        *metrics.MockMetrics
@@ -104,7 +104,7 @@ var _ = Describe("Yggdrasil", func() {
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
+		deployRepoMock = edgeworkload.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
 		groupRepoMock = edgedevicegroup.NewMockRepository(mockCtrl)
 		metricsMock = metrics.NewMockMetrics(mockCtrl)
@@ -446,10 +446,10 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Workloads).To(HaveLen(0))
 		})
 
-		It("Retrieval of deployment failed", func() {
+		It("Retrieval of workload failed", func() {
 			// given
 			device := getDevice("foo")
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), "foo", testNamespace).
@@ -467,11 +467,11 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
 		})
 
-		It("Cannot find deployment for device status", func() {
+		It("Cannot find workload for device status", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
@@ -492,23 +492,23 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Workloads).To(HaveLen(0))
 		})
 
-		It("Deployment status reported correctly on device status", func() {
+		It("Workload status reported correctly on device status", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			deploymentData := &v1alpha1.EdgeDeployment{
+			workloadData := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload1",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					DeviceSelector: &v1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
@@ -520,7 +520,7 @@ var _ = Describe("Yggdrasil", func() {
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData, nil)
+				Return(workloadData, nil)
 
 			// when
 			res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -543,16 +543,16 @@ var _ = Describe("Yggdrasil", func() {
 				deviceName string = "foo"
 				deviceCtx         = context.WithValue(context.TODO(), AuthzKey, deviceName)
 				device     *v1alpha1.EdgeDevice
-				deploy     *v1alpha1.EdgeDeployment
+				deploy     *v1alpha1.EdgeWorkload
 			)
 
-			getDeployment := func(name string, ns string) *v1alpha1.EdgeDeployment {
-				return &v1alpha1.EdgeDeployment{
+			getWorkload := func(name string, ns string) *v1alpha1.EdgeWorkload {
+				return &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      name,
 						Namespace: ns,
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						Type: "pod",
 						Pod:  v1alpha1.Pod{},
 					},
@@ -562,14 +562,14 @@ var _ = Describe("Yggdrasil", func() {
 			BeforeEach(func() {
 				deviceName = "foo"
 				device = getDevice(deviceName)
-				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
-				deploy = getDeployment("workload1", testNamespace)
+				deploy = getWorkload("workload1", testNamespace)
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
@@ -698,7 +698,7 @@ var _ = Describe("Yggdrasil", func() {
 
 				deviceCtx = context.WithValue(context.TODO(), AuthzKey, deviceName)
 				device = getDevice(deviceName)
-				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
@@ -706,13 +706,13 @@ var _ = Describe("Yggdrasil", func() {
 					Times(1)
 			})
 
-			getDeployment := func(name string, ns string) *v1alpha1.EdgeDeployment {
-				return &v1alpha1.EdgeDeployment{
+			getWorkload := func(name string, ns string) *v1alpha1.EdgeWorkload {
+				return &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      name,
 						Namespace: ns,
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						Type: "pod",
 						Pod:  v1alpha1.Pod{},
 					},
@@ -728,7 +728,7 @@ var _ = Describe("Yggdrasil", func() {
 					AllowList: &allowList,
 				}
 
-				deploy := getDeployment("workload1", testNamespace)
+				deploy := getWorkload("workload1", testNamespace)
 				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
 					Path: "/metrics", Port: 9999, Interval: 55, AllowList: &v1alpha1.NameRef{
 						Name: allowListName,
@@ -758,7 +758,7 @@ var _ = Describe("Yggdrasil", func() {
 			It("AllowList configmap retrival error", func() {
 
 				// given
-				deploy := getDeployment("workload1", testNamespace)
+				deploy := getWorkload("workload1", testNamespace)
 				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
 					Path: "/metrics", Port: 9999, Interval: 55, AllowList: &v1alpha1.NameRef{
 						Name: allowListName,
@@ -794,7 +794,7 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 
-				deploy := getDeployment("workload1", testNamespace)
+				deploy := getWorkload("workload1", testNamespace)
 				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
 					Path: "/metrics", Port: 9999, Containers: map[string]*v1alpha1.MetricsConfigEntity{
 						"test": {
@@ -825,7 +825,7 @@ var _ = Describe("Yggdrasil", func() {
 			It("Negative port is not considered", func() {
 
 				// given
-				deploy := getDeployment("workload1", testNamespace)
+				deploy := getWorkload("workload1", testNamespace)
 				deploy.Spec.Metrics = &v1alpha1.ContainerMetricsConfiguration{
 					Path: "/metrics",
 					Port: -1,
@@ -850,7 +850,7 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("receiver empty configuration", func() {
 				// given
-				device.Status.Deployments = nil
+				device.Status.Workloads = nil
 
 				// when
 				res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -865,7 +865,7 @@ var _ = Describe("Yggdrasil", func() {
 			It("receiver full configuration", func() {
 				// given
 				caContent := "test"
-				device.Status.Deployments = nil
+				device.Status.Workloads = nil
 				metricsReceiverConfig := &v1alpha1.MetricsReceiverConfiguration{
 					URL:               "https://metricsreceiver.io:19291/api/v1/receive",
 					RequestNumSamples: 1000,
@@ -902,7 +902,7 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("receiver empty secret", func() {
 				// given
-				device.Status.Deployments = nil
+				device.Status.Workloads = nil
 				metricsReceiverConfig := &v1alpha1.MetricsReceiverConfiguration{
 					URL:               "https://metricsreceiver.io:19291/api/v1/receive",
 					RequestNumSamples: 1000,
@@ -929,7 +929,7 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("receiver error reading secret", func() {
 				// given
-				device.Status.Deployments = nil
+				device.Status.Workloads = nil
 				metricsReceiverConfig := &v1alpha1.MetricsReceiverConfiguration{
 					URL:               "https://metricsreceiver.io:19291/api/v1/receive",
 					RequestNumSamples: 1000,
@@ -954,19 +954,19 @@ var _ = Describe("Yggdrasil", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			deploymentData := &v1alpha1.EdgeDeployment{
+			workloadData := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload1",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					Type: "pod",
 					Pod:  v1alpha1.Pod{},
 					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
@@ -978,11 +978,11 @@ var _ = Describe("Yggdrasil", func() {
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData, nil)
+				Return(workloadData, nil)
 
 			authFileContent := "authfile-content"
 			registryAuth.EXPECT().
-				GetAuthFileFromSecret(gomock.Any(), gomock.Eq(deploymentData.Namespace), gomock.Eq("fooSecret")).
+				GetAuthFileFromSecret(gomock.Any(), gomock.Eq(workloadData.Namespace), gomock.Eq("fooSecret")).
 				Return(authFileContent, nil)
 
 			// when
@@ -1006,19 +1006,19 @@ var _ = Describe("Yggdrasil", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			deploymentData := &v1alpha1.EdgeDeployment{
+			workloadData := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload1",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					Type: "pod",
 					Pod:  v1alpha1.Pod{},
 					ImageRegistries: &v1alpha1.ImageRegistriesConfiguration{
@@ -1029,7 +1029,7 @@ var _ = Describe("Yggdrasil", func() {
 				}}
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData, nil)
+				Return(workloadData, nil)
 
 			registryAuth.EXPECT().
 				GetAuthFileFromSecret(gomock.Any(), gomock.Eq("default"), gomock.Eq("fooSecret")).
@@ -1049,7 +1049,7 @@ var _ = Describe("Yggdrasil", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
@@ -1078,12 +1078,12 @@ var _ = Describe("Yggdrasil", func() {
 				},
 			}
 
-			deploymentData := &v1alpha1.EdgeDeployment{
+			workloadData := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload1",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					DeviceSelector: &v1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
@@ -1094,7 +1094,7 @@ var _ = Describe("Yggdrasil", func() {
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData, nil)
+				Return(workloadData, nil)
 			Mockk8sClient.EXPECT().
 				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
 				Return(fmt.Errorf("test"))
@@ -1110,7 +1110,7 @@ var _ = Describe("Yggdrasil", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
@@ -1139,12 +1139,12 @@ var _ = Describe("Yggdrasil", func() {
 				},
 			}
 
-			deploymentData := &v1alpha1.EdgeDeployment{
+			workloadData := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload1",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					DeviceSelector: &v1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
@@ -1155,7 +1155,7 @@ var _ = Describe("Yggdrasil", func() {
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData, nil)
+				Return(workloadData, nil)
 			Mockk8sClient.EXPECT().
 				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
 				Return(errorNotFound)
@@ -1171,7 +1171,7 @@ var _ = Describe("Yggdrasil", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
@@ -1214,12 +1214,12 @@ var _ = Describe("Yggdrasil", func() {
 				},
 			}
 
-			deploymentData := &v1alpha1.EdgeDeployment{
+			workloadData := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload1",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					DeviceSelector: &v1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
@@ -1230,7 +1230,7 @@ var _ = Describe("Yggdrasil", func() {
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData, nil)
+				Return(workloadData, nil)
 			Mockk8sClient.EXPECT().
 				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
 				Return(errorNotFound)
@@ -1360,19 +1360,19 @@ var _ = Describe("Yggdrasil", func() {
 				// given
 				deviceName := "foo"
 				device := getDevice(deviceName)
-				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
 				edgeDeviceRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
-				deploymentData := &v1alpha1.EdgeDeployment{
+				workloadData := &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      "workload1",
 						Namespace: "default",
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						DeviceSelector: &v1.LabelSelector{
 							MatchLabels: map[string]string{"test": "test"},
 						},
@@ -1383,7 +1383,7 @@ var _ = Describe("Yggdrasil", func() {
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
-					Return(deploymentData, nil)
+					Return(workloadData, nil)
 				secretDataMap := map[string][]byte{"key1": []byte("username"), "key2": []byte("password")}
 				Mockk8sClient.EXPECT().
 					Get(gomock.Any(), types.NamespacedName{Namespace: device.Namespace, Name: "secret"}, gomock.Any()).
@@ -1406,7 +1406,7 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("Secrets reading succeeded", func() {
 			// This test covers:
-			// multiple deployment
+			// multiple workload
 			// init containers and regular containers
 			// secretRef and secretKeyRef
 			// optional secretRef
@@ -1417,7 +1417,7 @@ var _ = Describe("Yggdrasil", func() {
 			// given
 			deviceName := "foo"
 			device := getDevice(deviceName)
-			device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}, {Name: "workload2"}}
+			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}, {Name: "workload2"}}
 
 			edgeDeviceRepoMock.EXPECT().
 				Read(gomock.Any(), deviceName, testNamespace).
@@ -1577,12 +1577,12 @@ var _ = Describe("Yggdrasil", func() {
 				},
 			}
 
-			deploymentData1 := &v1alpha1.EdgeDeployment{
+			workloadData1 := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload1",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					DeviceSelector: &v1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
@@ -1590,12 +1590,12 @@ var _ = Describe("Yggdrasil", func() {
 					Pod:  podData1,
 					Data: &v1alpha1.DataConfiguration{},
 				}}
-			deploymentData2 := &v1alpha1.EdgeDeployment{
+			workloadData2 := &v1alpha1.EdgeWorkload{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "workload2",
 					Namespace: "default",
 				},
-				Spec: v1alpha1.EdgeDeploymentSpec{
+				Spec: v1alpha1.EdgeWorkloadSpec{
 					DeviceSelector: &v1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
@@ -1607,10 +1607,10 @@ var _ = Describe("Yggdrasil", func() {
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil).AnyTimes()
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload1", testNamespace).
-				Return(deploymentData1, nil)
+				Return(workloadData1, nil)
 			deployRepoMock.EXPECT().
 				Read(gomock.Any(), "workload2", testNamespace).
-				Return(deploymentData2, nil)
+				Return(workloadData2, nil)
 
 			secretName := types.NamespacedName{
 				Namespace: device.Namespace,
@@ -1793,16 +1793,16 @@ var _ = Describe("Yggdrasil", func() {
 				deviceCtx   = context.WithValue(context.TODO(), AuthzKey, deviceName)
 				device      *v1alpha1.EdgeDevice
 				deviceGroup *v1alpha1.EdgeDeviceGroup
-				deploy      *v1alpha1.EdgeDeployment
+				deploy      *v1alpha1.EdgeWorkload
 			)
 
-			getDeployment := func(name string, ns string) *v1alpha1.EdgeDeployment {
-				return &v1alpha1.EdgeDeployment{
+			getWorkload := func(name string, ns string) *v1alpha1.EdgeWorkload {
+				return &v1alpha1.EdgeWorkload{
 					ObjectMeta: v1.ObjectMeta{
 						Name:      name,
 						Namespace: ns,
 					},
-					Spec: v1alpha1.EdgeDeploymentSpec{
+					Spec: v1alpha1.EdgeWorkloadSpec{
 						Type: "pod",
 						Pod:  v1alpha1.Pod{},
 					},
@@ -1812,7 +1812,7 @@ var _ = Describe("Yggdrasil", func() {
 			BeforeEach(func() {
 				deviceName = "foo"
 				device = getDevice(deviceName)
-				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 				device.Labels = map[string]string{
 					"flotta/member-of": groupName,
 				}
@@ -1864,7 +1864,7 @@ var _ = Describe("Yggdrasil", func() {
 					Return(device, nil).
 					Times(1)
 
-				deploy = getDeployment("workload1", testNamespace)
+				deploy = getWorkload("workload1", testNamespace)
 				deployRepoMock.EXPECT().
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
@@ -2200,7 +2200,7 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 
-				device.Status.Deployments = []v1alpha1.Deployment{{
+				device.Status.Workloads = []v1alpha1.Workload{{
 					Name:  "workload-1",
 					Phase: "failing",
 				}}
@@ -2218,10 +2218,10 @@ var _ = Describe("Yggdrasil", func() {
 				edgeDeviceRepoMock.EXPECT().
 					PatchStatus(gomock.Any(), device, gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
-						Expect(edgeDevice.Status.Deployments[0].Phase).To(
-							Equal(v1alpha1.EdgeDeploymentPhase("running")))
-						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("workload-1"))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads[0].Phase).To(
+							Equal(v1alpha1.EdgeWorkloadPhase("running")))
+						Expect(edgeDevice.Status.Workloads[0].Name).To(Equal("workload-1"))
 					}).
 					Return(nil).
 					Times(1)
@@ -2257,7 +2257,7 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 				device.Status.Phase = content.Status
-				device.Status.Deployments = []v1alpha1.Deployment{{
+				device.Status.Workloads = []v1alpha1.Workload{{
 					Name:  "workload-1",
 					Phase: "running",
 				}}
@@ -2320,7 +2320,7 @@ var _ = Describe("Yggdrasil", func() {
 					}},
 				}
 
-				device.Status.Deployments = []v1alpha1.Deployment{{
+				device.Status.Workloads = []v1alpha1.Workload{{
 					Name:  "workload-1",
 					Phase: "failing",
 				}}
@@ -2338,10 +2338,10 @@ var _ = Describe("Yggdrasil", func() {
 				edgeDeviceRepoMock.EXPECT().
 					PatchStatus(gomock.Any(), device, gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(1))
-						Expect(edgeDevice.Status.Deployments[0].Phase).To(
-							Equal(v1alpha1.EdgeDeploymentPhase("created")))
-						Expect(edgeDevice.Status.Deployments[0].Name).To(Equal("workload-1"))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
+						Expect(edgeDevice.Status.Workloads[0].Phase).To(
+							Equal(v1alpha1.EdgeWorkloadPhase("created")))
+						Expect(edgeDevice.Status.Workloads[0].Name).To(Equal("workload-1"))
 					}).
 					Return(nil).
 					Times(1)
@@ -2688,7 +2688,7 @@ var _ = Describe("Yggdrasil", func() {
 						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 							Expect(edgeDevice.Name).To(Equal(deviceName))
 							Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-							Expect(edgeDevice.Status.Deployments).To(HaveLen(0))
+							Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
 							Expect(edgeDevice.Status.Hardware.Hostname).To(Equal("fooHostname"))
 						}).
 						Return(nil).
@@ -2779,7 +2779,7 @@ var _ = Describe("Yggdrasil", func() {
 						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 							Expect(edgeDevice.Name).To(Equal(deviceName))
 							Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-							Expect(edgeDevice.Status.Deployments).To(HaveLen(0))
+							Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
 						}).
 						Return(fmt.Errorf("Failed")).
 						Times(1)
@@ -2878,7 +2878,7 @@ var _ = Describe("Yggdrasil", func() {
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Name).To(Equal(deviceName))
 						Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-						Expect(edgeDevice.Status.Deployments).To(HaveLen(0))
+						Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
 					}).
 					Return(nil).
 					Times(1)
