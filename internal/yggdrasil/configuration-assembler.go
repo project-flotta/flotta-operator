@@ -77,7 +77,7 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 	}
 
 	var deviceGroup *v1alpha1.EdgeDeviceGroup
-	if deviceGroupName, ok := edgeDevice.Labels["flotta/configured-by"]; ok {
+	if deviceGroupName, ok := edgeDevice.Labels["flotta/member-of"]; ok {
 		logger.V(1).Info("Device uses EdgeDeviceGroup", "edgeDeviceGroup", deviceGroupName)
 		var err error
 		deviceGroup, err = a.groupRepository.Read(ctx, deviceGroupName, edgeDevice.Namespace)

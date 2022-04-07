@@ -1748,7 +1748,7 @@ var _ = Describe("Yggdrasil", func() {
 				device = getDevice(deviceName)
 				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
 				device.Labels = map[string]string{
-					"flotta/configured-by": groupName,
+					"flotta/member-of": groupName,
 				}
 
 				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{

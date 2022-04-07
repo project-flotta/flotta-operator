@@ -59,11 +59,11 @@ spec:
 ## Defining `EdgeDevice` - `EdgeDeviceGroup` relationship
 
 To make specific `EdgeDevice` use chosen `EdgeDeviceGroup` configuration, user needs to add 
-`flotta/configured-by: <edge device group name>` label to the `EdgeDevice`.
+`flotta/member-of: <edge device group name>` label to the `EdgeDevice`.
 For example, if there is a `group-1` `EdgeDeviceGroup` and `device-1` `EdgeDevice`, user needs to issue following 
 command to build the relationship between them:
 ```shell
-kubectl label edgedevice device-1 flotta/configured-by=group-1
+kubectl label edgedevice device-1 flotta/member-of=group-1
 ```
 
 ## Configuration priority
