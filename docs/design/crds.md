@@ -150,3 +150,75 @@ spec:
       syslogConfig: 
         name: syslog-config-map # Name of a config map containing syslog connection configuration
 ```
+
+## EdgeConfig
+`EdgeConfig` is a namespaced custom resource that represents custom configuration that should be deployed to edge devices matching criteria specified in the CR.
+
+* apiVersion: `management.project-flotta.io/v1alpha1`
+* kind: `EdgeConfig`
+
+```yaml
+spec:
+  deviceIDs: # The deviceID list on which the playbook should be executed. Necessary to execute playbook on a devices that don't belong to any group
+    - device-1
+    - device-2
+  edgePlaybook:
+    ansiblePlaybookCmd:
+      user: foo # Username who execute the playbook
+      playbooksPriorityMap:
+        - "1" : 
+          content: # Ansible playbook in base64
+          LS0tCi0gIG5hbWU6IEhlbGxvIFdvcmxkIEFuc2libGUgUGxheWJvb2sKICAgaG9zdHM6IDEyNy4wLjAu....
+          timeoutSeconds: 100 # Interval in seconds on which the playbook execution should be executed
+          requiredPrivilegeLevel: # The required privelege level necessary to execute the playbook. See https://man7.org/linux/man-pages/man7/capabilities.7.html for a full list
+            capAdd: # Capabilities to add
+              - SYS_CHROOT
+            capDrop: # Capabilities to drop
+              - SYS_BOOT
+          ansibleOptions:
+            check: false #  Flag defining whether the playbook execution should be in check mode (is just a simulation)
+          privilegeEscalationOptions: # To execute tasks with root privileges or with another user’s permissions
+            become: true # Flag definig whether to activate privilege escalation
+            becomeUser: bar # set to user with desired privileges
+            becomeMethod: sudo # method to use to increase privilege. Currently only `sudo` and `su` are available
+          executionStategy: ExecuteOnce # Define the execution strategy for the playbook. Currently `StopOnFailure`, `RetryOnFailure`, `ExecuteOnce` are available.
+        - "2" : 
+          content: # Ansible playbook in base64 
+          LS0tCgotIGhvc3RzOiBhbGwKICBnYXRoZXJfZmFjdHM6IGZhbHNlCiAgdmFyczoKICAgIGFycmF5OgogICAgICAtFlvdXIg....
+          ...
+```
+
+### Status
+
+
+```yaml
+status:
+  condition:
+    - 
+      type: TargetVerification
+      status: false
+      reason: # one-word CamelCase reason for the condition's last transition
+      message: # human-readable message indicating details about last transition
+        Verifying playbook for rhel4edge target environment
+      lastTransitionTime: "2021-09-23T09:27:50Z" # last time the condition transit from one status to another 
+    - 
+      type: Deploying
+      status: false
+      lastTransitionTime:
+    - 
+      type: Executing
+      status: false
+      lastTransitionTime:
+    - 
+      type: Completed
+      status: false
+      reason:
+      message: "Execution completed with error. Execution strategy: RetryOnFailure"
+      lastTransitionTime:
+    -
+      type: Completed
+      status: true
+      reason: "Execution completed with error. Execution strategy: ExecuteOnce"
+      message:
+      lastTransitionTime:
+```
