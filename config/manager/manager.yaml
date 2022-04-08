@@ -36,8 +36,6 @@ spec:
         imagePullPolicy: IfNotPresent
         name: manager
         ports:
-          - containerPort: 8888
-            name: yggd
           - containerPort: 8043
             name: yggds
           - containerPort: 8080
@@ -75,10 +73,6 @@ metadata:
     control-plane: controller-manager
 spec:
   ports:
-    - name: yggd
-      protocol: TCP
-      port: 8888
-      targetPort: yggd
     - name: yggds
       protocol: TCP
       port: 8043

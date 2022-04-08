@@ -4,7 +4,6 @@
 //
 //  Flotta Edge Management
 //  Schemes:
-//    http
 //    https
 //  Host: localhost
 //  BasePath: /api/flotta-management/v1

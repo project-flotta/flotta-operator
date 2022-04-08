@@ -32,7 +32,6 @@ API to communicate with Yggdrasil daemon over HTTP
 ## Content negotiation
 
 ### URI Schemes
-  * http
   * https
 
 ### Consumes
