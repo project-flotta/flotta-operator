@@ -49,7 +49,7 @@ var _ = Describe("e2e", func() {
 	JustAfterEach(func() {
 		isValid, err := device.ValidateNoDataRaceInLogs()
 		Expect(err).NotTo(HaveOccurred())
-		Expect(isValid).To(BeTrue(),"Found data race in logs" )
+		Expect(isValid).To(BeTrue(), "Found data race in logs")
 	})
 
 	AfterFailed(func() {

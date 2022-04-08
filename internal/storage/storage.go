@@ -111,28 +111,28 @@ func (c *Claimer) GetStorageConfiguration(ctx context.Context, device *v1alpha1.
 	return conf, nil
 }
 
-func (c *Claimer) GetExternalStorageConfig(ctx context.Context, device *v1alpha1.EdgeDevice) (*models.S3StorageConfiguration, error) {
-	config := device.Spec.Storage.S3
-	if config == nil {
-		return nil, fmt.Errorf("missing storage in device configuration. Device name: %s", device.Name)
+func (c *Claimer) GetExternalStorageConfig(ctx context.Context, namespace string, storageConfig *v1alpha1.Storage) (*models.S3StorageConfiguration, error) {
+	s3StorageConfig := getS3(storageConfig)
+	if s3StorageConfig == nil {
+		return nil, fmt.Errorf("storage cannot be missing")
 	}
 	cm := corev1.ConfigMap{}
-	err := c.client.Get(ctx, client.ObjectKey{Namespace: device.Namespace, Name: config.ConfigMapName}, &cm)
+	err := c.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: s3StorageConfig.ConfigMapName}, &cm)
 	if err != nil {
 		return nil, err
 	}
 	secret := corev1.Secret{}
-	err = c.client.Get(ctx, client.ObjectKey{Namespace: device.Namespace, Name: config.SecretName}, &secret)
+	err = c.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: s3StorageConfig.SecretName}, &secret)
 	if err != nil {
 		return nil, err
 	}
 	configMapFullName := types.NamespacedName{
-		Namespace: device.Namespace,
-		Name:      config.ConfigMapName,
+		Namespace: namespace,
+		Name:      s3StorageConfig.ConfigMapName,
 	}.String()
 	secretFullName := types.NamespacedName{
-		Namespace: device.Namespace,
-		Name:      config.SecretName,
+		Namespace: namespace,
+		Name:      s3StorageConfig.SecretName,
 	}.String()
 	missingFieldMessage := "Missing field %s in resource %s"
 	bucketName, exists := cm.Data["BUCKET_NAME"]
@@ -175,8 +175,8 @@ func (c *Claimer) GetExternalStorageConfig(ctx context.Context, device *v1alpha1
 	}, nil
 }
 
-func ShouldUseExternalConfig(device *v1alpha1.EdgeDevice) bool {
-	s3Obj := getS3(device)
+func ShouldUseExternalConfig(storageObj *v1alpha1.Storage) bool {
+	s3Obj := getS3(storageObj)
 	if s3Obj != nil {
 		if s3Obj.ConfigMapName != "" ||
 			s3Obj.SecretName != "" {
@@ -186,23 +186,19 @@ func ShouldUseExternalConfig(device *v1alpha1.EdgeDevice) bool {
 	return false
 }
 
-func ShouldCreateOBC(device *v1alpha1.EdgeDevice) bool {
-	s3Obj := getS3(device)
+func ShouldCreateOBC(storageObj *v1alpha1.Storage) bool {
+	s3Obj := getS3(storageObj)
 	if s3Obj != nil {
-		if !ShouldUseExternalConfig(device) {
+		if !ShouldUseExternalConfig(storageObj) {
 			return s3Obj.CreateOBC
 		}
 	}
 	return false
 }
 
-func getS3(device *v1alpha1.EdgeDevice) *v1alpha1.S3Storage {
-	if device != nil {
-		storageObj := device.Spec.Storage
-		if storageObj != nil {
-			return storageObj.S3
-		}
+func getS3(storageObj *v1alpha1.Storage) *v1alpha1.S3Storage {
+	if storageObj != nil {
+		return storageObj.S3
 	}
-
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 	"path/filepath"
 	"strings"
 	"time"
@@ -62,6 +63,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl           *gomock.Controller
 		deployRepoMock     *edgedeployment.MockRepository
 		edgeDeviceRepoMock *edgedevice.MockRepository
+		groupRepoMock      *edgedevicegroup.MockRepository
 		metricsMock        *metrics.MockMetrics
 		registryAuth       *images.MockRegistryAuthAPI
 		handler            *yggdrasil.Handler
@@ -103,6 +105,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
+		groupRepoMock = edgedevicegroup.NewMockRepository(mockCtrl)
 		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
@@ -110,8 +113,8 @@ var _ = Describe("Yggdrasil", func() {
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
 
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, nil, Mockk8sClient, testNamespace,
-			eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil)
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, groupRepoMock, nil, Mockk8sClient,
+			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil)
 	})
 
 	AfterEach(func() {
@@ -1716,6 +1719,260 @@ var _ = Describe("Yggdrasil", func() {
 			// then
 			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
 		})
+
+		Context("With EdgeDeviceGroup", func() {
+			var (
+				deviceName  = "foo"
+				groupName   = "groupFoo"
+				deviceCtx   = context.WithValue(context.TODO(), AuthzKey, deviceName)
+				device      *v1alpha1.EdgeDevice
+				deviceGroup *v1alpha1.EdgeDeviceGroup
+				deploy      *v1alpha1.EdgeDeployment
+			)
+
+			getDeployment := func(name string, ns string) *v1alpha1.EdgeDeployment {
+				return &v1alpha1.EdgeDeployment{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      name,
+						Namespace: ns,
+					},
+					Spec: v1alpha1.EdgeDeploymentSpec{
+						Type: "pod",
+						Pod:  v1alpha1.Pod{},
+					},
+				}
+			}
+
+			BeforeEach(func() {
+				deviceName = "foo"
+				device = getDevice(deviceName)
+				device.Status.Deployments = []v1alpha1.Deployment{{Name: "workload1"}}
+				device.Labels = map[string]string{
+					"flotta/member-of": groupName,
+				}
+
+				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
+					"syslog-device": {
+						Kind:         "syslog",
+						BufferSize:   5,
+						SyslogConfig: &v1alpha1.NameRef{Name: "syslog-config"},
+					},
+				}
+
+				device.Spec.Heartbeat = &v1alpha1.HeartbeatConfiguration{
+					PeriodSeconds: 1,
+					HardwareProfile: &v1alpha1.HardwareProfileConfiguration{
+						Include: false,
+						Scope:   "full",
+					},
+				}
+
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					Retention: &v1alpha1.Retention{
+						MaxMiB:   123,
+						MaxHours: 123,
+					},
+					SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
+						Interval:  123,
+						Disabled:  false,
+						AllowList: nil,
+					},
+				}
+
+				device.Spec.OsInformation = &v1alpha1.OsInformation{
+					AutomaticallyUpgrade: false,
+					CommitID:             "fffffff",
+					HostedObjectsURL:     "",
+				}
+
+				device.Spec.Storage = &v1alpha1.Storage{
+					S3: &v1alpha1.S3Storage{
+						SecretName:    "no-secret",
+						ConfigMapName: "no-map",
+						CreateOBC:     false,
+					},
+				}
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				deploy = getDeployment("workload1", testNamespace)
+				deployRepoMock.EXPECT().
+					Read(gomock.Any(), "workload1", testNamespace).
+					Return(deploy, nil)
+
+				deviceGroup = &v1alpha1.EdgeDeviceGroup{
+					TypeMeta:   v1.TypeMeta{},
+					ObjectMeta: v1.ObjectMeta{Name: groupName, Namespace: testNamespace},
+					Spec:       v1alpha1.EdgeDeviceGroupSpec{},
+				}
+				groupRepoMock.EXPECT().
+					Read(gomock.Any(), groupName, testNamespace).
+					Return(deviceGroup, nil)
+
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
+			})
+
+			It("should map log collection", func() {
+				// given
+				Mockk8sClient.EXPECT().Get(
+					gomock.Any(),
+					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
+					gomock.Any()).
+					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
+						obj.(*corev1.ConfigMap).Data = map[string]string{
+							"Address": "127.0.0.1:512",
+						}
+					}).
+					Return(nil).
+					Times(1)
+
+				deviceGroup.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
+					"syslog": {
+						Kind:         "syslog",
+						BufferSize:   10,
+						SyslogConfig: &v1alpha1.NameRef{Name: "syslog-config"},
+					},
+				}
+				deploy.Spec.LogCollection = "syslog"
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+
+				// Device Log config
+				Expect(config.Configuration.LogCollection).To(HaveKey("syslog"))
+				logConfig := config.Configuration.LogCollection["syslog"]
+				Expect(logConfig.Kind).To(Equal("syslog"))
+				Expect(logConfig.BufferSize).To(Equal(int32(10)))
+				Expect(logConfig.SyslogConfig.Address).To(Equal("127.0.0.1:512"))
+				Expect(logConfig.SyslogConfig.Protocol).To(Equal("tcp"))
+
+				Expect(config.Workloads).To(HaveLen(1))
+				workload := config.Workloads[0]
+				Expect(workload.Name).To(Equal("workload1"))
+				Expect(workload.LogCollection).To(Equal("syslog"))
+				Expect(workload.ImageRegistries).To(BeNil())
+			})
+
+			It("should map metrics", func() {
+				// given
+				const allowListName = "a-name"
+				interval := int32(3600)
+				maxMiB := int32(123)
+				maxHours := int32(24)
+
+				deviceGroup.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					Retention: &v1alpha1.Retention{
+						MaxMiB:   maxMiB,
+						MaxHours: maxHours,
+					},
+					SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
+						Interval: interval,
+						Disabled: true,
+						AllowList: &v1alpha1.NameRef{
+							Name: allowListName,
+						},
+					},
+				}
+
+				allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
+				allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
+					Return(&allowList, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.Configuration.Metrics).ToNot(BeNil())
+
+				Expect(config.Configuration.Metrics.Retention).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.Retention.MaxHours).To(Equal(maxHours))
+				Expect(config.Configuration.Metrics.Retention.MaxMib).To(Equal(maxMiB))
+
+				Expect(config.Configuration.Metrics.System).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.System.Interval).To(Equal(interval))
+				Expect(config.Configuration.Metrics.System.Disabled).To(BeTrue())
+
+				Expect(config.Configuration.Metrics.System.AllowList).ToNot(BeNil())
+				Expect(*config.Configuration.Metrics.System.AllowList).To(Equal(allowList))
+			})
+
+			It("should map heartbeat", func() {
+				// given
+				period := int64(123)
+				deviceGroup.Spec.Heartbeat = &v1alpha1.HeartbeatConfiguration{
+					PeriodSeconds: period,
+					HardwareProfile: &v1alpha1.HardwareProfileConfiguration{
+						Include: true,
+						Scope:   "delta",
+					},
+				}
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.Configuration.Heartbeat).ToNot(BeNil())
+				Expect(config.Configuration.Heartbeat.PeriodSeconds).To(Equal(period))
+				Expect(config.Configuration.Heartbeat.HardwareProfile).ToNot(BeNil())
+				Expect(config.Configuration.Heartbeat.HardwareProfile.Include).To(BeTrue())
+				Expect(config.Configuration.Heartbeat.HardwareProfile.Scope).To(Equal("delta"))
+			})
+
+			It("should override OS information", func() {
+				// given
+				commitID := "12345"
+				url := "http://images.io"
+				deviceGroup.Spec.OsInformation = &v1alpha1.OsInformation{
+					AutomaticallyUpgrade: true,
+					CommitID:             commitID,
+					HostedObjectsURL:     url,
+				}
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.Configuration.Os).ToNot(BeNil())
+				Expect(config.Configuration.Os.AutomaticallyUpgrade).To(BeTrue())
+				Expect(config.Configuration.Os.CommitID).To(Equal(commitID))
+				Expect(config.Configuration.Os.HostedObjectsURL).To(Equal(url))
+			})
+
+			It("should override (remove) S3 storage information", func() {
+				// given
+				deviceGroup.Spec.Storage = &v1alpha1.Storage{
+					S3: &v1alpha1.S3Storage{
+						CreateOBC: true,
+					},
+				}
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.Configuration.Storage).To(BeNil())
+			})
+		})
 	})
 
 	Context("PostDataMessageForDevice", func() {
@@ -2199,6 +2456,7 @@ var _ = Describe("Yggdrasil", func() {
 					handler = yggdrasil.NewYggdrasilHandler(
 						edgeDeviceRepoMock,
 						deployRepoMock,
+						groupRepoMock,
 						nil,
 						Mockk8sClient,
 						testNamespace,

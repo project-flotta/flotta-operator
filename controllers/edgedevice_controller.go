@@ -77,7 +77,7 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice) {
+	if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice.Spec.Storage) {
 		return ctrl.Result{}, nil
 	}
 

@@ -340,9 +340,9 @@ var _ = Describe("Storage", func() {
 
 	Context("GetExternalStorageConfig", func() {
 
+		const namespace = "default"
 		var (
 			claimer    *storage.Claimer
-			device     *v1alpha1.EdgeDevice
 			storageObj *v1alpha1.Storage
 		)
 
@@ -367,7 +367,7 @@ var _ = Describe("Storage", func() {
 			cm := corev1.ConfigMap{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "test",
-					Namespace: "default",
+					Namespace: namespace,
 				},
 				Data: data,
 			}
@@ -379,7 +379,7 @@ var _ = Describe("Storage", func() {
 			secret := corev1.Secret{
 				ObjectMeta: v1.ObjectMeta{
 					Name:      "test",
-					Namespace: "default",
+					Namespace: namespace,
 				},
 				Data: data,
 			}
@@ -389,22 +389,20 @@ var _ = Describe("Storage", func() {
 
 		BeforeEach(func() {
 			claimer = storage.NewClaimer(k8sClient)
-			device = getDevice()
 			storageObj = &v1alpha1.Storage{
 				S3: &v1alpha1.S3Storage{
 					SecretName:    "test",
 					ConfigMapName: "test",
 				},
 			}
-			device.Spec.Storage = storageObj
 		})
 
 		It("missing S3 configuration", func() {
 			// given
-			device.Spec.Storage = &v1alpha1.Storage{}
+			storageObj = &v1alpha1.Storage{}
 
 			// when
-			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), namespace, storageObj)
 
 			// then
 			Expect(err).ToNot(BeNil())
@@ -413,11 +411,11 @@ var _ = Describe("Storage", func() {
 
 		It("missing config map", func() {
 			// given
-			device.Spec.Storage.S3.ConfigMapName = "missing"
+			storageObj.S3.ConfigMapName = "missing"
 			createS3Secret(nil)
 
 			// when
-			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), namespace, storageObj)
 
 			// then
 			Expect(err).ToNot(BeNil())
@@ -426,11 +424,11 @@ var _ = Describe("Storage", func() {
 
 		It("missing secret", func() {
 			// given
-			device.Spec.Storage.S3.SecretName = "missing"
+			storageObj.S3.SecretName = "missing"
 			createS3CM(nil)
 
 			// when
-			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), namespace, storageObj)
 
 			// then
 			Expect(err).ToNot(BeNil())
@@ -446,7 +444,7 @@ var _ = Describe("Storage", func() {
 				createS3Secret(getSecretData())
 
 				// when
-				result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+				result, err := claimer.GetExternalStorageConfig(context.TODO(), namespace, storageObj)
 
 				// then
 				Expect(err).ToNot(BeNil())
@@ -467,7 +465,7 @@ var _ = Describe("Storage", func() {
 				createS3Secret(secretData)
 
 				// when
-				result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+				result, err := claimer.GetExternalStorageConfig(context.TODO(), namespace, storageObj)
 
 				// then
 				if optional {
@@ -501,7 +499,7 @@ var _ = Describe("Storage", func() {
 			}
 
 			// when
-			result, err := claimer.GetExternalStorageConfig(context.TODO(), device)
+			result, err := claimer.GetExternalStorageConfig(context.TODO(), namespace, storageObj)
 
 			// then
 			Expect(err).To(BeNil())
@@ -511,107 +509,96 @@ var _ = Describe("Storage", func() {
 	})
 
 	Context("ShouldUseExternalConfig", func() {
-		var (
-			device *v1alpha1.EdgeDevice
-		)
-		BeforeEach(func() {
-			device = getDevice()
-		})
-		It("storage configuration does not exist", func() {
+
+		It("storage configuration is nil", func() {
 			// given
 			// when
-			result := storage.ShouldUseExternalConfig(device)
+			result := storage.ShouldUseExternalConfig(nil)
 			// then
 			Expect(result).To(BeFalse())
 		})
 		It("s3 configuration does not exist", func() {
 			// given
-			device.Spec.Storage = &managementv1alpha1.Storage{}
+			storageCfg := &managementv1alpha1.Storage{}
 			// when
-			result := storage.ShouldUseExternalConfig(device)
+			result := storage.ShouldUseExternalConfig(storageCfg)
 			// then
 			Expect(result).To(BeFalse())
 		})
 		It("s3 configuration is empty", func() {
 			// given
-			device.Spec.Storage = &managementv1alpha1.Storage{
+			storageCfg := &managementv1alpha1.Storage{
 				S3: &managementv1alpha1.S3Storage{},
 			}
 			// when
-			result := storage.ShouldUseExternalConfig(device)
+			result := storage.ShouldUseExternalConfig(storageCfg)
 			// then
 			Expect(result).To(BeFalse())
 		})
 		It("s3 configuration should be used", func() {
 			// given
-			device.Spec.Storage = &managementv1alpha1.Storage{
+			storageCfg := &managementv1alpha1.Storage{
 				S3: &managementv1alpha1.S3Storage{
 					SecretName: "s3secret",
 				},
 			}
 			// when
-			result := storage.ShouldUseExternalConfig(device)
+			result := storage.ShouldUseExternalConfig(storageCfg)
 			// then
 			Expect(result).To(BeTrue())
 		})
 	})
 
 	Context("ShouldCreateOBC", func() {
-		var (
-			device *v1alpha1.EdgeDevice
-		)
-		BeforeEach(func() {
-			device = getDevice()
-		})
-		It("storage configuration does not exist", func() {
+		It("storage configuration is nil", func() {
 			// given
 			// when
-			result := storage.ShouldCreateOBC(device)
+			result := storage.ShouldCreateOBC(nil)
 			// then
 			Expect(result).To(BeFalse())
 		})
 		It("s3 configuration does not exist", func() {
 			// given
-			device.Spec.Storage = &managementv1alpha1.Storage{}
+			storageCfg := &managementv1alpha1.Storage{}
 			// when
-			result := storage.ShouldCreateOBC(device)
+			result := storage.ShouldCreateOBC(storageCfg)
 			// then
 			Expect(result).To(BeFalse())
 		})
 		It("s3 external configuration not empty", func() {
 			// given
-			device.Spec.Storage = &managementv1alpha1.Storage{
+			storageCfg := &managementv1alpha1.Storage{
 				S3: &managementv1alpha1.S3Storage{
 					SecretName: "s3secret",
 					CreateOBC:  true,
 				},
 			}
 			// when
-			result := storage.ShouldCreateOBC(device)
+			result := storage.ShouldCreateOBC(storageCfg)
 			// then
 			Expect(result).To(BeFalse())
 		})
 		It("should not create OBC", func() {
 			// given
-			device.Spec.Storage = &managementv1alpha1.Storage{
+			storageCfg := &managementv1alpha1.Storage{
 				S3: &managementv1alpha1.S3Storage{
 					CreateOBC: false,
 				},
 			}
 			// when
-			result := storage.ShouldCreateOBC(device)
+			result := storage.ShouldCreateOBC(storageCfg)
 			// then
 			Expect(result).To(BeFalse())
 		})
 		It("should create OBC", func() {
 			// given
-			device.Spec.Storage = &managementv1alpha1.Storage{
+			storageCfg := &managementv1alpha1.Storage{
 				S3: &managementv1alpha1.S3Storage{
 					CreateOBC: true,
 				},
 			}
 			// when
-			result := storage.ShouldCreateOBC(device)
+			result := storage.ShouldCreateOBC(storageCfg)
 			// then
 			Expect(result).To(BeTrue())
 		})

@@ -6,6 +6,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/heartbeat"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 
 	"net/http"
@@ -67,9 +68,9 @@ type keyMapType = map[string]interface{}
 type secretMapType = map[string]keyMapType
 
 func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepository edgedeployment.Repository,
-	claimer *storage.Claimer, k8sClient k8sclient.K8sClient, initialNamespace string, recorder record.EventRecorder,
-	registryAuth images.RegistryAuthAPI, metrics metrics.Metrics, allowLists devicemetrics.AllowListGenerator,
-	configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig) *Handler {
+	groupRepository edgedevicegroup.Repository, claimer *storage.Claimer, k8sClient k8sclient.K8sClient,
+	initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
+	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig) *Handler {
 	return &Handler{
 		deviceRepository:     deviceRepository,
 		deploymentRepository: deploymentRepository,
@@ -83,6 +84,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, deploymentRepos
 			client:                 k8sClient,
 			configMaps:             configMaps,
 			deploymentRepository:   deploymentRepository,
+			groupRepository:        groupRepository,
 			recorder:               recorder,
 			registryAuthRepository: registryAuth},
 	}

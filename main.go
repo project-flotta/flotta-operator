@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -288,9 +289,11 @@ func main() {
 
 		k8sClient := k8sclient.NewK8sClient(mgr.GetClient())
 
+		edgeDeviceGroupRepository := edgedevicegroup.NewEdgeDeviceGroupRepository(mgr.GetClient())
 		yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
 			edgeDeviceRepository,
 			edgeDeploymentRepository,
+			edgeDeviceGroupRepository,
 			claimer,
 			k8sClient,
 			initialDeviceNamespace,
