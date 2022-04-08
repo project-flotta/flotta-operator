@@ -121,6 +121,9 @@ get-certs: # Write certificates to /tmp/ folder
 	kubectl -n flotta get secret $(REG_SECRET_NAME) -o json | jq -r '.data."client.crt"| @base64d' > /tmp/cert.pem
 	kubectl -n flotta get secret $(REG_SECRET_NAME) -o json | jq -r '.data."client.key"| @base64d' > /tmp/key.pem
 
+check-certs: # Check cert subject
+	openssl x509 -noout -in /tmp/cert.pem --subject
+
 ##@ Build
 build: generate fmt vet ## Build manager binary.
 	go build -mod=vendor -o bin/manager main.go
