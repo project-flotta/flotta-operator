@@ -47,10 +47,28 @@ spec:
           status:
             description: PlaybookExecutionStatus defines the observed state of PlaybookExecution
             properties:
-              completed:
-                type: boolean
               condition:
-                type: string
+                items:
+                  properties:
+                    lastTransitionTime:
+                      format: date-time
+                      type: string
+                    message:
+                      type: string
+                    reason:
+                      type: string
+                    status:
+                      description: Indicates whether that condition is applicable,
+                        with possible values "True", "False", or "Unknown" The absence
+                        of a condition should be interpreted the same as Unknown
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - status
+                  - type
+                  type: object
+                type: array
               lastSeenTime:
                 format: date-time
                 type: string

@@ -29,24 +29,36 @@ type PlaybookExecutionSpec struct {
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Default=0
 	ExecutionAttempt uint8 `json:"executionAttempt,omitempty" description:"the number of times the playbook has been executed" default:"0"`
-	// RunnerEvents     *models.AnsibleRunnerJobEventYaml `json:"runnerEvents,omitempty"`
-	// Events results.AnsiblePlaybookJSONResults `json:"events,omitempty"`
 }
 
 // PlaybookExecutionStatus defines the observed state of PlaybookExecution
 type PlaybookExecutionStatus struct {
-	Condition                 ExecutionPlaybookCondition `json:"condition,omitempty"`
-	LastSeenTime              metav1.Time                `json:"lastSeenTime,omitempty"`
-	LastSyncedResourceVersion string                     `json:"lastSyncedResourceVersion,omitempty"`
-	Completed                 bool                       `json:"completed,omitempty" description:"execution status, one of True, False"`
+	Condition                 []PlaybookExecutionCondition `json:"condition,omitempty"`
+	LastSeenTime              metav1.Time                  `json:"lastSeenTime,omitempty"`
+	LastSyncedResourceVersion string                       `json:"lastSyncedResourceVersion,omitempty"`
 }
 
-type ExecutionPlaybookCondition string
+type PlaybookExecutionCondition struct {
+	Type PlaybookExecutionConditionType `json:"type" description:"type of PlaybookExecutionCondition condition"`
+	// Indicates whether that condition is applicable, with possible values "True", "False", or "Unknown"
+	// The absence of a condition should be interpreted the same as Unknown
+	Status PlaybookExecutionConditionStatus `json:"status" description:"status of the condition, one of True, False, Unknown"`
+
+	// +optional
+	Reason *string `json:"reason,omitempty" description:"one-word CamelCase reason for the condition's last transition"`
+	// +optional
+	Message *string `json:"message,omitempty" description:"human-readable message indicating details about last transition"`
+	// +optional
+	LastTransitionTime *metav1.Time `json:"lastTransitionTime,omitempty" description:"last time the condition transit from one status to another"`
+}
+
+type PlaybookExecutionConditionType string
 
 const (
-	ExecutionPlaybookDeploying EdgePlaybookConditionType = "ExecutionPlaybookDeploying"
-	ExecutionPlaybookRunning   EdgePlaybookConditionType = "ExecutionPlaybookRunning"
-	ExecutionPlaybookCompleted EdgePlaybookConditionType = "ExecutionPlaybookCompleted"
+	PlaybookExecutionDeploying             PlaybookExecutionConditionType = "PlaybookExecutionDeploying"
+	PlaybookExecutionRunning               PlaybookExecutionConditionType = "PlaybookExecutionRunning"
+	PlaybookExecutionSuccessfullyCompleted PlaybookExecutionConditionType = "PlaybookExecutionSuccessfullyCompleted"
+	PlaybookExecutionCompletedWithError    PlaybookExecutionConditionType = "PlaybookExecutionCompletedWithError"
 )
 
 //+kubebuilder:object:root=true
