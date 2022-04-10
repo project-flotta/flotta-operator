@@ -195,6 +195,8 @@ definitions:
         type: integer
       request_num_samples:
         type: integer
+      caCert:
+        type: string
 
   logs-collection-information:
     description: Log collection information

@@ -44,6 +44,7 @@ type MetricsReceiverConfiguration struct {
 	RequestNumSamples int64  `json:"requestNumSamples,omitempty"`
 	TimeoutSeconds    int64  `json:"timeoutSeconds,omitempty"`
 	URL               string `json:"url,omitempty"`
+	CaSecretName      string `json:"caSecretName,omitempty"`
 }
 
 type LogCollectionConfig struct {

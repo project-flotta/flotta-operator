@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
 	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
 	"github.com/project-flotta/flotta-operator/internal/storage"
@@ -174,8 +176,14 @@ func (a *configurationAssembler) getDeviceMetricsConfiguration(ctx context.Conte
 	if deviceGroup != nil {
 		metricsConfigSpec = deviceGroup.Spec.Metrics
 	}
+
+	receiver, err := a.getMetricsReceiverConfiguration(ctx, metricsConfigSpec, edgeDevice.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
 	metricsConfig := models.MetricsConfiguration{
-		Receiver: a.getMetricsReceiverConfiguration(metricsConfigSpec),
+		Receiver: receiver,
 	}
 
 	if metricsConfigSpec == nil {
@@ -491,7 +499,7 @@ func GetDefaultMetricsReceiver() *models.MetricsReceiverConfiguration {
 	}
 }
 
-func (a *configurationAssembler) getMetricsReceiverConfiguration(metrics *v1alpha1.MetricsConfiguration) *models.MetricsReceiverConfiguration {
+func (a *configurationAssembler) getMetricsReceiverConfiguration(ctx context.Context, metrics *v1alpha1.MetricsConfiguration, namespace string) (*models.MetricsReceiverConfiguration, error) {
 	result := GetDefaultMetricsReceiver()
 
 	if metrics != nil {
@@ -504,8 +512,26 @@ func (a *configurationAssembler) getMetricsReceiverConfiguration(metrics *v1alph
 				result.RequestNumSamples = receiverConfig.RequestNumSamples
 			}
 			result.URL = receiverConfig.URL
+
+			if result.URL != "" && strings.HasPrefix(result.URL, "https") && receiverConfig.CaSecretName != "" {
+				secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{
+					Name:      receiverConfig.CaSecretName,
+					Namespace: namespace,
+				}}
+				err := a.client.Get(ctx, client.ObjectKeyFromObject(&secret), &secret)
+				if err != nil {
+					return nil, err
+				}
+
+				caBytes := secret.Data["ca.crt"]
+				if len(caBytes) == 0 {
+					return nil, fmt.Errorf("metrics receiver config - missing key 'ca.crt' in secret %s", secret.Name)
+				}
+
+				result.CaCert = string(caBytes)
+			}
 		}
 	}
 
-	return result
+	return result, nil
 }
