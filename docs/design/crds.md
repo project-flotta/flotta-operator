@@ -107,16 +107,16 @@ Go to this document to read about the [Data Upload](data-upload.md) feature.
 * `volumes[].hostPath.CharDevice` and `volumes[].hostPath.BlockDevice` `hostPath` volume subtypes are not supported
 * **TBD**
 
-## EdgeDeviceGroup
+## EdgeDeviceSet
 
-`EdgeDeviceGroup` is a namespaced custom resource that represents edge device configuration that can be assigned to multiple devices at the same time and allows for centralized configuration management.
+`EdgeDeviceSet` is a namespaced custom resource that represents edge device configuration that can be assigned to multiple devices at the same time and allows for centralized configuration management.
 
 * apiVersion: `management.project-flotta.io/v1alpha1`
-* kind: `EdgeDeviceGroup`
+* kind: `EdgeDeviceSet`
 
 ### Specification
 
-`EdgeDeviceGroup` specification is a copy of selected parts of `EdgeDevice` specification.
+`EdgeDeviceSet` specification is a copy of selected parts of `EdgeDevice` specification.
 
 ```yaml
 spec:

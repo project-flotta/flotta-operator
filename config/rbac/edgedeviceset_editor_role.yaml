@@ -1,13 +1,13 @@
-# permissions for end users to edit edgedevicegroups.
+# permissions for end users to edit edgedevicesets.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: edgedevicegroup-editor-role
+  name: edgedeviceset-editor-role
 rules:
 - apiGroups:
   - management.project-flotta.io
   resources:
-  - edgedevicegroups
+  - edgedevicesets
   verbs:
   - create
   - delete
@@ -19,6 +19,6 @@ rules:
 - apiGroups:
   - management.project-flotta.io
   resources:
-  - edgedevicegroups/status
+  - edgedevicesets/status
   verbs:
   - get

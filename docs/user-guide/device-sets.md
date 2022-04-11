@@ -1,15 +1,15 @@
-# Device grouping
+# Device Sets
 
-Edge Devices present in the cluster can be grouped using `EdgeDeviceGroup` CR. That CR would then provide common 
+Edge Devices present in the cluster can be grouped using `EdgeDeviceSet` CR. That CR would then provide common 
 configuration for all the edge devices using it and **override any configuration in scope that is present on the 
 `EdgeDevice` CR**.
 
-Currently `EdgeDeviceGroup` CRs do not take part in workload scheduling and no changes made to `EdgeDeviceGroup` 
-or group membership impact the way workloads are deployed. 
+Currently `EdgeDeviceSet` CRs do not take part in workload scheduling and no changes made to `EdgeDeviceSet` 
+or set membership impact the way workloads are deployed. 
 
-## EdgeDeviceGroup configuration scope
+## EdgeDeviceSet configuration scope
 
-User may define following configuration elements using `EdgeDeviceGroup`:
+User may define following configuration elements using `EdgeDeviceSet`:
 
  - heartbeat (`spec.heartbeat`);
  - metrics (`spec.metrics`);
@@ -17,13 +17,13 @@ User may define following configuration elements using `EdgeDeviceGroup`:
  - log collection (`spec.logCollection`);
  - OS configuration (`spec.osInformation`).
 
-Full `EdgeDeviceGroup` CR might look as follows:
+Full `EdgeDeviceSet` CR might look as follows:
 
 ```yaml
 apiVersion: management.project-flotta.io/v1alpha1
-kind: EdgeDeviceGroup
+kind: EdgeDeviceSet
 metadata:
-  name: sample-group
+  name: sample-set
 spec:
   heartbeat:
     periodSeconds: 5 # Interval in seconds with which the heartbeat messages should be sent from the agent 
@@ -56,25 +56,25 @@ spec:
         name: syslog-config-map # Name of a config map containing syslog connection configuration
 ```
 
-## Defining `EdgeDevice` - `EdgeDeviceGroup` relationship
+## Defining `EdgeDevice` - `EdgeDeviceSet` relationship
 
-To make specific `EdgeDevice` use chosen `EdgeDeviceGroup` configuration, user needs to add 
-`flotta/member-of: <edge device group name>` label to the `EdgeDevice`.
-For example, if there is a `group-1` `EdgeDeviceGroup` and `device-1` `EdgeDevice`, user needs to issue following 
+To make specific `EdgeDevice` use chosen `EdgeDeviceSet` configuration, user needs to add 
+`flotta/member-of: <edge device set name>` label to the `EdgeDevice`.
+For example, if there is a `set-1` `EdgeDeviceSet` and `device-1` `EdgeDevice`, user needs to issue following 
 command to build the relationship between them:
 ```shell
-kubectl label edgedevice device-1 flotta/member-of=group-1
+kubectl label edgedevice device-1 flotta/member-of=set-1
 ```
 
 ## Configuration priority
 
-Configuration defined in the `EdgeDeviceGroup` **always** takes precedence over whatever is defined in the `EdgeDevice` 
-as a whole. It means that even if some element is not present in the `EdgeDeviceGroup`, usual default values are used for it, 
+Configuration defined in the `EdgeDeviceSet` **always** takes precedence over whatever is defined in the `EdgeDevice` 
+as a whole. It means that even if some element is not present in the `EdgeDeviceSet`, usual default values are used for it, 
 even if it is defined at the level of `EdgeDevice`.
 
-Changes made to the `EdgeDeviceGroup` will be applied to all edge devices using it.
+Changes made to the `EdgeDeviceSet` will be applied to all edge devices using it.
 
-If corresponding `EdgeDeviceGroup` cannot be found, `EdgeDevice` configuration is used.
+If corresponding `EdgeDeviceSet` cannot be found, `EdgeDevice` configuration is used.
 
 ## Example
 
@@ -87,7 +87,7 @@ spec:
     periodSeconds: 60
 ```
 
-### `EdgeDeviceGroup` spec
+### `EdgeDeviceSet` spec
 ```yaml
 spec:
   heartbeat:

@@ -2,7 +2,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: edgedevicegroups.management.project-flotta.io
+  name: edgedevicesets.management.project-flotta.io
 spec:
   conversion:
     strategy: Webhook

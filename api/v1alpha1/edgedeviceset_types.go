@@ -23,8 +23,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// EdgeDeviceGroupSpec defines the desired state of EdgeDeviceGroup
-type EdgeDeviceGroupSpec struct {
+// EdgeDeviceSetSpec defines the desired state of EdgeDeviceSet
+type EdgeDeviceSetSpec struct {
 	// Heartbeat contains heartbeat messages configuration
 	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
 	// Storage contains data upload configuration
@@ -37,30 +37,30 @@ type EdgeDeviceGroupSpec struct {
 	OsInformation *OsInformation `json:"osInformation,omitempty"`
 }
 
-// EdgeDeviceGroupStatus defines the observed state of EdgeDeviceGroup
-type EdgeDeviceGroupStatus struct{}
+// EdgeDeviceSetStatus defines the observed state of EdgeDeviceSet
+type EdgeDeviceSetStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// EdgeDeviceGroup is the Schema for the edgedevicegroups API
-type EdgeDeviceGroup struct {
+// EdgeDeviceSet is the Schema for the edgedevicesets API
+type EdgeDeviceSet struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EdgeDeviceGroupSpec   `json:"spec,omitempty"`
-	Status EdgeDeviceGroupStatus `json:"status,omitempty"`
+	Spec   EdgeDeviceSetSpec   `json:"spec,omitempty"`
+	Status EdgeDeviceSetStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// EdgeDeviceGroupList contains a list of EdgeDeviceGroup
-type EdgeDeviceGroupList struct {
+// EdgeDeviceSetList contains a list of EdgeDeviceSet
+type EdgeDeviceSetList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EdgeDeviceGroup `json:"items"`
+	Items           []EdgeDeviceSet `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&EdgeDeviceGroup{}, &EdgeDeviceGroupList{})
+	SchemeBuilder.Register(&EdgeDeviceSet{}, &EdgeDeviceSetList{})
 }

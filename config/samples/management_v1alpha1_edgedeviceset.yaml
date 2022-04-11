@@ -1,7 +1,7 @@
 apiVersion: management.project-flotta.io/v1alpha1
-kind: EdgeDeviceGroup
+kind: EdgeDeviceSet
 metadata:
-  name: edgedevicegroup-sample
+  name: edgedeviceset-sample
 spec:
   heartbeat:
     periodSeconds: 15
