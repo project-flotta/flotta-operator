@@ -57,7 +57,6 @@ type AnsiblePlaybookCmd struct {
 	User string `json:"user,omitempty"`
 	// the ansible's playbooks list with execution priority
 	// +kubebuilder:validation:MinProperties=1
-	// +kubebuilder:validation:uniqueItems=true
 	PlaybooksPriorityMap map[string]Playbook `json:"playbooksPriorityMap,omitempty"`
 }
 
@@ -68,8 +67,6 @@ type Playbook struct {
 	// +kubernetes:validation:Minimum=0
 	TimeoutSeconds int64 `json:"timeoutSeconds,omitempty"`
 	// The required privelege level necessary to execute the playbook
-	// See https://man7.org/linux/man-pages/man7/capabilities.7.html
-	// +kubebuilder:validation:UniqueItems=true
 	RequiredPrivilegeLevel *RequiredPrivilegeLevel `json:"requiredPrivilegeLevel,omitempty"`
 	// the ansible's playbook options for the playbook
 	Options *AnsibleOptions `json:"ansibleOptions,omitempty"`
@@ -93,6 +90,7 @@ type AnsibleOptions struct {
 }
 
 type RequiredPrivilegeLevel struct {
+	// See https://man7.org/linux/man-pages/man7/capabilities.7.html
 	CapAdd  []CapType `json:"capAdd,omitempty" description:"Capabilities to add"`
 	CapDrop []CapType `json:"capDrop,omitempty" description:"Capabilities to drop"`
 }

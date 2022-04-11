@@ -83,9 +83,10 @@ spec:
                               type: object
                             requiredPrivilegeLevel:
                               description: The required privelege level necessary
-                                to execute the playbook See https://man7.org/linux/man-pages/man7/capabilities.7.html
+                                to execute the playbook
                               properties:
                                 capAdd:
+                                  description: See https://man7.org/linux/man-pages/man7/capabilities.7.html
                                   items:
                                     type: integer
                                   type: array
