@@ -63,6 +63,7 @@ spec:
                               type: object
                             content:
                               description: Playbook content
+                              format: byte
                               type: string
                             playbooksPriorityMap:
                               description: Execution strategy for the playbook

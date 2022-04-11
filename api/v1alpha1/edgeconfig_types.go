@@ -62,7 +62,7 @@ type AnsiblePlaybookCmd struct {
 
 type Playbook struct {
 	// Playbook content
-	Content string `json:"content"`
+	Content []byte `json:"content"`
 	// The connection timeout on ansible-playbook
 	// +kubernetes:validation:Minimum=0
 	TimeoutSeconds int64 `json:"timeoutSeconds,omitempty"`
