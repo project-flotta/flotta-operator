@@ -16,6 +16,50 @@ When your environment is running, you can [deploy your workload](deploying-workl
 To force device re-registration remove EdgeDevice CR from the cluster and `/var/local/yggdrasil/device` directory from the device
 
 ---
+## Automatically
+
+### Prerequisites
+- Clone all Flotta components: [flotta-operator](https://github.com/project-flotta/flotta-operator), [flotta-device-worker](https://github.com/project-flotta/flotta-device-worker) and [yggdrasil](https://github.com/RedHatInsights/yggdrasil).
+- On minikube: add to `/etc/hosts`: `<minikube ip> <host name>`.
+
+### Start Flotta operator
+Script arguments: 
+- `IMG` (image registry and tag, for example: `IMG=quay.io/project-flotta/flotta-operator:latest`) 
+- `TARGET` (k8s or ocp) 
+- `OPERATOR_PATH` (optional)
+
+From the operator directory run:
+```
+bash ./hack/start-operator.sh -i <image> -t <target>
+```
+Note: if running outside the operator directory, add also `-o <operator-path>`.
+
+### Start Flotta agent
+Script arguments: 
+- `TARGET` (k8s or ocp)
+- `YGGDRASIL_PATH`
+- `DEVICE_WORKER_PATH` (optional)
+
+From the device-worker directory run:
+```
+bash <operator-path>/hack/start-agent.sh -t <target> -y <yggdrasil path> 
+```
+Note: if running outside the device-worker directory, pass also `-d <device-worker-path>`.
+
+### Start Flotta (both operator and agent)
+Script arguments:
+- `IMG` (image registry and tag, for example: `IMG=quay.io/project-flotta/flotta-operator:latest`)
+- `TARGET` (k8s or ocp)
+- `OPERATOR_PATH` 
+- `DEVICE_WORKER_PATH`
+- `YGGDRASIL_PATH`
+
+From the operator directory run:
+```
+bash ./hack/start-flotta.sh -i <image> -t <target> -o <operator-path> -d <device-worker-path> -y <yggdrasil path>
+```
+
+---
 
 ## Manually
 
