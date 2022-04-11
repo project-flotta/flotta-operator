@@ -39,7 +39,12 @@ jobs:
           fi
           kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
           # TODO: add ingress resource to config/kind/kustomization.yaml instead of port forwarding
-          kubectl port-forward deploy/flotta-operator-controller-manager -n flotta --address 0.0.0.0 8043:8043 &
+          function port_forward() {
+            while true; do
+              kubectl port-forward deploy/flotta-operator-controller-manager -n flotta --address 0.0.0.0 8043:8043;
+            done
+          }
+          port_forward &
 
           # Run test
           make integration-test
