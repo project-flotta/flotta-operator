@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
 
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
@@ -64,7 +64,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl           *gomock.Controller
 		deployRepoMock     *edgeworkload.MockRepository
 		edgeDeviceRepoMock *edgedevice.MockRepository
-		groupRepoMock      *edgedevicegroup.MockRepository
+		deviceSetRepoMock  *edgedeviceset.MockRepository
 		metricsMock        *metrics.MockMetrics
 		registryAuth       *images.MockRegistryAuthAPI
 		handler            *yggdrasil.Handler
@@ -106,7 +106,7 @@ var _ = Describe("Yggdrasil", func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		deployRepoMock = edgeworkload.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
-		groupRepoMock = edgedevicegroup.NewMockRepository(mockCtrl)
+		deviceSetRepoMock = edgedeviceset.NewMockRepository(mockCtrl)
 		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
@@ -114,7 +114,7 @@ var _ = Describe("Yggdrasil", func() {
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
 
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, groupRepoMock, nil, Mockk8sClient,
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceRepoMock, deployRepoMock, deviceSetRepoMock, nil, Mockk8sClient,
 			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil)
 	})
 
@@ -1786,14 +1786,14 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
 		})
 
-		Context("With EdgeDeviceGroup", func() {
+		Context("With EdgeDeviceSet", func() {
 			var (
-				deviceName  = "foo"
-				groupName   = "groupFoo"
-				deviceCtx   = context.WithValue(context.TODO(), AuthzKey, deviceName)
-				device      *v1alpha1.EdgeDevice
-				deviceGroup *v1alpha1.EdgeDeviceGroup
-				deploy      *v1alpha1.EdgeWorkload
+				deviceName = "foo"
+				setName    = "setFoo"
+				deviceCtx  = context.WithValue(context.TODO(), AuthzKey, deviceName)
+				device     *v1alpha1.EdgeDevice
+				deviceSet  *v1alpha1.EdgeDeviceSet
+				deploy     *v1alpha1.EdgeWorkload
 			)
 
 			getWorkload := func(name string, ns string) *v1alpha1.EdgeWorkload {
@@ -1814,7 +1814,7 @@ var _ = Describe("Yggdrasil", func() {
 				device = getDevice(deviceName)
 				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 				device.Labels = map[string]string{
-					"flotta/member-of": groupName,
+					"flotta/member-of": setName,
 				}
 
 				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
@@ -1869,14 +1869,14 @@ var _ = Describe("Yggdrasil", func() {
 					Read(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
 
-				deviceGroup = &v1alpha1.EdgeDeviceGroup{
+				deviceSet = &v1alpha1.EdgeDeviceSet{
 					TypeMeta:   v1.TypeMeta{},
-					ObjectMeta: v1.ObjectMeta{Name: groupName, Namespace: testNamespace},
-					Spec:       v1alpha1.EdgeDeviceGroupSpec{},
+					ObjectMeta: v1.ObjectMeta{Name: setName, Namespace: testNamespace},
+					Spec:       v1alpha1.EdgeDeviceSetSpec{},
 				}
-				groupRepoMock.EXPECT().
-					Read(gomock.Any(), groupName, testNamespace).
-					Return(deviceGroup, nil)
+				deviceSetRepoMock.EXPECT().
+					Read(gomock.Any(), setName, testNamespace).
+					Return(deviceSet, nil)
 
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
 			})
@@ -1895,7 +1895,7 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil).
 					Times(1)
 
-				deviceGroup.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
+				deviceSet.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
 					"syslog": {
 						Kind:         "syslog",
 						BufferSize:   10,
@@ -1934,7 +1934,7 @@ var _ = Describe("Yggdrasil", func() {
 				maxMiB := int32(123)
 				maxHours := int32(24)
 
-				deviceGroup.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+				deviceSet.Spec.Metrics = &v1alpha1.MetricsConfiguration{
 					Retention: &v1alpha1.Retention{
 						MaxMiB:   maxMiB,
 						MaxHours: maxHours,
@@ -1976,7 +1976,7 @@ var _ = Describe("Yggdrasil", func() {
 			It("should map heartbeat", func() {
 				// given
 				period := int64(123)
-				deviceGroup.Spec.Heartbeat = &v1alpha1.HeartbeatConfiguration{
+				deviceSet.Spec.Heartbeat = &v1alpha1.HeartbeatConfiguration{
 					PeriodSeconds: period,
 					HardwareProfile: &v1alpha1.HardwareProfileConfiguration{
 						Include: true,
@@ -2002,7 +2002,7 @@ var _ = Describe("Yggdrasil", func() {
 				// given
 				commitID := "12345"
 				url := "http://images.io"
-				deviceGroup.Spec.OsInformation = &v1alpha1.OsInformation{
+				deviceSet.Spec.OsInformation = &v1alpha1.OsInformation{
 					AutomaticallyUpgrade: true,
 					CommitID:             commitID,
 					HostedObjectsURL:     url,
@@ -2023,7 +2023,7 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("should override (remove) S3 storage information", func() {
 				// given
-				deviceGroup.Spec.Storage = &v1alpha1.Storage{
+				deviceSet.Spec.Storage = &v1alpha1.Storage{
 					S3: &v1alpha1.S3Storage{
 						CreateOBC: true,
 					},
@@ -2522,7 +2522,7 @@ var _ = Describe("Yggdrasil", func() {
 					handler = yggdrasil.NewYggdrasilHandler(
 						edgeDeviceRepoMock,
 						deployRepoMock,
-						groupRepoMock,
+						deviceSetRepoMock,
 						nil,
 						Mockk8sClient,
 						testNamespace,

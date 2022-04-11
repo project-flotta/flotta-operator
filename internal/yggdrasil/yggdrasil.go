@@ -7,7 +7,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/heartbeat"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicegroup"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 
 	"net/http"
@@ -69,7 +69,7 @@ type keyMapType = map[string]interface{}
 type secretMapType = map[string]keyMapType
 
 func NewYggdrasilHandler(deviceRepository edgedevice.Repository, workloadRepository edgeworkload.Repository,
-	groupRepository edgedevicegroup.Repository, claimer *storage.Claimer, k8sClient k8sclient.K8sClient,
+	groupRepository edgedeviceset.Repository, claimer *storage.Claimer, k8sClient k8sclient.K8sClient,
 	initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
 	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig) *Handler {
 	return &Handler{
@@ -85,7 +85,7 @@ func NewYggdrasilHandler(deviceRepository edgedevice.Repository, workloadReposit
 			client:                 k8sClient,
 			configMaps:             configMaps,
 			workloadRepository:     workloadRepository,
-			groupRepository:        groupRepository,
+			deviceSetRepository:    groupRepository,
 			recorder:               recorder,
 			registryAuthRepository: registryAuth},
 	}

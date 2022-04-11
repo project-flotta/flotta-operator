@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: edgedevicegroups.management.project-flotta.io
+  name: edgedevicesets.management.project-flotta.io
 spec:
   group: management.project-flotta.io
   names:
-    kind: EdgeDeviceGroup
-    listKind: EdgeDeviceGroupList
-    plural: edgedevicegroups
-    singular: edgedevicegroup
+    kind: EdgeDeviceSet
+    listKind: EdgeDeviceSetList
+    plural: edgedevicesets
+    singular: edgedeviceset
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: EdgeDeviceGroup is the Schema for the edgedevicegroups API
+        description: EdgeDeviceSet is the Schema for the edgedevicesets API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: EdgeDeviceGroupSpec defines the desired state of EdgeDeviceGroup
+            description: EdgeDeviceSetSpec defines the desired state of EdgeDeviceSet
             properties:
               heartbeat:
                 description: Heartbeat contains heartbeat messages configuration
@@ -169,7 +169,7 @@ spec:
                 type: object
             type: object
           status:
-            description: EdgeDeviceGroupStatus defines the observed state of EdgeDeviceGroup
+            description: EdgeDeviceSetStatus defines the observed state of EdgeDeviceSet
             type: object
         type: object
     served: true
