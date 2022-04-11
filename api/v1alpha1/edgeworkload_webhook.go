@@ -29,7 +29,7 @@ import (
 
 //+kubebuilder:docs-gen:collapse=Go imports
 
-func (r *EdgeDeployment) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *EdgeWorkload) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -39,24 +39,24 @@ func (r *EdgeDeployment) SetupWebhookWithManager(mgr ctrl.Manager) error {
 This marker is responsible for generating a validating webhook manifest.
 */
 
-//+kubebuilder:webhook:verbs=create;update,path=/validate-management-project-flotta-io-v1alpha1-edgedeployment,mutating=false,failurePolicy=fail,groups=management.project-flotta.io,resources=edgedeployments,versions=v1alpha1,name=edgedeployment.management.project-flotta.io,sideEffects=None,admissionReviewVersions=v1
+//+kubebuilder:webhook:verbs=create;update,path=/validate-management-project-flotta-io-v1alpha1-edgeworkload,mutating=false,failurePolicy=fail,groups=management.project-flotta.io,resources=EdgeWorkloads,versions=v1alpha1,name=edgeworkload.management.project-flotta.io,sideEffects=None,admissionReviewVersions=v1
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *EdgeDeployment) ValidateCreate() error {
+func (r *EdgeWorkload) ValidateCreate() error {
 	return r.validate()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *EdgeDeployment) ValidateUpdate(old runtime.Object) error {
+func (r *EdgeWorkload) ValidateUpdate(old runtime.Object) error {
 	return r.validate()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *EdgeDeployment) ValidateDelete() error {
+func (r *EdgeWorkload) ValidateDelete() error {
 	return nil
 }
 
-func (r *EdgeDeployment) validate() error {
+func (r *EdgeWorkload) validate() error {
 	var notValidPaths []string
 	podSpec := r.Spec.Pod.Spec
 

@@ -17,7 +17,7 @@ import (
 
 //go:generate mockgen -package=configmaps -destination=mock_configmaps.go . ConfigMap
 type ConfigMap interface {
-	Fetch(ctx context.Context, deployment v1alpha1.EdgeDeployment, namespace string) (models.ConfigmapList, error)
+	Fetch(ctx context.Context, workload v1alpha1.EdgeWorkload, namespace string) (models.ConfigmapList, error)
 }
 
 type configMap struct {
@@ -28,12 +28,12 @@ func NewConfigMap(client k8sclient.K8sClient) ConfigMap {
 	return &configMap{client: client}
 }
 
-func (cm *configMap) Fetch(ctx context.Context, deployment v1alpha1.EdgeDeployment, namespace string) (models.ConfigmapList, error) {
+func (cm *configMap) Fetch(ctx context.Context, workload v1alpha1.EdgeWorkload, namespace string) (models.ConfigmapList, error) {
 	list := models.ConfigmapList{}
 
 	// create map of configmap names and keys
 	cmMap := utils.MapType{}
-	podSpec := deployment.Spec.Pod.Spec
+	podSpec := workload.Spec.Pod.Spec
 	allContainers := append(podSpec.InitContainers, podSpec.Containers...)
 	for i := range allContainers {
 		extractConfigMapsFromEnv(&allContainers[i], cmMap)

@@ -33,32 +33,6 @@ rules:
 - apiGroups:
   - management.project-flotta.io
   resources:
-  - edgedeployments
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - management.project-flotta.io
-  resources:
-  - edgedeployments/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - management.project-flotta.io
-  resources:
-  - edgedeployments/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - management.project-flotta.io
-  resources:
   - edgedevices
   verbs:
   - create
@@ -78,6 +52,32 @@ rules:
   - management.project-flotta.io
   resources:
   - edgedevices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgeworkloads
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgeworkloads/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgeworkloads/status
   verbs:
   - get
   - patch

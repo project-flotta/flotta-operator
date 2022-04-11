@@ -56,7 +56,7 @@ type EdgeDevice interface {
 	Remove() error
 	DumpLogs(extraCommands ...string)
 	Exec(string) (string, error)
-	WaitForDeploymentState(string, string) error
+	WaitForWorkloadState(string, string) error
 	ValidateNoDataRaceInLogs(extraCommands ...string) (bool, error)
 }
 
@@ -82,24 +82,31 @@ func (e *edgeDeviceDocker) GetId() string {
 	return e.machineId
 }
 
-func (e *edgeDeviceDocker) WaitForDeploymentState(deploymentName string, deploymentPhase string) error {
+func (e *edgeDeviceDocker) WaitForWorkloadState(workloadName string, workloadPhase string) error {
 	return e.waitForDevice(func() bool {
 		device, err := e.Get()
 		if device == nil || err != nil {
+			if device == nil {
+				ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since the Get() returned empty device\n")
+			}
+			if err != nil {
+				ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since Get() failed. Error: %v\n", err)
+			}
 			return false
 		}
 		status := device.Object["status"].(map[string]interface{})
-		if status["deployments"] == nil {
+		if status["workloads"] == nil {
+			ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since status contained no workloads\n")
 			return false
 		}
-		deployments := status["deployments"].([]interface{})
-		for _, deployment := range deployments {
-			deployment := deployment.(map[string]interface{})
-			if deployment["name"].(string) == deploymentName && deployment["phase"].(string) == deploymentPhase {
+		workloads := status["workloads"].([]interface{})
+		for _, workload := range workloads {
+			workload := workload.(map[string]interface{})
+			if workload["name"].(string) == workloadName && workload["phase"].(string) == workloadPhase {
 				return true
 			}
 		}
-
+		ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since workloadName didn't match any workload\n")
 		return false
 	})
 }

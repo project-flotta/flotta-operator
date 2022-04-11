@@ -24,11 +24,11 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// EdgeDeploymentSpec defines the desired state of EdgeDeployment
-type EdgeDeploymentSpec struct {
+// EdgeWorkloadSpec defines the desired state of EdgeWorkload
+type EdgeWorkloadSpec struct {
 	DeviceSelector  *metav1.LabelSelector          `json:"deviceSelector,omitempty"`
 	Device          string                         `json:"device,omitempty"`
-	Type            EdgeDeploymentType             `json:"type"`
+	Type            EdgeWorkloadType               `json:"type"`
 	Pod             Pod                            `json:"pod,omitempty"`
 	Data            *DataConfiguration             `json:"data,omitempty"`
 	ImageRegistries *ImageRegistriesConfiguration  `json:"imageRegistries,omitempty"`
@@ -95,37 +95,37 @@ type Pod struct {
 	Spec v1.PodSpec `json:"spec"`
 }
 
-type EdgeDeploymentType string
+type EdgeWorkloadType string
 
 const (
-	PodDeploymentType EdgeDeploymentType = "pod"
+	PodWorkloadType EdgeWorkloadType = "pod"
 )
 
-// EdgeDeploymentStatus defines the observed state of EdgeDeployment
-type EdgeDeploymentStatus struct {
+// EdgeWorkloadStatus defines the observed state of EdgeWorkload
+type EdgeWorkloadStatus struct {
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// EdgeDeployment is the Schema for the edgedeployments API
-type EdgeDeployment struct {
+// EdgeWorkload is the Schema for the EdgeWorkloads API
+type EdgeWorkload struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   EdgeDeploymentSpec   `json:"spec,omitempty"`
-	Status EdgeDeploymentStatus `json:"status,omitempty"`
+	Spec   EdgeWorkloadSpec   `json:"spec,omitempty"`
+	Status EdgeWorkloadStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// EdgeDeploymentList contains a list of EdgeDeployment
-type EdgeDeploymentList struct {
+// EdgeWorkloadList contains a list of EdgeWorkload
+type EdgeWorkloadList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []EdgeDeployment `json:"items"`
+	Items           []EdgeWorkload `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&EdgeDeployment{}, &EdgeDeploymentList{})
+	SchemeBuilder.Register(&EdgeWorkload{}, &EdgeWorkloadList{})
 }

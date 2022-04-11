@@ -1,7 +1,7 @@
 apiVersion: management.project-flotta.io/v1alpha1
-kind: EdgeDeployment
+kind: EdgeWorkload
 metadata:
-  name: edgedeployment-sample
+  name: edgeworkload-sample
 spec:
   deviceSelector:
     matchLabels:

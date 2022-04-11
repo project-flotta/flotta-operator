@@ -22,8 +22,8 @@ import (
 
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	flottalabels "github.com/project-flotta/flotta-operator/internal/labels"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -36,14 +36,14 @@ import (
 
 // EdgeDeviceLabelsReconciler reconciles a EdgeDevice object
 type EdgeDeviceLabelsReconciler struct {
-	EdgeDeviceRepository     edgedevice.Repository
-	EdgeDeploymentRepository edgedeployment.Repository
-	MaxConcurrentReconciles  int
+	EdgeDeviceRepository    edgedevice.Repository
+	EdgeWorkloadRepository  edgeworkload.Repository
+	MaxConcurrentReconciles int
 }
 
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices,verbs=get;watch;patch
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices/status,verbs=get;patch
-//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedeployments,verbs=list
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeworkloads,verbs=list
 
 func (r *EdgeDeviceLabelsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx).WithName("labels")
@@ -62,7 +62,7 @@ func (r *EdgeDeviceLabelsReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{}, nil
 	}
 
-	err = r.updateDeployments(ctx, edgeDevice)
+	err = r.updateWorkloads(ctx, edgeDevice)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, err
 	}
@@ -78,34 +78,34 @@ func (r *EdgeDeviceLabelsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *EdgeDeviceLabelsReconciler) updateDeployments(ctx context.Context, device *managementv1alpha1.EdgeDevice) error {
+func (r *EdgeDeviceLabelsReconciler) updateWorkloads(ctx context.Context, device *managementv1alpha1.EdgeDevice) error {
 	// create selector labels
 	selectorLabels := createSelectorLabelsMap(device)
 
-	// read deployments matching the labels and match to device
-	selectedDeployments := map[string]bool{} // each deployment we read is here. the value is true if the deployment matches the device
+	// read workloads matching the labels and match to device
+	selectedWorkloads := map[string]bool{} // each workload we read is here. the value is true if the workload matches the device
 
 	for selectorLabel, labelValue := range selectorLabels {
-		deployments, err := r.EdgeDeploymentRepository.ListByLabel(ctx, selectorLabel, labelValue, device.Namespace)
+		workloads, err := r.EdgeWorkloadRepository.ListByLabel(ctx, selectorLabel, labelValue, device.Namespace)
 		if err != nil {
 			return err
 		}
 
-		for i := range deployments {
-			deployment := deployments[i]
-			if _, ok := selectedDeployments[deployment.Name]; ok {
+		for i := range workloads {
+			workload := workloads[i]
+			if _, ok := selectedWorkloads[workload.Name]; ok {
 				continue
 			}
-			match, err := isDeploymentMatchDevice(&deployment, device)
+			match, err := isWorkloadMatchDevice(&workload, device)
 			if err != nil {
 				return err
 			}
-			selectedDeployments[deployment.Name] = match
+			selectedWorkloads[workload.Name] = match
 		}
 	}
 
-	// diff device deployments and matched deployments. update device if necessary
-	updatedDevice := createUpdatedDevice(selectedDeployments, device)
+	// diff device workloads and matched workloads. update device if necessary
+	updatedDevice := createUpdatedDevice(selectedWorkloads, device)
 	if updatedDevice != nil {
 		patch := client.MergeFrom(device)
 		err := r.EdgeDeviceRepository.PatchStatus(ctx, updatedDevice, &patch)
@@ -121,11 +121,11 @@ func (r *EdgeDeviceLabelsReconciler) updateDeployments(ctx context.Context, devi
 	return nil
 }
 
-func isDeploymentMatchDevice(deployment *managementv1alpha1.EdgeDeployment, device *managementv1alpha1.EdgeDevice) (bool, error) {
-	if deployment.Spec.Device == device.Name {
+func isWorkloadMatchDevice(workload *managementv1alpha1.EdgeWorkload, device *managementv1alpha1.EdgeDevice) (bool, error) {
+	if workload.Spec.Device == device.Name {
 		return true, nil
-	} else if deployment.Spec.DeviceSelector != nil {
-		selector, err := metav1.LabelSelectorAsSelector(deployment.Spec.DeviceSelector)
+	} else if workload.Spec.DeviceSelector != nil {
+		selector, err := metav1.LabelSelectorAsSelector(workload.Spec.DeviceSelector)
 		if err != nil {
 			return false, err
 		}
@@ -151,35 +151,35 @@ func createSelectorLabelsMap(device *managementv1alpha1.EdgeDevice) map[string]s
 	return result
 }
 
-func createUpdatedDevice(selectedDeployments map[string]bool, device *managementv1alpha1.EdgeDevice) *managementv1alpha1.EdgeDevice {
+func createUpdatedDevice(selectedWorkloads map[string]bool, device *managementv1alpha1.EdgeDevice) *managementv1alpha1.EdgeDevice {
 	// prepare a copy of the device for modifying
 	deviceCopy := device.DeepCopy()
-	deviceCopy.Status.Deployments = nil
+	deviceCopy.Status.Workloads = nil
 	if deviceCopy.Labels == nil {
 		deviceCopy.Labels = map[string]string{}
 	}
 	deviceUpdated := false
 
-	// go over device deployments
+	// go over device workloads
 	// if exist then remove from map
-	// if not exist in map then remove deployment and label
-	// go over map and add the remaining deployments
-	for _, deployment := range device.Status.Deployments {
-		if match, ok := selectedDeployments[deployment.Name]; ok && match {
-			deviceCopy.Status.Deployments = append(deviceCopy.Status.Deployments, deployment)
-			delete(selectedDeployments, deployment.Name)
+	// if not exist in map then remove workload and label
+	// go over map and add the remaining workloads
+	for _, workload := range device.Status.Workloads {
+		if match, ok := selectedWorkloads[workload.Name]; ok && match {
+			deviceCopy.Status.Workloads = append(deviceCopy.Status.Workloads, workload)
+			delete(selectedWorkloads, workload.Name)
 		} else {
-			delete(deviceCopy.Labels, flottalabels.WorkloadLabel(deployment.Name))
+			delete(deviceCopy.Labels, flottalabels.WorkloadLabel(workload.Name))
 			deviceUpdated = true
 		}
 	}
 
-	for name, match := range selectedDeployments {
+	for name, match := range selectedWorkloads {
 		if !match {
 			continue
 		}
 		deviceUpdated = true
-		deviceCopy.Status.Deployments = append(deviceCopy.Status.Deployments, managementv1alpha1.Deployment{
+		deviceCopy.Status.Workloads = append(deviceCopy.Status.Workloads, managementv1alpha1.Workload{
 			Name:  name,
 			Phase: managementv1alpha1.Deploying,
 		})

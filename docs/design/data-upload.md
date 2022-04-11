@@ -81,7 +81,7 @@ Go to `Settings` for viewing and editing the region.
 
 ## Get configuration
 
-The Flotta agent periodically downloads configuration from the Flotta operator and part of that configuration is data paths mapping for data upload - specified in each `EdgeDeployment`:
+The Flotta agent periodically downloads configuration from the Flotta operator and part of that configuration is data paths mapping for data upload - specified in each `EdgeWorkload`:
 ```yaml
 spec:
   data: 
@@ -95,16 +95,16 @@ spec:
 Each `path` specifies which on-device directory (`source`) should be synchronized to which directory (`target`). 
 `source` directory is always a subdirectory of a "well-known" `/export` directory in every container running on the device.
 
-The `/export` directory is shared among containers of one workload (pod), but different workloads (pods) have them separate; each workload has `/export` directory backed by different host path volume. It is added automatically and should not be part of the `EdgeDeployment`.
+The `/export` directory is shared among containers of one workload (pod), but different workloads (pods) have them separate; each workload has `/export` directory backed by different host path volume. It is added automatically and should not be part of the `EdgeWorkload`.
 
 The device configuration provided by the Flotta operator also contains S3 connection details (endpoint URL, bucket name, keys) for connecting to a bucket.
 
 ### Example
 
-EdgeDeployment:
+EdgeWorkload:
 ```yaml
 apiVersion: management.project-flotta.io/v1alpha1
-kind: EdgeDeployment
+kind: EdgeWorkload
 metadata:
   name: os-stats
 spec:

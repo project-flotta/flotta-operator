@@ -140,24 +140,24 @@ type EdgeDeviceStatus struct {
 	Phase                     string              `json:"phase,omitempty"`
 	LastSyncedResourceVersion string              `json:"lastSyncedResourceVersion,omitempty"`
 	Hardware                  *Hardware           `json:"hardware,omitempty"`
-	Deployments               []Deployment        `json:"deployments,omitempty"`
+	Workloads                 []Workload          `json:"workloads,omitempty"`
 	DataOBC                   *string             `json:"dataObc,omitempty"`
 	UpgradeInformation        *UpgradeInformation `json:"upgradeInformation,omitempty"`
 }
 
-type EdgeDeploymentPhase string
+type EdgeWorkloadPhase string
 
 const (
-	Deploying EdgeDeploymentPhase = "Deploying"
-	Running   EdgeDeploymentPhase = "Running"
-	Exited    EdgeDeploymentPhase = "Exited"
+	Deploying EdgeWorkloadPhase = "Deploying"
+	Running   EdgeWorkloadPhase = "Running"
+	Exited    EdgeWorkloadPhase = "Exited"
 )
 
-type Deployment struct {
-	Name               string              `json:"name"`
-	Phase              EdgeDeploymentPhase `json:"phase,omitempty"`
-	LastTransitionTime metav1.Time         `json:"lastTransitionTime,omitempty"`
-	LastDataUpload     metav1.Time         `json:"lastDataUpload,omitempty"`
+type Workload struct {
+	Name               string            `json:"name"`
+	Phase              EdgeWorkloadPhase `json:"phase,omitempty"`
+	LastTransitionTime metav1.Time       `json:"lastTransitionTime,omitempty"`
+	LastDataUpload     metav1.Time       `json:"lastDataUpload,omitempty"`
 }
 
 type UpgradeInformation struct {

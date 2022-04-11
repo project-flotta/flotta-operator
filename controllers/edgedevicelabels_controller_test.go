@@ -11,8 +11,8 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/controllers"
 	"github.com/project-flotta/flotta-operator/internal/labels"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -28,7 +28,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 	)
 	var (
 		mockCtrl                   *gomock.Controller
-		deployRepoMock             *edgedeployment.MockRepository
+		deployRepoMock             *edgeworkload.MockRepository
 		edgeDeviceRepoMock         *edgedevice.MockRepository
 		edgeDeviceLabelsReconciler *controllers.EdgeDeviceLabelsReconciler
 		req                        = ctrl.Request{
@@ -40,13 +40,13 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		device *v1alpha1.EdgeDevice
 	)
 
-	getDeployment := func(name string) *v1alpha1.EdgeDeployment {
-		return &v1alpha1.EdgeDeployment{
+	getWorkload := func(name string) *v1alpha1.EdgeWorkload {
+		return &v1alpha1.EdgeWorkload{
 			ObjectMeta: v1.ObjectMeta{
 				Name:      name,
 				Namespace: namespace,
 			},
-			Spec: v1alpha1.EdgeDeploymentSpec{
+			Spec: v1alpha1.EdgeWorkloadSpec{
 				Type: "pod",
 				Pod:  v1alpha1.Pod{},
 				Data: &v1alpha1.DataConfiguration{},
@@ -55,11 +55,11 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-		deployRepoMock = edgedeployment.NewMockRepository(mockCtrl)
+		deployRepoMock = edgeworkload.NewMockRepository(mockCtrl)
 		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
 		edgeDeviceLabelsReconciler = &controllers.EdgeDeviceLabelsReconciler{
-			EdgeDeviceRepository:     edgeDeviceRepoMock,
-			EdgeDeploymentRepository: deployRepoMock,
+			EdgeDeviceRepository:   edgeDeviceRepoMock,
+			EdgeWorkloadRepository: deployRepoMock,
 		}
 
 		device = &v1alpha1.EdgeDevice{
@@ -126,7 +126,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
 	})
 
-	It("list EdgeDeployments failed", func() {
+	It("list EdgeWorkloads failed", func() {
 		// given
 		edgeDeviceRepoMock.EXPECT().
 			Read(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -147,8 +147,8 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 
 	It("invalid deviceSelector", func() {
 		// given
-		deployment := getDeployment("test")
-		deployment.Spec.DeviceSelector = &v1.LabelSelector{
+		workload := getWorkload("test")
+		workload.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchExpressions: []v1.LabelSelectorRequirement{
 				{
 					Key:      "test",
@@ -156,14 +156,14 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 				},
 			},
 		}
-		deployments := []v1alpha1.EdgeDeployment{*deployment}
+		workloads := []v1alpha1.EdgeWorkload{*workload}
 		edgeDeviceRepoMock.EXPECT().
 			Read(gomock.Any(), gomock.Any(), gomock.Any()).
 			Return(device, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
-			Return(deployments, nil).
+			Return(workloads, nil).
 			Times(1)
 
 		// when
@@ -174,7 +174,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
 	})
 
-	It("list EdgeDeployments returned empty list", func() {
+	It("list EdgeWorkloads returned empty list", func() {
 		// given
 		edgeDeviceRepoMock.EXPECT().
 			Read(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -193,14 +193,14 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 	})
 
-	It("same EdgeDeployment listed multiple times", func() {
+	It("same EdgeWorkload listed multiple times", func() {
 		// given
 		device.Labels = map[string]string{
 			"label1": "",
 		}
 
-		deployment := getDeployment("test")
-		deployment.Spec.DeviceSelector = &v1.LabelSelector{
+		workload := getWorkload("test")
+		workload.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchExpressions: []v1.LabelSelectorRequirement{
 				{
 					Key:      "label1",
@@ -212,8 +212,8 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 				},
 			},
 		}
-		controllers.UpdateSelectorLabels(deployment)
-		deploymentList := []v1alpha1.EdgeDeployment{*deployment}
+		controllers.UpdateSelectorLabels(workload)
+		workloadList := []v1alpha1.EdgeWorkload{*workload}
 
 		edgeDeviceRepoMock.EXPECT().
 			Read(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -225,12 +225,12 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
-			Return(deploymentList, nil).
+			Return(workloadList, nil).
 			Times(2)
 		edgeDeviceRepoMock.EXPECT().
 			PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-				Expect(edgeDevice.Status.Deployments).To(Equal([]v1alpha1.Deployment{
+				Expect(edgeDevice.Status.Workloads).To(Equal([]v1alpha1.Workload{
 					{
 						Name:  "test",
 						Phase: v1alpha1.Deploying,
@@ -241,8 +241,8 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Patch(gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, old, new *v1alpha1.EdgeDevice) {
 				Expect(new.Labels).To(Equal(map[string]string{
-					"label1":                              "",
-					labels.WorkloadLabel(deployment.Name): "true",
+					"label1":                            "",
+					labels.WorkloadLabel(workload.Name): "true",
 				}))
 			}).Times(1)
 
@@ -254,13 +254,13 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 	})
 
-	It("no change to device deployments", func() {
+	It("no change to device workloads", func() {
 		// given
-		deployment := getDeployment("test")
-		deployment.Spec.Device = device.Name
-		controllers.UpdateSelectorLabels(deployment)
-		deploymentList := []v1alpha1.EdgeDeployment{*deployment}
-		device.Status.Deployments = []v1alpha1.Deployment{
+		workload := getWorkload("test")
+		workload.Spec.Device = device.Name
+		controllers.UpdateSelectorLabels(workload)
+		workloadList := []v1alpha1.EdgeWorkload{*workload}
+		device.Status.Workloads = []v1alpha1.Workload{
 			{
 				Name:  "test",
 				Phase: v1alpha1.Running,
@@ -274,7 +274,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any(), namespace).
-			Return(deploymentList, nil).
+			Return(workloadList, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
@@ -291,16 +291,16 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 
 	It("new device - test all selector options", func() {
 		// given
-		deployment1 := getDeployment("test1")
-		deployment2 := getDeployment("test2")
-		deployment3 := getDeployment("test3")
-		deployment4 := getDeployment("test4")
-		deployment5 := getDeployment("test5")
-		deployment1.Spec.Device = device.Name
-		deployment2.Spec.DeviceSelector = &v1.LabelSelector{
+		workload1 := getWorkload("test1")
+		workload2 := getWorkload("test2")
+		workload3 := getWorkload("test3")
+		workload4 := getWorkload("test4")
+		workload5 := getWorkload("test5")
+		workload1.Spec.Device = device.Name
+		workload2.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchLabels: map[string]string{"label1": "label1"},
 		}
-		deployment3.Spec.DeviceSelector = &v1.LabelSelector{
+		workload3.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchExpressions: []v1.LabelSelectorRequirement{
 				{
 					Key:      "notexist",
@@ -308,7 +308,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 				},
 			},
 		}
-		deployment4.Spec.DeviceSelector = &v1.LabelSelector{
+		workload4.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchExpressions: []v1.LabelSelectorRequirement{
 				{
 					Key:      "exist",
@@ -316,7 +316,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 				},
 			},
 		}
-		deployment5.Spec.DeviceSelector = &v1.LabelSelector{
+		workload5.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchExpressions: []v1.LabelSelectorRequirement{
 				{
 					Key:      "label2",
@@ -325,7 +325,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 				},
 			},
 		}
-		controllers.UpdateSelectorLabels(deployment1, deployment2, deployment3, deployment4, deployment5)
+		controllers.UpdateSelectorLabels(workload1, workload2, workload3, workload4, workload5)
 
 		device.Labels = map[string]string{
 			"label1": "label1",
@@ -339,28 +339,28 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DeviceNameLabel), gomock.Any(), namespace).
-			Return([]v1alpha1.EdgeDeployment{*deployment1}, nil).
+			Return([]v1alpha1.EdgeWorkload{*workload1}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("label1"), gomock.Any(), namespace).
-			Return([]v1alpha1.EdgeDeployment{*deployment2}, nil).
+			Return([]v1alpha1.EdgeWorkload{*workload2}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel(labels.DoesNotExistLabel), gomock.Any(), namespace).
-			Return([]v1alpha1.EdgeDeployment{*deployment3}, nil).
+			Return([]v1alpha1.EdgeWorkload{*workload3}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("exist"), gomock.Any(), namespace).
-			Return([]v1alpha1.EdgeDeployment{*deployment4}, nil).
+			Return([]v1alpha1.EdgeWorkload{*workload4}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("label2"), gomock.Any(), namespace).
-			Return([]v1alpha1.EdgeDeployment{*deployment5}, nil).
+			Return([]v1alpha1.EdgeWorkload{*workload5}, nil).
 			Times(1)
 		edgeDeviceRepoMock.EXPECT().
 			PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-				Expect(sortDeployments(edgeDevice.Status.Deployments)).To(Equal([]v1alpha1.Deployment{
+				Expect(sortWorkloads(edgeDevice.Status.Workloads)).To(Equal([]v1alpha1.Workload{
 					{Name: "test1", Phase: v1alpha1.Deploying},
 					{Name: "test2", Phase: v1alpha1.Deploying},
 					{Name: "test3", Phase: v1alpha1.Deploying},
@@ -393,7 +393,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 
 	It("device labels changed", func() {
 		// given
-		device.Status.Deployments = []v1alpha1.Deployment{
+		device.Status.Workloads = []v1alpha1.Workload{
 			{
 				Name:  "toremove",
 				Phase: v1alpha1.Running,
@@ -407,15 +407,15 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		device.Labels["tokeep"] = "tokeep"
 		device.Labels["toadd"] = "toadd"
 
-		deploymentToAdd := getDeployment("toadd")
-		deploymentToKeep := getDeployment("tokeep")
-		deploymentToKeep.Spec.DeviceSelector = &v1.LabelSelector{
+		workloadToAdd := getWorkload("toadd")
+		workloadToKeep := getWorkload("tokeep")
+		workloadToKeep.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchLabels: map[string]string{"tokeep": "tokeep"},
 		}
-		deploymentToAdd.Spec.DeviceSelector = &v1.LabelSelector{
+		workloadToAdd.Spec.DeviceSelector = &v1.LabelSelector{
 			MatchLabels: map[string]string{"toadd": "toadd"},
 		}
-		controllers.UpdateSelectorLabels(deploymentToAdd, deploymentToKeep)
+		controllers.UpdateSelectorLabels(workloadToAdd, workloadToKeep)
 
 		edgeDeviceRepoMock.EXPECT().
 			Read(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -423,11 +423,11 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("toadd"), gomock.Any(), namespace).
-			Return([]v1alpha1.EdgeDeployment{*deploymentToAdd}, nil).
+			Return([]v1alpha1.EdgeWorkload{*workloadToAdd}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), labels.CreateSelectorLabel("tokeep"), gomock.Any(), namespace).
-			Return([]v1alpha1.EdgeDeployment{*deploymentToKeep}, nil).
+			Return([]v1alpha1.EdgeWorkload{*workloadToKeep}, nil).
 			Times(1)
 		deployRepoMock.EXPECT().
 			ListByLabel(gomock.Any(), gomock.Any(), gomock.Any(), namespace).
@@ -437,7 +437,7 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 		edgeDeviceRepoMock.EXPECT().
 			PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 			Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-				Expect(sortDeployments(edgeDevice.Status.Deployments)).To(Equal([]v1alpha1.Deployment{
+				Expect(sortWorkloads(edgeDevice.Status.Workloads)).To(Equal([]v1alpha1.Workload{
 					{Name: "toadd", Phase: v1alpha1.Deploying},
 					{Name: "tokeep", Phase: v1alpha1.Running},
 				}))
@@ -463,15 +463,15 @@ var _ = Describe("EdgeDeviceLabels controller/Reconcile", func() {
 
 })
 
-func sortDeployments(deployments []v1alpha1.Deployment) []v1alpha1.Deployment {
-	sort.Slice(deployments, func(i, j int) bool {
-		return deployments[i].Name < deployments[j].Name
+func sortWorkloads(workloads []v1alpha1.Workload) []v1alpha1.Workload {
+	sort.Slice(workloads, func(i, j int) bool {
+		return workloads[i].Name < workloads[j].Name
 	})
-	return deployments
+	return workloads
 }
 
 func addWorkloadLabels(device *v1alpha1.EdgeDevice) {
-	if len(device.Status.Deployments) == 0 {
+	if len(device.Status.Workloads) == 0 {
 		return
 	}
 
@@ -479,7 +479,7 @@ func addWorkloadLabels(device *v1alpha1.EdgeDevice) {
 		device.Labels = map[string]string{}
 	}
 
-	for _, deployment := range device.Status.Deployments {
-		device.Labels[labels.WorkloadLabel(deployment.Name)] = "true"
+	for _, workload := range device.Status.Workloads {
+		device.Labels[labels.WorkloadLabel(workload.Name)] = "true"
 	}
 }

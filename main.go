@@ -36,8 +36,8 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/informers"
 	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeployment"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
@@ -117,8 +117,8 @@ var Config struct {
 	// Verbosity of the logger.
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 
-	// Number of concurrent goroutines to create for handling EdgeDeployment reconcile
-	EdgeDeploymentConcurrency uint `envconfig:"EDGEDEPLOYMENT_CONCURRENCY" default:"5"`
+	// Number of concurrent goroutines to create for handling EdgeWorkload reconcile
+	EdgeWorkloadConcurrency uint `envconfig:"EDGEWORKLOAD_CONCURRENCY" default:"5"`
 
 	// Client Certificate expiration time
 	ClientCertExpirationTime uint `envconfig:"CLIENT_CERT_EXPIRATION_DAYS" default:"30"`
@@ -150,8 +150,8 @@ func main() {
 		setupLog.Error(err, "unable to process configuration values")
 		os.Exit(1)
 	}
-	if Config.EdgeDeploymentConcurrency == 0 {
-		setupLog.Error(err, "config field EDGEDEPLOYMENT_CONCURRENCY must be greater than 0")
+	if Config.EdgeWorkloadConcurrency == 0 {
+		setupLog.Error(err, "config field EDGEWORKLOAD_CONCURRENCY must be greater than 0")
 		os.Exit(1)
 	}
 
@@ -190,7 +190,7 @@ func main() {
 
 	addIndexersToCache(mgr)
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
-	edgeDeploymentRepository := edgedeployment.NewEdgeDeploymentRepository(mgr.GetClient())
+	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(mgr.GetClient())
 	claimer := storage.NewClaimer(mgr.GetClient())
 	metricsObj := metrics.New()
 
@@ -206,31 +206,31 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controllers.EdgeDeviceLabelsReconciler{
-		EdgeDeviceRepository:     edgeDeviceRepository,
-		EdgeDeploymentRepository: edgeDeploymentRepository,
-		MaxConcurrentReconciles:  int(Config.MaxConcurrentReconciles),
+		EdgeDeviceRepository:    edgeDeviceRepository,
+		EdgeWorkloadRepository:  edgeWorkloadRepository,
+		MaxConcurrentReconciles: int(Config.MaxConcurrentReconciles),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDeviceLabels")
 		os.Exit(1)
 	}
-	if err = (&controllers.EdgeDeploymentReconciler{
-		Client:                   mgr.GetClient(),
-		Scheme:                   mgr.GetScheme(),
-		EdgeDeviceRepository:     edgeDeviceRepository,
-		EdgeDeploymentRepository: edgeDeploymentRepository,
-		Concurrency:              Config.EdgeDeploymentConcurrency,
-		ExecuteConcurrent:        controllers.ExecuteConcurrent,
-		Metrics:                  metricsObj,
-		MaxConcurrentReconciles:  int(Config.MaxConcurrentReconciles),
+	if err = (&controllers.EdgeWorkloadReconciler{
+		Client:                  mgr.GetClient(),
+		Scheme:                  mgr.GetScheme(),
+		EdgeDeviceRepository:    edgeDeviceRepository,
+		EdgeWorkloadRepository:  edgeWorkloadRepository,
+		Concurrency:             Config.EdgeWorkloadConcurrency,
+		ExecuteConcurrent:       controllers.ExecuteConcurrent,
+		Metrics:                 metricsObj,
+		MaxConcurrentReconciles: int(Config.MaxConcurrentReconciles),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "EdgeDeployment")
+		setupLog.Error(err, "unable to create controller", "controller", "EdgeWorkload")
 		os.Exit(1)
 	}
 
 	// webhooks
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		if err = (&v1alpha1.EdgeDeployment{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "EdgeDeployment")
+		if err = (&v1alpha1.EdgeWorkload{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "EdgeWorkload")
 			os.Exit(1)
 		}
 	}
@@ -292,12 +292,12 @@ func main() {
 		edgeDeviceGroupRepository := edgedevicegroup.NewEdgeDeviceGroupRepository(mgr.GetClient())
 		yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
 			edgeDeviceRepository,
-			edgeDeploymentRepository,
+			edgeWorkloadRepository,
 			edgeDeviceGroupRepository,
 			claimer,
 			k8sClient,
 			initialDeviceNamespace,
-			mgr.GetEventRecorderFor("edgedeployment-controller"),
+			mgr.GetEventRecorderFor("edgeworkload-controller"),
 			registryAuth,
 			metricsObj,
 			devicemetrics.NewAllowListGenerator(k8sClient),
@@ -379,9 +379,9 @@ func addIndexersToCache(mgr manager.Manager) {
 		setupLog.Error(err, "Failed to create indexer for EdgeDevice")
 		os.Exit(1)
 	}
-	err = mgr.GetFieldIndexer().IndexField(ctx, &managementv1alpha1.EdgeDeployment{}, indexer.DeploymentByDeviceIndexKey, indexer.DeploymentByDeviceIndexFunc)
+	err = mgr.GetFieldIndexer().IndexField(ctx, &managementv1alpha1.EdgeWorkload{}, indexer.WorkloadByDeviceIndexKey, indexer.WorkloadByDeviceIndexFunc)
 	if err != nil {
-		setupLog.Error(err, "Failed to create indexer for EdgeDeployment")
+		setupLog.Error(err, "Failed to create indexer for EdgeWorkload")
 		os.Exit(1)
 	}
 }

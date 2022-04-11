@@ -6,17 +6,17 @@ autonumber
 
 actor User
 
-User -> "EdgeDeployment CR": Create
-Operator -> "EdgeDeployment CR": Process
+User -> "EdgeWorkload CR": Create
+Operator -> "EdgeWorkload CR": Process
 Operator -> "EdgeDevice CR": add workload reference to status
 Operator -> Agent: Send pod yaml
-Operator -> "EdgeDevice CR": Set deployment status to deploying
+Operator -> "EdgeDevice CR": Set workload status to deploying
 Agent -> nftables: open ports
 Agent -> Podman: run pod
 
 loop
 Agent -> Operator: Heartbeat with workload information
-Operator -> "EdgeDeployment CR": Update status
+Operator -> "EdgeWorkload CR": Update status
 end
 
 

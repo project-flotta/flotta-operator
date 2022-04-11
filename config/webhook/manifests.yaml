@@ -12,9 +12,9 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-management-project-flotta-io-v1alpha1-edgedeployment
+      path: /validate-management-project-flotta-io-v1alpha1-edgeworkload
   failurePolicy: Fail
-  name: edgedeployment.management.project-flotta.io
+  name: edgeworkload.management.project-flotta.io
   rules:
   - apiGroups:
     - management.project-flotta.io
@@ -24,5 +24,5 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - edgedeployments
+    - EdgeWorkloads
   sideEffects: None

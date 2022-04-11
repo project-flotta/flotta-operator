@@ -1,20 +1,24 @@
-# permissions for end users to view edgedeployments.
+# permissions for end users to edit edgeworkloads.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: edgedeployment-viewer-role
+  name: edgeworkload-editor-role
 rules:
 - apiGroups:
   - management.project-flotta.io
   resources:
-  - edgedeployments
+  - edgeworkloads
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 - apiGroups:
   - management.project-flotta.io
   resources:
-  - edgedeployments/status
+  - edgeworkloads/status
   verbs:
   - get

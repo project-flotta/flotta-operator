@@ -22,7 +22,7 @@ resources:
   controller: true
   domain: project-flotta.io
   group: management
-  kind: EdgeDeployment
+  kind: EdgeWorkload
   path: github.com/project-flotta/flotta-operator/api/v1alpha1
   version: v1alpha1
 - api:

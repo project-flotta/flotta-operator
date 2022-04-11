@@ -58,10 +58,10 @@ var _ = Describe("ConfigMaps", func() {
 					},
 				},
 			}
-			deployment := getDeployment(podData)
+			workload := getWorkload(podData)
 
 			// when
-			cm, err := configMapManager.Fetch(context.TODO(), *deployment, "default")
+			cm, err := configMapManager.Fetch(context.TODO(), *workload, "default")
 
 			// then]
 			Expect(err).To(BeNil())
@@ -80,10 +80,10 @@ var _ = Describe("ConfigMaps", func() {
 				},
 			},
 		}
-		deployment := getDeployment(podData)
+		workload := getWorkload(podData)
 
 		// when
-		cm, err := configMapManager.Fetch(context.TODO(), *deployment, "default")
+		cm, err := configMapManager.Fetch(context.TODO(), *workload, "default")
 
 		// then]
 		Expect(err).To(BeNil())
@@ -118,10 +118,10 @@ var _ = Describe("ConfigMaps", func() {
 				},
 			},
 		}
-		deployment := getDeployment(podData)
+		workload := getWorkload(podData)
 
 		// when
-		cm, err := configMapManager.Fetch(context.TODO(), *deployment, "default")
+		cm, err := configMapManager.Fetch(context.TODO(), *workload, "default")
 
 		// then]
 		Expect(err).To(BeNil())
@@ -162,10 +162,10 @@ var _ = Describe("ConfigMaps", func() {
 				},
 			},
 		}
-		deployment := getDeployment(podData)
+		workload := getWorkload(podData)
 
 		// when
-		cm, err := configMapManager.Fetch(context.TODO(), *deployment, "default")
+		cm, err := configMapManager.Fetch(context.TODO(), *workload, "default")
 
 		// then]
 		Expect(err).To(BeNil())
@@ -174,9 +174,9 @@ var _ = Describe("ConfigMaps", func() {
 
 })
 
-func getDeployment(podData *v1alpha1.Pod) *v1alpha1.EdgeDeployment {
-	return &v1alpha1.EdgeDeployment{
-		Spec: v1alpha1.EdgeDeploymentSpec{
+func getWorkload(podData *v1alpha1.Pod) *v1alpha1.EdgeWorkload {
+	return &v1alpha1.EdgeWorkload{
+		Spec: v1alpha1.EdgeWorkloadSpec{
 			Type: "pod",
 			Pod:  *podData,
 		},

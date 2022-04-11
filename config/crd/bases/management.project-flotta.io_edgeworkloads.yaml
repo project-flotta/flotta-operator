@@ -6,20 +6,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
-  name: edgedeployments.management.project-flotta.io
+  name: edgeworkloads.management.project-flotta.io
 spec:
   group: management.project-flotta.io
   names:
-    kind: EdgeDeployment
-    listKind: EdgeDeploymentList
-    plural: edgedeployments
-    singular: edgedeployment
+    kind: EdgeWorkload
+    listKind: EdgeWorkloadList
+    plural: edgeworkloads
+    singular: edgeworkload
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: EdgeDeployment is the Schema for the edgedeployments API
+        description: EdgeWorkload is the Schema for the EdgeWorkloads API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -34,7 +34,7 @@ spec:
           metadata:
             type: object
           spec:
-            description: EdgeDeploymentSpec defines the desired state of EdgeDeployment
+            description: EdgeWorkloadSpec defines the desired state of EdgeWorkload
             properties:
               data:
                 properties:
@@ -6404,7 +6404,7 @@ spec:
             - type
             type: object
           status:
-            description: EdgeDeploymentStatus defines the observed state of EdgeDeployment
+            description: EdgeWorkloadStatus defines the observed state of EdgeWorkload
             type: object
         type: object
     served: true
