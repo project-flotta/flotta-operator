@@ -33,7 +33,7 @@ type PlaybookExecutionSpec struct {
 
 // PlaybookExecutionStatus defines the observed state of PlaybookExecution
 type PlaybookExecutionStatus struct {
-	Condition []PlaybookExecutionCondition `json:"condition,omitempty"`
+	Conditions []PlaybookExecutionCondition `json:"conditions,omitempty"`
 }
 
 type PlaybookExecutionCondition struct {

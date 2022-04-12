@@ -119,7 +119,7 @@ spec:
               edgePlaybookStatus:
                 description: EdgePlaybookStatus defines the observed state of EdgePlaybook
                 properties:
-                  condition:
+                  conditions:
                     items:
                       properties:
                         lastTransitionTime:

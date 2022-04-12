@@ -47,7 +47,7 @@ type EdgePlaybookSpec struct {
 
 // EdgePlaybookStatus defines the observed state of EdgePlaybook
 type EdgePlaybookStatus struct {
-	Condition []EdgePlaybookCondition `json:"condition,omitempty"`
+	Conditions []EdgePlaybookCondition `json:"conditions,omitempty"`
 }
 
 type AnsiblePlaybookCmd struct {
