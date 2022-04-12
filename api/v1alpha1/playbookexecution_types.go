@@ -25,7 +25,7 @@ import (
 
 // PlaybookExecutionSpec defines the desired state of PlaybookExecution
 type PlaybookExecutionSpec struct {
-	ExecutionStrategy ExecutionStrategy `json:"executionStrategy"`
+	Playbooks Playbook `json:"playbook,omitempty"`
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Default=0
 	ExecutionAttempt uint8 `json:"executionAttempt,omitempty" description:"the number of times the playbook has been executed" default:"0"`
@@ -33,16 +33,14 @@ type PlaybookExecutionSpec struct {
 
 // PlaybookExecutionStatus defines the observed state of PlaybookExecution
 type PlaybookExecutionStatus struct {
-	Condition                 []PlaybookExecutionCondition `json:"condition,omitempty"`
-	LastSeenTime              metav1.Time                  `json:"lastSeenTime,omitempty"`
-	LastSyncedResourceVersion string                       `json:"lastSyncedResourceVersion,omitempty"`
+	Condition []PlaybookExecutionCondition `json:"condition,omitempty"`
 }
 
 type PlaybookExecutionCondition struct {
 	Type PlaybookExecutionConditionType `json:"type" description:"type of PlaybookExecutionCondition condition"`
 	// Indicates whether that condition is applicable, with possible values "True", "False", or "Unknown"
 	// The absence of a condition should be interpreted the same as Unknown
-	Status PlaybookExecutionConditionStatus `json:"status" description:"status of the condition, one of True, False, Unknown"`
+	Status metav1.ConditionStatus `json:"status" description:"status of the condition, one of True, False, Unknown"`
 
 	// +optional
 	Reason *string `json:"reason,omitempty" description:"one-word CamelCase reason for the condition's last transition"`
@@ -55,10 +53,11 @@ type PlaybookExecutionCondition struct {
 type PlaybookExecutionConditionType string
 
 const (
-	PlaybookExecutionDeploying             PlaybookExecutionConditionType = "PlaybookExecutionDeploying"
-	PlaybookExecutionRunning               PlaybookExecutionConditionType = "PlaybookExecutionRunning"
-	PlaybookExecutionSuccessfullyCompleted PlaybookExecutionConditionType = "PlaybookExecutionSuccessfullyCompleted"
-	PlaybookExecutionCompletedWithError    PlaybookExecutionConditionType = "PlaybookExecutionCompletedWithError"
+	PlaybookExecutionDeploying             PlaybookExecutionConditionType = "Deploying"
+	PlaybookExecutionTargetVerification    PlaybookExecutionConditionType = "TargetVerification"
+	PlaybookExecutionRunning               PlaybookExecutionConditionType = "Running"
+	PlaybookExecutionSuccessfullyCompleted PlaybookExecutionConditionType = "SuccessfullyCompleted"
+	PlaybookExecutionCompletedWithError    PlaybookExecutionConditionType = "CompletedWithError"
 )
 
 //+kubebuilder:object:root=true

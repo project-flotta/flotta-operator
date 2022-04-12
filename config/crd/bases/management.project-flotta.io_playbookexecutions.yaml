@@ -39,10 +39,58 @@ spec:
               executionAttempt:
                 minimum: 0
                 type: integer
-              executionStrategy:
-                type: string
-            required:
-            - executionStrategy
+              playbook:
+                properties:
+                  ansibleOptions:
+                    description: the ansible's playbook options for the playbook
+                    properties:
+                      check:
+                        description: don't make any changes; instead, try to predict
+                          some of the changes that may occur
+                        type: boolean
+                    type: object
+                  content:
+                    description: Playbook content
+                    format: byte
+                    type: string
+                  playbooksPriorityMap:
+                    description: Execution strategy for the playbook
+                    type: string
+                  privilegeEscalationOptions:
+                    description: the ansible's playbook privilege escalation options
+                      for the playbook
+                    properties:
+                      become:
+                        type: boolean
+                      becomeMethod:
+                        enum:
+                        - sudo
+                        - su
+                        type: string
+                      becomeUser:
+                        type: string
+                    type: object
+                  requiredPrivilegeLevel:
+                    description: The required privelege level necessary to execute
+                      the playbook
+                    properties:
+                      capAdd:
+                        description: See https://man7.org/linux/man-pages/man7/capabilities.7.html
+                        items:
+                          type: integer
+                        type: array
+                      capDrop:
+                        items:
+                          type: integer
+                        type: array
+                    type: object
+                  timeoutSeconds:
+                    description: The connection timeout on ansible-playbook
+                    format: int64
+                    type: integer
+                required:
+                - content
+                type: object
             type: object
           status:
             description: PlaybookExecutionStatus defines the observed state of PlaybookExecution
@@ -69,11 +117,6 @@ spec:
                   - type
                   type: object
                 type: array
-              lastSeenTime:
-                format: date-time
-                type: string
-              lastSyncedResourceVersion:
-                type: string
             type: object
         type: object
     served: true
