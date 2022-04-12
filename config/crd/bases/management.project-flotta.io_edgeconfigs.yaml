@@ -49,8 +49,10 @@ spec:
                   ansiblePlaybookCmd:
                     description: The ansible playbook command to execute
                     properties:
-                      playbooksPriorityMap:
-                        additionalProperties:
+                      playbooks:
+                        description: The ansible's playbooks list. The first element
+                          is the playbook with the highest priority.
+                        items:
                           properties:
                             ansibleOptions:
                               description: the ansible's playbook options for the
@@ -103,9 +105,8 @@ spec:
                           required:
                           - content
                           type: object
-                        description: the ansible's playbooks list with execution priority
-                        minProperties: 1
-                        type: object
+                        minItems: 1
+                        type: array
                       user:
                         description: username who execute the playbook
                         type: string

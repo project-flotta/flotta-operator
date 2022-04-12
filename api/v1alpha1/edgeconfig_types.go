@@ -55,9 +55,9 @@ type EdgePlaybookStatus struct {
 type AnsiblePlaybookCmd struct {
 	// username who execute the playbook
 	User string `json:"user,omitempty"`
-	// the ansible's playbooks list with execution priority
-	// +kubebuilder:validation:MinProperties=1
-	PlaybooksPriorityMap map[string]Playbook `json:"playbooksPriorityMap,omitempty"`
+	// The ansible's playbooks list. The first element is the playbook with the highest priority.
+	// +kubebuilder:validation:MinItems=1
+	Playbooks []Playbook `json:"playbooks,omitempty"`
 }
 
 type Playbook struct {
