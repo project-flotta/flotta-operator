@@ -47,9 +47,7 @@ type EdgePlaybookSpec struct {
 
 // EdgePlaybookStatus defines the observed state of EdgePlaybook
 type EdgePlaybookStatus struct {
-	Condition                 []EdgePlaybookCondition `json:"condition,omitempty"`
-	LastSeenTime              metav1.Time             `json:"lastSeenTime,omitempty"`
-	LastSyncedResourceVersion string                  `json:"lastSyncedResourceVersion,omitempty"`
+	Condition []EdgePlaybookCondition `json:"condition,omitempty"`
 }
 
 type AnsiblePlaybookCmd struct {
@@ -149,7 +147,7 @@ type EdgePlaybookCondition struct {
 	Type EdgePlaybookConditionType `json:"type" description:"type of EdgePlaybookCondition condition"`
 	// Indicates whether that condition is applicable, with possible values "True", "False", or "Unknown"
 	// The absence of a condition should be interpreted the same as Unknown
-	Status PlaybookExecutionConditionStatus `json:"status" description:"status of the condition, one of True, False, Unknown"`
+	Status metav1.ConditionStatus `json:"status" description:"status of the condition, one of True, False, Unknown"`
 
 	// +optional
 	Reason *string `json:"reason,omitempty" description:"one-word CamelCase reason for the condition's last transition"`
@@ -162,18 +160,8 @@ type EdgePlaybookCondition struct {
 type EdgePlaybookConditionType string
 
 const (
-	TargetVerification EdgePlaybookConditionType = "TargetVerification"
-	PlaybookDeploying  EdgePlaybookConditionType = "Deploying"
-	PlaybookExecuting  EdgePlaybookConditionType = "Executing"
-	Completed          EdgePlaybookConditionType = "Completed"
-)
-
-type PlaybookExecutionConditionStatus string
-
-const (
-	EdgePlaybookConditionStatusTrue    PlaybookExecutionConditionStatus = "True"
-	EdgePlaybookConditionStatusFalse   PlaybookExecutionConditionStatus = "False"
-	EdgePlaybookConditionStatusUnknown PlaybookExecutionConditionStatus = "Unknown"
+	PlaybookDeploying EdgePlaybookConditionType = "Deploying"
+	Completed         EdgePlaybookConditionType = "Completed"
 )
 
 //+kubebuilder:object:root=true

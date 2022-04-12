@@ -142,11 +142,6 @@ spec:
                       - type
                       type: object
                     type: array
-                  lastSeenTime:
-                    format: date-time
-                    type: string
-                  lastSyncedResourceVersion:
-                    type: string
                 type: object
             type: object
         type: object
