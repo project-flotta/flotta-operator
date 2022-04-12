@@ -60,7 +60,7 @@ help: ## Display this help.
 ##@ Development
 
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	@$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(Q)$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
 
 generate-tools:
 ifeq (, $(shell which mockery))
@@ -166,19 +166,19 @@ endif
 
 $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into $(TARGET)-flotta-operator.yaml
-	@cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 ifeq ($(TARGET), k8s)
-	@sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/k8s/network/ingress.yaml
+	$(Q)sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/k8s/network/ingress.yaml
 	$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
-	@sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/k8s/network/ingress.yaml
+	$(Q)sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/k8s/network/ingress.yaml
 else ifeq ($(TARGET), ocp)
 	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 else ifeq ($(TARGET), kind)
 	$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 endif
 
-	@cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/flotta-operator/flotta-operator:latest
-	@echo -e "\033[92mDeployment file: $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml\033[0m"
+	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/flotta-operator/flotta-operator:latest
+	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml\033[0m"
 
 release:
 	TARGET=ocp gen-manifests
@@ -196,7 +196,7 @@ kustomize: ## Download kustomize locally if necessary.
 
 GINKGO = $(shell pwd)/bin/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.
-ifeq (, $(shell which ginkgo))
+ifeq (, $(shell which ginkgo 2> /dev/null))
 	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@v2.1.3)
 endif
 
