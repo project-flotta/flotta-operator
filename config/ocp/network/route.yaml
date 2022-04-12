@@ -8,7 +8,9 @@ metadata:
   namespace: system
 spec:
   port:
-    targetPort: yggd
+    targetPort: yggds
+  tls:
+    termination: passthrough
   to:
     kind: Service
     name: flotta-operator-controller-manager

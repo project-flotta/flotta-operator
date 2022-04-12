@@ -5,7 +5,8 @@ metadata:
   name: ingress
   namespace: system
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
 spec:
   rules:
     - host: REPLACE_HOSTNAME
@@ -17,4 +18,4 @@ spec:
               service:
                 name: controller-manager
                 port:
-                  number: 8888
+                  number: 8043

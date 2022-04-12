@@ -85,10 +85,6 @@ var (
 
 var Config struct {
 
-	// NOTE DEPRECATE
-	// The port of the HTTP server
-	HttpPort uint16 `envconfig:"HTTP_PORT" default:"8888"`
-
 	// The port of the HTTPs server
 	HttpsPort uint16 `envconfig:"HTTPS_PORT" default:"8043"`
 
@@ -317,13 +313,16 @@ func main() {
 				// to renew client certificates, and because some devices can be
 				// disconnected for days and does not have the option to renew it.
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.TLS != nil {
-						authType := yggdrasilAPIHandler.GetAuthType(r, api)
-						if ok, err := mtls.VerifyRequest(r, authType, opts, CACertChain, yggdrasil.AuthzKey); !ok {
-							setupLog.V(0).Info("cannot verify request:", "authType", authType, "method", r.Method, "url", r.URL, "err", err)
-							w.WriteHeader(http.StatusUnauthorized)
-							return
-						}
+					if r.TLS == nil {
+						w.WriteHeader(http.StatusBadRequest)
+						return
+					}
+
+					authType := yggdrasilAPIHandler.GetAuthType(r, api)
+					if ok, err := mtls.VerifyRequest(r, authType, opts, CACertChain, yggdrasil.AuthzKey); !ok {
+						setupLog.V(0).Info("cannot verify request:", "authType", authType, "method", r.Method, "url", r.URL, "err", err)
+						w.WriteHeader(http.StatusUnauthorized)
+						return
 					}
 					h.ServeHTTP(w, r)
 				})
@@ -334,11 +333,6 @@ func main() {
 		if err != nil {
 			setupLog.Error(err, "cannot start http server")
 		}
-
-		//@TODO This is a hack to keep compatibility now, to be deleted.
-		go func() {
-			_ = http.ListenAndServe(fmt.Sprintf(":%v", Config.HttpPort), APIHandler)
-		}()
 
 		server := &http.Server{
 			Addr:      fmt.Sprintf(":%v", Config.HttpsPort),

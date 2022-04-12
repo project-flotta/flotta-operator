@@ -32,7 +32,7 @@ $ kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
 2. Expose the flotta API
 
 ```bash
-$ kubectl port-forward deploy/flotta-operator-controller-manager -n flotta --address 0.0.0.0 8888:8888 &
+$ kubectl port-forward deploy/flotta-operator-controller-manager -n flotta --address 0.0.0.0 8043:8043 &
 ```
 
 3. Run the tests

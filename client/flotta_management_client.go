@@ -26,7 +26,7 @@ const (
 )
 
 // DefaultSchemes are the default schemes found in Meta (info) section of spec file
-var DefaultSchemes = []string{"http", "https"}
+var DefaultSchemes = []string{"https"}
 
 type Config struct {
 	// URL is the base URL of the upstream server
