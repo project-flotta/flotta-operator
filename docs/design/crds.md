@@ -160,9 +160,6 @@ spec:
 ### Specification
 ```yaml
 spec:
-  deviceIDs: # The deviceID list on which the playbook should be executed. Necessary to execute playbook on a devices that don't belong to any group
-    - device-1
-    - device-2
   edgePlaybook:
     ansiblePlaybookCmd:
       user: foo # Username who execute the playbook

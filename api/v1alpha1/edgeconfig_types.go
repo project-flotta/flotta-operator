@@ -27,11 +27,6 @@ import (
 type EdgeConfigSpec struct {
 	// Definition of the custom playbook workload to execute
 	EdgePlaybook *EdgePlaybookSpec `json:"edgePlaybook,omitempty"`
-
-	// The deviceID list on which the playbook should be executed.
-	// Necessary to execute the playbook on a devices that don't belong to any group.
-	//+optional
-	DeviceIDs []string `json:"deviceIDs,omitempty"`
 }
 
 // EdgeConfigStatus defines the observed state of EdgeConfig

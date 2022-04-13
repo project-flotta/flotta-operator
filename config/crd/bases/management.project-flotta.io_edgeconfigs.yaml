@@ -36,13 +36,6 @@ spec:
           spec:
             description: EdgeConfigSpec defines the desired state of EdgeConfig
             properties:
-              deviceIDs:
-                description: The deviceID list on which the playbook should be executed.
-                  Necessary to execute the playbook on a devices that don't belong
-                  to any group.
-                items:
-                  type: string
-                type: array
               edgePlaybook:
                 description: Definition of the custom playbook workload to execute
                 properties:
