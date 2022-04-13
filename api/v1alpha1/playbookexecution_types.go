@@ -25,7 +25,7 @@ import (
 
 // PlaybookExecutionSpec defines the desired state of PlaybookExecution
 type PlaybookExecutionSpec struct {
-	Playbooks Playbook `json:"playbook,omitempty"`
+	Playbook Playbook `json:"playbook,omitempty"`
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:validation:Default=0
 	ExecutionAttempt uint8 `json:"executionAttempt,omitempty" description:"the number of times the playbook has been executed" default:"0"`
