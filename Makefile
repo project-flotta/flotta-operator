@@ -64,10 +64,10 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 generate-tools:
 ifeq (, $(shell which mockery))
-	(cd /tmp && go get github.com/vektra/mockery/.../@v1.1.2)
+	(cd /tmp && go install github.com/vektra/mockery/...@v1.1.2)
 endif
 ifeq (, $(shell which mockgen))
-	(cd /tmp/ && go get github.com/golang/mock/mockgen@v1.6.0)
+	(cd /tmp/ && go install github.com/golang/mock/mockgen@v1.6.0)
 endif
 	@exit
 
@@ -112,7 +112,7 @@ test-coverage:
 	go tool cover --html=cover.out
 
 vendor:
-	go mod tidy
+	go mod tidy -go=1.17
 	go mod vendor
 
 get-certs: # Write certificates to /tmp/ folder
@@ -188,31 +188,31 @@ release:
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
-	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+	$(call go-install-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
 
 KUSTOMIZE = $(shell pwd)/bin/kustomize
 kustomize: ## Download kustomize locally if necessary.
-	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+	$(call go-install-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v4@latest)
 
 GINKGO = $(shell pwd)/bin/ginkgo
 ginkgo: ## Download ginkgo locally if necessary.
 ifeq (, $(shell which ginkgo 2> /dev/null))
-	$(call go-get-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@v2.1.3)
+	$(call go-install-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@v2.1.3)
 endif
 
 validate-swagger: ## Validate swagger
 	$(DOCKER) run --rm -v $(PWD)/.spectral.yaml:/tmp/.spectral.yaml:z -v $(PWD)/swagger.yaml:/tmp/swagger.yaml:z stoplight/spectral lint --ruleset "/tmp/.spectral.yaml" /tmp/swagger.yaml
 
-# go-get-tool will 'go get' any package $2 and install it to $1.
+# go-install-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
-define go-get-tool
+define go-install-tool
 @[ -f $(1) ] || { \
 set -e ;\
 TMP_DIR=$$(mktemp -d) ;\
 cd $$TMP_DIR ;\
 go mod init tmp ;\
 echo "Downloading $(2)" ;\
-GOBIN=$(PROJECT_DIR)/bin go get $(2) ;\
+GOBIN=$(PROJECT_DIR)/bin go install $(2) ;\
 rm -rf $$TMP_DIR ;\
 }
 endef
