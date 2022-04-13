@@ -29,6 +29,12 @@ func (o *PostDataMessageForDeviceReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return result, nil
+	case 208:
+		result := NewPostDataMessageForDeviceAlreadyReported()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return result, nil
 	case 400:
 		result := NewPostDataMessageForDeviceBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -94,6 +100,27 @@ func (o *PostDataMessageForDeviceOK) readResponse(response runtime.ClientRespons
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
+
+	return nil
+}
+
+// NewPostDataMessageForDeviceAlreadyReported creates a PostDataMessageForDeviceAlreadyReported with default headers values
+func NewPostDataMessageForDeviceAlreadyReported() *PostDataMessageForDeviceAlreadyReported {
+	return &PostDataMessageForDeviceAlreadyReported{}
+}
+
+/*PostDataMessageForDeviceAlreadyReported handles this case with default header values.
+
+Already Reported
+*/
+type PostDataMessageForDeviceAlreadyReported struct {
+}
+
+func (o *PostDataMessageForDeviceAlreadyReported) Error() string {
+	return fmt.Sprintf("[POST /data/{device_id}/out][%d] postDataMessageForDeviceAlreadyReported ", 208)
+}
+
+func (o *PostDataMessageForDeviceAlreadyReported) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }

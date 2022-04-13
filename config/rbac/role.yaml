@@ -59,6 +59,26 @@ rules:
 - apiGroups:
   - management.project-flotta.io
   resources:
+  - edgedevicesignedrequest
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgedevicesignedrequest/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - management.project-flotta.io
+  resources:
   - edgeworkloads
   verbs:
   - create

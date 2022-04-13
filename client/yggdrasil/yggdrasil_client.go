@@ -28,7 +28,7 @@ type API interface {
 	PostControlMessageForDevice(ctx context.Context, params *PostControlMessageForDeviceParams) (*PostControlMessageForDeviceOK, error)
 	/*
 	   PostDataMessageForDevice Post data message for device API*/
-	PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, error)
+	PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, *PostDataMessageForDeviceAlreadyReported, error)
 }
 
 // New creates a new yggdrasil API client.
@@ -124,7 +124,7 @@ func (a *Client) PostControlMessageForDevice(ctx context.Context, params *PostCo
 /*
 PostDataMessageForDevice Post data message for device API
 */
-func (a *Client) PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, error) {
+func (a *Client) PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, *PostDataMessageForDeviceAlreadyReported, error) {
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "PostDataMessageForDevice",
@@ -139,8 +139,14 @@ func (a *Client) PostDataMessageForDevice(ctx context.Context, params *PostDataM
 		Client:             params.HTTPClient,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return result.(*PostDataMessageForDeviceOK), nil
+	switch value := result.(type) {
+	case *PostDataMessageForDeviceOK:
+		return value, nil, nil
+	case *PostDataMessageForDeviceAlreadyReported:
+		return nil, value, nil
+	}
+	return nil, nil, nil
 
 }

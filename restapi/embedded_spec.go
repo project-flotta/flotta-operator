@@ -194,6 +194,9 @@ func init() {
               "$ref": "#/definitions/message-response"
             }
           },
+          "208": {
+            "description": "Already Reported"
+          },
           "400": {
             "description": "Error"
           },
@@ -406,6 +409,26 @@ func init() {
         },
         "wwn": {
           "type": "string"
+        }
+      }
+    },
+    "enrolment-info": {
+      "type": "object",
+      "properties": {
+        "features": {
+          "type": "object",
+          "properties": {
+            "hardware": {
+              "$ref": "#/definitions/hardware-info"
+            },
+            "modelName": {
+              "type": "string"
+            }
+          }
+        },
+        "target-namespace": {
+          "type": "string",
+          "default": "default"
         }
       }
     },
@@ -1208,6 +1231,9 @@ func init() {
               "$ref": "#/definitions/message-response"
             }
           },
+          "208": {
+            "description": "Already Reported"
+          },
           "400": {
             "description": "Error"
           },
@@ -1228,6 +1254,17 @@ func init() {
     }
   },
   "definitions": {
+    "EnrolmentInfoFeatures": {
+      "type": "object",
+      "properties": {
+        "hardware": {
+          "$ref": "#/definitions/hardware-info"
+        },
+        "modelName": {
+          "type": "string"
+        }
+      }
+    },
     "LogsCollectionInformationSyslogConfig": {
       "type": "object",
       "properties": {
@@ -1432,6 +1469,26 @@ func init() {
         },
         "wwn": {
           "type": "string"
+        }
+      }
+    },
+    "enrolment-info": {
+      "type": "object",
+      "properties": {
+        "features": {
+          "type": "object",
+          "properties": {
+            "hardware": {
+              "$ref": "#/definitions/hardware-info"
+            },
+            "modelName": {
+              "type": "string"
+            }
+          }
+        },
+        "target-namespace": {
+          "type": "string",
+          "default": "default"
         }
       }
     },

@@ -83,7 +83,7 @@ func (_m *MockAPI) PostControlMessageForDevice(ctx context.Context, params *Post
 }
 
 // PostDataMessageForDevice provides a mock function with given fields: ctx, params
-func (_m *MockAPI) PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, error) {
+func (_m *MockAPI) PostDataMessageForDevice(ctx context.Context, params *PostDataMessageForDeviceParams) (*PostDataMessageForDeviceOK, *PostDataMessageForDeviceAlreadyReported, error) {
 	ret := _m.Called(ctx, params)
 
 	var r0 *PostDataMessageForDeviceOK
@@ -95,12 +95,21 @@ func (_m *MockAPI) PostDataMessageForDevice(ctx context.Context, params *PostDat
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *PostDataMessageForDeviceParams) error); ok {
+	var r1 *PostDataMessageForDeviceAlreadyReported
+	if rf, ok := ret.Get(1).(func(context.Context, *PostDataMessageForDeviceParams) *PostDataMessageForDeviceAlreadyReported); ok {
 		r1 = rf(ctx, params)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*PostDataMessageForDeviceAlreadyReported)
+		}
 	}
 
-	return r0, r1
+	var r2 error
+	if rf, ok := ret.Get(2).(func(context.Context, *PostDataMessageForDeviceParams) error); ok {
+		r2 = rf(ctx, params)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }
