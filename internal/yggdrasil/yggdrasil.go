@@ -128,13 +128,27 @@ func (h *Handler) GetAuthType(r *http.Request, api *apioperations.FlottaManageme
 	return res
 }
 
+func (h *Handler) getNamespace(ctx context.Context) string {
+	ns := h.initialNamespace
+
+	val, ok := ctx.Value(AuthzKey).(mtls.RequestAuthVal)
+	if !ok {
+		return ns
+	}
+
+	if val.Namespace != "" {
+		return val.Namespace
+	}
+	return ns
+}
+
 func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
 	if !IsOwnDevice(ctx, deviceID) {
 		return operations.NewGetControlMessageForDeviceForbidden()
 	}
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
-	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
+	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("edge device is not found")
@@ -164,7 +178,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		return operations.NewGetDataMessageForDeviceForbidden()
 	}
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
-	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
+	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("edge device is not found")
@@ -230,7 +244,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		}
 		err = h.heartbeatHandler.Process(ctx, heartbeat.Notification{
 			DeviceID:  deviceID,
-			Namespace: h.initialNamespace,
+			Namespace: h.getNamespace(ctx),
 			Heartbeat: &hb,
 		})
 		if err != nil {
@@ -256,13 +270,20 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceAlreadyReported()
 		}
 
-		_, err = h.edgedeviceSignedRequestRepository.Read(ctx, deviceID, h.initialNamespace)
+		edsr, err := h.edgedeviceSignedRequestRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err == nil {
 			// Is already created, but not approved
+			if edsr.Spec.TargetNamespace != *enrolmentInfo.TargetNamespace {
+				_, err = h.deviceRepository.Read(ctx, deviceID, edsr.Spec.TargetNamespace)
+				if err == nil {
+					// Device is already created.
+					return operations.NewPostDataMessageForDeviceAlreadyReported()
+				}
+			}
 			return operations.NewPostDataMessageForDeviceOK()
 		}
 
-		edsr := &v1alpha1.EdgeDeviceSignedRequest{
+		edsr = &v1alpha1.EdgeDeviceSignedRequest{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      deviceID,
@@ -291,84 +312,79 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
 		logger.V(1).Info("received registration info", "content", registrationInfo)
-
 		res := models.MessageResponse{
 			Directive: msg.Directive,
 			MessageID: msg.MessageID,
 		}
 		content := models.RegistrationResponse{}
+		ns := h.getNamespace(ctx)
 
-		dvc, err := h.deviceRepository.Read(ctx, deviceID, h.initialNamespace)
-		if err == nil {
-			isInit := false
-			if dvc.ObjectMeta.Labels[v1alpha1.EdgeDeviceSignedRequestLabelName] == v1alpha1.EdgeDeviceSignedRequestLabelValue {
-				isInit = true
-			}
-
-			if !isInit && !IsOwnDevice(ctx, deviceID) {
-				authKeyVal, _ := ctx.Value(AuthzKey).(string)
-				logger.V(0).Info("Device tries to re-register with an invalid certificate", "certcn", authKeyVal)
-				// At this moment, the registration certificate it's no longer valid,
-				// because the CR is already created, and need to be a device
-				// certificate.
-				return operations.NewPostDataMessageForDeviceForbidden()
-			}
-
-			// @TODO remove this IF when MTLS is finished
-			if registrationInfo.CertificateRequest != "" {
-				cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)
-				if err != nil {
-					return operations.NewPostDataMessageForDeviceBadRequest()
-				}
-				content.Certificate = string(cert)
-			}
-			res.Content = content
-
-			if isInit {
-				newdevice := dvc.DeepCopy()
-				delete(newdevice.Labels, v1alpha1.EdgeDeviceSignedRequestLabelName)
-				err = h.deviceRepository.Patch(ctx, dvc, newdevice)
-				if err != nil {
-					logger.Error(err, "cannot update edgedevice labels")
-				}
-			}
-			return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
-		}
-
-		if !errors.IsNotFound(err) {
-			return operations.NewPostDataMessageForDeviceInternalServerError()
-		}
-		// @TODO here the base certificate should be the same CN as DeviceID and only expired.
-		// @TODO remove this IF when MTLS is finished
-		// @TODO remove this lines on ECOPROJECT-402
-		if registrationInfo.CertificateRequest != "" {
-			cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)
+		if ns == h.initialNamespace && !IsOwnDevice(ctx, deviceID) {
+			// check if it's a valid device, shouldn't match
+			esdr, err := h.edgedeviceSignedRequestRepository.Read(ctx, deviceID, h.initialNamespace)
 			if err != nil {
-				return operations.NewPostDataMessageForDeviceBadRequest()
+				h.metrics.IncEdgeDeviceFailedRegistration()
+				return operations.NewPostDataMessageForDeviceNotFound()
 			}
-			content.Certificate = string(cert)
-			res.Content = content
+			if esdr.Spec.TargetNamespace != "" {
+				ns = esdr.Spec.TargetNamespace
+			}
+		}
+		dvc, err := h.deviceRepository.Read(ctx, deviceID, ns)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				h.metrics.IncEdgeDeviceFailedRegistration()
+				return operations.NewPostDataMessageForDeviceInternalServerError()
+			}
+			return operations.NewPostDataMessageForDeviceNotFound()
 		}
 
-		now := metav1.Now()
-		device := v1alpha1.EdgeDevice{
-			Spec: v1alpha1.EdgeDeviceSpec{
-				RequestTime: &now,
-			},
-		}
-		device.Name = deviceID
-		device.Namespace = h.initialNamespace
-		device.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
-		err = h.deviceRepository.Create(ctx, &device)
-		if err != nil {
-			logger.Error(err, "cannot save EdgeDevice")
+		if dvc == nil {
 			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-		err = h.updateDeviceStatus(ctx, &device, func(device *v1alpha1.EdgeDevice) {
-			device.Status = v1alpha1.EdgeDeviceStatus{
-				Hardware: hardware.MapHardware(registrationInfo.Hardware),
-			}
+
+		isInit := false
+		if dvc.ObjectMeta.Labels[v1alpha1.EdgeDeviceSignedRequestLabelName] == v1alpha1.EdgeDeviceSignedRequestLabelValue {
+			isInit = true
+		}
+
+		// the first time that tries to register should be able to use register certificate.
+		if !isInit && !IsOwnDevice(ctx, deviceID) {
+			authKeyVal, _ := ctx.Value(AuthzKey).(string)
+			logger.V(0).Info("Device tries to re-register with an invalid certificate", "certcn", authKeyVal)
+			// At this moment, the registration certificate it's no longer valid,
+			// because the CR is already created, and need to be a device
+			// certificate.
+			h.metrics.IncEdgeDeviceFailedRegistration()
+			return operations.NewPostDataMessageForDeviceForbidden()
+		}
+
+		cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceBadRequest()
+		}
+		content.Certificate = string(cert)
+
+		res.Content = content
+		deviceCopy := dvc.DeepCopy()
+		deviceCopy.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
+		for key, val := range hardware.MapLabels(registrationInfo.Hardware) {
+			deviceCopy.ObjectMeta.Labels[key] = val
+		}
+		if isInit {
+			delete(deviceCopy.Labels, v1alpha1.EdgeDeviceSignedRequestLabelName)
+		}
+
+		err = h.deviceRepository.Patch(ctx, dvc, deviceCopy)
+		if err != nil {
+			logger.Error(err, "cannot update edgedevice")
+			h.metrics.IncEdgeDeviceFailedRegistration()
+			return operations.NewPostDataMessageForDeviceBadRequest()
+		}
+
+		err = h.updateDeviceStatus(ctx, dvc, func(device *v1alpha1.EdgeDevice) {
+			device.Status.Hardware = hardware.MapHardware(registrationInfo.Hardware)
 		})
 
 		if err != nil {
@@ -376,15 +392,13 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-		err = h.deviceRepository.UpdateLabels(ctx, &device, hardware.MapLabels(registrationInfo.Hardware))
-		if err != nil {
-			logger.Error(err, "cannot update EdgeDevice labels")
-			h.metrics.IncEdgeDeviceFailedRegistration()
-			return operations.NewPostDataMessageForDeviceInternalServerError()
+		if isInit {
+			logger.Info("EdgeDevice registere correctly for first time")
+		} else {
+			logger.Info("EdgeDevice renew registration correctly")
 		}
-		logger.Info("EdgeDevice created")
-		h.metrics.IncEdgeDeviceSuccessfulRegistration()
 
+		h.metrics.IncEdgeDeviceSuccessfulRegistration()
 		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 	default:
 		logger.Info("received unknown message", "message", msg)

@@ -2595,11 +2595,18 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceBadRequest{}))
 			})
 
-			It("edgedevice signer request is already created", func() {
+			It("edgedevice signed request is already created with same namespace", func() {
 				// given
+				edsr := &v1alpha1.EdgeDeviceSignedRequest{
+					Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
+						TargetNamespace: targetNamespace,
+						Approved:        true,
+					},
+				}
+
 				edgeDeviceSRRepoMock.EXPECT().
 					Read(gomock.Any(), deviceName, device.Namespace).
-					Return(nil, nil).
+					Return(edsr, nil).
 					Times(1)
 
 				edgeDeviceRepoMock.EXPECT().
@@ -2624,14 +2631,93 @@ var _ = Describe("Yggdrasil", func() {
 				// then
 				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
 			})
+
+			It("edgedevice signed request is in different namespace", func() {
+				// given
+				edsr := &v1alpha1.EdgeDeviceSignedRequest{
+					Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
+						TargetNamespace: "newOne",
+						Approved:        true,
+					},
+				}
+
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, device.Namespace).
+					Return(edsr, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, targetNamespace).
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, "newOne").
+					Return(nil, nil).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content: models.EnrolmentInfo{
+							Features:        &models.EnrolmentInfoFeatures{},
+							TargetNamespace: &targetNamespace,
+						},
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceAlreadyReported{}))
+			})
+
+			It("edgedevice signed request is in different namespace but device is not yet created", func() {
+				// given
+				edsr := &v1alpha1.EdgeDeviceSignedRequest{
+					Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
+						TargetNamespace: "newOne",
+						Approved:        true,
+					},
+				}
+
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, device.Namespace).
+					Return(edsr, nil).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, targetNamespace).
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, "newOne").
+					Return(nil, fmt.Errorf("Failed")).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+						Content: models.EnrolmentInfo{
+							Features:        &models.EnrolmentInfoFeatures{},
+							TargetNamespace: &targetNamespace,
+						},
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
+			})
 		})
 
 		Context("Registration", func() {
-
-			// @TODO: Missing test:
-			// Device is already registered, and does not send a valid CSR
-			// Device is sending invalid CN that does not match device-id request.
-
 			var directiveName = "registration"
 
 			Context("With certificate", func() {
@@ -2688,11 +2774,176 @@ var _ = Describe("Yggdrasil", func() {
 					Expect(err).NotTo(HaveOccurred())
 				})
 
+				It("No error on repo read, but there is no device", func() {
+
+					// given
+					edgeDeviceRepoMock.EXPECT().
+						Read(gomock.Any(), deviceName, testNamespace).
+						Return(nil, nil).
+						Times(1)
+
+					metricsMock.EXPECT().
+						IncEdgeDeviceFailedRegistration().
+						Times(1)
+
+					params := api.PostDataMessageForDeviceParams{
+						DeviceID: deviceName,
+						Message: &models.Message{
+							Directive: directiveName,
+							Content: models.RegistrationInfo{
+								CertificateRequest: string(givenCert),
+								Hardware:           nil,
+							},
+						},
+					}
+
+					// when
+					res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+					// then
+
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceInternalServerError{}))
+				})
+
+				It("Device register for first time", func() {
+
+					// given
+
+					// KEY and Value hardcoded here because a change can break any update.
+					key := "edgedeviceSignedRequest" // v1alpha1.EdgeDeviceSignedRequestLabelName
+					val := "true"                    // v1alpha1.EdgeDeviceSignedRequestLabelValue
+					device.ObjectMeta.Labels = map[string]string{key: val}
+
+					edgeDeviceRepoMock.EXPECT().
+						Read(gomock.Any(), deviceName, testNamespace).
+						Return(device, nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, dvcCopy *v1alpha1.EdgeDevice) {
+							Expect(dvcCopy.ObjectMeta.Labels).To(HaveLen(1))
+							Expect(dvcCopy.ObjectMeta.Labels).To(Equal(map[string]string{
+								"device.hostname": "testfoo"}))
+							Expect(dvcCopy.ObjectMeta.Finalizers).To(HaveLen(2))
+							Expect(dvcCopy.ObjectMeta.Finalizers).To(ContainElement(YggdrasilWorkloadFinalizer))
+							Expect(dvcCopy.ObjectMeta.Finalizers).To(ContainElement(YggdrasilConnectionFinalizer))
+						}).
+						Return(nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						PatchStatus(gomock.Any(), device, gomock.Any()).
+						Return(nil).
+						Times(1)
+
+					metricsMock.EXPECT().
+						IncEdgeDeviceSuccessfulRegistration().
+						Times(1)
+
+					params := api.PostDataMessageForDeviceParams{
+						DeviceID: deviceName,
+						Message: &models.Message{
+							Directive: directiveName,
+							Content: models.RegistrationInfo{
+								CertificateRequest: string(givenCert),
+								Hardware: &models.HardwareInfo{
+									Hostname: "testFoo",
+								},
+							},
+						},
+					}
+
+					// when
+					res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+					// then
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
+					data, ok := res.(*operations.PostDataMessageForDeviceOK)
+					Expect(ok).To(BeTrue())
+					Expect(data.Payload.Content).NotTo(BeNil())
+				})
+
+				It("Device register for first time, but EDSR says another namespace", func() {
+
+					// given
+					key := "edgedeviceSignedRequest" // v1alpha1.EdgeDeviceSignedRequestLabelName
+					val := "true"                    // v1alpha1.EdgeDeviceSignedRequestLabelValue
+					device.ObjectMeta.Labels = map[string]string{key: val}
+					otherNS := "otherNS"
+					edsr := &v1alpha1.EdgeDeviceSignedRequest{
+						Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
+							TargetNamespace: otherNS,
+							Approved:        true,
+						},
+					}
+
+					edgeDeviceSRRepoMock.EXPECT().
+						Read(gomock.Any(), deviceName, testNamespace).
+						Return(edsr, nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						Read(gomock.Any(), deviceName, otherNS).
+						Return(device, nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						PatchStatus(gomock.Any(), device, gomock.Any()).
+						Return(nil).
+						Times(1)
+
+					metricsMock.EXPECT().
+						IncEdgeDeviceSuccessfulRegistration().
+						Times(1)
+
+					params := api.PostDataMessageForDeviceParams{
+						DeviceID: deviceName,
+						Message: &models.Message{
+							Directive: directiveName,
+							Content: models.RegistrationInfo{
+								CertificateRequest: string(givenCert),
+								Hardware: &models.HardwareInfo{
+									Hostname: "testFoo",
+								},
+							},
+						},
+					}
+
+					// when
+					res := handler.PostDataMessageForDevice(context.TODO(), params)
+
+					// then
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
+					data, ok := res.(*operations.PostDataMessageForDeviceOK)
+					Expect(ok).To(BeTrue())
+					Expect(data.Payload.Content).NotTo(BeNil())
+				})
+
 				It("Device is already register, and send a CSR to renew", func() {
 					// given
 					edgeDeviceRepoMock.EXPECT().
 						Read(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						PatchStatus(gomock.Any(), device, gomock.Any()).
+						Return(nil).
+						Times(1)
+
+					metricsMock.EXPECT().
+						IncEdgeDeviceSuccessfulRegistration().
 						Times(1)
 
 					params := api.PostDataMessageForDeviceParams{
@@ -2714,6 +2965,71 @@ var _ = Describe("Yggdrasil", func() {
 					data, ok := res.(*operations.PostDataMessageForDeviceOK)
 					Expect(ok).To(BeTrue())
 					Expect(data.Payload.Content).NotTo(BeNil())
+				})
+
+				It("cannot patch device", func() {
+					// given
+					edgeDeviceRepoMock.EXPECT().
+						Read(gomock.Any(), deviceName, testNamespace).
+						Return(device, nil).
+						Times(1)
+
+					edgeDeviceRepoMock.EXPECT().
+						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(fmt.Errorf("Failed")).
+						Times(1)
+
+					metricsMock.EXPECT().
+						IncEdgeDeviceFailedRegistration().
+						Times(1)
+
+					params := api.PostDataMessageForDeviceParams{
+						DeviceID: deviceName,
+						Message: &models.Message{
+							Directive: directiveName,
+							Content: models.RegistrationInfo{
+								CertificateRequest: string(givenCert),
+								Hardware:           nil,
+							},
+						},
+					}
+
+					// when
+					res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+					// then
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceBadRequest{}))
+				})
+
+				It("try to update a device that it's not his own", func() {
+					// given
+					edgeDeviceSRRepoMock.EXPECT().
+						Read(gomock.Any(), deviceName, device.Namespace).
+						Return(nil, fmt.Errorf("Failed")).
+						Times(1)
+
+					metricsMock.EXPECT().
+						IncEdgeDeviceFailedRegistration().
+						Times(1)
+
+					params := api.PostDataMessageForDeviceParams{
+						DeviceID: deviceName,
+						Message: &models.Message{
+							Directive: directiveName,
+							Content: models.RegistrationInfo{
+								CertificateRequest: string(givenCert),
+								Hardware:           nil,
+							},
+						},
+					}
+
+					// when
+					res := handler.PostDataMessageForDevice(
+						context.WithValue(context.TODO(), AuthzKey, "AnotherDevice"),
+						params)
+
+					// then
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceNotFound{}))
 				})
 
 				It("Device is already register, and send a CSR to renew with invalid cert", func() {
@@ -2728,45 +3044,26 @@ var _ = Describe("Yggdrasil", func() {
 						Message: &models.Message{
 							Directive: directiveName,
 							Content: models.RegistrationInfo{
-								CertificateRequest: string(givenCert),
+								CertificateRequest: string("----Invalid-----"),
 								Hardware:           nil,
 							},
 						},
 					}
 
 					// when
-					res := handler.PostDataMessageForDevice(context.TODO(), params)
+					res := handler.PostDataMessageForDevice(deviceCtx, params)
 
 					// then
-					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceForbidden{}))
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceBadRequest{}))
 				})
 
-				It("Device is not registered, and send a valid CSR", func() {
+				It("Device is not registered, and send a valid CSR, but not approved", func() {
 
 					// given
 					edgeDeviceRepoMock.EXPECT().
 						Read(gomock.Any(), deviceName, testNamespace).
 						Return(nil, errorNotFound).
 						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						Create(gomock.Any(), gomock.Any()).
-						Return(nil).
-						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
-						Return(nil).
-						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						UpdateLabels(gomock.Any(), gomock.Any(), gomock.Any()).
-						Return(nil).
-						Times(1)
-
-					metricsMock.EXPECT().
-						IncEdgeDeviceSuccessfulRegistration().
-						AnyTimes()
 
 					params := api.PostDataMessageForDeviceParams{
 						DeviceID: deviceName,
@@ -2783,117 +3080,7 @@ var _ = Describe("Yggdrasil", func() {
 					res := handler.PostDataMessageForDevice(deviceCtx, params)
 
 					// then
-					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
-					data, ok := res.(*operations.PostDataMessageForDeviceOK)
-					Expect(ok).To(BeTrue())
-					Expect(data.Payload.Content).NotTo(BeNil())
-
-					// // checked that response is valid certificate.
-					parsedResponse, ok := data.Payload.Content.(models.RegistrationResponse)
-					Expect(ok).To(BeTrue())
-
-					block, nextCert := pem.Decode([]byte(parsedResponse.Certificate))
-					Expect(block).NotTo(BeNil())
-					Expect(nextCert).To(HaveLen(0))
-
-					cert, err := x509.ParseCertificate(block.Bytes)
-					Expect(err).NotTo(HaveOccurred())
-					Expect(cert.Subject.CommonName).To(Equal(deviceName))
-				})
-
-				It("Create device with valid content", func() {
-					// given
-					content := models.RegistrationInfo{
-						Hardware:           &models.HardwareInfo{Hostname: "fooHostname"},
-						CertificateRequest: givenCert,
-					}
-
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
-						Return(nil, errorNotFound).
-						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						Create(gomock.Any(), gomock.Any()).
-						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) {
-							Expect(edgeDevice.Name).To(Equal(deviceName))
-							Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-							Expect(edgeDevice.Finalizers).To(HaveLen(2))
-						}).
-						Return(nil).
-						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
-						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-							Expect(edgeDevice.Name).To(Equal(deviceName))
-							Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-							Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
-							Expect(edgeDevice.Status.Hardware.Hostname).To(Equal("fooHostname"))
-						}).
-						Return(nil).
-						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						UpdateLabels(gomock.Any(), gomock.Any(), gomock.Any()).
-						Return(nil).
-						Times(1)
-
-					metricsMock.EXPECT().
-						IncEdgeDeviceSuccessfulRegistration().
-						AnyTimes()
-
-					params := api.PostDataMessageForDeviceParams{
-						DeviceID: deviceName,
-						Message: &models.Message{
-							Directive: directiveName,
-							Content:   content,
-						},
-					}
-
-					// when
-					res := handler.PostDataMessageForDevice(deviceCtx, params)
-
-					// then
-					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
-				})
-
-				It("Cannot create device on repo", func() {
-					// given
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
-						Return(nil, errorNotFound).
-						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						Create(gomock.Any(), gomock.Any()).
-						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) {
-							Expect(edgeDevice.Name).To(Equal(deviceName))
-							Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-							Expect(edgeDevice.Finalizers).To(HaveLen(2))
-						}).
-						Return(fmt.Errorf("Failed")).
-						Times(1)
-
-					metricsMock.EXPECT().
-						IncEdgeDeviceFailedRegistration().
-						AnyTimes()
-
-					params := api.PostDataMessageForDeviceParams{
-						DeviceID: deviceName,
-						Message: &models.Message{
-							Directive: directiveName,
-							Content: models.RegistrationInfo{
-								CertificateRequest: givenCert,
-							},
-						},
-					}
-
-					// when
-					res := handler.PostDataMessageForDevice(deviceCtx, params)
-
-					// then
-					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceInternalServerError{}))
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceNotFound{}))
 				})
 
 				It("Update device status failed", func() {
@@ -2901,18 +3088,8 @@ var _ = Describe("Yggdrasil", func() {
 					// given
 					edgeDeviceRepoMock.EXPECT().
 						Read(gomock.Any(), deviceName, testNamespace).
-						Return(nil, errorNotFound).
-						Times(1)
-
-					edgeDeviceRepoMock.EXPECT().
-						Create(gomock.Any(), gomock.Any()).
-						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) {
-							Expect(edgeDevice.Name).To(Equal(deviceName))
-							Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-							Expect(edgeDevice.Finalizers).To(HaveLen(2))
-						}).
-						Return(nil).
-						Times(1)
+						Return(device, nil).
+						Times(4)
 
 					edgeDeviceRepoMock.EXPECT().
 						PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -2922,12 +3099,12 @@ var _ = Describe("Yggdrasil", func() {
 							Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
 						}).
 						Return(fmt.Errorf("Failed")).
-						Times(1)
+						Times(4)
 
 					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
-						Return(nil, fmt.Errorf("Failed")).
-						Times(3)
+						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+						Return(nil).
+						Times(1)
 
 					metricsMock.EXPECT().
 						IncEdgeDeviceFailedRegistration().
@@ -2959,6 +3136,10 @@ var _ = Describe("Yggdrasil", func() {
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
+				metricsMock.EXPECT().
+					IncEdgeDeviceFailedRegistration().
+					Times(1)
+
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
 					Message: &models.Message{
@@ -2971,57 +3152,6 @@ var _ = Describe("Yggdrasil", func() {
 
 				// then
 				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceInternalServerError{}))
-			})
-
-			// @TODO To be extended, with the CSR entry. WIll fail
-			It("Create device without any content", func() {
-				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
-					Return(nil, errorNotFound).
-					Times(1)
-
-				edgeDeviceRepoMock.EXPECT().
-					Create(gomock.Any(), gomock.Any()).
-					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) {
-						Expect(edgeDevice.Name).To(Equal(deviceName))
-						Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-						Expect(edgeDevice.Finalizers).To(HaveLen(2))
-					}).
-					Return(nil).
-					Times(1)
-
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
-					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
-						Expect(edgeDevice.Name).To(Equal(deviceName))
-						Expect(edgeDevice.Namespace).To(Equal(testNamespace))
-						Expect(edgeDevice.Status.Workloads).To(HaveLen(0))
-					}).
-					Return(nil).
-					Times(1)
-
-				edgeDeviceRepoMock.EXPECT().
-					UpdateLabels(gomock.Any(), gomock.Any(), gomock.Any()).
-					Return(nil).
-					Times(1)
-
-				metricsMock.EXPECT().
-					IncEdgeDeviceSuccessfulRegistration().
-					AnyTimes()
-
-				params := api.PostDataMessageForDeviceParams{
-					DeviceID: deviceName,
-					Message: &models.Message{
-						Directive: directiveName,
-					},
-				}
-
-				// when
-				res := handler.PostDataMessageForDevice(deviceCtx, params)
-
-				// then
-				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceOK{}))
 			})
 
 			It("Create device with invalid content", func() {
