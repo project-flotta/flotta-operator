@@ -124,6 +124,61 @@ var _ = Describe("EdgeDeviceSignedRequest controller", func() {
 		Expect(edsr.Spec.Approved).To(BeFalse())
 	})
 
+	It("Device Signed request is not yet approved on AutoApproval", func() {
+
+		// given
+		reconciler.AutoApproval = true
+
+		edgeDeviceSRRepoMock.EXPECT().
+			Read(gomock.Any(), req.Name, req.Namespace).
+			Return(edsr, nil).
+			Times(1)
+
+		edgeDeviceSRRepoMock.EXPECT().
+			Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, old, new *v1alpha1.EdgeDeviceSignedRequest) {
+				Expect(new.Spec.Approved).To(BeTrue())
+				Expect(old.Spec.Approved).To(BeFalse())
+			}).
+			Return(nil).
+			Times(1)
+
+		// when
+		result, err := reconciler.Reconcile(context.TODO(), req)
+
+		// then
+		Expect(err).NotTo(HaveOccurred())
+		Expect(result.Requeue).To(BeTrue())
+	})
+
+	It("Device Signed request is not yet approved but fail on patch", func() {
+
+		// given
+		reconciler.AutoApproval = true
+
+		edgeDeviceSRRepoMock.EXPECT().
+			Read(gomock.Any(), req.Name, req.Namespace).
+			Return(edsr, nil).
+			Times(1)
+
+		edgeDeviceSRRepoMock.EXPECT().
+			Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+			Do(func(ctx context.Context, old, new *v1alpha1.EdgeDeviceSignedRequest) {
+				Expect(new.Spec.Approved).To(BeTrue())
+				Expect(old.Spec.Approved).To(BeFalse())
+			}).
+			Return(fmt.Errorf("Fail")).
+			Times(1)
+
+		// when
+		result, err := reconciler.Reconcile(context.TODO(), req)
+
+		// then
+		Expect(err).To(HaveOccurred())
+		Expect(result.Requeue).To(BeTrue())
+		Expect(edsr.Spec.Approved).To(BeFalse())
+	})
+
 	Context("Is approved", func() {
 		BeforeEach(func() {
 			edsr.Spec.Approved = true
