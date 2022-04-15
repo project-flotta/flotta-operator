@@ -2,9 +2,10 @@ package heartbeat
 
 import (
 	"context"
-	mtrcs "github.com/project-flotta/flotta-operator/internal/metrics"
 	"reflect"
 	"time"
+
+	mtrcs "github.com/project-flotta/flotta-operator/internal/metrics"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/hardware"
@@ -76,7 +77,7 @@ func updateDeploymentStatuses(oldWorkloads []v1alpha1.Workload, workloads []*mod
 			edgeWorkloadMap[status.Name] = edgeWorkload
 		}
 	}
-	var edgeWorkloads []v1alpha1.Workload
+	edgeWorkloads := make([]v1alpha1.Workload, 0, len(edgeWorkloadMap))
 	for _, edgeWorkload := range edgeWorkloadMap {
 		edgeWorkloads = append(edgeWorkloads, edgeWorkload)
 	}

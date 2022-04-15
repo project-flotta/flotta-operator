@@ -112,7 +112,7 @@ func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, err
 		caCert, err := caProvider.GetCACertificate()
 		if err != nil {
 			errors = multierror.Append(errors, fmt.Errorf(
-				"cannot get CA certificate for provider %s: %v",
+				"cannot get CA certificate for provider %s: %w",
 				caProvider.GetName(), err))
 			continue
 		}
@@ -138,7 +138,7 @@ func (conf *TLSConfig) InitCertificates() (*tls.Config, []*x509.Certificate, err
 
 	certificate, err := serverCert.GetCertificate()
 	if err != nil {
-		return nil, nil, fmt.Errorf("Cannot create server certfificate: %v", err)
+		return nil, nil, fmt.Errorf("Cannot create server certfificate: %w", err)
 	}
 
 	tlsConfig := &tls.Config{

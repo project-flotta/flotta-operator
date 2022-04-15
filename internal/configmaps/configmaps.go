@@ -40,7 +40,10 @@ func (cm *configMap) Fetch(ctx context.Context, workload v1alpha1.EdgeWorkload, 
 
 		// Extract info also from volumes:
 		utils.ExtractInfoFromVolume(podSpec.Volumes, cmMap, func(i interface{}) (bool, *bool, string) {
-			volume := i.(corev1.Volume)
+			volume, ok := i.(corev1.Volume)
+			if !ok {
+				return false, nil, ""
+			}
 			if volume.ConfigMap != nil {
 				return true, volume.ConfigMap.Optional, volume.ConfigMap.Name
 			}
@@ -52,7 +55,7 @@ func (cm *configMap) Fetch(ctx context.Context, workload v1alpha1.EdgeWorkload, 
 	for name, keys := range cmMap {
 		configmapObj, err := cm.readAndValidateConfigMap(ctx, name, namespace, keys)
 		if err != nil {
-			return nil, fmt.Errorf("Can't fetch the configmap %v/%v: %v", name, namespace, err)
+			return nil, fmt.Errorf("Can't fetch the configmap %v/%v: %w", name, namespace, err)
 		}
 		if configmapObj == nil {
 			continue
@@ -90,7 +93,10 @@ func (cm *configMap) readAndValidateConfigMap(ctx context.Context, configmapName
 
 func extractConfigMapsFromEnv(container *corev1.Container, configmapMap utils.MapType) {
 	utils.ExtractInfoFromEnvFrom(container.EnvFrom, configmapMap, func(e interface{}) (bool, *bool, string) {
-		env := e.(corev1.EnvFromSource)
+		env, ok := e.(corev1.EnvFromSource)
+		if !ok {
+			return false, nil, ""
+		}
 		if env.ConfigMapRef != nil {
 			return true, env.ConfigMapRef.Optional, env.ConfigMapRef.Name
 		}

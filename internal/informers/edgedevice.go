@@ -14,12 +14,14 @@ func NewEdgeDeviceEventHandler(metrics mtrcs.Metrics) *edgeDeviceEventHandler {
 }
 
 func (h *edgeDeviceEventHandler) OnAdd(obj interface{}) {
-	edgeDevice := obj.(*v1alpha1.EdgeDevice)
-	h.metrics.RegisterDeviceCounter(edgeDevice.Namespace, edgeDevice.Name)
+	if edgeDevice, ok := obj.(*v1alpha1.EdgeDevice); ok {
+		h.metrics.RegisterDeviceCounter(edgeDevice.Namespace, edgeDevice.Name)
+	}
 }
 func (h *edgeDeviceEventHandler) OnDelete(obj interface{}) {
-	edgeDevice := obj.(*v1alpha1.EdgeDevice)
-	h.metrics.RemoveDeviceCounter(edgeDevice.Namespace, edgeDevice.Name)
+	if edgeDevice, ok := obj.(*v1alpha1.EdgeDevice); ok {
+		h.metrics.RemoveDeviceCounter(edgeDevice.Namespace, edgeDevice.Name)
+	}
 }
 
 func (h *edgeDeviceEventHandler) OnUpdate(_, _ interface{}) {}

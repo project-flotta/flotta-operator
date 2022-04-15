@@ -63,7 +63,7 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 		if err != nil {
 			return nil, err
 		}
-		secretList, err = a.createSecretList(ctx, logger, edgeWorkloads, edgeDevice)
+		secretList, err = a.createSecretList(ctx, edgeWorkloads, edgeDevice)
 		if err != nil {
 			logger.Error(err, "failed reading secrets for device workloads")
 			return nil, err
@@ -271,7 +271,7 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger logr
 			if allowListSpec := spec.Metrics.AllowList; allowListSpec != nil {
 				allowList, err := a.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, edgeworkload.Namespace)
 				if err != nil {
-					return nil, fmt.Errorf("Cannot get AllowList Metrics Confimap for %v: %v", edgeworkload.Name, err)
+					return nil, fmt.Errorf("Cannot get AllowList Metrics Confimap for %v: %w", edgeworkload.Name, err)
 				}
 				workload.Metrics.AllowList = allowList
 			}
@@ -315,7 +315,7 @@ func (a *configurationAssembler) getAuthFile(ctx context.Context, imageRegistrie
 	return "", nil
 }
 
-func (a *configurationAssembler) createSecretList(ctx context.Context, logger logr.Logger, workloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.SecretList, error) {
+func (a *configurationAssembler) createSecretList(ctx context.Context, workloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.SecretList, error) {
 	list := models.SecretList{}
 
 	// create map of secret names and keys
@@ -475,7 +475,7 @@ func (a *configurationAssembler) getDeviceSyslogLogConfig(ctx context.Context, n
 		client.ObjectKey{Namespace: namespace, Name: val.SyslogConfig.Name},
 		&cm)
 	if err != nil {
-		return nil, fmt.Errorf("cannot get syslogconfig from configmap %s: %v", val.SyslogConfig.Name, err)
+		return nil, fmt.Errorf("cannot get syslogconfig from configmap %s: %w", val.SyslogConfig.Name, err)
 	}
 	proto := "tcp"
 	if cmproto, ok := cm.Data["Protocol"]; ok {

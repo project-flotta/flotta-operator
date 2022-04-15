@@ -18,7 +18,10 @@ const (
 )
 
 func WorkloadByDeviceIndexFunc(obj ctrlruntimeclient.Object) []string {
-	workload := obj.(*v1alpha1.EdgeWorkload)
+	workload, ok := obj.(*v1alpha1.EdgeWorkload)
+	if !ok {
+		return []string{}
+	}
 	var keys []string
 	for name, value := range workload.Labels {
 		if flottalabels.IsSelectorLabel(name) {
@@ -29,7 +32,10 @@ func WorkloadByDeviceIndexFunc(obj ctrlruntimeclient.Object) []string {
 }
 
 func DeviceByWorkloadIndexFunc(obj ctrlruntimeclient.Object) []string {
-	device := obj.(*v1alpha1.EdgeDevice)
+	device, ok := obj.(*v1alpha1.EdgeDevice)
+	if !ok {
+		return []string{}
+	}
 	var keys []string
 	// iterate over labels map and return a list of workloads as keys
 	for name := range device.Labels {

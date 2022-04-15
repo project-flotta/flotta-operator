@@ -113,7 +113,7 @@ func (config *CASecretProvider) GetServerCertificate(dnsNames []string, localhos
 	}, &secret)
 
 	if err != nil && !errors.IsNotFound(err) {
-		return nil, fmt.Errorf("cannot get Host TLS cert:%v", err)
+		return nil, fmt.Errorf("cannot get Host TLS cert: %w", err)
 	}
 
 	if err == nil {
@@ -125,19 +125,19 @@ func (config *CASecretProvider) GetServerCertificate(dnsNames []string, localhos
 		}
 
 		if err := certGroup.ImportFromPem(); err != nil {
-			return nil, fmt.Errorf("cannot import server cert from configmap: %v", err)
+			return nil, fmt.Errorf("cannot import server cert from configmap: %w", err)
 		}
 		return certGroup, err
 	}
 
 	CACert, err := config.GetCACertificate()
 	if err != nil {
-		return nil, fmt.Errorf("cannot get Host CA TLS cert:%v", err)
+		return nil, fmt.Errorf("cannot get Host CA TLS cert: %w", err)
 	}
 
 	cert, err := getServerCertificate(dnsNames, localhostEnabled, CACert)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create host TLS cert:%v", err)
+		return nil, fmt.Errorf("cannot create host TLS cert: %w", err)
 	}
 
 	secret = corev1.Secret{
@@ -153,7 +153,7 @@ func (config *CASecretProvider) GetServerCertificate(dnsNames []string, localhos
 
 	err = config.client.Create(context.TODO(), &secret)
 	if err != nil {
-		return nil, fmt.Errorf("cannot store server cert: %v", err)
+		return nil, fmt.Errorf("cannot store server cert: %w", err)
 	}
 	return cert, nil
 }
@@ -180,12 +180,12 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 
 	certGroup, err := createKeyAndCSR(cert, CACert)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot sign certificate request: %v", err)
+		return nil, fmt.Errorf("Cannot sign certificate request: %w", err)
 	}
 
 	err = certGroup.CreatePem()
 	if err != nil {
-		return nil, fmt.Errorf("Cannot encode certs: %v", err)
+		return nil, fmt.Errorf("Cannot encode certs: %w", err)
 	}
 
 	res := map[string][]byte{
@@ -212,7 +212,7 @@ func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expira
 
 	CSR, err := x509.ParseCertificateRequest(decodecCert.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse CSR: %v", err)
+		return nil, fmt.Errorf("cannot parse CSR: %w", err)
 	}
 
 	clientCert := &x509.Certificate{
@@ -236,7 +236,7 @@ func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expira
 	certBytes, err := x509.CreateCertificate(
 		rand.Reader, clientCert, config.latestCA.cert, CSR.PublicKey, config.latestCA.privKey)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot sign certificate reques: %v", err)
+		return nil, fmt.Errorf("Cannot sign certificate reques: %w", err)
 	}
 
 	certPEM := pem.EncodeToMemory(&pem.Block{

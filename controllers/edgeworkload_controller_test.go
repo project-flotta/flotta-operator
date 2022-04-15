@@ -661,13 +661,13 @@ var _ = Describe("Controllers", func() {
 				actualSplit   map[int]int
 				syncMap       = sync.Mutex{}
 			)
-			executeConcurrent := func(concurrency uint, f controllers.ConcurrentFunc, devices []v1alpha1.EdgeDevice) []error {
+			executeConcurrent := func(ctx context.Context, concurrency uint, f controllers.ConcurrentFunc, devices []v1alpha1.EdgeDevice) []error {
 				if len(devices) == 0 {
 					return nil
 				}
-				testF := func(devices []v1alpha1.EdgeDevice) []error {
+				testF := func(ctx context.Context, devices []v1alpha1.EdgeDevice) []error {
 					defer GinkgoRecover()
-					errs := f(devices)
+					errs := f(context.Background(), devices)
 					lenErrs := len(errs)
 					syncMap.Lock()
 					val, ok := actualSplit[lenErrs]
@@ -680,7 +680,7 @@ var _ = Describe("Controllers", func() {
 					syncMap.Unlock()
 					return errs
 				}
-				_ = controllers.ExecuteConcurrent(concurrency, testF, devices)
+				_ = controllers.ExecuteConcurrent(context.Background(), concurrency, testF, devices)
 				return nil
 			}
 
