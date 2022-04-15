@@ -33,6 +33,32 @@ rules:
 - apiGroups:
   - management.project-flotta.io
   resources:
+  - edgeconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgeconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - edgeconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - management.project-flotta.io
+  resources:
   - edgedevices
   verbs:
   - create
