@@ -89,6 +89,8 @@ gosec: ## Run gosec locally
 
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
+test: ## Run tests.
+test: GINKGO_OPTIONS ?= --skip e2e
 test: manifests generate fmt vet test-fast ## Run tests.
 
 integration-test: ginkgo get-certs
@@ -100,7 +102,7 @@ ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test-fast: ginkgo
 	mkdir -p ${ENVTEST_ASSETS_DIR}
 	test -f ${ENVTEST_ASSETS_DIR}/setup-envtest.sh || curl -sSLo ${ENVTEST_ASSETS_DIR}/setup-envtest.sh https://raw.githubusercontent.com/kubernetes-sigs/controller-runtime/v0.8.3/hack/setup-envtest.sh
-	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); $(GINKGO) --cover -output-dir=. -coverprofile=cover.out -v -progress -skip e2e $(TEST_PACKAGES)
+	source ${ENVTEST_ASSETS_DIR}/setup-envtest.sh; fetch_envtest_tools $(ENVTEST_ASSETS_DIR); setup_envtest_env $(ENVTEST_ASSETS_DIR); $(GINKGO) --cover -output-dir=. -coverprofile=cover.out -v -progress $(GINKGO_OPTIONS) $(TEST_PACKAGES)
 
 test-create-coverage:
 	sed -i '/mock_/d' cover.out
