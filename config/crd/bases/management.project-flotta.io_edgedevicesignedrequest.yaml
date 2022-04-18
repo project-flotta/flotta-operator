@@ -287,6 +287,9 @@ spec:
               target_namespace:
                 description: TargetNamespace is the namespace where device will land
                 type: string
+              target_set:
+                description: TargetSet is set that edgedevice will use.
+                type: string
             required:
             - target_namespace
             type: object

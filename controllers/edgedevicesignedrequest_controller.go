@@ -91,6 +91,11 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 			RequestTime: &now,
 		},
 	}
+
+	if edsr.Spec.TargetSet != "" {
+		device.ObjectMeta.Labels[v1alpha1.EdgedeviceSetLabel] = edsr.Spec.TargetSet
+	}
+
 	err = r.EdgeDeviceRepository.Create(ctx, device)
 	if err != nil {
 		logger.Error(err, "cannot create edgedevice")

@@ -36,6 +36,9 @@ type EdgeDeviceSignedRequestSpec struct {
 	// TargetNamespace is the namespace where device will land
 	TargetNamespace string `json:"target_namespace"`
 
+	// TargetSet is set that edgedevice will use.
+	TargetSet string `json:"target_set,omitempty"`
+
 	// Approved is set to true if the device should be approved to register
 	// +kubebuilder:default=false
 	Approved bool `json:"approved,omitempty"`
