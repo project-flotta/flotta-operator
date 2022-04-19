@@ -85,7 +85,7 @@ vet: ## Run go vet against code.
 	go vet ./...
 
 gosec: ## Run gosec locally
-	$(DOCKER) run --rm -it -v $(PWD):/opt/data/:z docker.io/securego/gosec -exclude-generated /opt/data/...
+	$(DOCKER) run --rm -v $(PWD):/opt/data/:z docker.io/securego/gosec -exclude-generated /opt/data/...
 
 GO_IMAGE=golang:1.17.8-alpine3.14
 GOIMPORTS_IMAGE=golang.org/x/tools/cmd/goimports@latest
@@ -99,7 +99,7 @@ imports: ## fix and format go imports
 
 LINT_IMAGE=golangci/golangci-lint:v1.45.0
 lint: ## Check if the go code is properly written, rules are in .golangci.yml 
-	docker run --rm -v $(CURDIR):$(CURDIR) -w="$(CURDIR)" $(LINT_IMAGE) sh -c 'golangci-lint run'
+	$(DOCKER) run --rm -v $(CURDIR):$(CURDIR) -w="$(CURDIR)" $(LINT_IMAGE) sh -c 'golangci-lint run'
 
 
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
@@ -109,7 +109,7 @@ test: manifests generate fmt vet test-fast ## Run tests.
 
 integration-test: ginkgo get-certs
 	$(DOCKER) pull quay.io/project-flotta/edgedevice
-	$(GINKGO) -focus=$(FOCUS) run test/e2e
+	$(GINKGO) -v run test/e2e
 
 TEST_PACKAGES := ./...
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
