@@ -141,7 +141,7 @@ check-certs: # Check cert subject
 	openssl x509 -noout -in /tmp/cert.pem --subject
 
 ##@ Build
-build: generate fmt vet gosec imports ## Build manager binary.
+build: generate fmt vet imports ## Build manager binary.
 	go build -mod=vendor -o bin/manager main.go
 
 fast-build: generate fmt vet ## Fast build manager binary for local dev.
