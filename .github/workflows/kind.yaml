@@ -34,7 +34,7 @@ jobs:
           IMG=flotta-operator:latest make docker-build
           kind load docker-image flotta-operator:latest
           timeout 2m make deploy IMG=flotta-operator TARGET=kind || retVal=$?
-          if [ $retVal -ne 124 ]; then
+          if [[ -n "$retVal" && $retVal -ne 124 ]]; then
             echo "Make run failed"; exit 1
           fi
           kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
