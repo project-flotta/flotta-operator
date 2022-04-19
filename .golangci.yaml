@@ -1,3 +1,4 @@
+---
 # Options for analysis running.
 run:
   # The default concurrency value is the number of available CPU.
@@ -90,7 +91,7 @@ linters:
   # Enable specific linter
   # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
   enable:
-  # default linter
+    # default linter
     - deadcode
     - errcheck
     - gosimple
@@ -101,7 +102,7 @@ linters:
     - typecheck
     - unused
     - varcheck
-  # additional linters
+    # additional linters
     - bodyclose
     - errorlint
     - exportloopref
