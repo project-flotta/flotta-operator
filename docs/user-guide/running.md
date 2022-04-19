@@ -63,11 +63,7 @@ sudo chown root:root /tmp/*.pem
 
 #### Prerequisites
 
-- Generate certificate and a key:
-
-  `openssl req -new -newkey rsa:4096 -x509 -sha256 -days 365 -nodes -out cert.pem -keyout key.pem`
-- Put generated cert.pem and key.pem files in `/etc/pki/consumer` edge device directory 
-- Checkout https://github.com/jakub-dzon/yggdrasil repository
+- Checkout https://github.com/RedHatInsights/yggdrasil repository on main branch
 
 #### Running
 
@@ -88,7 +84,6 @@ sudo yggd \
   --cert-file /tmp/cert.pem \
   --key-file /tmp/key.pem \
   --ca-root /tmp/ca.pem \
-  --socket-addr @yggd \
   --server 127.0.0.1:8043
 `
 
