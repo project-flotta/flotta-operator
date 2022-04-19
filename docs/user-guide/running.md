@@ -58,14 +58,43 @@ make get-certs
 sudo chown root:root /tmp/*.pem
 ```
 
+### Agent from RPMs
 
-### yggdrasil
+#### Prepare installation scripts
 
-#### Prerequisites
+On a machine with KUBECONFIG pointing at cluster with Flotta Operator running, execute in the `flotta-operator` repository:
+```shell
+make agent-install-scripts
+```
+
+As a result, two files will be generated:
+ - `hack/install-agent-rpm-ostree.sh` - to be used to install Flotta Agent on machines with Ostree-based system (i.e. Fedora IoT);
+ - `hack/install-agent-dnf.sh` - to be used to install Flotta Agent on machines with `dnf` package manager installed (i.e. Fedora Server); 
+
+#### Upload chosen file
+
+Upload your installation script to machine that should be managed by Flotta.
+
+#### Install
+
+Execute uploaded script, passing as an argument IP address of machine exposing Flotta HTTP API port 8043:
+
+```shell
+./install-agent-rpm-ostree.sh -i <HTTP_API_IP>
+```
+
+The script will install and enable required software and machine will get registered as an `EdgeDevice` as soon as agent 
+components are up.
+
+### Agent - from sources
+
+#### yggdrasil
+
+##### Prerequisites
 
 - Checkout https://github.com/RedHatInsights/yggdrasil repository on main branch
 
-#### Running
+##### Running
 
 ---
 **Warning**
@@ -101,9 +130,9 @@ make check-certs
 ```
 
 
-### flotta-device-worker
+#### flotta-device-worker
 
-#### Prerequisites
+##### Prerequisites
 
 On the build machine:
 
@@ -130,25 +159,23 @@ On the edge device:
 - Make sure `/usr/local/libexec/yggdrasil` directory exists
 
 
-#### Building and installing on the edge device
+##### Building and installing on the edge device
 
 1. `export GOPROXY=proxy.golang.org,direct`
 2. `LIBEXECDIR=/usr/local/libexec make install`
 
-#### Alternative: Building on a separate build machine
+##### Alternative: Building on a separate build machine
 
-##### Building
+###### Building
 Execute following steps on the build machine:
 
 1. `export GOPROXY=proxy.golang.org,direct`
 2. `make build`
 
-##### Installing 
+###### Installing 
 
 1. Upload <flotta-device-worker repo dir>/bin/device-worker to `/usr/local/libexec/yggdrasil` directory on the edge device
 2. Make sure that `/usr/local/libexec/yggdrasil/device-worker` is executable
-
-
 
 
 ## Using edge device ISO
