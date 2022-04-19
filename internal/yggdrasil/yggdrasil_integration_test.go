@@ -141,11 +141,11 @@ var _ = Describe("Yggdrasil", func() {
 			params = api.GetControlMessageForDeviceParams{
 				DeviceID: "foo",
 			}
-			deviceCtx = context.WithValue(context.TODO(), AuthzKey, "foo")
+			deviceCtx = context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "foo"})
 		)
 
 		It("cannot retrieve another device", func() {
-			ctx := context.WithValue(context.TODO(), AuthzKey, "bar")
+			ctx := context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "bar"})
 
 			// when
 			res := handler.GetControlMessageForDevice(ctx, params)
@@ -298,7 +298,7 @@ var _ = Describe("Yggdrasil", func() {
 			params = api.GetDataMessageForDeviceParams{
 				DeviceID: "foo",
 			}
-			deviceCtx = context.WithValue(context.TODO(), AuthzKey, "foo")
+			deviceCtx = context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "foo"})
 		)
 
 		validateAndGetDeviceConfig := func(res middleware.Responder) models.DeviceConfigurationMessage {
@@ -315,7 +315,7 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("Trying to access with not owning device", func() {
 			// given
-			ctx := context.WithValue(context.TODO(), AuthzKey, "bar")
+			ctx := context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "bar"})
 			// when
 			res := handler.GetDataMessageForDevice(ctx, params)
 
@@ -544,7 +544,7 @@ var _ = Describe("Yggdrasil", func() {
 
 			var (
 				deviceName string = "foo"
-				deviceCtx         = context.WithValue(context.TODO(), AuthzKey, deviceName)
+				deviceCtx         = context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: deviceName})
 				device     *v1alpha1.EdgeDevice
 				deploy     *v1alpha1.EdgeWorkload
 			)
@@ -698,8 +698,7 @@ var _ = Describe("Yggdrasil", func() {
 
 			BeforeEach(func() {
 				deviceName = "foo"
-
-				deviceCtx = context.WithValue(context.TODO(), AuthzKey, deviceName)
+				deviceCtx = context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "foo"})
 				device = getDevice(deviceName)
 				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
@@ -1793,7 +1792,7 @@ var _ = Describe("Yggdrasil", func() {
 			var (
 				deviceName = "foo"
 				setName    = "setFoo"
-				deviceCtx  = context.WithValue(context.TODO(), AuthzKey, deviceName)
+				deviceCtx  = context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: deviceName})
 				device     *v1alpha1.EdgeDevice
 				deviceSet  *v1alpha1.EdgeDeviceSet
 				deploy     *v1alpha1.EdgeWorkload
@@ -2054,7 +2053,7 @@ var _ = Describe("Yggdrasil", func() {
 
 		BeforeEach(func() {
 			deviceName = "foo"
-			deviceCtx = context.WithValue(context.TODO(), AuthzKey, deviceName)
+			deviceCtx = context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: deviceName})
 			device = getDevice(deviceName)
 		})
 
@@ -2076,7 +2075,7 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("Invalid deviceID on context", func() {
 			// given
-			ctx := context.WithValue(context.TODO(), AuthzKey, "bar")
+			ctx := context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "bar"})
 			params := api.PostDataMessageForDeviceParams{
 				DeviceID: deviceName,
 				Message: &models.Message{
@@ -2098,7 +2097,8 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("invalid deviceID on context", func() {
 				// given
-				ctx := context.WithValue(context.TODO(), AuthzKey, "bar")
+
+				ctx := context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "bar"})
 
 				params := api.PostDataMessageForDeviceParams{
 					DeviceID: deviceName,
@@ -3025,7 +3025,7 @@ var _ = Describe("Yggdrasil", func() {
 
 					// when
 					res := handler.PostDataMessageForDevice(
-						context.WithValue(context.TODO(), AuthzKey, "AnotherDevice"),
+						context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "bar"}),
 						params)
 
 					// then

@@ -99,11 +99,11 @@ func IsOwnDevice(ctx context.Context, deviceID string) bool {
 		return false
 	}
 
-	val, ok := ctx.Value(AuthzKey).(string)
+	val, ok := ctx.Value(AuthzKey).(mtls.RequestAuthVal)
 	if !ok {
 		return false
 	}
-	return val == strings.ToLower(deviceID)
+	return val.CommonName == strings.ToLower(deviceID)
 }
 
 // GetAuthType returns the kind of the authz that need to happen on the API call, the options are:
@@ -351,8 +351,8 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		// the first time that tries to register should be able to use register certificate.
 		if !isInit && !IsOwnDevice(ctx, deviceID) {
-			authKeyVal, _ := ctx.Value(AuthzKey).(string)
-			logger.V(0).Info("Device tries to re-register with an invalid certificate", "certcn", authKeyVal)
+			authKeyVal, _ := ctx.Value(AuthzKey).(mtls.RequestAuthVal)
+			logger.V(0).Info("Device tries to re-register with an invalid certificate", "certcn", authKeyVal.CommonName)
 			// At this moment, the registration certificate it's no longer valid,
 			// because the CR is already created, and need to be a device
 			// certificate.
@@ -360,7 +360,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceForbidden()
 		}
 
-		cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID)
+		cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID, h.initialNamespace)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
