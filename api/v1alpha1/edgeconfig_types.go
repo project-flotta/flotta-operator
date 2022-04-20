@@ -36,21 +36,16 @@ type EdgeConfigStatus struct {
 
 // EdgePlaybookSpec defines the desired state of EdgePlaybook
 type EdgePlaybookSpec struct {
-	// The ansible playbook command to execute
-	AnsiblePlaybookCmd *AnsiblePlaybookCmd `json:"ansiblePlaybookCmd,omitempty"`
-}
-
-// EdgePlaybookStatus defines the observed state of EdgePlaybook
-type EdgePlaybookStatus struct {
-	Conditions []EdgePlaybookCondition `json:"conditions,omitempty"`
-}
-
-type AnsiblePlaybookCmd struct {
 	// username who execute the playbook
 	User string `json:"user,omitempty"`
 	// The ansible's playbooks list. The first element is the playbook with the highest priority.
 	// +kubebuilder:validation:MinItems=1
 	Playbooks []Playbook `json:"playbooks,omitempty"`
+}
+
+// EdgePlaybookStatus defines the observed state of EdgePlaybook
+type EdgePlaybookStatus struct {
+	Conditions []EdgePlaybookCondition `json:"conditions,omitempty"`
 }
 
 type Playbook struct {

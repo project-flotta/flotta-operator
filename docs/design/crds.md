@@ -161,27 +161,26 @@ spec:
 ```yaml
 spec:
   edgePlaybook:
-    ansiblePlaybookCmd:
-      user: foo # Username who execute the playbook
-      playbooks:
-        - content: # Ansible playbook in base64
-          LS0tCi0gIG5hbWU6IEhlbGxvIFdvcmxkIEFuc2libGUgUGxheWJvb2sKICAgaG9zdHM6IDEyNy4wLjAu....
-          timeoutSeconds: 100 # Interval in seconds on which the playbook execution should be executed
-          requiredPrivilegeLevel: # The required privelege level necessary to execute the playbook. See https://man7.org/linux/man-pages/man7/capabilities.7.html for a full list
-            capAdd: # Capabilities to add
-              - SYS_CHROOT
-            capDrop: # Capabilities to drop
-              - SYS_BOOT
-          ansibleOptions:
-            check: false #  Flag defining whether the playbook execution should be in check mode (is just a simulation)
-          privilegeEscalationOptions: # To execute tasks with root privileges or with another user’s permissions
-            become: true # Flag definig whether to activate privilege escalation
-            becomeUser: bar # set to user with desired privileges
-            becomeMethod: sudo # method to use to increase privilege. Currently only `sudo` and `su` are available
-          executionStategy: ExecuteOnce # Define the execution strategy for the playbook. Currently `StopOnFailure`, `RetryOnFailure`, `ExecuteOnce` are available.
-        - content: # Ansible playbook in base64 
-          LS0tCgotIGhvc3RzOiBhbGwKICBnYXRoZXJfZmFjdHM6IGZhbHNlCiAgdmFyczoKICAgIGFycmF5OgogICAgICAtFlvdXIg....
-          ...
+    user: foo # Username who execute the playbook
+    playbooks:
+      - content: # Ansible playbook in base64
+        LS0tCi0gIG5hbWU6IEhlbGxvIFdvcmxkIEFuc2libGUgUGxheWJvb2sKICAgaG9zdHM6IDEyNy4wLjAu....
+        timeoutSeconds: 100 # Interval in seconds on which the playbook execution should be executed
+        requiredPrivilegeLevel: # The required privelege level necessary to execute the playbook. See https://man7.org/linux/man-pages/man7/capabilities.7.html for a full list
+          capAdd: # Capabilities to add
+            - SYS_CHROOT
+          capDrop: # Capabilities to drop
+            - SYS_BOOT
+        ansibleOptions:
+          check: false #  Flag defining whether the playbook execution should be in check mode (is just a simulation)
+        privilegeEscalationOptions: # To execute tasks with root privileges or with another user’s permissions
+          become: true # Flag definig whether to activate privilege escalation
+          becomeUser: bar # set to user with desired privileges
+          becomeMethod: sudo # method to use to increase privilege. Currently only `sudo` and `su` are available
+        executionStategy: ExecuteOnce # Define the execution strategy for the playbook. Currently `StopOnFailure`, `RetryOnFailure`, `ExecuteOnce` are available.
+      - content: # Ansible playbook in base64 
+        LS0tCgotIGhvc3RzOiBhbGwKICBnYXRoZXJfZmFjdHM6IGZhbHNlCiAgdmFyczoKICAgIGFycmF5OgogICAgICAtFlvdXIg....
+        ...
 ```
 
 ### Status

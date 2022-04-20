@@ -39,71 +39,66 @@ spec:
               edgePlaybook:
                 description: Definition of the custom playbook workload to execute
                 properties:
-                  ansiblePlaybookCmd:
-                    description: The ansible playbook command to execute
-                    properties:
-                      playbooks:
-                        description: The ansible's playbooks list. The first element
-                          is the playbook with the highest priority.
-                        items:
+                  playbooks:
+                    description: The ansible's playbooks list. The first element is
+                      the playbook with the highest priority.
+                    items:
+                      properties:
+                        ansibleOptions:
+                          description: the ansible's playbook options for the playbook
                           properties:
-                            ansibleOptions:
-                              description: the ansible's playbook options for the
-                                playbook
-                              properties:
-                                check:
-                                  description: don't make any changes; instead, try
-                                    to predict some of the changes that may occur
-                                  type: boolean
-                              type: object
-                            content:
-                              description: Playbook content
-                              format: byte
-                              type: string
-                            executionStrategy:
-                              description: Execution strategy for the playbook
-                              type: string
-                            privilegeEscalationOptions:
-                              description: the ansible's playbook privilege escalation
-                                options for the playbook
-                              properties:
-                                become:
-                                  type: boolean
-                                becomeMethod:
-                                  enum:
-                                  - sudo
-                                  - su
-                                  type: string
-                                becomeUser:
-                                  type: string
-                              type: object
-                            requiredPrivilegeLevel:
-                              description: The required privelege level necessary
-                                to execute the playbook
-                              properties:
-                                capAdd:
-                                  description: See https://man7.org/linux/man-pages/man7/capabilities.7.html
-                                  items:
-                                    type: integer
-                                  type: array
-                                capDrop:
-                                  items:
-                                    type: integer
-                                  type: array
-                              type: object
-                            timeoutSeconds:
-                              description: The connection timeout on ansible-playbook
-                              format: int64
-                              type: integer
-                          required:
-                          - content
+                            check:
+                              description: don't make any changes; instead, try to
+                                predict some of the changes that may occur
+                              type: boolean
                           type: object
-                        minItems: 1
-                        type: array
-                      user:
-                        description: username who execute the playbook
-                        type: string
-                    type: object
+                        content:
+                          description: Playbook content
+                          format: byte
+                          type: string
+                        executionStrategy:
+                          description: Execution strategy for the playbook
+                          type: string
+                        privilegeEscalationOptions:
+                          description: the ansible's playbook privilege escalation
+                            options for the playbook
+                          properties:
+                            become:
+                              type: boolean
+                            becomeMethod:
+                              enum:
+                              - sudo
+                              - su
+                              type: string
+                            becomeUser:
+                              type: string
+                          type: object
+                        requiredPrivilegeLevel:
+                          description: The required privelege level necessary to execute
+                            the playbook
+                          properties:
+                            capAdd:
+                              description: See https://man7.org/linux/man-pages/man7/capabilities.7.html
+                              items:
+                                type: integer
+                              type: array
+                            capDrop:
+                              items:
+                                type: integer
+                              type: array
+                          type: object
+                        timeoutSeconds:
+                          description: The connection timeout on ansible-playbook
+                          format: int64
+                          type: integer
+                      required:
+                      - content
+                      type: object
+                    minItems: 1
+                    type: array
+                  user:
+                    description: username who execute the playbook
+                    type: string
                 type: object
             type: object
           status:
