@@ -109,7 +109,7 @@ test: manifests generate fmt vet test-fast ## Run tests.
 
 integration-test: ginkgo get-certs
 	$(DOCKER) pull quay.io/project-flotta/edgedevice
-	$(GINKGO) -v run test/e2e
+	$(GINKGO) -focus=$(FOCUS) run test/e2e
 
 TEST_PACKAGES := ./...
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin

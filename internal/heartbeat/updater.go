@@ -77,7 +77,7 @@ func updateDeploymentStatuses(oldWorkloads []v1alpha1.Workload, workloads []*mod
 			edgeWorkloadMap[status.Name] = edgeWorkload
 		}
 	}
-	edgeWorkloads := make([]v1alpha1.Workload, 0, len(edgeWorkloadMap))
+	var edgeWorkloads []v1alpha1.Workload //nolint
 	for _, edgeWorkload := range edgeWorkloadMap {
 		edgeWorkloads = append(edgeWorkloads, edgeWorkload)
 	}
