@@ -1,0 +1,100 @@
+#!/bin/bash
+
+usage()
+{
+cat << EOF
+Usage: $0 OPTIONS
+This script installs Flotta agent component on RPM-compatible machine.
+OPTIONS:
+   -h      Show this message
+   -i      IP address under which your Flotta operator API endpoint on port 8043 is accessible to the device.
+           When your KUBECONFIG is pointing to cluster with Flotta operator deployed, you can run
+
+           kubectl port-forward service/flotta-operator-controller-manager -n flotta 8043 --address 0.0.0.0
+
+           to make the Flotta API accessible from your machine
+EOF
+}
+
+while getopts "i:h:" option; do
+    case "${option}"
+    in
+        i) FLOTTA_API_IP=${OPTARG};;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -z $FLOTTA_API_IP ]]; then
+    echo "ERROR: Flotta API IP is required"
+    usage
+    exit 1
+fi
+
+
+curl https://copr.fedorainfracloud.org/coprs/project-flotta/flotta/repo/fedora-35/project-flotta-flotta-fedora-35.repo -o /etc/yum.repos.d/project-flotta.repo
+
+rpm-ostree install node_exporter yggdrasil flotta-agent
+
+cat <<EOF >> /etc/hosts
+$FLOTTA_API_IP project-flotta.io
+EOF
+
+mkdir -p /etc/pki/consumer
+cat <<EOF > /etc/pki/consumer/ca.pem
+<CA_PEM>
+EOF
+
+cat <<EOF > /etc/pki/consumer/key.pem
+<KEY_PEM>
+EOF
+
+cat <<EOF > /etc/pki/consumer/cert.pem
+<CERT_PEM>
+EOF
+
+mkdir -p /var/yggdrasil-init
+cat <<EOF >/usr/local/bin/init-yggrasild.sh
+#!/bin/bash
+cat <<INTERNAL > /etc/yggdrasil/config.toml
+<CONFIG_TOML>
+INTERNAL
+
+systemctl disable init-yggd.service
+
+rm /etc/systemd/system/init-yggd.service
+rm -rf /usr/local/bin/init-yggrasild.sh
+EOF
+
+chmod 744 /usr/local/bin/init-yggrasild.sh
+
+cat <<EOF >/etc/systemd/system/init-yggd.service
+[Unit]
+Description=Initialize yggdrasild configuration.
+Before=yggdrasild.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/init-yggrasild.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 644 /etc/systemd/system/init-yggd.service
+
+systemctl enable init-yggd.service
+
+ln -s /usr/lib/systemd/system/podman.service /etc/systemd/system/default.target.wants/podman.service
+ln -s /usr/lib/systemd/system/podman.socket /etc/systemd/system/sockets.target.wants/podman.socket
+ln -s /usr/lib/systemd/system/node_exporter.service /etc/systemd/system/multi-user.target.wants/node_exporter.service
+ln -s /usr/lib/systemd/system/yggdrasild.service /etc/systemd/system/multi-user.target.wants/yggdrasild.service
+ln -s /usr/lib/systemd/system/nftables.service /etc/systemd/system/multi-user.target.wants/nftables.service
+
+systemctl reboot

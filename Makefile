@@ -222,6 +222,25 @@ endif
 validate-swagger: ## Validate swagger
 	$(DOCKER) run --rm -v $(PWD)/.spectral.yaml:/tmp/.spectral.yaml:z -v $(PWD)/swagger.yaml:/tmp/swagger.yaml:z stoplight/spectral lint --ruleset "/tmp/.spectral.yaml" /tmp/swagger.yaml
 
+generate-agent-install-ostree:
+	sed -e "/<CA_PEM>/r /tmp/ca.pem" -e '/<CA_PEM>/d' \
+		-e "/<CERT_PEM>/r /tmp/cert.pem" -e '/<CERT_PEM>/d' \
+		-e "/<KEY_PEM>/r /tmp/key.pem" -e '/<KEY_PEM>/d' \
+		-e "/<CONFIG_TOML>/r hack/config.toml" -e '/<CONFIG_TOML>/d' \
+		hack/install-agent-rpm-ostree.sh.template > hack/install-agent-rpm-ostree.sh
+	chmod +x hack/install-agent-rpm-ostree.sh
+
+generate-agent-install-dnf:
+	sed -e "/<CA_PEM>/r /tmp/ca.pem" -e '/<CA_PEM>/d' \
+		-e "/<CERT_PEM>/r /tmp/cert.pem" -e '/<CERT_PEM>/d' \
+		-e "/<KEY_PEM>/r /tmp/key.pem" -e '/<KEY_PEM>/d' \
+		-e "/<CONFIG_TOML>/r hack/config.toml" -e '/<CONFIG_TOML>/d' \
+		hack/install-agent-dnf.sh.template > hack/install-agent-dnf.sh
+	chmod +x hack/install-agent-dnf.sh
+
+agent-install-scripts: get-certs generate-agent-install-ostree generate-agent-install-dnf
+
+
 # go-install-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
 define go-install-tool

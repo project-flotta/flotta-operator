@@ -22,3 +22,5 @@ testbin
 
 # generated code
 *gomock_reflect*
+install-agent-rpm-ostree.sh
+install-agent-dnf.sh
