@@ -48,12 +48,12 @@ type EdgeWorkloadReconciler struct {
 	EdgeWorkloadRepository  edgeworkload.Repository
 	EdgeDeviceRepository    edgedevice.Repository
 	Concurrency             uint
-	ExecuteConcurrent       func(uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
+	ExecuteConcurrent       func(context.Context, uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
 	Metrics                 metrics.Metrics
 	MaxConcurrentReconciles int
 }
 
-type ConcurrentFunc func([]managementv1alpha1.EdgeDevice) []error
+type ConcurrentFunc func(context.Context, []managementv1alpha1.EdgeDevice) []error
 
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeworkloads,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeworkloads/status,verbs=get;update;patch
@@ -144,7 +144,7 @@ func (r *EdgeWorkloadReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 func (r *EdgeWorkloadReconciler) finalizeRemoval(ctx context.Context, edgeDevices []managementv1alpha1.EdgeDevice, edgeWorkload *managementv1alpha1.EdgeWorkload) error {
-	f := func(input []managementv1alpha1.EdgeDevice) []error {
+	f := func(ctx context.Context, input []managementv1alpha1.EdgeDevice) []error {
 		return r.removeWorkloadFromDevices(ctx, input, edgeWorkload.Name)
 	}
 	errs := r.executeConcurrent(ctx, f, edgeDevices)
@@ -196,9 +196,16 @@ func (r *EdgeWorkloadReconciler) removeWorkloadFromNonMatchingDevices(ctx contex
 		matchingDevicesMap[device.Name] = struct{}{}
 	}
 
-	f := func(input []managementv1alpha1.EdgeDevice) []error {
+	f := func(ctx context.Context, input []managementv1alpha1.EdgeDevice) []error {
 		var errs []error
 		for _, device := range input {
+			select {
+			case <-ctx.Done():
+				errs = append(errs, fmt.Errorf("context canceled: %w", ctx.Err()))
+				return errs
+			default:
+			}
+
 			if _, ok := matchingDevicesMap[device.Name]; !ok {
 				err := r.removeWorkloadFromDevice(ctx, name, device)
 				if err != nil {
@@ -219,9 +226,16 @@ func (r *EdgeWorkloadReconciler) removeWorkloadFromNonMatchingDevices(ctx contex
 }
 
 func (r *EdgeWorkloadReconciler) addWorkloadsToDevices(ctx context.Context, name string, edgeDevices []managementv1alpha1.EdgeDevice) error {
-	f := func(input []managementv1alpha1.EdgeDevice) []error {
+	f := func(ctx context.Context, input []managementv1alpha1.EdgeDevice) []error {
 		var errs []error
 		for i := range input {
+			select {
+			case <-ctx.Done():
+				errs = append(errs, fmt.Errorf("context canceled: %w", ctx.Err()))
+				return errs
+			default:
+			}
+
 			edgeDevice := input[i]
 			if !hasWorkload(edgeDevice, name) {
 				WorkloadStatus := managementv1alpha1.Workload{Name: name, Phase: managementv1alpha1.Deploying}
@@ -281,9 +295,9 @@ func (r *EdgeWorkloadReconciler) getLabelledEdgeDevices(ctx context.Context, nam
 func (r *EdgeWorkloadReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
 	var errs []error
 	if r.Concurrency == 1 {
-		errs = f(edgeDevices)
+		errs = f(ctx, edgeDevices)
 	} else {
-		errs = r.ExecuteConcurrent(r.Concurrency, f, edgeDevices)
+		errs = r.ExecuteConcurrent(ctx, r.Concurrency, f, edgeDevices)
 	}
 	return errs
 }
@@ -296,7 +310,7 @@ func (r *EdgeWorkloadReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func ExecuteConcurrent(concurrency uint, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+func ExecuteConcurrent(ctx context.Context, concurrency uint, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
 	if len(edgeDevices) == 0 || concurrency == 0 {
 		return nil
 	}
@@ -309,7 +323,7 @@ func ExecuteConcurrent(concurrency uint, f ConcurrentFunc, edgeDevices []managem
 		index := i
 		go func() {
 			defer wg.Done()
-			returnValues[index] = f(inputs[index])
+			returnValues[index] = f(ctx, inputs[index])
 		}()
 	}
 	wg.Wait()
@@ -336,7 +350,7 @@ func hasWorkload(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
 
 func merge(edgeDevices1 []managementv1alpha1.EdgeDevice, edgeDevices2 []managementv1alpha1.EdgeDevice) []managementv1alpha1.EdgeDevice {
 	mergedMap := make(map[string]struct{})
-	var merged []managementv1alpha1.EdgeDevice
+	merged := make([]managementv1alpha1.EdgeDevice, 0, len(edgeDevices1))
 	for _, device := range edgeDevices1 {
 		mergedMap[device.Name] = struct{}{}
 		merged = append(merged, device)

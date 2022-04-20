@@ -18,9 +18,10 @@ package controllers
 
 import (
 	"context"
+	"time"
+
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"time"
 
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
@@ -99,7 +100,7 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *managementv1alpha1.EdgeDevice) (*obv1.ObjectBucketClaim, error) {
 	obc, err := r.Claimer.GetClaim(ctx, edgeDevice.Name, edgeDevice.Namespace)
 	if err == nil {
-		return obc, err
+		return obc, nil
 	}
 
 	logger := log.FromContext(ctx, "EdgeDevice Name", edgeDevice.Name, "EdgeDevice Namespace", edgeDevice.Namespace)

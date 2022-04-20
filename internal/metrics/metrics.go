@@ -2,9 +2,10 @@ package metrics
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
-	"sync"
 )
 
 // When adding metric names, see https://prometheus.io/docs/practices/naming/#metric-names
@@ -88,7 +89,7 @@ func (m *metricsImpl) IncEdgeDeviceUnregistration() {
 
 func (m *metricsImpl) RemoveDeviceCounter(namespace, name string) {
 	if counter, ok := m.devices.LoadAndDelete(deviceKey(namespace, name)); ok {
-		metrics.Registry.Unregister(counter.(prometheus.Counter))
+		metrics.Registry.Unregister(counter.(prometheus.Counter)) //nolint
 	}
 }
 
@@ -103,7 +104,7 @@ func (m *metricsImpl) registerDeviceCounter(namespace, name string) prometheus.C
 			},
 		}))
 
-	counter := collector.(prometheus.Counter)
+	counter := collector.(prometheus.Counter) //nolint
 	if !loaded {
 		metrics.Registry.MustRegister(counter)
 	}

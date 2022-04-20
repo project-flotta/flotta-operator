@@ -51,7 +51,7 @@ func (c *CertificateGroup) ImportFromPem() error {
 	}
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return fmt.Errorf("Failing parsing cert: %v", err)
+		return fmt.Errorf("Failing parsing cert: %w", err)
 	}
 	err = c.decodePrivKeyFromPEM()
 	if err != nil {
@@ -78,7 +78,7 @@ func (c *CertificateGroup) decodePrivKeyFromPEM() error {
 	case RSAPrivateKeyBlockType:
 		key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 		if err != nil {
-			return fmt.Errorf("failing parsing key: %v", err)
+			return fmt.Errorf("failing parsing key: %w", err)
 		}
 		c.privKey = key
 	default:
@@ -99,7 +99,7 @@ func (c *CertificateGroup) CreatePem() error {
 	}
 	privKeyPEM, err := c.MarshalKeyToPem(c.privKey)
 	if err != nil {
-		return fmt.Errorf("Cannot marshal to PEM: %v", err)
+		return fmt.Errorf("Cannot marshal to PEM: %w", err)
 	}
 	c.CertPEM = caPEM
 	c.PrivKeyPEM = privKeyPEM
@@ -200,11 +200,11 @@ func getCACertificate() (*CertificateGroup, error) {
 	}
 	err = certificateBundle.CreatePem()
 	if err != nil {
-		return nil, fmt.Errorf("Cannot encode certificate: %v", err)
+		return nil, fmt.Errorf("Cannot encode certificate: %w", err)
 	}
 	err = certificateBundle.parseSignedCertificate()
 	if err != nil {
-		return nil, fmt.Errorf("Cannot parse PEM certificate: %v", err)
+		return nil, fmt.Errorf("Cannot parse PEM certificate: %w", err)
 	}
 
 	// Just pushed the signed cert, so PubkeyAlgo is present on the cert
@@ -215,14 +215,14 @@ func getCACertificate() (*CertificateGroup, error) {
 func createKeyAndCSR(cert *x509.Certificate, caCert *CertificateGroup) (*CertificateGroup, error) {
 	certKey, err := caCert.GetNewKey()
 	if err != nil {
-		return nil, fmt.Errorf("Cannot generate cert Key: %v", err)
+		return nil, fmt.Errorf("Cannot generate cert Key: %w", err)
 	}
 
 	// sign the cert by the CA
 	certBytes, err := x509.CreateCertificate(
 		rand.Reader, cert, caCert.cert, certKey.Public(), caCert.privKey)
 	if err != nil {
-		return nil, fmt.Errorf("cannot sign certificate: %v", err)
+		return nil, fmt.Errorf("cannot sign certificate: %w", err)
 	}
 
 	certificateBundle := CertificateGroup{
@@ -232,12 +232,12 @@ func createKeyAndCSR(cert *x509.Certificate, caCert *CertificateGroup) (*Certifi
 	}
 	err = certificateBundle.CreatePem()
 	if err != nil {
-		return nil, fmt.Errorf("Cannot encode certificate: %v", err)
+		return nil, fmt.Errorf("Cannot encode certificate: %w", err)
 	}
 
 	err = certificateBundle.parseSignedCertificate()
 	if err != nil {
-		return nil, fmt.Errorf("Cannot parse PEM certificate: %v", err)
+		return nil, fmt.Errorf("Cannot parse PEM certificate: %w", err)
 	}
 	return &certificateBundle, nil
 }
