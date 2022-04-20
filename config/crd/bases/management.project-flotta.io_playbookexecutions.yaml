@@ -53,7 +53,7 @@ spec:
                     description: Playbook content
                     format: byte
                     type: string
-                  playbooksPriorityMap:
+                  executionStrategy:
                     description: Execution strategy for the playbook
                     type: string
                   privilegeEscalationOptions:

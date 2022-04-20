@@ -66,7 +66,7 @@ type Playbook struct {
 	// the ansible's playbook privilege escalation options for the playbook
 	PrivilegeEscalationOptions *PrivilegeEscalationOptions `json:"privilegeEscalationOptions,omitempty"`
 	//Execution strategy for the playbook
-	ExecutionStrategy ExecutionStrategy `json:"playbooksPriorityMap,omitempty"`
+	ExecutionStrategy ExecutionStrategy `json:"executionStrategy,omitempty"`
 }
 
 type ExecutionStrategy string
