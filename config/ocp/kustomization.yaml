@@ -9,7 +9,10 @@ namespace: flotta
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
 namePrefix: flotta-operator-
-
+images:
+- name: "gcr.io/kubebuilder/kube-rbac-proxy"
+  newName: "registry.redhat.io/openshift4/ose-kube-rbac-proxy"
+  newTag: "v4.9.0"
 resources:
   - ../base
   - network/route.yaml
