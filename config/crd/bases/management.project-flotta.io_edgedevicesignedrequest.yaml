@@ -24,7 +24,7 @@ spec:
       name: deviceid
       type: string
     - description: Target Namespace to land
-      jsonPath: .spec.target_namespace
+      jsonPath: .spec.targetNamespace
       name: targetNamespace
       type: string
     - description: Approved
@@ -279,19 +279,19 @@ spec:
                     - gpus
                     - interfaces
                     type: object
-                  model_name:
+                  modelName:
                     description: 'ModelName is the model name from the OS. The output
                       of: cat /sys/firmware/devicetree/base/model'
                     type: string
                 type: object
-              target_namespace:
+              targetNamespace:
                 description: TargetNamespace is the namespace where device will land
                 type: string
-              target_set:
+              targetSet:
                 description: TargetSet is set that edgedevice will use.
                 type: string
             required:
-            - target_namespace
+            - targetNamespace
             type: object
           status:
             properties:

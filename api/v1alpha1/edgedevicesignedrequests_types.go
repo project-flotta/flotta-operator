@@ -34,10 +34,10 @@ type EdgeDeviceSignedRequestSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// TargetNamespace is the namespace where device will land
-	TargetNamespace string `json:"target_namespace"`
+	TargetNamespace string `json:"targetNamespace"`
 
 	// TargetSet is set that edgedevice will use.
-	TargetSet string `json:"target_set,omitempty"`
+	TargetSet string `json:"targetSet,omitempty"`
 
 	// Approved is set to true if the device should be approved to register
 	// +kubebuilder:default=false
@@ -51,7 +51,7 @@ type Features struct {
 	// ModelName is the model name from the OS.
 	// The output of:
 	// cat /sys/firmware/devicetree/base/model
-	ModelName string `json:"model_name,omitempty"`
+	ModelName string `json:"modelName,omitempty"`
 
 	// Hardware defines the hardware that devices has
 	Hardware *Hardware `json:"hardware,omitempty"`
@@ -87,7 +87,7 @@ type EdgeDeviceSignedRequestStatus struct {
 // EdgeDeviceSignedRequest is the Schema for the edgedevice enrolment options
 // +kubebuilder:resource:singular="edgedevicesignedrequest",path="edgedevicesignedrequest",scope="Namespaced",shortName={edsr}
 // +kubebuilder:printcolumn:JSONPath=".metadata.name",description="DeviceID",name="deviceid",type=string
-// +kubebuilder:printcolumn:JSONPath=".spec.target_namespace",description="Target Namespace to land",name="targetNamespace",type=string
+// +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",description="Target Namespace to land",name="targetNamespace",type=string
 // +kubebuilder:printcolumn:JSONPath=".spec.approved",description="Approved",name="Approved",type=string
 // +kubebuilder:printcolumn:JSONPath=".status.phase",description="Status",name="Status",type=string
 type EdgeDeviceSignedRequest struct {
