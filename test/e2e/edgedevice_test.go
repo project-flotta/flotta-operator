@@ -94,7 +94,15 @@ func (e *edgeDeviceDocker) WaitForWorkloadState(workloadName string, workloadPha
 			}
 			return false
 		}
-		status := device.Object["status"].(map[string]interface{})
+
+		if device.Object == nil {
+			return false
+		}
+
+		status, ok := device.Object["status"].(map[string]interface{})
+		if !ok {
+			return false
+		}
 		if status["workloads"] == nil {
 			ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since status contained no workloads\n")
 			return false
