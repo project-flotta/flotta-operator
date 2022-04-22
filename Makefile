@@ -4,6 +4,7 @@ VERSION ?= 0.0.1
 
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 IMAGE_TAG_BASE ?= project-flotta.io/flotta-operator
+TEST_IMAGE ?= quay.io/project-flotta/edgedevice:latest
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
@@ -108,7 +109,7 @@ test: GINKGO_OPTIONS ?= --skip e2e
 test: manifests generate fmt vet test-fast ## Run tests.
 
 integration-test: ginkgo get-certs
-	$(DOCKER) pull quay.io/project-flotta/edgedevice
+	$(DOCKER) pull $(TEST_IMAGE)
 	$(GINKGO) -focus=$(FOCUS) run test/e2e
 
 TEST_PACKAGES := ./...
