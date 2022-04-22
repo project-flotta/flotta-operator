@@ -331,7 +331,7 @@ func edgeworkload(name string, hostport int, containerport int, secretRef *strin
 	}
 	containers := []map[string]interface{}{{
 		"name":  name,
-		"image": "quay.io/bitnami/nginx:latest",
+		"image": "quay.io/project-flotta/nginx:1.21.6",
 		"ports": []map[string]int{{
 			"hostPort":      hostport,
 			"containerPort": containerport,
