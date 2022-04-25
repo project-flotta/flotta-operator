@@ -123,6 +123,9 @@ var Config struct {
 
 	// MaxConcurrentReconciles is the maximum number of concurrent Reconciles which can be run
 	MaxConcurrentReconciles uint `envconfig:"MAX_CONCURRENT_RECONCILES" default:"3"`
+
+	// AutoApprovalprocess enable auto approval on devices
+	AutoApproval bool `envconfig:"AUTO_APPROVAL_PROCESS" default:"true"`
 }
 
 func init() {
@@ -200,6 +203,7 @@ func main() {
 		EdgedeviceSignedRequestRepository: edgeDeviceSignedRequestRepository,
 		EdgeDeviceRepository:              edgeDeviceRepository,
 		MaxConcurrentReconciles:           int(Config.MaxConcurrentReconciles),
+		AutoApproval:                      Config.AutoApproval,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "edgedeviceSignedRequest")
 		os.Exit(1)

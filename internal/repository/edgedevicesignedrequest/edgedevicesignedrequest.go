@@ -12,6 +12,7 @@ type Repository interface {
 	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeviceSignedRequest, error)
 	Create(ctx context.Context, edgedeviceSignedRequest *v1alpha1.EdgeDeviceSignedRequest) error
 	PatchStatus(ctx context.Context, edgedeviceSignedRequest *v1alpha1.EdgeDeviceSignedRequest, patch *client.Patch) error
+	Patch(ctx context.Context, old *v1alpha1.EdgeDeviceSignedRequest, new *v1alpha1.EdgeDeviceSignedRequest) error
 }
 
 type EdgedeviceSignedRequestRepository struct {
@@ -34,4 +35,9 @@ func (esr *EdgedeviceSignedRequestRepository) Create(ctx context.Context, edgede
 
 func (esr *EdgedeviceSignedRequestRepository) PatchStatus(ctx context.Context, edgedeviceSignedRequest *v1alpha1.EdgeDeviceSignedRequest, patch *client.Patch) error {
 	return esr.client.Status().Patch(ctx, edgedeviceSignedRequest, *patch)
+}
+
+func (esr *EdgedeviceSignedRequestRepository) Patch(ctx context.Context, old *v1alpha1.EdgeDeviceSignedRequest, new *v1alpha1.EdgeDeviceSignedRequest) error {
+	patch := client.MergeFrom(old)
+	return esr.client.Patch(ctx, new, patch)
 }

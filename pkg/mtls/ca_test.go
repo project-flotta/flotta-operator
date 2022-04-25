@@ -403,7 +403,7 @@ KVwIKwl1tEGP
 -----END CERTIFICATE REQUEST-----`
 
 				// when
-				pemCert, err := config.SignCSR(csr, "test")
+				pemCert, err := config.SignCSR(csr, "test", "test")
 
 				// then
 				Expect(err).NotTo(HaveOccurred())
@@ -415,6 +415,8 @@ KVwIKwl1tEGP
 				cert, err := x509.ParseCertificate(block.Bytes)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(cert.Subject.CommonName).To(Equal("test"), "CommonName was not updated")
+				Expect(cert.Subject.OrganizationalUnit).To(HaveLen(1))
+				Expect(cert.Subject.OrganizationalUnit).To(ContainElement("test"))
 			})
 
 			Context("With initial config", func() {
@@ -432,7 +434,7 @@ MIIBhTCB7wIBADAdMQwwCgYDVQQKEwNrNGUxDTALBgNVBAMTBHRlc3QwgZ8wDQYJ
 KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 `
 					// when
-					pemCert, err := config.SignCSR(csr, "test")
+					pemCert, err := config.SignCSR(csr, "test", "test")
 
 					//  then
 					Expect(err).To(HaveOccurred())
@@ -447,7 +449,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 					})
 
 					// when
-					pemCert, err := config.SignCSR(string(givenCert), "test")
+					pemCert, err := config.SignCSR(string(givenCert), "test", "test")
 
 					// then
 					Expect(err).To(HaveOccurred())
@@ -463,7 +465,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 					})
 
 					// when
-					pemCert, err := config.SignCSR(string(givenCert), "test")
+					pemCert, err := config.SignCSR(string(givenCert), "test", "test")
 
 					// then
 					Expect(err).To(HaveOccurred())
@@ -484,7 +486,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 					date := time.Now().AddDate(0, 0, 1)
 					// when
 
-					pemCert, err := config.SignCSR(string(givenCert), "test")
+					pemCert, err := config.SignCSR(string(givenCert), "test", "test")
 					// then
 
 					Expect(err).NotTo(HaveOccurred())

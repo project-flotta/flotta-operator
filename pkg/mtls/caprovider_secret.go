@@ -199,7 +199,7 @@ func (config *CASecretProvider) CreateRegistrationCertificate(name string) (map[
 // This function is going to be used a lot, so using config.latestCA ensure
 // that APIServer is not overloaded with that.
 // Because the CM is always managed by this, should be safe to use that one.
-func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expiration time.Time) ([]byte, error) {
+func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, namespace string, expiration time.Time) ([]byte, error) {
 	if config.latestCA == nil {
 		return nil, fmt.Errorf("Cannot get CA certificate")
 	}
@@ -232,6 +232,7 @@ func (config *CASecretProvider) SignCSR(CSRPem string, commonName string, expira
 	// get access to another device.
 	clientCert.Subject.CommonName = commonName
 	clientCert.Subject.Organization = []string{certOrganization}
+	clientCert.Subject.OrganizationalUnit = []string{namespace}
 
 	certBytes, err := x509.CreateCertificate(
 		rand.Reader, clientCert, config.latestCA.cert, CSR.PublicKey, config.latestCA.privKey)

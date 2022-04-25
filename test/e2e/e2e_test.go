@@ -59,7 +59,7 @@ var _ = Describe("e2e", func() {
 	Context("Sanity", func() {
 		It("Deploy valid edgeworkload to registered device", func() {
 			// given
-			err := device.Register()
+			err := device.Register("dnf install ansible -y")
 			Expect(err).To(BeNil())
 
 			// when
@@ -331,7 +331,7 @@ func edgeworkload(name string, hostport int, containerport int, secretRef *strin
 	}
 	containers := []map[string]interface{}{{
 		"name":  name,
-		"image": "quay.io/bitnami/nginx:latest",
+		"image": "quay.io/project-flotta/nginx:1.21.6",
 		"ports": []map[string]int{{
 			"hostPort":      hostport,
 			"containerPort": containerport,

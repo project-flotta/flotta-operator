@@ -50,6 +50,20 @@ func (mr *MockRepositoryMockRecorder) Create(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), arg0, arg1)
 }
 
+// Patch mocks base method.
+func (m *MockRepository) Patch(arg0 context.Context, arg1, arg2 *v1alpha1.EdgeDeviceSignedRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Patch", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Patch indicates an expected call of Patch.
+func (mr *MockRepositoryMockRecorder) Patch(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Patch", reflect.TypeOf((*MockRepository)(nil).Patch), arg0, arg1, arg2)
+}
+
 // PatchStatus mocks base method.
 func (m *MockRepository) PatchStatus(arg0 context.Context, arg1 *v1alpha1.EdgeDeviceSignedRequest, arg2 *client.Patch) error {
 	m.ctrl.T.Helper()
