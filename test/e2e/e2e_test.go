@@ -59,7 +59,7 @@ var _ = Describe("e2e", func() {
 	Context("Sanity", func() {
 		It("Deploy valid edgeworkload to registered device", func() {
 			// given
-			err := device.Register()
+			err := device.Register("dnf install ansible -y")
 			Expect(err).To(BeNil())
 
 			// when

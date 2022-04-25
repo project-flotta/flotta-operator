@@ -2,6 +2,7 @@ package e2e_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -17,6 +18,7 @@ import (
 	"github.com/docker/docker/pkg/archive"
 	"github.com/google/uuid"
 	"github.com/onsi/ginkgo/v2"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
@@ -277,10 +279,32 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 	}
 
 	return e.waitForDevice(func() bool {
-		if eCr, _ := e.Get(); eCr != nil && err == nil {
-			return true
+		eCr, err := e.Get()
+		if err != nil || eCr == nil {
+			return false
 		}
-		return false
+
+		device := v1alpha1.EdgeDevice{}
+		raw, err := eCr.MarshalJSON()
+		if err != nil {
+			return false
+		}
+
+		err = json.Unmarshal(raw, &device)
+		if err != nil {
+			return false
+		}
+
+		if _, ok := device.ObjectMeta.Labels["edgedeviceSignedRequest"]; ok {
+			// Is not yet fully registered
+			return false
+		}
+
+		if device.Status.Hardware == nil {
+			return false
+		}
+
+		return true
 	})
 }
 
