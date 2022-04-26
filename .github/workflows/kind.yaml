@@ -5,6 +5,12 @@ on:  # yamllint disable-line rule:truthy
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Custom edgedevice testing image'
+        default: 'quay.io/project-flotta/edgedevice:latest'
+        required: true
 
 jobs:
   kind:
@@ -47,7 +53,8 @@ jobs:
           port_forward &
 
           # Run test
-          make integration-test
+          INPUT_IMAGE="${{ github.event.inputs.image }}"
+          TEST_IMAGE="${INPUT_IMAGE:-quay.io/project-flotta/edgedevice:latest}" make integration-test
 
       # collect logs always just in case the test fails
       - name: Collect all logs
