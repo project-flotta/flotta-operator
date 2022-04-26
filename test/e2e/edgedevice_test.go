@@ -44,7 +44,7 @@ var localTestCertificates = []string{
 var edgeDeviceResource = schema.GroupVersionResource{Group: "management.project-flotta.io", Version: "v1alpha1", Resource: "edgedevices"}
 
 const (
-	EdgeDeviceImage string = "quay.io/project-flotta/edgedevice"
+	EdgeDeviceImage string = "quay.io/project-flotta/edgedevice:latest"
 	Namespace       string = "default" // the namespace where flotta operator is running
 	waitTimeout     int    = 120
 	sleepInterval   int    = 2
@@ -246,8 +246,12 @@ func (e *edgeDeviceDocker) waitForDevice(cond func() bool) error {
 // can be used to execute just before the registration happens. The main use
 // case is to add something needed for the test, like network-latency.
 func (e *edgeDeviceDocker) Register(cmds ...string) error {
+	image := EdgeDeviceImage
+	if name, exists := os.LookupEnv("TEST_IMAGE"); exists {
+		image = name
+	}
 	ctx := context.Background()
-	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: EdgeDeviceImage}, &container.HostConfig{Privileged: true, ExtraHosts: []string{"project-flotta.io:172.17.0.1"}}, nil, nil, e.name)
+	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: image}, &container.HostConfig{Privileged: true, ExtraHosts: []string{"project-flotta.io:172.17.0.1"}}, nil, nil, e.name)
 	if err != nil {
 		return err
 	}
