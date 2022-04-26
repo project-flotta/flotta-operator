@@ -107,6 +107,7 @@ type EdgeWorkloadStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+genclient
 
 // EdgeWorkload is the Schema for the EdgeWorkloads API
 type EdgeWorkload struct {

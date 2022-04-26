@@ -2,6 +2,7 @@ package heartbeat
 
 import (
 	"context"
+
 	"github.com/project-flotta/flotta-operator/models"
 )
 

@@ -3,8 +3,9 @@ package edgedevicesignedrequest
 import (
 	"context"
 
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 )
 
 //go:generate mockgen -package=edgedevicesignedrequest -destination=mock_edgedeviceSignedRequest.go . Repository

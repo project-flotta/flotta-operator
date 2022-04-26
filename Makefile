@@ -90,7 +90,7 @@ gosec: ## Run gosec locally
 
 GO_IMAGE=golang:1.17.8-alpine3.14
 GOIMPORTS_IMAGE=golang.org/x/tools/cmd/goimports@latest
-FILES_LIST=$(shell ls -d */ | grep -v -E "vendor|tools|test|client|restapi|models")
+FILES_LIST=$(shell ls -d */ | grep -v -E "vendor|tools|test|client|restapi|models|generated")
 MODULE_NAME=$(shell head -n 1 go.mod | cut -d '/' -f 3)
 imports: ## fix and format go imports
 	@# Removes blank lines within import block so that goimports does its magic in a deterministic way
@@ -220,6 +220,39 @@ ginkgo: ## Download ginkgo locally if necessary.
 ifeq (, $(shell which ginkgo 2> /dev/null))
 	$(call go-install-tool,$(GINKGO),github.com/onsi/ginkgo/v2/ginkgo@v2.1.3)
 endif
+
+CLIENTGEN = $(shell pwd)/bin/client-gen
+client-gen: ## Download client-gen locally if necessary.
+	$(call go-install-tool,$(CLIENTGEN),k8s.io/code-generator/cmd/client-gen@v0.23.5)
+
+LISTERGEN = $(shell pwd)/bin/lister-gen
+lister-gen: ## Download lister-gen locally if necessary.
+	$(call go-install-tool,$(LISTERGEN),k8s.io/code-generator/cmd/lister-gen@v0.23.5)
+
+INFORMERGEN = $(shell pwd)/bin/informer-gen
+informer-gen: ## Download client-gen locally if necessary.
+	$(call go-install-tool,$(INFORMERGEN),k8s.io/code-generator/cmd/informer-gen@v0.23.5)
+
+k8s-client-gen: client-gen lister-gen informer-gen ## Generate typed client for flotta project.
+	mkdir gen-tmp
+	$(CLIENTGEN) --clientset-name versioned --input-base "" --input github.com/project-flotta/flotta-operator/api//v1alpha1 \
+				--output-package github.com/project-flotta/flotta-operator/generated/clientset \
+				--output-base gen-tmp --go-header-file hack/boilerplate.go.txt --v 10
+	# since the api folder structure has no group folder, the client fails to generate client with group prefix and needs to be renamed
+	mv gen-tmp/github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1/_client.go gen-tmp/github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1/client.go
+
+	$(LISTERGEN) --input-dirs github.com/project-flotta/flotta-operator/api/v1alpha1 \
+				--output-package github.com/project-flotta/flotta-operator/generated/listers \
+				--output-base gen-tmp --go-header-file hack/boilerplate.go.txt --v 10
+
+	$(INFORMERGEN) --input-dirs github.com/project-flotta/flotta-operator/api/v1alpha1 \
+				--versioned-clientset-package github.com/project-flotta/flotta-operator/generated/clientset/versioned \
+				--listers-package github.com/project-flotta/flotta-operator/generated/listers \
+				--output-package github.com/project-flotta/flotta-operator/generated/informers \
+				--output-base gen-tmp --go-header-file hack/boilerplate.go.txt --v 10
+	rm -rf generated
+	mv gen-tmp/github.com/project-flotta/flotta-operator/generated ./
+	rm -rf gen-tmp
 
 validate-swagger: ## Validate swagger
 	$(DOCKER) run --rm -v $(PWD)/.spectral.yaml:/tmp/.spectral.yaml:z -v $(PWD)/swagger.yaml:/tmp/swagger.yaml:z stoplight/spectral lint --ruleset "/tmp/.spectral.yaml" /tmp/swagger.yaml

@@ -2,8 +2,10 @@ package edgedeviceset
 
 import (
 	"context"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 )
 
 //go:generate mockgen -package=edgedeviceset -destination=mock_edgedeviceset.go . Repository

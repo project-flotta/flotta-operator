@@ -13,38 +13,35 @@ import (
 	"strings"
 	"time"
 
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
-
-	"github.com/project-flotta/flotta-operator/internal/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
-	"github.com/project-flotta/flotta-operator/pkg/mtls"
-
-	"github.com/project-flotta/flotta-operator/internal/images"
-	"github.com/project-flotta/flotta-operator/internal/k8sclient"
-
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/images"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
 	"github.com/project-flotta/flotta-operator/models"
+	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	api "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 	operations "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 const (

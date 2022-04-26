@@ -20,22 +20,20 @@ import (
 	"context"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/storage"
-
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	mgmtv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/storage"
 )
 
 // EdgeDeviceReconciler reconciles a EdgeDevice object
@@ -112,7 +110,7 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	return ctrl.Result{}, nil
 }
 
-func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *managementv1alpha1.EdgeDevice) (*obv1.ObjectBucketClaim, error) {
+func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *mgmtv1alpha1.EdgeDevice) (*obv1.ObjectBucketClaim, error) {
 	obc, err := r.Claimer.GetClaim(ctx, edgeDevice.Name, edgeDevice.Namespace)
 	if err == nil {
 		return obc, nil
@@ -133,7 +131,7 @@ func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *m
 	return nil, err
 }
 
-func (r *EdgeDeviceReconciler) addObcReference(ctx context.Context, edgeDevice *managementv1alpha1.EdgeDevice, obcName string) error {
+func (r *EdgeDeviceReconciler) addObcReference(ctx context.Context, edgeDevice *mgmtv1alpha1.EdgeDevice, obcName string) error {
 	patch := client.MergeFrom(edgeDevice.DeepCopy())
 	edgeDevice.Status.DataOBC = &obcName
 	return r.EdgeDeviceRepository.PatchStatus(ctx, edgeDevice, &patch)
@@ -142,7 +140,7 @@ func (r *EdgeDeviceReconciler) addObcReference(ctx context.Context, edgeDevice *
 // SetupWithManager sets up the controller with the Manager.
 func (r *EdgeDeviceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&managementv1alpha1.EdgeDevice{}).
+		For(&mgmtv1alpha1.EdgeDevice{}).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: r.MaxConcurrentReconciles}).
 		Complete(r)
