@@ -20,7 +20,7 @@ type EnrolmentInfo struct {
 	Features *EnrolmentInfoFeatures `json:"features,omitempty"`
 
 	// target namespace
-	TargetNamespace *string `json:"target-namespace,omitempty"`
+	TargetNamespace *string `json:"target_namespace,omitempty"`
 }
 
 // Validate validates this enrolment info

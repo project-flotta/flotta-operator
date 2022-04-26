@@ -452,7 +452,7 @@ definitions:
             type: string
           hardware:
             $ref: '#/definitions/hardware-info'
-      target-namespace:
+      target_namespace:
         type: string
         default: "default"
 
