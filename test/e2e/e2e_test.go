@@ -3,7 +3,10 @@ package e2e_test
 import (
 	"context"
 	"fmt"
+	"os/exec"
+	"time"
 
+	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/client-go/dynamic"
@@ -54,6 +57,11 @@ var _ = Describe("e2e", func() {
 
 	AfterFailed(func() {
 		device.DumpLogs()
+
+		// Dump the edgedevice CRs:
+		cmd := exec.Command("kubectl", "get", "edgedevices", "-A", "-o", "yaml")
+		out, err := cmd.CombinedOutput()
+		ginkgo.GinkgoT().Logf("Edgedevices[%s]:\n %s\n", string(out), err)
 	})
 
 	Context("Sanity", func() {
@@ -112,7 +120,7 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(Equal("0"))
 
 			// no pods running
-			stdout, err = device.Exec("podman ps --noheading | wc -l")
+			stdout, err = device.Exec("machinectl shell -q flotta@.host /usr/bin/podman ps --noheading")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("0"))
 
@@ -138,9 +146,10 @@ var _ = Describe("e2e", func() {
 			Expect(depCr).ToNot(BeNil())
 
 			// no pods running
-			stdout, err := device.Exec("podman ps --noheading | wc -l")
+			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman ps --noheading")
 			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("0"))
+			Expect(stdout).To(Equal(""))
+			//Expect(stdout).ToNot(ContainSubstring("nginx"))
 		})
 
 		It("Expose reserved container port", func() {
@@ -157,9 +166,12 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("systemctl is-failed pod-*.service")
-			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("failed"))
+			for i := 0; i < 3; i++ {
+				time.Sleep(1 * time.Second)
+				stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/systemctl --user is-failed pod-*.service")
+				Expect(err).To(BeNil())
+				Expect(stdout).To(Equal("activating"))
+			}
 		})
 
 		It("Re-create the edgeworkload", func() {
@@ -213,7 +225,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman exec nginx_pod-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 
@@ -247,7 +259,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman exec nginx_pod-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 

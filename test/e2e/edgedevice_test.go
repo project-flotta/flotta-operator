@@ -173,12 +173,11 @@ func (e *edgeDeviceDocker) GetLogs(extraCommands ...string) (map[string]string, 
 	var err error
 	logsMap := make(map[string]string)
 	commands := []string{
-		"journalctl -u podman",
-		"journalctl -u yggdrasild",
 		"ps aux",
-		"podman ps -a",
-		"systemctl status podman",
 		"systemctl status yggdrasild",
+		"journalctl --no-pager",
+		"machinectl shell -q flotta@.host /usr/bin/podman ps -a",
+		"machinectl shell -q flotta@.host /usr/bin/journalctl --user --no-pager",
 	}
 	commands = append(commands, extraCommands...)
 
@@ -274,11 +273,20 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 		return fmt.Errorf("cannot copy certificates to device: %v", err)
 	}
 
-	if _, err = e.Exec("systemctl start podman"); err != nil {
+	if _, err = e.Exec("systemctl start yggdrasild.service"); err != nil {
 		return err
 	}
 
-	if _, err = e.Exec("systemctl start yggdrasild.service"); err != nil {
+	// FIXME: This should be properly handled by the flotta-gent RPM
+	if _, err = e.Exec("machinectl -q shell flotta@.host /usr/bin/true"); err != nil {
+		return err
+	}
+
+	if _, err = e.Exec("loginctl enable-linger flotta"); err != nil {
+		return err
+	}
+
+	if _, err = e.Exec("machinectl shell flotta@.host /usr/bin/systemctl start --user podman.socket"); err != nil {
 		return err
 	}
 
