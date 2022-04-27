@@ -185,9 +185,7 @@ $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into $(TARGET)-flotta-operator.yaml
 	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 ifeq ($(TARGET), k8s)
-	$(Q)sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/k8s/network/ingress.yaml
 	$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
-	$(Q)sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/k8s/network/ingress.yaml
 else ifeq ($(TARGET), ocp)
 	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 else ifeq ($(TARGET), kind)

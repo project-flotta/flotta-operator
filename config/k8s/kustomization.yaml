@@ -12,4 +12,15 @@ namePrefix: flotta-operator-
 
 resources:
   - ../base
-  - network/ingress.yaml
+  - ../network
+
+patchesJson6902:
+  - target:
+      group: route.openshift.io
+      version: v1
+      kind: Route
+      name: controller-manager
+    patch: |-
+      - op: replace
+        path: /spec/host
+        value: project-flotta.io

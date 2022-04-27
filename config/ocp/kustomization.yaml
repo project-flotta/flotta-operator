@@ -15,7 +15,7 @@ images:
   newTag: "v4.9.0"
 resources:
   - ../base
-  - network/route.yaml
+  - ../network
   - prometheus/prometheus_role.yaml
   - prometheus/prometheus_role_binding.yaml
   - prometheus/monitor.yaml
