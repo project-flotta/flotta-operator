@@ -7,6 +7,7 @@ metadata:
   name: controller-manager
   namespace: system
 spec:
+  host: REPLACE_HOST
   port:
     targetPort: yggds
   tls:
