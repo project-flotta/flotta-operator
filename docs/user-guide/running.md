@@ -148,13 +148,13 @@ On the edge device:
  
 - Make sure Podman is running
   ```shell
-  sudo systemctl --now enable podman.socket
-  sudo loginctl enable-linger root
+  systemctl --now enable --user podman.socket
+  loginctl enable-linger $(USER)
   ```
 
   Verify with:
   ```shell
-  systemctl status podman.socket
+  systemctl status --user podman.socket
   ```
 - Make sure `/usr/local/libexec/yggdrasil` directory exists
 
