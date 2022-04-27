@@ -473,7 +473,7 @@ Status: Internal Server Error
 | Name | Type | Go type | Required | Default | Description | Example |
 |------|------|---------|:--------:| ------- |-------------|---------|
 | features | [EnrolmentInfoFeatures](#enrolment-info-features)| `EnrolmentInfoFeatures` |  | |  |  |
-| target-namespace | string| `string` |  | `"default"`|  |  |
+| target_namespace | string| `string` |  | `"default"`|  |  |
 
 
 

@@ -262,9 +262,13 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.V(1).Info("received registration info", "content", enrolmentInfo)
+		logger.V(1).Info("received enrolment info", "content", enrolmentInfo)
+		ns := h.initialNamespace
+		if enrolmentInfo.TargetNamespace != nil {
+			ns = *enrolmentInfo.TargetNamespace
+		}
 
-		_, err = h.deviceRepository.Read(ctx, deviceID, *enrolmentInfo.TargetNamespace)
+		_, err = h.deviceRepository.Read(ctx, deviceID, ns)
 		if err == nil {
 			// Device is already created.
 			return operations.NewPostDataMessageForDeviceAlreadyReported()
@@ -290,7 +294,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				Namespace: h.initialNamespace,
 			},
 			Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
-				TargetNamespace: *enrolmentInfo.TargetNamespace,
+				TargetNamespace: ns,
 				Approved:        false,
 				Features: &v1alpha1.Features{
 					Hardware: hardware.MapHardware(enrolmentInfo.Features.Hardware),

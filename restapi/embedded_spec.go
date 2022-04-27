@@ -426,7 +426,7 @@ func init() {
             }
           }
         },
-        "target-namespace": {
+        "target_namespace": {
           "type": "string",
           "default": "default"
         }
@@ -1486,7 +1486,7 @@ func init() {
             }
           }
         },
-        "target-namespace": {
+        "target_namespace": {
           "type": "string",
           "default": "default"
         }

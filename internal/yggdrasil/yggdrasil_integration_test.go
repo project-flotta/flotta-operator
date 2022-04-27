@@ -2496,6 +2496,27 @@ var _ = Describe("Yggdrasil", func() {
 				targetNamespace = "fooNS"
 			)
 
+			It("Empty enrolement information does not crash", func() {
+				// given
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				params := api.PostDataMessageForDeviceParams{
+					DeviceID: deviceName,
+					Message: &models.Message{
+						Directive: directiveName,
+					},
+				}
+
+				// when
+				res := handler.PostDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceAlreadyReported{}))
+			})
+
 			It("It's already created", func() {
 				// given
 				edgeDeviceRepoMock.EXPECT().
