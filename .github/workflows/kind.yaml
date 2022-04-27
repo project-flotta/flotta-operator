@@ -25,14 +25,15 @@ jobs:
       - uses: engineerd/setup-kind@v0.5.0
         with:
           version: "v0.11.1"
+          config: hack/kind-config.yaml
+
       - name: Testing on KinD
         run: |
-          export GO111MODULE=on
-          export PATH=$PATH:$(go env GOPATH)/bin
           # Print cluster info
           kubectl cluster-info
           kubectl get pods -n kube-system
           kubectl wait --for=condition=Ready pods --all -n kube-system
+          make install-router
 
           # Deploy flotta operator
           sed -i 's/LOG_LEVEL=info/LOG_LEVEL=debug/g' config/manager/controller_manager_config.properties
@@ -44,14 +45,6 @@ jobs:
             echo "Make run failed"; exit 1
           fi
           kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
-          # TODO: add ingress resource to config/kind/kustomization.yaml instead of port forwarding
-          function port_forward() {
-            while true; do
-              kubectl port-forward deploy/flotta-operator-controller-manager -n flotta --address 0.0.0.0 8043:8043;
-            done
-          }
-          port_forward &
-
           # Run test
           INPUT_IMAGE="${{ github.event.inputs.image }}"
           TEST_IMAGE="${INPUT_IMAGE:-quay.io/project-flotta/edgedevice:latest}" make integration-test
