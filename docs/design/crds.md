@@ -150,3 +150,112 @@ spec:
       syslogConfig: 
         name: syslog-config-map # Name of a config map containing syslog connection configuration
 ```
+
+## EdgeConfig
+`EdgeConfig` is a namespaced custom resource that represents custom configuration that should be deployed to edge devices matching criteria specified in the CR.
+
+* apiVersion: `management.project-flotta.io/v1alpha1`
+* kind: `EdgeConfig`
+
+### Specification
+```yaml
+spec:
+  edgePlaybook:
+    user: foo # Username who execute the playbook
+    playbooks:
+      - content: # Ansible playbook in base64
+        LS0tCi0gIG5hbWU6IEhlbGxvIFdvcmxkIEFuc2libGUgUGxheWJvb2sKICAgaG9zdHM6IDEyNy4wLjAu....
+        timeoutSeconds: 100 # Interval in seconds on which the playbook execution should be executed
+        requiredPrivilegeLevel: # The required privelege level necessary to execute the playbook. See https://man7.org/linux/man-pages/man7/capabilities.7.html for a full list
+          capAdd: # Capabilities to add
+            - SYS_CHROOT
+          capDrop: # Capabilities to drop
+            - SYS_BOOT
+        ansibleOptions:
+          check: false #  Flag defining whether the playbook execution should be in check mode (is just a simulation)
+        privilegeEscalationOptions: # To execute tasks with root privileges or with another user’s permissions
+          become: true # Flag definig whether to activate privilege escalation
+          becomeUser: bar # set to user with desired privileges
+          becomeMethod: sudo # method to use to increase privilege. Currently only `sudo` and `su` are available
+        executionStategy: ExecuteOnce # Define the execution strategy for the playbook. Currently `StopOnFailure`, `RetryOnFailure`, `ExecuteOnce` are available.
+      - content: # Ansible playbook in base64 
+        LS0tCgotIGhvc3RzOiBhbGwKICBnYXRoZXJfZmFjdHM6IGZhbHNlCiAgdmFyczoKICAgIGFycmF5OgogICAgICAtFlvdXIg....
+        ...
+```
+
+### Status
+
+
+```yaml
+status:
+  condition:
+    - 
+      type: Deploying
+      status: false
+      lastTransitionTime: "2021-09-23T09:28:01Z"
+    -
+      type: Completed
+      status: true
+      reason:  "ExecutionCompletedOnAllDevices" # one-word CamelCase reason for the condition's last transition
+      message: "Playbook execution completed on all involed devices" # human-readable message indicating details about last transition
+      lastTransitionTime: "2021-09-23T09:30:25Z" # last time the condition transit from one status to another
+```
+
+## PlaybookExecution
+`PlaybookExecution` is a namespaced custom resource that represents custom ansible playbook that should be deployed an edge device.
+Each `EdgePlaybook` in `EdgeConfig` CR generates a `PlaybookExecution` CR for each involved edge device.
+
+* apiVersion: `management.project-flotta.io/v1alpha1`
+* kind: `PlaybookExecution`
+
+### Specification
+`PlaybookExecution` contains a copy of one of `EdgeConfig.EdgePlaybook.Playbooks` specification.
+
+```yaml
+spec:
+ playbook:
+        content: # Ansible playbook in base64
+        LS0tCi0gIG5hbWU6IEhlbGxvIFdvcmxkIEFuc2libGUgUGxheWJvb2sKICAgaG9zdHM6IDEyNy4wLjAu....
+        timeoutSeconds: 100 # Interval in seconds on which the playbook execution should be executed
+        requiredPrivilegeLevel: # The required privelege level necessary to execute the playbook. See https://man7.org/linux/man-pages/man7/capabilities.7.html for a full list
+          capAdd: # Capabilities to add
+            - SYS_CHROOT
+          capDrop: # Capabilities to drop
+            - SYS_BOOT
+        ansibleOptions:
+          check: false #  Flag defining whether the playbook execution should be in check mode (is just a simulation)
+        privilegeEscalationOptions: # To execute tasks with root privileges or with another user’s permissions
+          become: true # Flag definig whether to activate privilege escalation
+          becomeUser: bar # set to user with desired privileges
+          becomeMethod: sudo # method to use to increase privilege. Currently only `sudo` and `su` are available
+        executionStategy: ExecuteOnce # Define the execution strategy for the playbook. Currently `StopOnFailure`, `RetryOnFailure`, `ExecuteOnce` are available.
+executionAttempt: 0
+```
+
+### Status
+
+```yaml
+status:
+  condition:
+    - 
+      type: TargetVerification
+      status: false
+      reason: VerifiedForRHEL4Edge # one-word CamelCase reason for the condition's last transition
+      message: # human-readable message indicating details about last transition
+        Playbook verified for rhel4edge target environment
+      lastTransitionTime: "2021-09-23T10:30:15Z" # last time the condition transit from one status to another 
+    - 
+      type: Deploying
+      status: false
+      lastTransitionTime: "2021-09-23T10:30:27Z"
+    - 
+      type: Running
+      status: false
+      lastTransitionTime: "2021-09-23T10:30:50Z"
+    -
+      type: Completed
+      status: true
+      reason:  "SuccessfullyCompleted"
+      message: "Playbook execution successfully completed"
+      lastTransitionTime: "2021-09-23T09:40:32Z"
+```
