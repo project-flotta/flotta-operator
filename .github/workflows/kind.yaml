@@ -40,11 +40,12 @@ jobs:
           make build
           IMG=flotta-operator:latest make docker-build
           kind load docker-image flotta-operator:latest
-          timeout 2m make deploy IMG=flotta-operator TARGET=kind || retVal=$?
+          timeout 2m make deploy IMG=flotta-operator TARGET=k8s || retVal=$?
           if [[ -n "$retVal" && $retVal -ne 124 ]]; then
             echo "Make run failed"; exit 1
           fi
           kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
+
           # Run test
           INPUT_IMAGE="${{ github.event.inputs.image }}"
           TEST_IMAGE="${INPUT_IMAGE:-quay.io/project-flotta/edgedevice:latest}" make integration-test
