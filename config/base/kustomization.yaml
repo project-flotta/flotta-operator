@@ -7,6 +7,7 @@ kind: Kustomization
 
 patchesStrategicMerge:
 - manager_auth_proxy_patch.yaml
+- edge_api_auth_proxy_patch.yaml
 
 # Mount the controller config file for loading manager configurations
 # through a ComponentConfig type
@@ -55,6 +56,8 @@ resources:
 - ../crd
 - ../rbac
 - ../manager
+- ../edge-api
+
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
 # crd/kustomization.yaml
 - ../webhook

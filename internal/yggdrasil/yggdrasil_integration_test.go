@@ -17,6 +17,7 @@ import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -77,6 +78,8 @@ var _ = Describe("Yggdrasil", func() {
 
 		k8sClient client.Client
 		testEnv   *envtest.Environment
+
+		logger, _ = zap.NewDevelopment()
 	)
 
 	initKubeConfig := func() {
@@ -115,7 +118,7 @@ var _ = Describe("Yggdrasil", func() {
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
 
 		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceSRRepoMock, edgeDeviceRepoMock, deployRepoMock, deviceSetRepoMock, nil, Mockk8sClient,
-			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil)
+			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil, logger.Sugar())
 	})
 
 	AfterEach(func() {
@@ -2800,6 +2803,7 @@ var _ = Describe("Yggdrasil", func() {
 						allowListsMock,
 						configMap,
 						MTLSConfig,
+						logger.Sugar(),
 					)
 					_, _, err := MTLSConfig.InitCertificates()
 					Expect(err).ToNot(HaveOccurred())

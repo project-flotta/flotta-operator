@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/go-logr/logr"
 	"github.com/go-openapi/strfmt"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,7 +38,7 @@ type configurationAssembler struct {
 	registryAuthRepository images.RegistryAuthAPI
 }
 
-func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, logger logr.Logger) (*models.DeviceConfigurationMessage, error) {
+func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, logger *zap.SugaredLogger) (*models.DeviceConfigurationMessage, error) {
 	var workloadList models.WorkloadList
 	var secretList models.SecretList
 	if edgeDevice.DeletionTimestamp == nil {
@@ -79,7 +79,7 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 
 	var deviceSet *v1alpha1.EdgeDeviceSet
 	if deviceSetName, ok := edgeDevice.Labels["flotta/member-of"]; ok {
-		logger.V(1).Info("Device uses EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
+		logger.Debug("Device uses EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
 		var err error
 		deviceSet, err = a.deviceSetRepository.Read(ctx, deviceSetName, edgeDevice.Namespace)
 		if err != nil {
@@ -217,7 +217,7 @@ func (a *configurationAssembler) getDeviceMetricsConfiguration(ctx context.Conte
 	return &metricsConfig, nil
 }
 
-func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger logr.Logger, edgeworkloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
+func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger *zap.SugaredLogger, edgeworkloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
 	list := models.WorkloadList{}
 	for _, edgeworkload := range edgeworkloads {
 		if edgeworkload.DeletionTimestamp != nil {

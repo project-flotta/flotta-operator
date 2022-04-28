@@ -10,6 +10,8 @@ SKIP_TEST_IMAGE_PULL ?= false
 
 # Image URL to use all building/pushing image targets
 IMG ?= controller:latest
+HTTP_IMG ?= edge-api:latest
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 # Cluster type - k8s/ocp/all
@@ -161,9 +163,12 @@ run: manifests pre-build ## Run a controller from your host.
 
 docker-build: ## Build docker image with the manager.
 	$(DOCKER) build -t ${IMG} .
+	$(DOCKER) build -f build/httpapi/Dockerfile -t ${HTTP_IMG} .
+
 
 docker-push: ## Push docker image with the manager.
 	$(DOCKER) push ${IMG}
+	$(DOCKER) push ${HTTP_IMG}
 
 release: ## Release the operator in github releases, tagged by its version.
 release: gen-manifests
@@ -196,6 +201,7 @@ endif
 $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into $(TARGET)-flotta-operator.yaml
 	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(Q)cd config/edge-api && $(KUSTOMIZE) edit set image edge-api=${HTTP_IMG}
 ifneq (,$(filter $(TARGET), k8s all))
 	$(Q)$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/k8s-flotta-operator.yaml
 	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/k8s-flotta-operator.yaml\033[0m"
@@ -206,6 +212,7 @@ ifneq (,$(filter $(TARGET), ocp all))
 endif
 
 	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/project-flotta/flotta-operator
+	$(Q)cd config/edge-api && $(KUSTOMIZE) edit set image edge-api=quay.io/project-flotta/flotta-edge-api
 
 install-router: ## Install openshift router
 install-router:

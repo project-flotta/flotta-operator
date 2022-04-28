@@ -115,7 +115,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "ceil(sum by(deviceID, deviceNamespace)(rate(flotta_operator_edge_devices_heartbeat{job=~\"flotta.+\"}[2m])))",
+          "expr": "ceil(sum by(deviceID, deviceNamespace)(rate(flotta_api_edge_devices_heartbeat{job=~\"flotta.+\"}[2m])))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -234,7 +234,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "ceil(sum by(deviceID, deviceNamespace)(rate(flotta_operator_edge_devices_heartbeat{job=~\"flotta.+\"}[2m])))",
+          "expr": "ceil(sum by(deviceID, deviceNamespace)(rate(flotta_api_edge_devices_heartbeat{job=~\"flotta.+\"}[2m])))",
           "interval": "",
           "legendFormat": "",
           "refId": "A"

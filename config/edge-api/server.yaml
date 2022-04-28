@@ -1,0 +1,82 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: edge-api
+  namespace: system
+  labels:
+    app: flotta-edge-api
+spec:
+  selector:
+    matchLabels:
+      app: flotta-edge-api
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: flotta-edge-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - command:
+            - /flotta-api
+          envFrom:
+            - configMapRef:
+                name: manager-config
+          image: edge-api:latest
+          imagePullPolicy: IfNotPresent
+          name: http
+          ports:
+            - containerPort: 8043
+              name: yggds
+            - containerPort: 8080
+              name: metrics
+          securityContext:
+            allowPrivilegeEscalation: false
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+            requests:
+              cpu: 100m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      serviceAccountName: edge-api
+      terminationGracePeriodSeconds: 10
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: edge-api
+  namespace: system
+  labels:
+    app: flotta-edge-api
+spec:
+  ports:
+    - name: yggds
+      protocol: TCP
+      port: 8043
+      targetPort: yggds
+    - name: metrics
+      protocol: TCP
+      port: 8080
+      targetPort: metrics
+    - name: https
+      protocol: TCP
+      port: 8443
+      targetPort: https
+  selector:
+    app: flotta-edge-api
+  type: ClusterIP

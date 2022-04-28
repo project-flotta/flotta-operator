@@ -1,0 +1,246 @@
+package main
+
+import (
+	"crypto/x509"
+	"fmt"
+	"github.com/kelseyhightower/envconfig"
+	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
+	routev1 "github.com/openshift/api/route/v1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/images"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
+	"github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/storage"
+	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
+	"github.com/project-flotta/flotta-operator/pkg/mtls"
+	"github.com/project-flotta/flotta-operator/restapi"
+	"github.com/project-flotta/flotta-operator/restapi/operations"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/record"
+	"net/http"
+	"os"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
+)
+
+const (
+	initialDeviceNamespace = "default"
+)
+
+var (
+	operatorNamespace = "flotta"
+	scheme            = runtime.NewScheme()
+)
+
+var Config struct {
+
+	// The port of the HTTPs server
+	HttpsPort uint16 `envconfig:"HTTPS_PORT" default:"8043"`
+
+	// Domain where TLS certificate listen.
+	// FIXME check default here
+	Domain string `envconfig:"DOMAIN" default:"project-flotta.io"`
+
+	// If TLS server certificates should work on 127.0.0.1
+	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
+
+	// The address the metric endpoint binds to.
+	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`
+
+	// The address the probe endpoint binds to.
+	ProbeAddr string `envconfig:"PROBE_ADDR" default:":8081"`
+
+	// Verbosity of the logger.
+	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
+
+	// Client Certificate expiration time
+	ClientCertExpirationTime uint `envconfig:"CLIENT_CERT_EXPIRATION_DAYS" default:"30"`
+
+	// Kubeconfig specifies path to a kubeconfig file if the server is run outside of a cluster
+	Kubeconfig string `envconfig:"KUBECONFIG" default:""`
+}
+
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+
+	utilruntime.Must(managementv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(obv1.AddToScheme(scheme))
+	utilruntime.Must(routev1.AddToScheme(scheme))
+}
+
+func main() {
+	err := envconfig.Process("", &Config)
+	if err != nil {
+		panic(err.Error())
+	}
+	err, logger := logger(Config.LogLevel)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	clientConfig, err := getRestConfig(Config.Kubeconfig)
+	if err != nil {
+		logger.Errorf("Cannot prepare k8s client config: %v. Kubeconfig was: %s", err, Config.Kubeconfig)
+		panic(err.Error())
+	}
+
+	c, err := client.New(clientConfig, client.Options{Scheme: scheme})
+	if err != nil {
+		logger.Errorf("Cannot create k8s client: %v", err)
+		panic(err.Error())
+	}
+	registryAuth := images.NewRegistryAuth(c)
+	mtlsConfig := mtls.NewMTLSConfig(c, operatorNamespace,
+		[]string{Config.Domain}, Config.TLSLocalhostEnabled)
+
+	err = mtlsConfig.SetClientExpiration(int(Config.ClientCertExpirationTime))
+	if err != nil {
+		logger.Errorf("Cannot set MTLS client certificate expiration time: %w", err)
+	}
+
+	tlsConfig, CACertChain, err := mtlsConfig.InitCertificates()
+	if err != nil {
+		logger.Errorf("Cannot retrieve any MTLS configuration: %w", err)
+		os.Exit(1)
+	}
+
+	// @TODO check here what to do with leftovers or if a new one is need to be created
+	err = mtlsConfig.CreateRegistrationClientCerts()
+	if err != nil {
+		logger.Errorf("Cannot create registration client certificate: %w", err)
+		os.Exit(1)
+	}
+
+	opts := x509.VerifyOptions{
+		Roots:         tlsConfig.ClientCAs,
+		Intermediates: x509.NewCertPool(),
+	}
+
+	k8sClient := k8sclient.NewK8sClient(c)
+
+	edgeDeviceSignedRequestRepository := edgedevicesignedrequest.NewEdgedeviceSignedRequestRepository(c)
+	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(c)
+	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(c)
+	claimer := storage.NewClaimer(c)
+
+	metricsObj := metrics.New()
+
+	broadcaster := record.NewBroadcaster()
+
+	corev1Client, err := corev1client.NewForConfig(clientConfig)
+	if err != nil {
+		panic(err)
+	}
+	broadcaster.StartRecordingToSink(&v1.EventSinkImpl{Interface: corev1Client.Events("")})
+	defer func() {
+		broadcaster.Shutdown()
+	}()
+	edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(c)
+	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
+		edgeDeviceSignedRequestRepository,
+		edgeDeviceRepository,
+		edgeWorkloadRepository,
+		edgeDeviceSetRepository,
+		claimer,
+		k8sClient,
+		initialDeviceNamespace,
+		broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-api"}),
+		registryAuth,
+		metricsObj,
+		devicemetrics.NewAllowListGenerator(k8sClient),
+		configmaps.NewConfigMap(k8sClient),
+		mtlsConfig,
+		logger,
+	)
+
+	var api *operations.FlottaManagementAPI
+	var handler http.Handler
+
+	APIConfig := restapi.Config{
+		YggdrasilAPI: yggdrasilAPIHandler,
+		InnerMiddleware: func(h http.Handler) http.Handler {
+			// This is needed for one reason. Registration endpoint can be
+			// triggered with a certificate signed by the CA, but can be expired
+			// The main reason to allow expired certificates in this endpoint, it's
+			// to renew client certificates, and because some devices can be
+			// disconnected for days and does not have the option to renew it.
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.TLS == nil {
+					w.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
+				authType := yggdrasilAPIHandler.GetAuthType(r, api)
+				if ok, err := mtls.VerifyRequest(r, authType, opts, CACertChain, yggdrasil.AuthzKey, logger); !ok {
+					metricsObj.IncEdgeDeviceFailedAuthenticationCounter()
+					logger.Info("cannot verify request:", "authType", authType, "method", r.Method, "url", r.URL, "err", err)
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				h.ServeHTTP(w, r)
+			})
+		},
+	}
+	handler, api, err = restapi.HandlerAPI(APIConfig)
+	if err != nil {
+		logger.Errorf("cannot start http server: %w", err)
+	}
+
+	server := &http.Server{
+		Addr:      fmt.Sprintf(":%v", Config.HttpsPort),
+		TLSConfig: tlsConfig,
+		Handler:   handler,
+	}
+	go func() {
+		logger.Fatal(server.ListenAndServeTLS("", ""))
+	}()
+
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.HandlerFor(crmetrics.Registry, promhttp.HandlerOpts{}))
+	mux.HandleFunc("/healthz", httpOK)
+	mux.HandleFunc("/readyz", httpOK)
+	logger.Fatal(http.ListenAndServe(Config.MetricsAddr, mux))
+}
+
+func logger(logLevel string) (error, *zap.SugaredLogger) {
+	var level zapcore.Level
+	err := level.UnmarshalText([]byte(logLevel))
+	if err != nil {
+		return err, nil
+	}
+	logConfig := zap.NewDevelopmentConfig()
+	logConfig.Level.SetLevel(level)
+	log, err := logConfig.Build()
+	if err != nil {
+		return err, nil
+	}
+	return nil, log.Sugar()
+}
+
+func httpOK(writer http.ResponseWriter, _ *http.Request) {
+	writer.WriteHeader(http.StatusOK)
+	_, _ = fmt.Fprint(writer, "ok")
+}
+
+func getRestConfig(kubeconfigPath string) (*rest.Config, error) {
+	if kubeconfigPath != "" {
+		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	}
+	return rest.InClusterConfig()
+}
