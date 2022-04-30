@@ -3,11 +3,11 @@ package e2e_test
 import (
 	"context"
 	"fmt"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/client-go/dynamic"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -22,7 +22,7 @@ var _ = Describe("e2e", func() {
 
 	var (
 		clientset *kubernetes.Clientset
-		client    dynamic.Interface
+		client    managementv1alpha1.ManagementV1alpha1Interface
 		workload  EdgeWorkload
 		device    EdgeDevice
 		err       error
@@ -321,51 +321,56 @@ var _ = Describe("e2e", func() {
 	})
 })
 
-func edgeworkloadWithSecretFromEnv(name string, device string, secretName string) map[string]interface{} {
+func edgeworkloadWithSecretFromEnv(name string, device string, secretName string) *v1alpha1.EdgeWorkload {
 	workload := edgeworkload(name, hostPort, nginxPort, &secretName, nil)
-	workload["spec"].(map[string]interface{})["device"] = device
+	workload.Spec.Device = device
 	return workload
 }
 
-func edgeworkloadWithConfigMapFromEnv(name string, device string, configMap string) map[string]interface{} {
+func edgeworkloadWithConfigMapFromEnv(name string, device string, configMap string) *v1alpha1.EdgeWorkload {
 	workload := edgeworkload(name, hostPort, nginxPort, nil, &configMap)
-	workload["spec"].(map[string]interface{})["device"] = device
+	workload.Spec.Device = device
 	return workload
 }
 
-func edgeworkloadDeviceIdContainers(name string, device string, hostport int, containerport int, ctrCount int) map[string]interface{} {
+func edgeworkloadDeviceIdContainers(name string, device string, hostport int, containerport int, ctrCount int) *v1alpha1.EdgeWorkload {
 	workload := edgeworkloadContainers(name, hostport, containerport, nil, nil, ctrCount)
-	workload["spec"].(map[string]interface{})["device"] = device
+	workload.Spec.Device = device
 	return workload
 }
 
-func edgeworkloadDeviceId(name string, device string, hostport int, containerport int) map[string]interface{} {
+func edgeworkloadDeviceId(name string, device string, hostport int, containerport int) *v1alpha1.EdgeWorkload {
 	workload := edgeworkload(name, hostport, containerport, nil, nil)
-	workload["spec"].(map[string]interface{})["device"] = device
+	workload.Spec.Device = device
 	return workload
 }
 
-func edgeworkloadDeviceLabel(name string, labels map[string]string, hostport int, containerport int) map[string]interface{} {
+func edgeworkloadDeviceLabel(name string, labels map[string]string, hostport int, containerport int) *v1alpha1.EdgeWorkload {
 	workload := edgeworkload(name, hostport, containerport, nil, nil)
-	spec := workload["spec"].(map[string]interface{})
-	spec["deviceSelector"] = map[string]interface{}{}
-	spec["deviceSelector"].(map[string]interface{})["matchLabels"] = labels
+	workload.Spec.DeviceSelector = &metav1.LabelSelector{
+		MatchLabels: labels,
+	}
 	return workload
 }
 
-func edgeworkload(name string, hostport int, containerport int, secretRef *string, configRef *string) map[string]interface{} {
+func edgeworkload(name string, hostport int, containerport int, secretRef *string, configRef *string) *v1alpha1.EdgeWorkload {
 	return edgeworkloadContainers(name, hostport, containerport, secretRef, configRef, 1)
 }
 
-func edgeworkloadContainers(name string, hostport int, containerport int, secretRef *string, configRef *string, ctrCount int) map[string]interface{} {
-	workload := map[string]interface{}{}
-	workload["apiVersion"] = "management.project-flotta.io/v1alpha1"
-	workload["kind"] = "EdgeWorkload"
-	workload["metadata"] = map[string]interface{}{
-		"name": name,
+func edgeworkloadContainers(name string, hostport int, containerport int, secretRef *string, configRef *string, ctrCount int) *v1alpha1.EdgeWorkload {
+	envFrom := make([]corev1.EnvFromSource, 0)
+	if secretRef != nil {
+		envFrom = append(envFrom, corev1.EnvFromSource{SecretRef: &corev1.SecretEnvSource{
+			LocalObjectReference: corev1.LocalObjectReference{Name: *secretRef},
+		}})
+	}
+	if configRef != nil {
+		envFrom = append(envFrom, corev1.EnvFromSource{ConfigMapRef: &corev1.ConfigMapEnvSource{
+			LocalObjectReference: corev1.LocalObjectReference{Name: *configRef},
+		}})
 	}
 
-	var containers []map[string]interface{}
+	var containers = make([]corev1.Container, 0)
 	for i := 0; i < ctrCount; i++ {
 		// Let's use same name as workload for container, and different name
 		// if multiple containers, so we use both cases.
@@ -373,31 +378,32 @@ func edgeworkloadContainers(name string, hostport int, containerport int, secret
 		if i > 0 {
 			ctrName = fmt.Sprintf("%s_%d", name, i)
 		}
-		containers = append(containers, map[string]interface{}{
-			"name":  ctrName,
-			"image": "quay.io/project-flotta/nginx:1.21.6",
-			"ports": []map[string]int{{
-				"hostPort":      hostport + i,
-				"containerPort": containerport,
-			}},
+		containers = append(containers, corev1.Container{
+			Name:  ctrName,
+			Image: "quay.io/project-flotta/nginx:1.21.6",
+			Ports: []corev1.ContainerPort{
+				{
+					ContainerPort: int32(containerport),
+					HostPort:      int32(hostport + i),
+				},
+			},
+			EnvFrom: envFrom,
 		})
-		containers[i]["envFrom"] = []map[string]interface{}{}
-		envFrom := containers[i]["envFrom"].([]map[string]interface{})
-		if secretRef != nil {
-			containers[i]["envFrom"] = append(envFrom, map[string]interface{}{"secretRef": map[string]string{"name": *secretRef}})
-		}
-		if configRef != nil {
-			containers[i]["envFrom"] = append(envFrom, map[string]interface{}{"configMapRef": map[string]string{"name": *configRef}})
-		}
 	}
 
-	workload["spec"] = map[string]interface{}{
-		"type": "pod",
-		"pod": map[string]interface{}{
-			"spec": map[string]interface{}{
-				"containers": containers,
+	workload := &v1alpha1.EdgeWorkload{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+		Spec: v1alpha1.EdgeWorkloadSpec{
+			Type: "pod",
+			Pod: v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: containers,
+				},
 			},
 		},
 	}
+
 	return workload
 }
