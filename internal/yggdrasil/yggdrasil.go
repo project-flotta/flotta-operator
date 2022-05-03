@@ -277,7 +277,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		edsr, err := h.edgedeviceSignedRequestRepository.Read(ctx, deviceID, h.initialNamespace)
 		if err == nil {
 			// Is already created, but not approved
-			if edsr.Spec.TargetNamespace != *enrolmentInfo.TargetNamespace {
+			if edsr.Spec.TargetNamespace != ns {
 				_, err = h.deviceRepository.Read(ctx, deviceID, edsr.Spec.TargetNamespace)
 				if err == nil {
 					// Device is already created.
