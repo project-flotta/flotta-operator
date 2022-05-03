@@ -2760,6 +2760,19 @@ var _ = Describe("Yggdrasil", func() {
 					return csrCertificate
 				}
 
+				getCert := func(PayloadContent interface{}) *x509.Certificate {
+					content, ok := PayloadContent.(models.RegistrationResponse)
+					Expect(ok).To(BeTrue())
+
+					block, rest := pem.Decode([]byte(content.Certificate))
+					Expect(block).NotTo(BeNil())
+					Expect(rest).NotTo(BeNil())
+
+					cert, err := x509.ParseCertificate(block.Bytes)
+					Expect(err).NotTo(HaveOccurred())
+					return cert
+				}
+
 				var givenCert string
 
 				BeforeEach(func() {
@@ -2883,6 +2896,11 @@ var _ = Describe("Yggdrasil", func() {
 					data, ok := res.(*operations.PostDataMessageForDeviceOK)
 					Expect(ok).To(BeTrue())
 					Expect(data.Payload.Content).NotTo(BeNil())
+
+					cert := getCert(data.Payload.Content)
+					Expect(cert.Subject.CommonName).To(Equal("foo"))
+					Expect(cert.Subject.OrganizationalUnit).To(HaveLen(1))
+					Expect(cert.Subject.OrganizationalUnit).To(ContainElement("test-ns"))
 				})
 
 				It("Device register for first time, but EDSR says another namespace", func() {
@@ -2944,6 +2962,11 @@ var _ = Describe("Yggdrasil", func() {
 					data, ok := res.(*operations.PostDataMessageForDeviceOK)
 					Expect(ok).To(BeTrue())
 					Expect(data.Payload.Content).NotTo(BeNil())
+
+					cert := getCert(data.Payload.Content)
+					Expect(cert.Subject.CommonName).To(Equal("foo"))
+					Expect(cert.Subject.OrganizationalUnit).To(HaveLen(1))
+					Expect(cert.Subject.OrganizationalUnit).To(ContainElement("otherNS"))
 				})
 
 				It("Device is already register, and send a CSR to renew", func() {
@@ -2986,6 +3009,11 @@ var _ = Describe("Yggdrasil", func() {
 					data, ok := res.(*operations.PostDataMessageForDeviceOK)
 					Expect(ok).To(BeTrue())
 					Expect(data.Payload.Content).NotTo(BeNil())
+
+					cert := getCert(data.Payload.Content)
+					Expect(cert.Subject.CommonName).To(Equal("foo"))
+					Expect(cert.Subject.OrganizationalUnit).To(HaveLen(1))
+					Expect(cert.Subject.OrganizationalUnit).To(ContainElement("test-ns"))
 				})
 
 				It("cannot patch device", func() {

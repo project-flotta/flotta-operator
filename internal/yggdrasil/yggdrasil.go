@@ -364,7 +364,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceForbidden()
 		}
 
-		cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID, h.initialNamespace)
+		cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID, ns)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
