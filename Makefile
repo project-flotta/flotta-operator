@@ -170,9 +170,6 @@ deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.ku
 	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 	kubectl wait --for=condition=Ready pods --all -n cert-manager --timeout=60s
 	kubectl apply -f $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
-ifeq ($(TARGET), k8s)
-	minikube addons enable ingress
-endif
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
 ifeq ($(TARGET), k8s)
@@ -188,9 +185,7 @@ $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into $(TARGET)-flotta-operator.yaml
 	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 ifeq ($(TARGET), k8s)
-	$(Q)sed -i 's/REPLACE_HOSTNAME/$(HOST)/' ./config/k8s/network/ingress.yaml
 	$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
-	$(Q)sed -i 's/$(HOST)/REPLACE_HOSTNAME/' ./config/k8s/network/ingress.yaml
 else ifeq ($(TARGET), ocp)
 	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 else ifeq ($(TARGET), kind)
@@ -199,6 +194,12 @@ endif
 
 	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/flotta-operator/flotta-operator:latest
 	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml\033[0m"
+
+install-router: ## Install openshift router
+install-router:
+	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/router_rbac.yaml
+	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/route_crd.yaml
+	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/router.yaml
 
 release:
 	TARGET=ocp gen-manifests

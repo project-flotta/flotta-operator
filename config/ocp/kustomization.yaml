@@ -15,7 +15,18 @@ images:
   newTag: "v4.9.0"
 resources:
   - ../base
-  - network/route.yaml
+  - ../network
   - prometheus/prometheus_role.yaml
   - prometheus/prometheus_role_binding.yaml
   - prometheus/monitor.yaml
+
+patchesJson6902:
+  - target:
+      group: route.openshift.io
+      version: v1
+      kind: Route
+      name: controller-manager
+    patch: |-
+      - op: replace
+        path: /spec/host
+        value: project-flotta.io
