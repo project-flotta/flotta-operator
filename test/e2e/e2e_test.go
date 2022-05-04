@@ -77,6 +77,31 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
 		})
 
+		It("Deploy multiple containers part of workload", func() {
+			// given
+			err := device.Register()
+			Expect(err).To(BeNil())
+
+			// when
+			_, err = workload.Create(edgeworkloadDeviceIdContainers("nginx", device.GetId(), hostPort, nginxPort, 2))
+			Expect(err).To(BeNil())
+
+			// then
+			// Check the edgedevice report proper state of workload:
+			err = device.WaitForWorkloadState("nginx", "Running")
+			Expect(err).To(BeNil(), "cannot get workload status for nginx workload")
+
+			// Check the nginx1 is serving content:
+			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
+			Expect(err).To(BeNil())
+			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
+
+			// Check the nginx2 is serving content:
+			stdout, err = device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort+1))
+			Expect(err).To(BeNil())
+			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
+		})
+
 		It("Unregister device without any workloads", func() {
 			// given
 			err := device.Register()
@@ -308,6 +333,12 @@ func edgeworkloadWithConfigMapFromEnv(name string, device string, configMap stri
 	return workload
 }
 
+func edgeworkloadDeviceIdContainers(name string, device string, hostport int, containerport int, ctrCount int) map[string]interface{} {
+	workload := edgeworkloadContainers(name, hostport, containerport, nil, nil, ctrCount)
+	workload["spec"].(map[string]interface{})["device"] = device
+	return workload
+}
+
 func edgeworkloadDeviceId(name string, device string, hostport int, containerport int) map[string]interface{} {
 	workload := edgeworkload(name, hostport, containerport, nil, nil)
 	workload["spec"].(map[string]interface{})["device"] = device
@@ -323,27 +354,41 @@ func edgeworkloadDeviceLabel(name string, labels map[string]string, hostport int
 }
 
 func edgeworkload(name string, hostport int, containerport int, secretRef *string, configRef *string) map[string]interface{} {
+	return edgeworkloadContainers(name, hostport, containerport, secretRef, configRef, 1)
+}
+
+func edgeworkloadContainers(name string, hostport int, containerport int, secretRef *string, configRef *string, ctrCount int) map[string]interface{} {
 	workload := map[string]interface{}{}
 	workload["apiVersion"] = "management.project-flotta.io/v1alpha1"
 	workload["kind"] = "EdgeWorkload"
 	workload["metadata"] = map[string]interface{}{
 		"name": name,
 	}
-	containers := []map[string]interface{}{{
-		"name":  name,
-		"image": "quay.io/project-flotta/nginx:1.21.6",
-		"ports": []map[string]int{{
-			"hostPort":      hostport,
-			"containerPort": containerport,
-		}},
-	}}
-	containers[0]["envFrom"] = []map[string]interface{}{}
-	envFrom := containers[0]["envFrom"].([]map[string]interface{})
-	if secretRef != nil {
-		containers[0]["envFrom"] = append(envFrom, map[string]interface{}{"secretRef": map[string]string{"name": *secretRef}})
-	}
-	if configRef != nil {
-		containers[0]["envFrom"] = append(envFrom, map[string]interface{}{"configMapRef": map[string]string{"name": *configRef}})
+
+	var containers []map[string]interface{}
+	for i := 0; i < ctrCount; i++ {
+		// Let's use same name as workload for container, and different name
+		// if multiple containers, so we use both cases.
+		ctrName := name
+		if i > 0 {
+			ctrName = fmt.Sprintf("%s_%d", name, i)
+		}
+		containers = append(containers, map[string]interface{}{
+			"name":  ctrName,
+			"image": "quay.io/project-flotta/nginx:1.21.6",
+			"ports": []map[string]int{{
+				"hostPort":      hostport + i,
+				"containerPort": containerport,
+			}},
+		})
+		containers[i]["envFrom"] = []map[string]interface{}{}
+		envFrom := containers[i]["envFrom"].([]map[string]interface{})
+		if secretRef != nil {
+			containers[i]["envFrom"] = append(envFrom, map[string]interface{}{"secretRef": map[string]string{"name": *secretRef}})
+		}
+		if configRef != nil {
+			containers[i]["envFrom"] = append(envFrom, map[string]interface{}{"configMapRef": map[string]string{"name": *configRef}})
+		}
 	}
 
 	workload["spec"] = map[string]interface{}{
