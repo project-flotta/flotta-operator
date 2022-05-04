@@ -31,6 +31,7 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
@@ -52,6 +53,7 @@ var _ = Describe("Yggdrasil", func() {
 	var (
 		mockCtrl       *gomock.Controller
 		repositoryMock *k8s.MockRepositoryFacade
+		playbookExecRepoMock *playbookexecution.MockRepository
 		metricsMock    *metrics.MockMetrics
 		registryAuth   *images.MockRegistryAuthAPI
 		handler        *yggdrasil.Handler
@@ -93,6 +95,7 @@ var _ = Describe("Yggdrasil", func() {
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
 		repositoryMock = k8s.NewMockRepositoryFacade(mockCtrl)
+		playbookExecRepoMock = playbookexecution.NewMockRepository(mockCtrl)
 		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
@@ -2873,6 +2876,7 @@ var _ = Describe("Yggdrasil", func() {
 					MTLSConfig := mtls.NewMTLSConfig(k8sClient, testNamespace, []string{"foo.com"}, true)
 					assembler := k8s.NewConfigurationAssembler(
 						allowListsMock,
+						playbookExecRepoMock,
 						nil,
 						configMap,
 						eventsRecorder,
