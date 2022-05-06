@@ -7,10 +7,8 @@ on:  # yamllint disable-line rule:truthy
     branches: [main]
   workflow_dispatch:
     inputs:
-      image:
-        description: 'Custom edgedevice testing image'
-        default: 'quay.io/project-flotta/edgedevice:latest'
-        required: true
+      artifactid:
+        description: 'Artifact id'
 
 jobs:
   kind:
@@ -31,6 +29,8 @@ jobs:
           config: hack/kind-config.yaml
 
       - name: Testing on KinD
+        env:
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           # Print cluster info
           kubectl cluster-info
@@ -49,8 +49,16 @@ jobs:
           fi
           kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
 
+          # Use custom image:
+          if [[ -n "${{ github.event.inputs.artifactid }}" ]]; then
+        curl -o /tmp/edgedevice.zip -H 'Authorization: Bearer ${TOKEN}' -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/project-flotta/flotta-device-worker/actions/artifacts/${{ github.event.inputs.artifactid }}/zip
+            pushd /tmp && unzip /tmp/edgedevice.zip && popd
+            docker import /tmp/edgedevice customedgedevice
+            kind load docker-image customedgedevice
+            INPUT_IMAGE=customedgedevice
+          fi
+
           # Run test
-          INPUT_IMAGE="${{ github.event.inputs.image }}"
           TEST_IMAGE="${INPUT_IMAGE:-quay.io/project-flotta/edgedevice:latest}" make integration-test
 
       # collect logs always just in case the test fails
