@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"context"
 	"fmt"
+
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1"
 
@@ -100,6 +101,10 @@ var _ = Describe("e2e", func() {
 			stdout, err = device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort+1))
 			Expect(err).To(BeNil())
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
+
+			stdout, err = device.Exec("systemctl is-active pod-nginx_pod.service")
+			Expect(err).To(BeNil())
+			Expect(stdout).To(Equal("active"))
 		})
 
 		It("Unregister device without any workloads", func() {
