@@ -210,12 +210,14 @@ func main() {
 	}
 
 	if err = (&controllers.EdgeDeviceReconciler{
-		Client:                  mgr.GetClient(),
-		Scheme:                  mgr.GetScheme(),
-		EdgeDeviceRepository:    edgeDeviceRepository,
-		Claimer:                 claimer,
-		ObcAutoCreate:           Config.EnableObcAutoCreation,
-		MaxConcurrentReconciles: int(Config.MaxConcurrentReconciles),
+		Client:                            mgr.GetClient(),
+		Scheme:                            mgr.GetScheme(),
+		EdgeDeviceRepository:              edgeDeviceRepository,
+		EdgeDeviceSignedRequestRepository: edgeDeviceSignedRequestRepository,
+		InitialDeviceNamespace:            initialDeviceNamespace,
+		Claimer:                           claimer,
+		ObcAutoCreate:                     Config.EnableObcAutoCreation,
+		MaxConcurrentReconciles:           int(Config.MaxConcurrentReconciles),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)
