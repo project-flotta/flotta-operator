@@ -247,7 +247,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 		})
 
-		It("Create edgeworkload with env configmap", func() {
+		FIt("Create edgeworkload with env configmap", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
@@ -278,7 +278,8 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(Equal("key1=config1"))
 
 			err = clientset.CoreV1().ConfigMaps(Namespace).Delete(context.TODO(), "myconfigmap", metav1.DeleteOptions{})
-			Expect(err).To(BeNil())
+			Expect(err).ToNot(BeNil())
+
 		})
 	})
 

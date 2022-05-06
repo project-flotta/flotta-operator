@@ -16,9 +16,9 @@ func TestE2e(t *testing.T) {
 // function if the test fail. For example, retrieving logs.
 func AfterFailed(body func()) {
 	JustAfterEach(func() {
-		//if CurrentSpecReport().Failed() {
+		if CurrentSpecReport().Failed() {
 			By("Running AfterFailed function")
 			body()
-		//}
+		}
 	})
 }
