@@ -12,6 +12,7 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/controllers"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,20 +32,26 @@ var _ = Describe("EdgeDevice controller", func() {
 		cancelContext        context.CancelFunc
 		signalContext        context.Context
 
-		edgeDeviceRepoMock *edgedevice.MockRepository
-		k8sManager         manager.Manager
+		edgeDeviceRepoMock   *edgedevice.MockRepository
+		edgeDeviceSRRepoMock *edgedevicesignedrequest.MockRepository
+		k8sManager           manager.Manager
+
+		initialNamespace string = "default"
 	)
 
 	BeforeEach(func() {
 		k8sManager = getK8sManager(cfg)
 		mockCtrl := gomock.NewController(GinkgoT())
 		edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(k8sClient)
+		edgeDeviceSRRepoMock = edgedevicesignedrequest.NewMockRepository(mockCtrl)
 		edgeDeviceReconciler = &controllers.EdgeDeviceReconciler{
-			Client:               k8sClient,
-			Scheme:               k8sManager.GetScheme(),
-			EdgeDeviceRepository: edgeDeviceRepository,
-			Claimer:              storage.NewClaimer(k8sClient),
-			ObcAutoCreate:        false,
+			Client:                            k8sClient,
+			Scheme:                            k8sManager.GetScheme(),
+			EdgeDeviceRepository:              edgeDeviceRepository,
+			EdgeDeviceSignedRequestRepository: edgeDeviceSRRepoMock,
+			InitialDeviceNamespace:            initialNamespace,
+			Claimer:                           storage.NewClaimer(k8sClient),
+			ObcAutoCreate:                     false,
 		}
 		err = edgeDeviceReconciler.SetupWithManager(k8sManager)
 		Expect(err).ToNot(HaveOccurred())
@@ -78,11 +85,13 @@ var _ = Describe("EdgeDevice controller", func() {
 			}
 
 			edgeDeviceReconciler = &controllers.EdgeDeviceReconciler{
-				Client:               k8sClient,
-				Scheme:               k8sManager.GetScheme(),
-				EdgeDeviceRepository: edgeDeviceRepoMock,
-				Claimer:              storage.NewClaimer(k8sClient),
-				ObcAutoCreate:        false,
+				Client:                            k8sClient,
+				Scheme:                            k8sManager.GetScheme(),
+				EdgeDeviceRepository:              edgeDeviceRepoMock,
+				EdgeDeviceSignedRequestRepository: edgeDeviceSRRepoMock,
+				InitialDeviceNamespace:            initialNamespace,
+				Claimer:                           storage.NewClaimer(k8sClient),
+				ObcAutoCreate:                     false,
 			}
 		})
 
@@ -220,6 +229,81 @@ var _ = Describe("EdgeDevice controller", func() {
 			Expect(res.Requeue).To(BeFalse())
 		})
 
+		Context("Delete edgedevice", func() {
+			var (
+				edsr   *v1alpha1.EdgeDeviceSignedRequest
+				device *v1alpha1.EdgeDevice
+			)
+
+			BeforeEach(func() {
+				device = getDevice("test")
+				device.DeletionTimestamp = &v1.Time{Time: time.Now()}
+
+				edgeDeviceRepoMock.EXPECT().
+					Read(gomock.Any(), req.Name, req.Namespace).
+					Return(device, nil).
+					Times(1)
+
+				edsr = &v1alpha1.EdgeDeviceSignedRequest{
+					ObjectMeta: v1.ObjectMeta{Name: req.Name, Namespace: initialNamespace},
+					Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
+						TargetNamespace: initialNamespace,
+						Approved:        false,
+					},
+				}
+			})
+
+			It("Edgedevice signed request not found", func() {
+				// given
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), req.Name, initialNamespace).
+					Return(nil, errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound"))
+
+				// when
+				res, err := edgeDeviceReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+			})
+
+			It("Edgedevice signed request read failed", func() {
+				// given
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), req.Name, initialNamespace).
+					Return(nil, fmt.Errorf("Failed"))
+
+				// when
+				res, err := edgeDeviceReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).To(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
+			})
+
+			It("Edgedevice signed request is present and deleted", func() {
+				// given
+				device := getDevice("test")
+				device.DeletionTimestamp = &v1.Time{Time: time.Now()}
+
+				edgeDeviceSRRepoMock.EXPECT().
+					Read(gomock.Any(), req.Name, initialNamespace).
+					Return(edsr, nil)
+
+				edgeDeviceSRRepoMock.EXPECT().
+					Delete(gomock.Any(), edsr).
+					Return(nil)
+
+				// when
+				res, err := edgeDeviceReconciler.Reconcile(context.TODO(), req)
+
+				// then
+				Expect(err).NotTo(HaveOccurred())
+				Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
+			})
+
+		})
+
 	})
 
 	It("should not attach OBC to EdgeDevice when OBC creation (manual and automatic) is disabled", func() {
@@ -336,6 +420,7 @@ var _ = Describe("EdgeDevice controller", func() {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(obc.Spec.StorageClassName).To(BeEquivalentTo("openshift-storage.noobaa.io"))
 	})
+
 })
 
 func getExpectedEdgeDevice(ctx context.Context, objectKey client.ObjectKey) v1alpha1.EdgeDevice {

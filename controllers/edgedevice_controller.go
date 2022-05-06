@@ -26,6 +26,7 @@ import (
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/storage"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -40,12 +41,14 @@ import (
 // EdgeDeviceReconciler reconciles a EdgeDevice object
 type EdgeDeviceReconciler struct {
 	client.Client
-	Scheme                  *runtime.Scheme
-	EdgeDeviceRepository    edgedevice.Repository
-	ObcAutoCreate           bool
-	Claimer                 *storage.Claimer
-	Metrics                 metrics.Metrics
-	MaxConcurrentReconciles int
+	Scheme                            *runtime.Scheme
+	EdgeDeviceRepository              edgedevice.Repository
+	EdgeDeviceSignedRequestRepository edgedevicesignedrequest.Repository
+	InitialDeviceNamespace            string
+	ObcAutoCreate                     bool
+	Claimer                           *storage.Claimer
+	Metrics                           metrics.Metrics
+	MaxConcurrentReconciles           int
 }
 
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
@@ -76,6 +79,18 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{Requeue: true}, err
+	}
+
+	if edgeDevice.DeletionTimestamp != nil {
+		edsr, err := r.EdgeDeviceSignedRequestRepository.Read(ctx, edgeDevice.Name, r.InitialDeviceNamespace)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return ctrl.Result{}, nil
+			}
+			return ctrl.Result{Requeue: true}, err
+		}
+		err = r.EdgeDeviceSignedRequestRepository.Delete(ctx, edsr)
+		return ctrl.Result{}, err
 	}
 
 	if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice.Spec.Storage) {

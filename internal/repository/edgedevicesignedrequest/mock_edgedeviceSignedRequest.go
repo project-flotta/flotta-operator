@@ -50,6 +50,20 @@ func (mr *MockRepositoryMockRecorder) Create(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), arg0, arg1)
 }
 
+// Delete mocks base method.
+func (m *MockRepository) Delete(arg0 context.Context, arg1 *v1alpha1.EdgeDeviceSignedRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockRepositoryMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), arg0, arg1)
+}
+
 // Patch mocks base method.
 func (m *MockRepository) Patch(arg0 context.Context, arg1, arg2 *v1alpha1.EdgeDeviceSignedRequest) error {
 	m.ctrl.T.Helper()
