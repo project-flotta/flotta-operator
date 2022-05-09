@@ -129,6 +129,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - management.project-flotta.io
+  resources:
+  - playbookexecutions
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - playbookexecutions/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - management.project-flotta.io
+  resources:
+  - playbookexecutions/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - objectbucket.io
   resources:
   - objectbucketclaims
