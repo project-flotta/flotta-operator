@@ -394,7 +394,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 		if isInit {
-			logger.Info("EdgeDevice registere correctly for first time")
+			logger.Info("EdgeDevice registered correctly for first time")
 		} else {
 			logger.Info("EdgeDevice renew registration correctly")
 		}
