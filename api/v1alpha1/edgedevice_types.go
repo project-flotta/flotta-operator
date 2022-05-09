@@ -143,6 +143,7 @@ type EdgeDeviceStatus struct {
 	LastSyncedResourceVersion string              `json:"lastSyncedResourceVersion,omitempty"`
 	Hardware                  *Hardware           `json:"hardware,omitempty"`
 	Workloads                 []Workload          `json:"workloads,omitempty"`
+	PlaybookExecutions        []PlaybookExec      `json:"PlaybookExec,omitempty"`
 	DataOBC                   *string             `json:"dataObc,omitempty"`
 	UpgradeInformation        *UpgradeInformation `json:"upgradeInformation,omitempty"`
 }
@@ -160,6 +161,11 @@ type Workload struct {
 	Phase              EdgeWorkloadPhase `json:"phase,omitempty"`
 	LastTransitionTime metav1.Time       `json:"lastTransitionTime,omitempty"`
 	LastDataUpload     metav1.Time       `json:"lastDataUpload,omitempty"`
+}
+
+type PlaybookExec struct {
+	Name                    string                  `json:"name"`
+	PlaybookExecutionStatus PlaybookExecutionStatus `json:"PlaybookExecutionStatus,omitempty"`
 }
 
 type UpgradeInformation struct {

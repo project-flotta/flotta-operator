@@ -210,6 +210,43 @@ spec:
           status:
             description: EdgeDeviceStatus defines the observed state of EdgeDevice
             properties:
+              PlaybookExec:
+                items:
+                  properties:
+                    PlaybookExecutionStatus:
+                      description: PlaybookExecutionStatus defines the observed state
+                        of PlaybookExecution
+                      properties:
+                        conditions:
+                          items:
+                            properties:
+                              lastTransitionTime:
+                                format: date-time
+                                type: string
+                              message:
+                                type: string
+                              reason:
+                                type: string
+                              status:
+                                description: Indicates whether that condition is applicable,
+                                  with possible values "True", "False", or "Unknown"
+                                  The absence of a condition should be interpreted
+                                  the same as Unknown
+                                type: string
+                              type:
+                                type: string
+                            required:
+                            - status
+                            - type
+                            type: object
+                          type: array
+                      type: object
+                    name:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
               dataObc:
                 type: string
               hardware:
