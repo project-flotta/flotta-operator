@@ -18,20 +18,21 @@ package controllers
 
 import (
 	"context"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	flottalabels "github.com/project-flotta/flotta-operator/internal/labels"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	flottalabels "github.com/project-flotta/flotta-operator/internal/labels"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 )
 
 // EdgeDeviceLabelsReconciler reconciles a EdgeDevice object

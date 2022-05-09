@@ -380,6 +380,8 @@ type SystemVendor struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+genclient
+//+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // EdgeDevice is the Schema for the edgedevices API
 type EdgeDevice struct {

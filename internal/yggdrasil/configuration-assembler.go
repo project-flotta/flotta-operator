@@ -6,26 +6,25 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/project-flotta/flotta-operator/internal/k8sclient"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/storage"
-
+	"github.com/ghodss/yaml"
+	"github.com/go-logr/logr"
 	"github.com/go-openapi/strfmt"
-	"github.com/project-flotta/flotta-operator/internal/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/images"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/ghodss/yaml"
-	"github.com/go-logr/logr"
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/images"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/labels"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/storage"
 	"github.com/project-flotta/flotta-operator/models"
-	corev1 "k8s.io/api/core/v1"
 )
 
 type configurationAssembler struct {

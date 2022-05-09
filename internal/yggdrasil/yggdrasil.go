@@ -3,41 +3,38 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
-
-	"github.com/project-flotta/flotta-operator/internal/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/heartbeat"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/pkg/mtls"
-
 	"net/http"
 	"strings"
-
 	"time"
-
-	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/hardware"
-	"github.com/project-flotta/flotta-operator/internal/images"
-	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/storage"
-	"github.com/project-flotta/flotta-operator/internal/utils"
-	"github.com/project-flotta/flotta-operator/models"
-	apioperations "github.com/project-flotta/flotta-operator/restapi/operations"
-	"github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
-	operations "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/hardware"
+	"github.com/project-flotta/flotta-operator/internal/heartbeat"
+	"github.com/project-flotta/flotta-operator/internal/images"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
+	"github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/storage"
+	"github.com/project-flotta/flotta-operator/internal/utils"
+	"github.com/project-flotta/flotta-operator/models"
+	"github.com/project-flotta/flotta-operator/pkg/mtls"
+	apioperations "github.com/project-flotta/flotta-operator/restapi/operations"
+	"github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
+	operations "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
 )
 
 const (
@@ -397,7 +394,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 		if isInit {
-			logger.Info("EdgeDevice registere correctly for first time")
+			logger.Info("EdgeDevice registered correctly for first time")
 		} else {
 			logger.Info("EdgeDevice renew registration correctly")
 		}

@@ -1,15 +1,15 @@
 package metrics_test
 
 import (
-	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/prometheus/client_golang/prometheus"
 	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
+	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	ctrlmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
+
+	"github.com/project-flotta/flotta-operator/internal/metrics"
 )
 
 const (

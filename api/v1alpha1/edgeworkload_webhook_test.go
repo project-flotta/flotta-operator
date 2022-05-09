@@ -3,9 +3,10 @@ package v1alpha1_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 )
 
 var _ = Describe("EdgeWorkload Webhook", func() {

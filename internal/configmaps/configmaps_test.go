@@ -6,12 +6,13 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 )
 
 var _ = Describe("ConfigMaps", func() {

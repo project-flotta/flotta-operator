@@ -3,9 +3,10 @@ package utils_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
+
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/utils"
-	v1 "k8s.io/api/core/v1"
 )
 
 var _ = Describe("Utils", func() {

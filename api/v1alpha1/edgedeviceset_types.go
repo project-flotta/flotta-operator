@@ -46,6 +46,7 @@ type EdgeDeviceSetStatus struct{}
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+genclient
 
 // EdgeDeviceSet is the Schema for the edgedevicesets API
 type EdgeDeviceSet struct {

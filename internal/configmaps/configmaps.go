@@ -5,14 +5,15 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/k8sclient"
-	"github.com/project-flotta/flotta-operator/internal/utils"
-	"github.com/project-flotta/flotta-operator/models"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/k8sclient"
+	"github.com/project-flotta/flotta-operator/internal/utils"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 //go:generate mockgen -package=configmaps -destination=mock_configmaps.go . ConfigMap

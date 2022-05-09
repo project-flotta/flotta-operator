@@ -5,16 +5,16 @@ import (
 	"reflect"
 	"time"
 
-	mtrcs "github.com/project-flotta/flotta-operator/internal/metrics"
-
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/hardware"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/models"
 	v12 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/hardware"
+	mtrcs "github.com/project-flotta/flotta-operator/internal/metrics"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 type Updater struct {

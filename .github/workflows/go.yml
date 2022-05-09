@@ -36,7 +36,7 @@ jobs:
 
     - name: Checking generated files are up to date
       run: |
-        git diff --quiet config/ internal/ client/ restapi/ || (echo "There are not committed changes"; git diff config/ internal/ client/ restapi/ | tee; exit 1)
+        git diff --quiet config/ internal/ client/ restapi/ generated/ || (echo "There are not committed changes"; git diff config/ internal/ client/ restapi/ generated/ | tee; exit 1)
 
   Coverage:
     needs: build
