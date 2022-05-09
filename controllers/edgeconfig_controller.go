@@ -18,28 +18,39 @@ package controllers
 
 import (
 	"context"
+	"fmt"
+	"sync"
 
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeconfig"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeconfig"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
+	"github.com/project-flotta/flotta-operator/internal/common/utils"
 )
 
 // EdgeConfigReconciler reconciles a EdgeConfig object
 type EdgeConfigReconciler struct {
 	client.Client
-	Scheme                  *runtime.Scheme
-	EdgeConfigRepository    edgeconfig.Repository
-	EdgeDeviceRepository    edgedevice.Repository
-	MaxConcurrentReconciles int
+	Scheme                      *runtime.Scheme
+	EdgeConfigRepository        edgeconfig.Repository
+	EdgeDeviceRepository        edgedevice.Repository
+	PlaybookExecutionRepository playbookexecution.Repository
+	Concurrency                 uint
+	MaxConcurrentReconciles     int
+	ExecuteConcurrent           func(context.Context, uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
 }
+
+var logger = log.FromContext(context.TODO())
 
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeconfigs/status,verbs=get;update;patch
@@ -56,9 +67,8 @@ type EdgeConfigReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *EdgeConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling", "edgeConfig", req)
+	logger.V(1).Info("EdgeConfig Reconcile", "edgeConfig", req)
 
-	// your logic here
 	edgeConfig, err := r.EdgeConfigRepository.Read(ctx, req.Name, req.Namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -77,39 +87,138 @@ func (r *EdgeConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{Requeue: true}, nil
 	}
 
-	if edgeConfig.DeletionTimestamp == nil {
-		return ctrl.Result{}, nil
-	}
-
 	edgeDevices, err := r.EdgeDeviceRepository.ListForEdgeConfig(ctx, edgeConfig.Name, edgeConfig.Namespace)
-	if !errors.IsNotFound(err) {
-		logger.Error(err, "Cannot retrieve labelled Edge Config", "edgeConfig", edgeConfig.Name, "namespace", edgeConfig.Namespace)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return ctrl.Result{Requeue: true}, err
+		}
+
+	}
+	err = r.addPlaybookExecutionToDevices(ctx, edgeConfig, edgeDevices)
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			return ctrl.Result{}, nil
+		}
 		return ctrl.Result{Requeue: true}, err
 	}
-	logger.Info("EdgeDevice found", "edgeDevices", edgeDevices)
-	// *******************
-	// TODO : complete
-	// *******************
-	return ctrl.Result{}, nil
-}
 
-func (r *EdgeConfigReconciler) getLabelledEdgeDevices(ctx context.Context, name, namespace string) ([]managementv1alpha1.EdgeDevice, error) {
-	return r.EdgeDeviceRepository.ListForWorkload(ctx, name, namespace)
+	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *EdgeConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
 		For(&managementv1alpha1.EdgeConfig{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		WithEventFilter(predicate.Funcs{
+			CreateFunc: func(e event.CreateEvent) bool {
+				return true
+			},
+		}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: r.MaxConcurrentReconciles}).
 		Complete(r)
 }
-func createPlaybookExecution(edgeConfig *managementv1alpha1.EdgeConfig) managementv1alpha1.PlaybookExecution {
-	playbookExec.ObjectMeta.Namespace = edgeConfig.Namespace
-	return playbookExec
-	playbookExecutionBase := createPlaybookExecution(edgeConfig)
 
-				edgeDevice.Status.PlaybookExecutions = append(edgeDevice.Status.PlaybookExecutions, *playbookExecution)
+func createPlaybookExecution(edgeConfig *managementv1alpha1.EdgeConfig) managementv1alpha1.PlaybookExecution {
+	var playbookExec managementv1alpha1.PlaybookExecution
+	playbookExec.ObjectMeta.Name = edgeConfig.Name
+	playbookExec.ObjectMeta.Namespace = edgeConfig.Namespace
+	playbookExec.Spec.Playbook = edgeConfig.Spec.EdgePlaybook.Playbooks[0] //TODO Iterate over the playbooks
+	playbookExec.Spec.ExecutionAttempt = 0
+	playbookExecutionStatus := managementv1alpha1.PlaybookExecutionStatus{}
+	playbookExecutionStatus.Conditions = append(playbookExecutionStatus.Conditions, managementv1alpha1.PlaybookExecutionCondition{Type: managementv1alpha1.PlaybookExecutionDeploying, Status: v1.ConditionTrue})
+	playbookExec.Status = playbookExecutionStatus
+	return playbookExec
+}
+
+func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context, edgeConfig *managementv1alpha1.EdgeConfig, edgeDevices []managementv1alpha1.EdgeDevice) error {
+
+	playbookExecutionBase := createPlaybookExecution(edgeConfig)
+	f := func(ctx context.Context, input []managementv1alpha1.EdgeDevice) []error {
+
+		var errs []error
+		for _, edgeDevice := range input {
+			select {
+			case <-ctx.Done():
+				errs = append(errs, fmt.Errorf("context canceled: %w", ctx.Err()))
+				return errs
+			default:
+			}
+			if !r.hasPlaybookExecution(edgeDevice, edgeConfig.Name) {
+				patch := client.MergeFrom(edgeDevice.DeepCopy())
+				playbookExecution := playbookExecutionBase.DeepCopy()
+				playbookExecution.Name = edgeDevice.Name + "-" + edgeConfig.Name
+
+				peStatus := managementv1alpha1.PlaybookExec{Name: playbookExecution.Name}
+				edgeDevice.Status.PlaybookExecutions = append(edgeDevice.Status.PlaybookExecutions, peStatus)
+				err := r.PlaybookExecutionRepository.Create(ctx, playbookExecution)
+				if err != nil {
+					if errors.IsAlreadyExists(err) {
+						continue
+					}
+					errs = append(errs, err)
+					continue
+				}
+
+				err = r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
+				if err != nil {
+					errs = append(errs, err)
+					continue
+				}
+			} else {
+				logger.Info("Edge Device has already a playbookExecution", "edgeDevice", edgeDevice, "edgeConfig", edgeConfig)
+			}
+		}
+
+		return errs
+	}
+
+	errs := r.executeConcurrent(ctx, f, edgeDevices)
+	if len(errs) != 0 {
+		return fmt.Errorf(mergeErrorMessages(errs))
+	}
+	return nil
+}
+
+func (r *EdgeConfigReconciler) hasPlaybookExecution(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
+	for _, PlaybookExec := range edgeDevice.Status.PlaybookExecutions {
+		if PlaybookExec.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *EdgeConfigReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+	var errs []error
+	if r.Concurrency == 1 {
+		errs = f(ctx, edgeDevices)
+	} else {
+		errs = r.ExecuteConcurrent(ctx, r.Concurrency, f, edgeDevices)
+	}
+	return errs
+}
+
+func ExecuteEdgeConfigConcurrent(ctx context.Context, concurrency uint, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+	if len(edgeDevices) == 0 || concurrency == 0 {
+		return nil
+	}
+	inputs := splitEdgeDevices(edgeDevices, concurrency)
+	nInputs := len(inputs)
+	returnValues := make([][]error, nInputs)
+	var wg sync.WaitGroup
+	wg.Add(nInputs)
+	for i := 0; i < nInputs; i++ {
+		index := i
+		go func() {
+			defer wg.Done()
+			returnValues[index] = f(ctx, inputs[index])
+		}()
+	}
+	wg.Wait()
+	var result []error
+	for _, returnValue := range returnValues {
+		result = append(result, returnValue...)
+	}
+	return result
+}
