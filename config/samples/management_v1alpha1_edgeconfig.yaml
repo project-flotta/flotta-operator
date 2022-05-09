@@ -1,6 +1,10 @@
+---
 apiVersion: management.project-flotta.io/v1alpha1
 kind: EdgeConfig
 metadata:
   name: edgeconfig-sample
 spec:
-  # TODO(user): Add fields here
+  edgePlaybook:
+    playbooks:
+      - content: LS0tCi0gIG5hbWU6IEhlbGxvIFdvcmxkIEFuc2libGUgUGxheWJvb2sKICAgaG9zdHM6IDEyNy4wLjAuMQogICBnYXRoZXJfZmFjdHM6IGZhbHNlCiAgIAogICB0YXNrczoKICAgLSBuYW1lOiBDcmVhdGUgYSBmaWxlIGNhbGxlZCAnL3RtcC90ZXN0ZmlsZS50eHQnIHdpdGggdGhlIGNvbnRlbnQgJ2hlbGxvIHdvcmxkJy4KICAgICBjb3B5OgogICAgICAgY29udGVudDogaGVsbG8gd29ybGQKICAgICAgIGRlc3Q6IC90bXAvdGVzdGZpbGUudHh0CiAgIC0gbmFtZTogQW5vdGhlciB0YXNrCiAgICAgZGVidWc6CiAgICAgICBtc2c6IFRlc3QgbWVzc2FnZQogICAtIG5hbWU6IExhc3QgdGFzawogICAgIGRlYnVnOgogICAgICAgdmFyOiBhbnNpYmxlX2ZhY3Rz
+    timeoutSeconds: 150  # Interval in seconds on which the playbook execution should be executed
