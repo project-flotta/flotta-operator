@@ -7,19 +7,19 @@ Usage: $0 OPTIONS
 This script installs Flotta agent component on RPM-compatible machine.
 OPTIONS:
    -h      Show this message
-   -i      IP address under which your Flotta operator API endpoint on port 8043 is accessible to the device.
-           When your KUBECONFIG is pointing to cluster with Flotta operator deployed, you can run
+   -i      IP address under which your Flotta edge API endpoint is accessible to the device.
+           For testing, when your KUBECONFIG is pointing to cluster with Flotta operator deployed, you can run
 
            kubectl port-forward service/flotta-operator-controller-manager -n flotta 8043 --address 0.0.0.0
-
-           to make the Flotta API accessible from your machine
+   -p      Port to connect to Flotta API, default 8043
 EOF
 }
 
-while getopts "i:h:" option; do
+while getopts "i:h:p:" option; do
     case "${option}"
     in
         i) FLOTTA_API_IP=${OPTARG};;
+        p) FLOTTA_PORT=${OPTARG};;
         h)
             usage
             exit 0
