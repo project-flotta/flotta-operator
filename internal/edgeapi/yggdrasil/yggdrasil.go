@@ -3,6 +3,9 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
+	"github.com/project-flotta/flotta-operator/internal/labels"
+	"github.com/project-flotta/flotta-operator/internal/repository/edgeconfig"
+	"github.com/project-flotta/flotta-operator/internal/repository/playbookexecution"
 	"net/http"
 	"strings"
 	"time"
@@ -31,6 +34,9 @@ const (
 
 type Handler struct {
 	backend          backendapi.EdgeDeviceBackend
+	edgeConfigRepository              edgeconfig.Repository
+	playbookExecutionRepository       playbookexecution.Repository
+	deviceSetRepository               edgedeviceset.Repository
 	initialNamespace string
 	metrics          metrics.Metrics
 	heartbeatHandler *RetryingDelegatingHandler
@@ -142,6 +148,57 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		logger.With("err", err).Error("failed to get edge device configuration")
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
+	// var deviceSet *v1alpha1.EdgeDeviceSet
+	if deviceSetName, ok := edgeDevice.Labels["flotta/member-of"]; ok {
+		logger.V(1).Info("Device uses EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
+		if labels.IsConfigLabel(deviceSetName) {
+			playbookExecution, err := h.playbookExecutionRepository.Read(ctx, deviceSetName, h.initialNamespace)
+			if err != nil {
+				if errors.IsNotFound(err) {
+					logger.Info("playbook execution is not found")
+					edgeConfig, err := h.edgeConfigRepository.Read(ctx, deviceSetName, h.initialNamespace)
+					if err != nil {
+						if errors.IsNotFound(err) {
+							logger.Info("edge config is not found")
+							return operations.NewGetDataMessageForDeviceNotFound()
+						}
+						logger.Error(err, "failed to get edge config")
+						return operations.NewGetDataMessageForDeviceInternalServerError()
+					}
+					err = createPlaybookExecution(ctx, edgeConfig, edgeDevice, h.playbookExecutionRepository)
+					if err != nil {
+						logger.Error(err, "failed to create playbook execution")
+						return operations.NewGetDataMessageForDeviceInternalServerError()
+					}
+				} else {
+					logger.Error(err, "failed to get playbook execution")
+					return operations.NewGetDataMessageForDeviceInternalServerError()
+				}
+			}
+			if playbookExecution == nil {
+
+			}
+		}
+		// var err error
+		// deviceSet, err = h.deviceSetRepository.Read(ctx, deviceSetName, edgeDevice.Namespace)
+		// if err != nil {
+		// 	logger.Info("Cannot load EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
+		// 	deviceSet = nil
+		// }
+	}
+
+	// h.edgeConfigRepository.ListByLabel()
+
+	// h.deviceRepository.ListForEdgeConfig(ctx)
+	// edgeConfig, err := h.edgeConfigRepository.Read(ctx, deviceID, h.initialNamespace)
+	// if err != nil {
+	// 	if errors.IsNotFound(err) {
+	// 		logger.Info("edge config is not found")
+	// 		return operations.NewGetDataMessageForDeviceNotFound()
+	// 	}
+	// }
+
+	// logger.Info("edge config found", "edgeConfig", edgeConfig.Name)
 
 	// TODO: Network optimization: Decide whether there is a need to return any payload based on difference between last applied configuration and current state in the cluster.
 	message := models.Message{
@@ -153,6 +210,20 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		Content:   *dc,
 	}
 	return operations.NewGetDataMessageForDeviceOK().WithPayload(&message)
+}
+
+func createPlaybookExecution(ctx context.Context, edgeConfig *v1alpha1.EdgeConfig, edgeDevice *v1alpha1.EdgeDevice, playbookExecutionRepo playbookexecution.Repository) error {
+	playbookExecution := &v1alpha1.PlaybookExecution{}
+
+	playbookExecution.Spec.Playbook = edgeConfig.Spec.EdgePlaybook.Playbooks[0] //TODO: for each
+	playbookExecution.Spec.ExecutionAttempt = 0
+
+	err := playbookExecutionRepo.Create(ctx, playbookExecution)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {
@@ -263,6 +334,44 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		h.metrics.IncEdgeDeviceSuccessfulRegistration()
 		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
+	case "ansible":
+		ns := h.getNamespace(ctx)
+
+		edgeDevice, err := h.edgeDeviceRepository.Read(ctx, deviceID, ns)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				h.metrics.IncEdgeDeviceFailedRegistration()
+				return operations.NewPostDataMessageForDeviceInternalServerError()
+			}
+			return operations.NewPostDataMessageForDeviceNotFound()
+		}
+
+		for labelName, labelValue := range edgeDevice.ObjectMeta.Labels {
+			if labels.IsEdgeConfigLabel(labelName) { //FIXME: what if the are multiple config labels?
+
+				playbookExecution, err := h.playbookExecutionRepository.Read(ctx, labelValue, h.getNamespace(ctx))
+				if err != nil {
+					if errors.IsNotFound(err) {
+						return operations.NewGetDataMessageForDeviceNotFound()
+					}
+					return operations.NewGetDataMessageForDeviceInternalServerError()
+				}
+				if playbookExecution == nil {
+					return operations.NewGetDataMessageForDeviceInternalServerError()
+				}
+
+				message := models.Message{
+					Type:      models.MessageTypeData,
+					Metadata:  map[string]string{"ansible-playbook": "true"},
+					Directive: "ansible",
+					MessageID: uuid.New().String(),
+					Version:   1,
+					Sent:      strfmt.DateTime(time.Now()),
+					Content:   playbookExecution,
+				}
+				return operations.NewGetDataMessageForDeviceOK().WithPayload(&message)
+			}
+		}
 	default:
 		logger.With("message", msg).Info("received unknown message")
 		return operations.NewPostDataMessageForDeviceBadRequest()
