@@ -9,10 +9,9 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	v1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
-
-	v1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 )
 
 // MockRepository is a mock of Repository interface.
@@ -123,6 +122,21 @@ func (m *MockRepository) Read(arg0 context.Context, arg1, arg2 string) (*v1alpha
 func (mr *MockRepositoryMockRecorder) Read(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockRepository)(nil).Read), arg0, arg1, arg2)
+}
+
+// ReadForPlaybookExecution mocks base method.
+func (m *MockRepository) ReadForPlaybookExecution(arg0 context.Context, arg1, arg2 string) (*v1alpha1.EdgeDevice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadForPlaybookExecution", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.EdgeDevice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadForPlaybookExecution indicates an expected call of ReadForPlaybookExecution.
+func (mr *MockRepositoryMockRecorder) ReadForPlaybookExecution(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadForPlaybookExecution", reflect.TypeOf((*MockRepository)(nil).ReadForPlaybookExecution), arg0, arg1, arg2)
 }
 
 // RemoveFinalizer mocks base method.
