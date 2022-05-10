@@ -56,7 +56,7 @@ all: build
 # http://linuxcommand.org/lc3_adv_awk.php
 
 help: ## Display this help.
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Development
 
@@ -166,9 +166,8 @@ install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~
 uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl delete -f -
 
-deploy: gen-manifests ## Deploy controller to the K8s cluster specified in ~/.kube/config.
-	kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
-	kubectl wait --for=condition=Ready pods --all -n cert-manager --timeout=60s
+deploy: ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+deploy: gen-manifests install-cert-manager
 	kubectl apply -f $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
 
 undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/config.
@@ -200,6 +199,11 @@ install-router:
 	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/router_rbac.yaml
 	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/route_crd.yaml
 	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/router.yaml
+
+install-cert-manager: ## Install cert-manager dependency
+install-cert-manager:
+	$(KUBECTL) apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+	$(KUBECTL) wait --for=condition=Ready pods --all -n cert-manager --timeout=60s
 
 release:
 	TARGET=ocp gen-manifests
