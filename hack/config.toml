@@ -5,4 +5,4 @@ ca-root = ["/etc/pki/consumer/ca.pem"]
 path-prefix = "api/flotta-management/v1"
 protocol = "http"
 client-id = "$(cat /etc/machine-id)"
-server = "project-flotta.io:8043"
+server = "project-flotta.io:$FLOTTA_PORT"
