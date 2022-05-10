@@ -10,11 +10,13 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
+	"github.com/project-flotta/flotta-operator/internal/labels"
 )
 
 //go:generate mockgen -package=edgedevice -destination=mock_edgedevice.go . Repository
 type Repository interface {
 	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDevice, error)
+	ReadForPlaybookExecution(ctx context.Context, naplaybookExecutionNameme string, namespace string) (*v1alpha1.EdgeDevice, error)
 	Create(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) error
 	PatchStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) error
 	Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
@@ -38,6 +40,8 @@ func (r *CRRepository) Read(ctx context.Context, name string, namespace string) 
 	return &edgeDevice, err
 }
 
+func (r *CRRepository) ReadForPlaybookExecution(ctx context.Context, playbookExecutionName string, namespace string) (*v1alpha1.EdgeDevice, error) {
+				if pe.Name == playbookExecutionName {
 func (r *CRRepository) Create(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) error {
 	return r.client.Create(ctx, edgeDevice)
 }
@@ -71,11 +75,12 @@ func (r CRRepository) ListForSelector(ctx context.Context, selector *metav1.Labe
 
 func (r CRRepository) ListForWorkload(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error) {
 	var edl v1alpha1.EdgeDeviceList
-	err := r.client.List(ctx, &edl, client.MatchingFields{indexer.DeviceByWorkloadIndexKey: name}, client.InNamespace(namespace))
+	err := r.client.List(ctx, &edl, client.MatchingLabels{indexer.DeviceByWorkloadIndexKey: name}, client.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
-
+	err := r.client.List(ctx, &edl, client.MatchingLabels{indexer.DeviceByConfigIndexKey: name}, client.InNamespace(namespace))
+	err := r.client.List(ctx, &edl, client.MatchingLabels{labels.ConfigLabelPrefix + indexer.DeviceByConfigIndexKey: indexer.CreateDeviceConfigIndexKey(name)}, client.InNamespace(namespace))
 	return edl.Items, nil
 }
 
