@@ -126,6 +126,10 @@ var Config struct {
 
 	// AutoApprovalprocess enable auto approval on devices
 	AutoApproval bool `envconfig:"AUTO_APPROVAL_PROCESS" default:"true"`
+
+	// If Webhooks are enabled, an admission webhook is created and checked when
+	// any user submits any change to any project-flotta.io CRD.
+	EnableWebhooks bool `envconfig:"ENABLE_WEBHOOKS" default:"true"`
 }
 
 func init() {
@@ -245,7 +249,7 @@ func main() {
 	}
 
 	// webhooks
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+	if Config.EnableWebhooks {
 		if err = (&v1alpha1.EdgeWorkload{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "EdgeWorkload")
 			os.Exit(1)
