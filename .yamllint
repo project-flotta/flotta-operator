@@ -9,6 +9,7 @@ rules:
       .github/workflows/go.yml
       config/crd/bases/
       config/test/crd/
+      config/samples/management_v1alpha1_edgeconfig.yaml
       swagger.yaml
   empty-lines:
     max: 1
