@@ -78,6 +78,26 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
 		})
 
+		It("Deploy valid edgeworkload to registered device where pod and container name is different", func() {
+			// given
+			err := device.Register()
+			Expect(err).To(BeNil())
+
+			// when
+			_, err = workload.Create(edgeworkloadDeviceIdCtrName("nginx", "nginx-ctr", device.GetId(), hostPort, nginxPort))
+			Expect(err).To(BeNil())
+
+			// then
+			// Check the edgedevice report proper state of workload:
+			err = device.WaitForWorkloadState("nginx", "Running")
+			Expect(err).To(BeNil(), "cannot get workload status for nginx workload")
+
+			// Check the nginx is serving content:
+			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
+			Expect(err).To(BeNil())
+			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
+		})
+
 		It("Deploy multiple containers part of workload", func() {
 			// given
 			err := device.Register()
@@ -101,10 +121,6 @@ var _ = Describe("e2e", func() {
 			stdout, err = device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort+1))
 			Expect(err).To(BeNil())
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
-
-			stdout, err = device.Exec("systemctl is-active pod-nginx_pod.service")
-			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("active"))
 		})
 
 		It("Unregister device without any workloads", func() {
@@ -327,42 +343,46 @@ var _ = Describe("e2e", func() {
 })
 
 func edgeworkloadWithSecretFromEnv(name string, device string, secretName string) *v1alpha1.EdgeWorkload {
-	workload := edgeworkload(name, hostPort, nginxPort, &secretName, nil)
+	workload := edgeworkload(name, name, hostPort, nginxPort, &secretName, nil)
 	workload.Spec.Device = device
 	return workload
 }
 
 func edgeworkloadWithConfigMapFromEnv(name string, device string, configMap string) *v1alpha1.EdgeWorkload {
-	workload := edgeworkload(name, hostPort, nginxPort, nil, &configMap)
+	workload := edgeworkload(name, name, hostPort, nginxPort, nil, &configMap)
 	workload.Spec.Device = device
 	return workload
 }
 
 func edgeworkloadDeviceIdContainers(name string, device string, hostport int, containerport int, ctrCount int) *v1alpha1.EdgeWorkload {
-	workload := edgeworkloadContainers(name, hostport, containerport, nil, nil, ctrCount)
+	workload := edgeworkloadContainers(name, name, hostport, containerport, nil, nil, ctrCount)
+	workload.Spec.Device = device
+	return workload
+}
+
+func edgeworkloadDeviceIdCtrName(name string, ctrName string, device string, hostport int, containerport int) *v1alpha1.EdgeWorkload {
+	workload := edgeworkload(name, ctrName, hostport, containerport, nil, nil)
 	workload.Spec.Device = device
 	return workload
 }
 
 func edgeworkloadDeviceId(name string, device string, hostport int, containerport int) *v1alpha1.EdgeWorkload {
-	workload := edgeworkload(name, hostport, containerport, nil, nil)
-	workload.Spec.Device = device
-	return workload
+	return edgeworkloadDeviceIdCtrName(name, name, device, hostport, containerport)
 }
 
 func edgeworkloadDeviceLabel(name string, labels map[string]string, hostport int, containerport int) *v1alpha1.EdgeWorkload {
-	workload := edgeworkload(name, hostport, containerport, nil, nil)
+	workload := edgeworkload(name, name, hostport, containerport, nil, nil)
 	workload.Spec.DeviceSelector = &metav1.LabelSelector{
 		MatchLabels: labels,
 	}
 	return workload
 }
 
-func edgeworkload(name string, hostport int, containerport int, secretRef *string, configRef *string) *v1alpha1.EdgeWorkload {
-	return edgeworkloadContainers(name, hostport, containerport, secretRef, configRef, 1)
+func edgeworkload(name string, ctrName string, hostport int, containerport int, secretRef *string, configRef *string) *v1alpha1.EdgeWorkload {
+	return edgeworkloadContainers(name, ctrName, hostport, containerport, secretRef, configRef, 1)
 }
 
-func edgeworkloadContainers(name string, hostport int, containerport int, secretRef *string, configRef *string, ctrCount int) *v1alpha1.EdgeWorkload {
+func edgeworkloadContainers(name string, ctrName string, hostport int, containerport int, secretRef *string, configRef *string, ctrCount int) *v1alpha1.EdgeWorkload {
 	envFrom := make([]corev1.EnvFromSource, 0)
 	if secretRef != nil {
 		envFrom = append(envFrom, corev1.EnvFromSource{SecretRef: &corev1.SecretEnvSource{
@@ -379,7 +399,6 @@ func edgeworkloadContainers(name string, hostport int, containerport int, secret
 	for i := 0; i < ctrCount; i++ {
 		// Let's use same name as workload for container, and different name
 		// if multiple containers, so we use both cases.
-		ctrName := name
 		if i > 0 {
 			ctrName = fmt.Sprintf("%s_%d", name, i)
 		}
