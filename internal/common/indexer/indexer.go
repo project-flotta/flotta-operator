@@ -15,6 +15,9 @@ const (
 
 	// DeviceByWorkloadIndexKey is the key of the indexer for devices by workload
 	DeviceByWorkloadIndexKey = "device-by-workload"
+
+	// DeviceByConfigIndexKey is the key of the indexer for devices by config
+	DeviceByConfigIndexKey = "device-by-config"
 )
 
 func WorkloadByDeviceIndexFunc(obj ctrlruntimeclient.Object) []string {
@@ -46,9 +49,29 @@ func DeviceByWorkloadIndexFunc(obj ctrlruntimeclient.Object) []string {
 	return keys
 }
 
+func DeviceByConfigIndexFunc(obj ctrlruntimeclient.Object) []string {
+	device, ok := obj.(*v1alpha1.EdgeDevice)
+	if !ok {
+		return []string{}
+	}
+	var keys []string
+	// iterate over labels map and return a list of config as keys
+	for name := range device.Labels {
+		if flottalabels.IsEdgeConfigLabel(name) {
+			keys = append(keys, CreateDeviceConfigIndexKey(name))
+		}
+	}
+	return keys
+}
+
 // CreateDeviceIndexKey creates a key for the device index which is basically the workload name
 func CreateDeviceIndexKey(label string) string {
 	return strings.TrimPrefix(label, flottalabels.WorkloadLabelPrefix)
+}
+
+// CreateDeviceConfigIndexKey creates a key for the device index which is basically the config name
+func CreateDeviceConfigIndexKey(label string) string {
+	return strings.TrimPrefix(label, flottalabels.EdgeConfigLabelPrefix)
 }
 
 // CreateWorkloadIndexKey creates a key for the workload index

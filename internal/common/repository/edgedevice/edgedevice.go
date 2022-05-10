@@ -2,6 +2,7 @@ package edgedevice
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"time"
 
@@ -22,6 +23,7 @@ type Repository interface {
 	Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
 	ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error)
 	ListForWorkload(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error)
+	ListForEdgeConfig(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error)
 	RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error
 	UpdateLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error
 }
@@ -41,7 +43,27 @@ func (r *CRRepository) Read(ctx context.Context, name string, namespace string) 
 }
 
 func (r *CRRepository) ReadForPlaybookExecution(ctx context.Context, playbookExecutionName string, namespace string) (*v1alpha1.EdgeDevice, error) {
+	options := client.ListOptions{
+		Namespace: namespace,
+	}
+	var edl v1alpha1.EdgeDeviceList
+	err := r.client.List(ctx, &edl, &options)
+	if err != nil {
+		return nil, err
+	}
+	for _, device := range edl.Items {
+		if device.Status.PlaybookExecutions != nil {
+			for _, pe := range device.Status.PlaybookExecutions {
 				if pe.Name == playbookExecutionName {
+					return &device, nil
+				}
+			}
+		}
+	}
+
+	return nil, errors.New("cannot find edge device")
+}
+
 func (r *CRRepository) Create(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice) error {
 	return r.client.Create(ctx, edgeDevice)
 }
@@ -79,8 +101,16 @@ func (r CRRepository) ListForWorkload(ctx context.Context, name string, namespac
 	if err != nil {
 		return nil, err
 	}
-	err := r.client.List(ctx, &edl, client.MatchingLabels{indexer.DeviceByConfigIndexKey: name}, client.InNamespace(namespace))
-	err := r.client.List(ctx, &edl, client.MatchingLabels{labels.ConfigLabelPrefix + indexer.DeviceByConfigIndexKey: indexer.CreateDeviceConfigIndexKey(name)}, client.InNamespace(namespace))
+	return edl.Items, nil
+}
+
+func (r CRRepository) ListForEdgeConfig(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error) {
+	var edl v1alpha1.EdgeDeviceList
+	err := r.client.List(ctx, &edl, client.MatchingLabels{labels.EdgeConfigLabelPrefix + indexer.DeviceByConfigIndexKey: name}, client.InNamespace(namespace))
+	if err != nil {
+		return nil, err
+	}
+
 	return edl.Items, nil
 }
 
