@@ -133,10 +133,10 @@ vendor:
 	go mod vendor
 
 get-certs: # Write certificates to /tmp/ folder
-	kubectl get secret -n flotta flotta-ca  -o json | jq '.data."ca.crt"| @base64d' -r >/tmp/ca.pem
+	kubectl get secret -n flotta flotta-ca -o go-template='{{ index .data "ca.crt" | base64decode}}' >/tmp/ca.pem
 	$(eval REG_SECRET_NAME := $(shell kubectl get secrets -n flotta -l reg-client-ca=true --sort-by=.metadata.creationTimestamp | tail -1 | awk '{print $$1}'))
-	kubectl -n flotta get secret $(REG_SECRET_NAME) -o json | jq -r '.data."client.crt"| @base64d' > /tmp/cert.pem
-	kubectl -n flotta get secret $(REG_SECRET_NAME) -o json | jq -r '.data."client.key"| @base64d' > /tmp/key.pem
+	kubectl get secret -n flotta $(REG_SECRET_NAME) -o go-template='{{ index .data "client.crt" | base64decode}}' > /tmp/cert.pem
+	kubectl get secret -n flotta $(REG_SECRET_NAME) -o go-template='{{ index .data "client.key" | base64decode}}' > /tmp/key.pem
 
 check-certs: # Check cert subject
 	openssl x509 -noout -in /tmp/cert.pem --subject
