@@ -18,26 +18,26 @@ type Repository interface {
 	ListByLabel(ctx context.Context, labelName, labelValue string, namespace string) ([]v1alpha1.EdgeWorkload, error)
 }
 
-type CRRespository struct {
+type CRRepository struct {
 	client client.Client
 }
 
-func NewEdgeWorkloadRepository(client client.Client) *CRRespository {
-	return &CRRespository{client: client}
+func NewEdgeWorkloadRepository(client client.Client) *CRRepository {
+	return &CRRepository{client: client}
 }
 
-func (r *CRRespository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeWorkload, error) {
+func (r *CRRepository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeWorkload, error) {
 	edgeWorkload := v1alpha1.EdgeWorkload{}
 	err := r.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, &edgeWorkload)
 	return &edgeWorkload, err
 }
 
-func (r *CRRespository) Patch(ctx context.Context, old, new *v1alpha1.EdgeWorkload) error {
+func (r *CRRepository) Patch(ctx context.Context, old, new *v1alpha1.EdgeWorkload) error {
 	patch := client.MergeFrom(old)
 	return r.client.Patch(ctx, new, patch)
 }
 
-func (r *CRRespository) RemoveFinalizer(ctx context.Context, edgeWorkload *v1alpha1.EdgeWorkload, finalizer string) error {
+func (r *CRRepository) RemoveFinalizer(ctx context.Context, edgeWorkload *v1alpha1.EdgeWorkload, finalizer string) error {
 	cp := edgeWorkload.DeepCopy()
 
 	var finalizers []string
@@ -56,7 +56,7 @@ func (r *CRRespository) RemoveFinalizer(ctx context.Context, edgeWorkload *v1alp
 	return nil
 }
 
-func (r *CRRespository) ListByLabel(ctx context.Context, labelName, labelValue string, namespace string) ([]v1alpha1.EdgeWorkload, error) {
+func (r *CRRepository) ListByLabel(ctx context.Context, labelName, labelValue string, namespace string) ([]v1alpha1.EdgeWorkload, error) {
 	edgeWorkloads := v1alpha1.EdgeWorkloadList{}
 	err := r.client.List(ctx, &edgeWorkloads,
 		client.MatchingFields{indexer.WorkloadByDeviceIndexKey: indexer.CreateWorkloadIndexKey(labelName, labelValue)},
