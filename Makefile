@@ -12,7 +12,7 @@ SKIP_TEST_IMAGE_PULL ?= false
 IMG ?= controller:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
-# Cluster type - k8s/ocp/kind
+# Cluster type - k8s/ocp/all
 TARGET ?= k8s
 # Host name for ingress creation
 HOST ?= flotta-operator.srv
@@ -187,8 +187,6 @@ ifeq ($(TARGET), k8s)
 	$(KUSTOMIZE) build config/k8s | kubectl delete -f -
 else ifeq ($(TARGET), ocp)
 	$(KUSTOMIZE) build config/ocp | kubectl delete -f -
-else ifeq ($(TARGET), kind)
-	$(KUSTOMIZE) build config/kind | kubectl delete -f -
 endif
 	kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 
@@ -202,10 +200,6 @@ endif
 ifneq (,$(filter $(TARGET), ocp all))
 	$(Q)$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/ocp-flotta-operator.yaml
 	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/ocp-flotta-operator.yaml\033[0m"
-endif
-ifeq ($(TARGET), kind)
-	$(Q)$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/kind-flotta-operator.yaml
-	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/kind-flotta-operator.yaml\033[0m"
 endif
 
 	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/project-flotta/flotta-operator
