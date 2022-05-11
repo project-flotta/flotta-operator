@@ -5,6 +5,7 @@ VERSION ?= 0.0.1
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 IMAGE_TAG_BASE ?= project-flotta.io/flotta-operator
 TEST_IMAGE ?= quay.io/project-flotta/edgedevice:latest
+RELEASE_REPO ?= project-flotta/flotta-operator
 SKIP_TEST_IMAGE_PULL ?= false
 
 # Image URL to use all building/pushing image targets
@@ -161,6 +162,14 @@ docker-build: ## Build docker image with the manager.
 docker-push: ## Push docker image with the manager.
 	$(DOCKER) push ${IMG}
 
+release: ## Release the operator in github releases, tagged by its version.
+release: gen-manifests
+	gh release create v$(VERSION) --notes "Release v$(VERSION) of Flotta Operator"\
+		--repo=$(RELEASE_REPO) --title "Release v$(VERSION)"\
+		'$(TMP_ODIR)/ocp-flotta-operator.yaml# Flotta Operator for OCP'\
+		'$(TMP_ODIR)/k8s-flotta-operator.yaml# Flotta Operator for kubernetes'
+	$(Q)rm -rf $(TMP_ODIR)
+
 ##@ Deployment
 
 install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
@@ -186,16 +195,20 @@ endif
 $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into $(TARGET)-flotta-operator.yaml
 	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
-ifeq ($(TARGET), k8s)
-	$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
-else ifeq ($(TARGET), ocp)
-	$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
-else ifeq ($(TARGET), kind)
-	$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml
+ifneq (,$(filter $(TARGET), k8s all))
+	$(Q)$(KUSTOMIZE) build config/k8s > $(TMP_ODIR)/k8s-flotta-operator.yaml
+	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/k8s-flotta-operator.yaml\033[0m"
+endif
+ifneq (,$(filter $(TARGET), ocp all))
+	$(Q)$(KUSTOMIZE) build config/ocp > $(TMP_ODIR)/ocp-flotta-operator.yaml
+	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/ocp-flotta-operator.yaml\033[0m"
+endif
+ifeq ($(TARGET), kind)
+	$(Q)$(KUSTOMIZE) build config/kind > $(TMP_ODIR)/kind-flotta-operator.yaml
+	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/kind-flotta-operator.yaml\033[0m"
 endif
 
-	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/flotta-operator/flotta-operator:latest
-	$(Q)echo -e "\033[92mDeployment file: $(TMP_ODIR)/$(TARGET)-flotta-operator.yaml\033[0m"
+	$(Q)cd config/manager && $(KUSTOMIZE) edit set image controller=quay.io/project-flotta/flotta-operator
 
 install-router: ## Install openshift router
 install-router:
@@ -207,12 +220,6 @@ install-cert-manager: ## Install cert-manager dependency
 install-cert-manager:
 	$(KUBECTL) apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
 	$(KUBECTL) wait --for=condition=Ready pods --all -n cert-manager --timeout=60s
-
-release:
-	TARGET=ocp gen-manifests
-	TARGET=k8s gen-manifests
-	gh release create v$(VERSION) --notes "Release v$(VERSION) of Flotta Operator" --title "Release v$(VERSION)" '$(TMP_ODIR)/ocp-flotta-operator.yaml# Flotta Operator for OCP' '$(TMP_ODIR)/k8s-flotta-operator.yaml# Flotta Operator for kubernetes'
-	rm -rf $(TMP_ODIR)
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
