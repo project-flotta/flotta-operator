@@ -142,7 +142,9 @@ var _ = Describe("Yggdrasil", func() {
 		)
 
 		It("cannot retrieve another device", func() {
+			// given
 			ctx := context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "bar"})
+			metricsMock.EXPECT().IncEdgeDeviceInvalidOwnerCounter().Times(1)
 
 			// when
 			res := handler.GetControlMessageForDevice(ctx, params)
@@ -152,6 +154,9 @@ var _ = Describe("Yggdrasil", func() {
 		})
 
 		It("cannot retrieve device with empty context", func() {
+			// given
+			metricsMock.EXPECT().IncEdgeDeviceInvalidOwnerCounter().Times(1)
+
 			// when
 			res := handler.GetControlMessageForDevice(context.TODO(), params)
 
@@ -313,6 +318,8 @@ var _ = Describe("Yggdrasil", func() {
 		It("Trying to access with not owning device", func() {
 			// given
 			ctx := context.WithValue(context.TODO(), AuthzKey, mtls.RequestAuthVal{CommonName: "bar"})
+			metricsMock.EXPECT().IncEdgeDeviceInvalidOwnerCounter().Times(1)
+
 			// when
 			res := handler.GetDataMessageForDevice(ctx, params)
 
@@ -321,6 +328,8 @@ var _ = Describe("Yggdrasil", func() {
 		})
 
 		It("Trying to access no context device", func() {
+			// given
+			metricsMock.EXPECT().IncEdgeDeviceInvalidOwnerCounter().Times(1)
 			// when
 			res := handler.GetDataMessageForDevice(context.TODO(), params)
 
@@ -2079,6 +2088,7 @@ var _ = Describe("Yggdrasil", func() {
 					Directive: "NOT VALID ONE",
 				},
 			}
+			metricsMock.EXPECT().IncEdgeDeviceInvalidOwnerCounter().Times(2)
 
 			// when
 			res := handler.PostDataMessageForDevice(ctx, params)
@@ -2103,6 +2113,7 @@ var _ = Describe("Yggdrasil", func() {
 						Directive: directiveName,
 					},
 				}
+				metricsMock.EXPECT().IncEdgeDeviceInvalidOwnerCounter().Times(1)
 
 				// when
 				res := handler.PostDataMessageForDevice(ctx, params)

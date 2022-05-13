@@ -142,6 +142,7 @@ func (h *Handler) getNamespace(ctx context.Context) string {
 func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdrasil.GetControlMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
 	if !IsOwnDevice(ctx, deviceID) {
+		h.metrics.IncEdgeDeviceInvalidOwnerCounter()
 		return operations.NewGetControlMessageForDeviceForbidden()
 	}
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
@@ -172,6 +173,7 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.GetDataMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
 	if !IsOwnDevice(ctx, deviceID) {
+		h.metrics.IncEdgeDeviceInvalidOwnerCounter()
 		return operations.NewGetDataMessageForDeviceForbidden()
 	}
 	logger := log.FromContext(ctx, "DeviceID", deviceID)
@@ -214,6 +216,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdrasil.PostControlMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
 	if !IsOwnDevice(ctx, deviceID) {
+		h.metrics.IncEdgeDeviceInvalidOwnerCounter()
 		return operations.NewPostDataMessageForDeviceForbidden()
 	}
 	return operations.NewPostControlMessageForDeviceOK()
@@ -228,6 +231,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		break
 	default:
 		if !IsOwnDevice(ctx, deviceID) {
+			h.metrics.IncEdgeDeviceInvalidOwnerCounter()
 			return operations.NewPostDataMessageForDeviceForbidden()
 		}
 	}

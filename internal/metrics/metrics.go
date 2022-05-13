@@ -14,6 +14,8 @@ const (
 	EdgeDeviceFailedRegistrationQuery     = "flotta_operator_edge_devices_failed_registration"
 	EdgeDeviceUnregistrationQuery         = "flotta_operator_edge_devices_unregistration"
 	EdgeDeviceHeartbeatQuery              = "flotta_operator_edge_devices_heartbeat"
+	EdgeDeviceFailedAuthentication        = "flotta_operator_edge_devices_failed_authentication"
+	EdgeDeviceInvalidOwner                = "flotta_operator_edge_devices_invalid_owner"
 )
 
 var (
@@ -35,6 +37,20 @@ var (
 			Help: "Number of unregistered EdgeDevices",
 		},
 	)
+
+	failedAuthenticationCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: EdgeDeviceFailedAuthentication,
+			Help: "Counts the number of devices that failed to authenticate",
+		},
+	)
+
+	invalidOwnerCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: EdgeDeviceInvalidOwner,
+			Help: "Counts the number of times a device ID mismatches the ID stored in the context",
+		},
+	)
 )
 
 func init() {
@@ -43,6 +59,8 @@ func init() {
 		registeredEdgeDevices,
 		failedToCompleteRegistrationEdgeDevices,
 		unregisteredEdgeDevices,
+		failedAuthenticationCounter,
+		invalidOwnerCounter,
 	)
 }
 
@@ -56,6 +74,8 @@ type Metrics interface {
 	RecordEdgeDevicePresence(namespace, name string)
 	RemoveDeviceCounter(namespace, name string)
 	RegisterDeviceCounter(namespace string, name string)
+	IncEdgeDeviceFailedAuthenticationCounter()
+	IncEdgeDeviceInvalidOwnerCounter()
 }
 
 func New() Metrics {
@@ -85,6 +105,14 @@ func (m *metricsImpl) IncEdgeDeviceFailedRegistration() {
 }
 func (m *metricsImpl) IncEdgeDeviceUnregistration() {
 	unregisteredEdgeDevices.Inc()
+}
+
+func (m *metricsImpl) IncEdgeDeviceFailedAuthenticationCounter() {
+	failedAuthenticationCounter.Inc()
+}
+
+func (m *metricsImpl) IncEdgeDeviceInvalidOwnerCounter() {
+	invalidOwnerCounter.Inc()
 }
 
 func (m *metricsImpl) RemoveDeviceCounter(namespace, name string) {
