@@ -92,7 +92,6 @@ func (r *EdgeConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if !errors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true}, err
 		}
-
 	}
 	err = r.addPlaybookExecutionToDevices(ctx, edgeConfig, edgeDevices)
 	if err != nil {
@@ -132,7 +131,6 @@ func createPlaybookExecution(edgeConfig *managementv1alpha1.EdgeConfig) manageme
 }
 
 func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context, edgeConfig *managementv1alpha1.EdgeConfig, edgeDevices []managementv1alpha1.EdgeDevice) error {
-
 	playbookExecutionBase := createPlaybookExecution(edgeConfig)
 	f := func(ctx context.Context, input []managementv1alpha1.EdgeDevice) []error {
 
@@ -160,9 +158,9 @@ func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context
 					continue
 				}
 
-				err = r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
-				if err != nil {
-					errs = append(errs, err)
+				err2 := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
+				if err2 != nil {
+					errs = append(errs, err2)
 					continue
 				}
 			} else {
