@@ -42,7 +42,7 @@ while getopts "h:d:u" option; do
 done
 
 if [[ -z $FLOTTA_DASHBOARD ]]; then
-    FLOTTA_DASHBOARD="./docs/metrics/flotta-dashboard.json"
+    FLOTTA_DASHBOARD="./contrib/metrics/flotta-dashboard.json"
     echo "No dashboard specified, using default: $FLOTTA_DASHBOARD"
 fi
 
