@@ -209,6 +209,7 @@ install-router:
 	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/router_rbac.yaml
 	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/route_crd.yaml
 	$(KUBECTL) apply -f https://raw.githubusercontent.com/openshift/router/master/deploy/router.yaml
+	$(KUBECTL) wait --for=condition=Ready pods --all -n openshift-ingress --timeout=60s
 
 install-cert-manager: ## Install cert-manager dependency
 install-cert-manager:
