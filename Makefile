@@ -108,7 +108,7 @@ lint: ## Check if the go code is properly written, rules are in .golangci.yml
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: ## Run tests.
 test: GINKGO_OPTIONS ?= --skip e2e
-test: manifests generate fmt vet imports test-fast ## Run tests.
+test: manifests generate fmt vet imports test-fast
 
 integration-test: ginkgo get-certs
 ifeq ($(SKIP_TEST_IMAGE_PULL), false)
