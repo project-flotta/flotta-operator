@@ -108,7 +108,7 @@ lint: ## Check if the go code is properly written, rules are in .golangci.yml
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 test: ## Run tests.
 test: GINKGO_OPTIONS ?= --skip e2e
-test: manifests generate fmt vet imports test-fast
+test: manifests pre-build test-fast
 
 integration-test: ginkgo get-certs
 ifeq ($(SKIP_TEST_IMAGE_PULL), false)
@@ -146,13 +146,16 @@ check-certs: # Check cert subject
 	openssl x509 -noout -in /tmp/cert.pem --subject
 
 ##@ Build
-build: generate fmt vet imports ## Build manager binary.
+pre-build: ## Generate code, format it and organize imports before executing build
+pre-build: generate fmt imports vet
+
+build: pre-build ## Build manager binary.
 	go build -mod=vendor -o bin/manager main.go
 
-fast-build: generate fmt vet ## Fast build manager binary for local dev.
+fast-build: generate ## Fast build manager binary for local dev.
 	go build -mod=vendor -o bin/manager main.go
 
-run: manifests generate fmt vet ## Run a controller from your host.
+run: manifests pre-build ## Run a controller from your host.
 	$(Q) kubectl create ns $(FLOTTA_OPERATOR_NAMESPACE) 2> /dev/null || exit 0
 	OBC_AUTO_CREATE=false ENABLE_WEBHOOKS=false LOG_LEVEL=debug go run -mod=vendor ./main.go
 
