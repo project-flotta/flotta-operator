@@ -51,6 +51,7 @@ resources:
 - api:
     crdVersion: v1
     namespaced: true
+  controller: true
   domain: project-flotta.io
   group: management
   kind: PlaybookExecution
