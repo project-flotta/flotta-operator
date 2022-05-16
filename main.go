@@ -110,7 +110,7 @@ var Config struct {
 	WebhookPort int `envconfig:"WEBHOOK_PORT" default:"9443"`
 
 	// Enable OBC auto creation when EdgeDevice is registered
-	EnableObcAutoCreation bool `envconfig:"OBC_AUTO_CREATE" default:"true"`
+	EnableObcAutoCreation bool `envconfig:"OBC_AUTO_CREATE" default:"false"`
 
 	// Verbosity of the logger.
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
