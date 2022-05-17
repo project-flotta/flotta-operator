@@ -11,7 +11,6 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
-	"github.com/project-flotta/flotta-operator/internal/labels"
 )
 
 //go:generate mockgen -package=edgedevice -destination=mock_edgedevice.go . Repository
