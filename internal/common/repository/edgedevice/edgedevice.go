@@ -41,7 +41,7 @@ func (r *CRRepository) Read(ctx context.Context, name string, namespace string) 
 	return &edgeDevice, err
 }
 
-func (r *CRRepository) ReadForPlaybookExecution(ctx context.Context, playbookExecutionName string, namespace string) (*v1alpha1.EdgeDevice, error) {
+func (r *CRRepository) ReadForPlaybbokExecution(ctx context.Context, playbookExecutionName string, namespace string) (*v1alpha1.EdgeDevice, error) {
 	options := client.ListOptions{
 		Namespace: namespace,
 	}
