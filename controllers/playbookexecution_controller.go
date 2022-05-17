@@ -19,16 +19,25 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
+	"github.com/project-flotta/flotta-operator/internal/common/utils"
 )
 
 // PlaybookExecutionReconciler reconciles a PlaybookExecution object
 type PlaybookExecutionReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme                      *runtime.Scheme
+	EdgeDeviceRepository        edgedevice.Repository
+	PlaybookExecutionRepository playbookexecution.Repository
 }
 
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=playbookexecutions,verbs=get;list;watch;create;update;patch;delete
@@ -45,17 +54,42 @@ type PlaybookExecutionReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *PlaybookExecutionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	playbookExec, err := r.PlaybookExecutionRepository.Read(ctx, req.Name, req.Namespace)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{Requeue: true}, err
+	}
+	if playbookExec.DeletionTimestamp == nil && !utils.HasFinalizer(&playbookExec.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
+		PlaybookExecCopy := playbookExec.DeepCopy()
+		PlaybookExecCopy.Finalizers = []string{YggdrasilDeviceReferenceFinalizer}
+		err := r.PlaybookExecutionRepository.Patch(ctx, playbookExec, PlaybookExecCopy)
+		if err != nil {
+			return ctrl.Result{Requeue: true}, err
+		}
+		return ctrl.Result{Requeue: true}, nil
+	}
 
-	// TODO(user): your logic here
-
+	edgeDevice, err := r.EdgeDeviceRepository.ReadForPlaybookExecution(ctx, playbookExec.Name, req.Namespace) //TODO use edgeDevice
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{Requeue: true}, err
+	}
+	logger.Info(">>> edgeDevice found", "edgeDevice", edgeDevice)
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PlaybookExecutionReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		// For().
+		For(&v1alpha1.PlaybookExecution{}).
+		WithEventFilter(predicate.Funcs{
+			CreateFunc: func(e event.CreateEvent) bool {
+				return true
+			},
+		}).
 		Complete(r)
 }
