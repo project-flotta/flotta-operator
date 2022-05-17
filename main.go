@@ -28,16 +28,16 @@ import (
 	routev1 "github.com/openshift/api/route/v1"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/project-flotta/flotta-operator/internal/indexer"
-	"github.com/project-flotta/flotta-operator/internal/informers"
-	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeconfig"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/repository/playbookexecution"
-	"github.com/project-flotta/flotta-operator/internal/storage"
-	watchers "github.com/project-flotta/flotta-operator/watchers"
+	"github.com/project-flotta/flotta-operator/internal/common/indexer"
+	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeconfig"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
+	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/operator/informers"
+	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -232,6 +232,7 @@ func main() {
 
 	edgeConfigRepository := edgeconfig.NewEdgeConfigRepository(mgr.GetClient())
 	playbookExecutionRepository := playbookexecution.NewPlaybookExecutionRepository(mgr.GetClient())
+
 	if err = (&controllers.EdgeConfigReconciler{
 		Client:                      mgr.GetClient(),
 		Scheme:                      mgr.GetScheme(),
@@ -255,8 +256,10 @@ func main() {
 	}
 
 	if err = (&controllers.PlaybookExecutionReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:                      mgr.GetClient(),
+		Scheme:                      mgr.GetScheme(),
+		EdgeDeviceRepository:        edgeDeviceRepository,
+		PlaybookExecutionRepository: playbookExecutionRepository,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PlaybookExecution")
 		os.Exit(1)
@@ -279,7 +282,6 @@ func main() {
 	}
 	informer.AddEventHandler(informers.NewEdgeDeviceEventHandler(metricsObj))
 
-			playbookExecutionRepository,
 	if isInCluster() {
 		k8sClient, err := kubernetes.NewForConfig(mgr.GetConfig())
 		if err != nil {
