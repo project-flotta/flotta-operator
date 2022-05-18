@@ -16,6 +16,9 @@ resources:
   kind: EdgeDevice
   path: github.com/project-flotta/flotta-operator/api/v1alpha1
   version: v1alpha1
+  webhooks:
+    validation: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -25,6 +28,9 @@ resources:
   kind: EdgeWorkload
   path: github.com/project-flotta/flotta-operator/api/v1alpha1
   version: v1alpha1
+  webhooks:
+    validation: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
