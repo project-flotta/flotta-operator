@@ -16,6 +16,8 @@ const (
 	numberOfEdgeDevicesSuccessfulRegisteredValue = 3
 	numberOfEdgeDevicesFailedToRegisterValue     = 1
 	numberOfEdgeDevicesUnregisteredValue         = 2
+	numberOfEdgeDevicesFailedAuthentication      = 1
+	numberOfEdgeDevicesInvalidOwner              = 1
 )
 
 func TestMetrics(t *testing.T) {
@@ -170,6 +172,24 @@ var _ = Describe("Metrics", func() {
 			}
 
 			Fail("Metric not found")
+		})
+
+		It("correctly detects when a device fails to authenticate", func() {
+			for i := 0; i < numberOfEdgeDevicesFailedAuthentication; i++ {
+				m.IncEdgeDeviceFailedAuthenticationCounter()
+			}
+
+			//then
+			validateMetric(metrics.EdgeDeviceFailedAuthentication, numberOfEdgeDevicesFailedAuthentication)
+		})
+
+		It("correctly detects when a device fails to authenticate", func() {
+			for i := 0; i < numberOfEdgeDevicesInvalidOwner; i++ {
+				m.IncEdgeDeviceInvalidOwnerCounter()
+			}
+
+			//then
+			validateMetric(metrics.EdgeDeviceInvalidOwner, numberOfEdgeDevicesInvalidOwner)
 		})
 	})
 })

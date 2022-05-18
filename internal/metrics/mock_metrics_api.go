@@ -33,6 +33,18 @@ func (m *MockMetrics) EXPECT() *MockMetricsMockRecorder {
 	return m.recorder
 }
 
+// IncEdgeDeviceFailedAuthenticationCounter mocks base method.
+func (m *MockMetrics) IncEdgeDeviceFailedAuthenticationCounter() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncEdgeDeviceFailedAuthenticationCounter")
+}
+
+// IncEdgeDeviceFailedAuthenticationCounter indicates an expected call of IncEdgeDeviceFailedAuthenticationCounter.
+func (mr *MockMetricsMockRecorder) IncEdgeDeviceFailedAuthenticationCounter() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncEdgeDeviceFailedAuthenticationCounter", reflect.TypeOf((*MockMetrics)(nil).IncEdgeDeviceFailedAuthenticationCounter))
+}
+
 // IncEdgeDeviceFailedRegistration mocks base method.
 func (m *MockMetrics) IncEdgeDeviceFailedRegistration() {
 	m.ctrl.T.Helper()
@@ -43,6 +55,18 @@ func (m *MockMetrics) IncEdgeDeviceFailedRegistration() {
 func (mr *MockMetricsMockRecorder) IncEdgeDeviceFailedRegistration() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncEdgeDeviceFailedRegistration", reflect.TypeOf((*MockMetrics)(nil).IncEdgeDeviceFailedRegistration))
+}
+
+// IncEdgeDeviceInvalidOwnerCounter mocks base method.
+func (m *MockMetrics) IncEdgeDeviceInvalidOwnerCounter() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "IncEdgeDeviceInvalidOwnerCounter")
+}
+
+// IncEdgeDeviceInvalidOwnerCounter indicates an expected call of IncEdgeDeviceInvalidOwnerCounter.
+func (mr *MockMetricsMockRecorder) IncEdgeDeviceInvalidOwnerCounter() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncEdgeDeviceInvalidOwnerCounter", reflect.TypeOf((*MockMetrics)(nil).IncEdgeDeviceInvalidOwnerCounter))
 }
 
 // IncEdgeDeviceSuccessfulRegistration mocks base method.
