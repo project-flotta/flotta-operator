@@ -23,7 +23,7 @@ spec:
             - /flotta-edge-api
           envFrom:
             - configMapRef:
-                name: manager-config
+                name: edge-api-config
           image: edge-api:latest
           imagePullPolicy: IfNotPresent
           name: http
