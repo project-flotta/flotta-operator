@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"crypto/x509"
+	"errors"
 	"fmt"
 	"github.com/kelseyhightower/envconfig"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -35,6 +37,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"net/http"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	crmetrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 )
@@ -97,7 +100,7 @@ func main() {
 		panic(err.Error())
 	}
 
-	c, err := client.New(clientConfig, client.Options{Scheme: scheme})
+	c, err := getClient(clientConfig, client.Options{Scheme: scheme})
 	if err != nil {
 		logger.Errorf("Cannot create k8s client: %v", err)
 		panic(err.Error())
@@ -239,4 +242,35 @@ func getRestConfig(kubeconfigPath string) (*rest.Config, error) {
 		return clientcmd.BuildConfigFromFlags("", kubeconfigPath)
 	}
 	return rest.InClusterConfig()
+}
+
+func getClient(config *rest.Config, options client.Options) (client.Client, error) {
+	c, err := client.New(config, options)
+	if err != nil {
+		return nil, err
+	}
+
+	cacheOpts := cache.Options{
+		Scheme: options.Scheme,
+		Mapper: options.Mapper,
+	}
+	objCache, err := cache.New(config, cacheOpts)
+	if err != nil {
+		return nil, err
+	}
+	background := context.Background()
+	go func() {
+		err = objCache.Start(background)
+	}()
+	if err != nil {
+		return nil, err
+	}
+	if !objCache.WaitForCacheSync(background) {
+		return nil, errors.New("cannot sync cache")
+	}
+	return client.NewDelegatingClient(client.NewDelegatingClientInput{
+		CacheReader:     objCache,
+		Client:          c,
+		UncachedObjects: []client.Object{},
+	})
 }
