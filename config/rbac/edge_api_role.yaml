@@ -34,8 +34,6 @@ rules:
     resources:
       - edgedevices
     verbs:
-      - create
-      - delete
       - get
       - list
       - patch
@@ -56,16 +54,27 @@ rules:
       - patch
       - update
   - apiGroups:
+    - management.project-flotta.io
+    resources:
+    - edgedevicesets
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - management.project-flotta.io
+    resources:
+    - edgedevicesets/status
+    verbs:
+    - get
+  - apiGroups:
       - management.project-flotta.io
     resources:
       - edgedevicesignedrequest
     verbs:
       - create
-      - delete
       - get
       - list
-      - patch
-      - update
       - watch
   - apiGroups:
       - management.project-flotta.io
@@ -73,34 +82,20 @@ rules:
       - edgedevicesignedrequest/status
     verbs:
       - get
-      - patch
-      - update
   - apiGroups:
       - management.project-flotta.io
     resources:
       - edgeworkloads
     verbs:
-      - create
-      - delete
       - get
       - list
-      - patch
-      - update
       - watch
-  - apiGroups:
-      - management.project-flotta.io
-    resources:
-      - edgeworkloads/finalizers
-    verbs:
-      - update
   - apiGroups:
       - management.project-flotta.io
     resources:
       - edgeworkloads/status
     verbs:
       - get
-      - patch
-      - update
   - apiGroups:
       - objectbucket.io
     resources:

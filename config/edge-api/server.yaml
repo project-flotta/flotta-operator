@@ -20,7 +20,7 @@ spec:
         runAsNonRoot: true
       containers:
         - command:
-            - /flotta-api
+            - /flotta-edge-api
           envFrom:
             - configMapRef:
                 name: manager-config

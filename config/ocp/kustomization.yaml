@@ -8,7 +8,7 @@ namespace: flotta
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: flotta-operator-
+namePrefix: flotta-
 images:
 - name: "gcr.io/kubebuilder/kube-rbac-proxy"
   newName: "registry.redhat.io/openshift4/ose-kube-rbac-proxy"

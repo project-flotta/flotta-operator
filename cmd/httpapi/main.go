@@ -63,9 +63,6 @@ var Config struct {
 	// The address the metric endpoint binds to.
 	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`
 
-	// The address the probe endpoint binds to.
-	ProbeAddr string `envconfig:"PROBE_ADDR" default:":8081"`
-
 	// Verbosity of the logger.
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 
@@ -133,25 +130,25 @@ func main() {
 	}
 
 	k8sClient := k8sclient.NewK8sClient(c)
-
 	edgeDeviceSignedRequestRepository := edgedevicesignedrequest.NewEdgedeviceSignedRequestRepository(c)
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(c)
 	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(c)
+	edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(c)
 	claimer := storage.NewClaimer(c)
 
 	metricsObj := metrics.New()
-
-	broadcaster := record.NewBroadcaster()
 
 	corev1Client, err := corev1client.NewForConfig(clientConfig)
 	if err != nil {
 		panic(err)
 	}
+
+	broadcaster := record.NewBroadcaster()
 	broadcaster.StartRecordingToSink(&v1.EventSinkImpl{Interface: corev1Client.Events("")})
 	defer func() {
 		broadcaster.Shutdown()
 	}()
-	edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(c)
+
 	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
 		edgeDeviceSignedRequestRepository,
 		edgeDeviceRepository,
@@ -160,7 +157,7 @@ func main() {
 		claimer,
 		k8sClient,
 		initialDeviceNamespace,
-		broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-api"}),
+		broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"}),
 		registryAuth,
 		metricsObj,
 		devicemetrics.NewAllowListGenerator(k8sClient),
@@ -235,7 +232,6 @@ func logger(logLevel string) (error, *zap.SugaredLogger) {
 
 func httpOK(writer http.ResponseWriter, _ *http.Request) {
 	writer.WriteHeader(http.StatusOK)
-	_, _ = fmt.Fprint(writer, "ok")
 }
 
 func getRestConfig(kubeconfigPath string) (*rest.Config, error) {

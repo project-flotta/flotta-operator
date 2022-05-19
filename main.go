@@ -59,7 +59,7 @@ import (
 const (
 	initialDeviceNamespace   = "default"
 	defaultOperatorNamespace = "flotta"
-	defaultConfigMapName     = "flotta-operator-manager-config"
+	defaultConfigMapName     = "flotta-manager-config"
 	logLevelLabel            = "LOG_LEVEL"
 )
 
@@ -73,16 +73,6 @@ var (
 )
 
 var Config struct {
-
-	// The port of the HTTPs server
-	HttpsPort uint16 `envconfig:"HTTPS_PORT" default:"8043"`
-
-	// Domain where TLS certificate listen.
-	// FIXME check default here
-	Domain string `envconfig:"DOMAIN" default:"project-flotta.io"`
-
-	// If TLS server certificates should work on 127.0.0.1
-	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
 
 	// The address the metric endpoint binds to.
 	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`
@@ -104,9 +94,6 @@ var Config struct {
 
 	// Number of concurrent goroutines to create for handling EdgeWorkload reconcile
 	EdgeWorkloadConcurrency uint `envconfig:"EDGEWORKLOAD_CONCURRENCY" default:"5"`
-
-	// Client Certificate expiration time
-	ClientCertExpirationTime uint `envconfig:"CLIENT_CERT_EXPIRATION_DAYS" default:"30"`
 
 	// MaxConcurrentReconciles is the maximum number of concurrent Reconciles which can be run
 	MaxConcurrentReconciles uint `envconfig:"MAX_CONCURRENT_RECONCILES" default:"3"`

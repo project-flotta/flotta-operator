@@ -1,4 +1,4 @@
-# Build the manager binary
+# Build the flotta-edge-api binary
 FROM golang:1.17 as builder
 
 WORKDIR /workspace
@@ -16,13 +16,13 @@ COPY models/ models/
 COPY pkg/ pkg/
 COPY restapi/ restapi/
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -a -o flotta-api main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -a -o flotta-edge-api main.go
 
-# Use distroless as minimal base image to package the manager binary
+# Use distroless as minimal base image to package the flotta-edge-api binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
-COPY --from=builder /workspace/flotta-api .
+COPY --from=builder /workspace/flotta-edge-api .
 USER 65532:65532
 
-ENTRYPOINT ["/flotta-api"]
+ENTRYPOINT ["/flotta-edge-api"]
