@@ -11,29 +11,23 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/labels"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"github.com/project-flotta/flotta-operator/models"
 )
 
 type configurationAssembler struct {
 	allowLists             devicemetrics.AllowListGenerator
 	claimer                *storage.Claimer
-	client                 k8sclient.K8sClient
 	configMaps             configmaps.ConfigMap
-	deviceSetRepository    edgedeviceset.Repository
-	workloadRepository     edgeworkload.Repository
+	repository             k8s.RepositoryFacade
 	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 }
@@ -45,7 +39,7 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 		var edgeWorkloads []v1alpha1.EdgeWorkload
 
 		for _, workload := range edgeDevice.Status.Workloads {
-			edgeWorkload, err := a.workloadRepository.Read(ctx, workload.Name, edgeDevice.Namespace)
+			edgeWorkload, err := a.repository.GetEdgeWorkload(ctx, workload.Name, edgeDevice.Namespace)
 			if err != nil {
 				if !errors.IsNotFound(err) {
 					logger.Error(err, "cannot retrieve Edge Workloads")
@@ -81,7 +75,7 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 	if deviceSetName, ok := edgeDevice.Labels["flotta/member-of"]; ok {
 		logger.Debug("Device uses EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
 		var err error
-		deviceSet, err = a.deviceSetRepository.Read(ctx, deviceSetName, edgeDevice.Namespace)
+		deviceSet, err = a.repository.GetEdgeDeviceSet(ctx, deviceSetName, edgeDevice.Namespace)
 		if err != nil {
 			logger.Info("Cannot load EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
 			deviceSet = nil
@@ -343,8 +337,7 @@ func (a *configurationAssembler) createSecretList(ctx context.Context, workloads
 
 func (a *configurationAssembler) readAndValidateSecret(ctx context.Context, secretName, secretNamespace string, secretKeys keyMapType) (*corev1.Secret, error) {
 	optional := secretKeys == nil
-	secretObj := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: secretNamespace}}
-	err := a.client.Get(ctx, client.ObjectKeyFromObject(secretObj), secretObj)
+	secretObj, err := a.repository.GetSecret(ctx, secretName, secretNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) && optional {
 			return nil, nil
@@ -465,10 +458,7 @@ func (a *configurationAssembler) getDeviceLogConfig(ctx context.Context, edgeDev
 }
 
 func (a *configurationAssembler) getDeviceSyslogLogConfig(ctx context.Context, namespace string, val *v1alpha1.LogCollectionConfig) (*models.LogsCollectionInformationSyslogConfig, error) {
-	cm := corev1.ConfigMap{}
-	err := a.client.Get(ctx,
-		client.ObjectKey{Namespace: namespace, Name: val.SyslogConfig.Name},
-		&cm)
+	cm, err := a.repository.GetConfigMap(ctx, val.SyslogConfig.Name, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get syslogconfig from configmap %s: %w", val.SyslogConfig.Name, err)
 	}
@@ -509,11 +499,8 @@ func (a *configurationAssembler) getMetricsReceiverConfiguration(ctx context.Con
 			result.URL = receiverConfig.URL
 
 			if result.URL != "" && strings.HasPrefix(result.URL, "https") && receiverConfig.CaSecretName != "" {
-				secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{
-					Name:      receiverConfig.CaSecretName,
-					Namespace: namespace,
-				}}
-				err := a.client.Get(ctx, client.ObjectKeyFromObject(&secret), &secret)
+				secret, err := a.repository.GetSecret(ctx, receiverConfig.CaSecretName, namespace)
+
 				if err != nil {
 					return nil, err
 				}

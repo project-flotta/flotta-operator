@@ -9,24 +9,24 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	mtrcs "github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 )
 
 type SynchronousHandler struct {
-	deviceRepository edgedevice.Repository
-	updater          Updater
-	logger           *zap.SugaredLogger
+	repository k8s.RepositoryFacade
+	updater    Updater
+	logger     *zap.SugaredLogger
 }
 
-func NewSynchronousHandler(deviceRepository edgedevice.Repository, recorder record.EventRecorder, metrics mtrcs.Metrics,
+func NewSynchronousHandler(repository k8s.RepositoryFacade, recorder record.EventRecorder, metrics mtrcs.Metrics,
 	logger *zap.SugaredLogger) *SynchronousHandler {
 	return &SynchronousHandler{
-		logger:           logger,
-		deviceRepository: deviceRepository,
+		logger:     logger,
+		repository: repository,
 		updater: Updater{
-			deviceRepository: deviceRepository,
-			recorder:         recorder,
-			metrics:          metrics,
+			repository: repository,
+			recorder:   recorder,
+			metrics:    metrics,
 		},
 	}
 }
@@ -58,7 +58,7 @@ func (h *SynchronousHandler) process(ctx context.Context, notification Notificat
 	logger := h.logger.With("DeviceID", notification.DeviceID, "Namespace", notification.Namespace)
 	heartbeat := notification.Heartbeat
 	logger.Debug("processing heartbeat", "content", heartbeat, "retry", notification.Retry)
-	edgeDevice, err := h.deviceRepository.Read(ctx, notification.DeviceID, notification.Namespace)
+	edgeDevice, err := h.repository.GetEdgeDevice(ctx, notification.DeviceID, notification.Namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return err, false
