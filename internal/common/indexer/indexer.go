@@ -1,12 +1,12 @@
 package indexer
 
 import (
-	flottalabels "github.com/project-flotta/flotta-operator/internal/common/labels"
 	"strings"
 
 	ctrlruntimeclient "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	flottalabels "github.com/project-flotta/flotta-operator/internal/common/labels"
 )
 
 const (

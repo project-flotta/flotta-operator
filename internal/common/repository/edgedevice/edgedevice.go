@@ -2,7 +2,6 @@ package edgedevice
 
 import (
 	"context"
-	"github.com/project-flotta/flotta-operator/internal/common/indexer"
 	"reflect"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/indexer"
 )
 
 //go:generate mockgen -package=edgedevice -destination=mock_edgedevice.go . Repository

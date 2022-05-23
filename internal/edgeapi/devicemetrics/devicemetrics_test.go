@@ -2,8 +2,6 @@ package devicemetrics_test
 
 import (
 	"context"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 
 	"github.com/go-openapi/errors"
 	"github.com/golang/mock/gomock"
@@ -11,6 +9,9 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 )
 
 const (

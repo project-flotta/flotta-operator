@@ -2,9 +2,9 @@ package hardware
 
 import (
 	"fmt"
-	"github.com/project-flotta/flotta-operator/internal/common/utils"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/utils"
 	"github.com/project-flotta/flotta-operator/models"
 )
 

@@ -2,8 +2,6 @@ package configmaps_test
 
 import (
 	"context"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 
 	gomock "github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
@@ -13,6 +11,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 )
 
 var _ = Describe("ConfigMaps", func() {

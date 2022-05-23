@@ -1,13 +1,13 @@
 package hardware_test
 
 import (
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
 	"github.com/project-flotta/flotta-operator/models"
 )
 

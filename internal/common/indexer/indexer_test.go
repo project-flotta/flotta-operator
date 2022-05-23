@@ -3,10 +3,10 @@ package indexer_test
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/project-flotta/flotta-operator/internal/common/indexer"
-	flottalabels "github.com/project-flotta/flotta-operator/internal/common/labels"
 
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/indexer"
+	flottalabels "github.com/project-flotta/flotta-operator/internal/common/labels"
 )
 
 var _ = Describe("Index functions", func() {
