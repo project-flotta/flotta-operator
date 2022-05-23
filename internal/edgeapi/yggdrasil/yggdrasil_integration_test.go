@@ -30,14 +30,10 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
@@ -51,27 +47,20 @@ const (
 	YggdrasilWorkloadFinalizer   = "yggdrasil-workload-finalizer"
 	YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
 
-	MessageTypeConnectionStatus string              = "connection-status"
-	MessageTypeCommand          string              = "command"
-	MessageTypeEvent            string              = "event"
-	MessageTypeData             string              = "data"
-	AuthzKey                    mtls.RequestAuthKey = "APIAuthzkey" // the same as yggdrasil one, but important if got changed
+	MessageTypeData string              = "data"
+	AuthzKey        mtls.RequestAuthKey = "APIAuthzkey" // the same as yggdrasil one, but important if got changed
 )
 
 var _ = Describe("Yggdrasil", func() {
 	var (
-		mockCtrl             *gomock.Controller
-		deployRepoMock       *edgeworkload.MockRepository
-		edgeDeviceRepoMock   *edgedevice.MockRepository
-		edgeDeviceSRRepoMock *edgedevicesignedrequest.MockRepository
-		deviceSetRepoMock    *edgedeviceset.MockRepository
-		metricsMock          *metrics.MockMetrics
-		registryAuth         *images.MockRegistryAuthAPI
-		handler              *yggdrasil.Handler
-		eventsRecorder       *record.FakeRecorder
-		Mockk8sClient        *k8sclient.MockK8sClient
-		allowListsMock       *devicemetrics.MockAllowListGenerator
-		configMap            *configmaps.MockConfigMap
+		mockCtrl       *gomock.Controller
+		repositoryMock *k8s.MockRepositoryFacade
+		metricsMock    *metrics.MockMetrics
+		registryAuth   *images.MockRegistryAuthAPI
+		handler        *yggdrasil.Handler
+		eventsRecorder *record.FakeRecorder
+		allowListsMock *devicemetrics.MockAllowListGenerator
+		configMap      *configmaps.MockConfigMap
 
 		errorNotFound = errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
 		boolTrue      = true
@@ -106,19 +95,14 @@ var _ = Describe("Yggdrasil", func() {
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-		deployRepoMock = edgeworkload.NewMockRepository(mockCtrl)
-		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
-		deviceSetRepoMock = edgedeviceset.NewMockRepository(mockCtrl)
-		edgeDeviceSRRepoMock = edgedevicesignedrequest.NewMockRepository(mockCtrl)
+		repositoryMock = k8s.NewMockRepositoryFacade(mockCtrl)
 		metricsMock = metrics.NewMockMetrics(mockCtrl)
 		registryAuth = images.NewMockRegistryAuthAPI(mockCtrl)
 		eventsRecorder = record.NewFakeRecorder(1)
-		Mockk8sClient = k8sclient.NewMockK8sClient(mockCtrl)
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
-
-		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceSRRepoMock, edgeDeviceRepoMock, deployRepoMock, deviceSetRepoMock, nil, Mockk8sClient,
-			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil, logger.Sugar())
+		handler = yggdrasil.NewYggdrasilHandler(nil, testNamespace, eventsRecorder, registryAuth,
+			metricsMock, allowListsMock, configMap, nil, logger.Sugar(), repositoryMock)
 	})
 
 	AfterEach(func() {
@@ -170,8 +154,8 @@ var _ = Describe("Yggdrasil", func() {
 		It("Can retrieve message correctly", func() {
 			// given
 			device := getDevice("foo")
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -184,8 +168,8 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("Device does not exists", func() {
 			// given
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(nil, errorNotFound).
 				Times(1)
 
@@ -198,8 +182,8 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("Cannot retrieve device", func() {
 			// given
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(nil, fmt.Errorf("Failed")).
 				Times(1)
 
@@ -215,8 +199,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice("foo")
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -233,8 +217,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice("foo")
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 			device.Finalizers = []string{YggdrasilWorkloadFinalizer, YggdrasilConnectionFinalizer}
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -250,13 +234,13 @@ var _ = Describe("Yggdrasil", func() {
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 			device.Finalizers = []string{YggdrasilConnectionFinalizer}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			edgeDeviceRepoMock.EXPECT().
-				RemoveFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
+			repositoryMock.EXPECT().
+				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
 				Return(nil).
 				Times(1)
 
@@ -278,13 +262,13 @@ var _ = Describe("Yggdrasil", func() {
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 			device.Finalizers = []string{YggdrasilConnectionFinalizer}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			edgeDeviceRepoMock.EXPECT().
-				RemoveFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
+			repositoryMock.EXPECT().
+				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
 				Return(fmt.Errorf("Failed")).
 				Times(1)
 
@@ -342,8 +326,8 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("Device is not in repo", func() {
 			// given
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(nil, errorNotFound).
 				Times(1)
 
@@ -356,8 +340,8 @@ var _ = Describe("Yggdrasil", func() {
 
 		It("Device repo failed", func() {
 			// given
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(nil, fmt.Errorf("failed")).
 				Times(1)
 
@@ -373,8 +357,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice("foo")
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -394,8 +378,8 @@ var _ = Describe("Yggdrasil", func() {
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 			device.Finalizers = []string{"foo"}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -415,13 +399,13 @@ var _ = Describe("Yggdrasil", func() {
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 			device.Finalizers = []string{YggdrasilWorkloadFinalizer}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			edgeDeviceRepoMock.EXPECT().
-				RemoveFinalizer(gomock.Any(), device, YggdrasilWorkloadFinalizer).
+			repositoryMock.EXPECT().
+				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilWorkloadFinalizer).
 				Return(fmt.Errorf("Failed to remove")).
 				Times(1)
 
@@ -438,13 +422,13 @@ var _ = Describe("Yggdrasil", func() {
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
 			device.Finalizers = []string{YggdrasilWorkloadFinalizer}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			edgeDeviceRepoMock.EXPECT().
-				RemoveFinalizer(gomock.Any(), device, YggdrasilWorkloadFinalizer).
+			repositoryMock.EXPECT().
+				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilWorkloadFinalizer).
 				Return(nil).
 				Times(1)
 
@@ -463,13 +447,13 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice("foo")
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(nil, fmt.Errorf("Failed"))
 
 			// when
@@ -485,13 +469,13 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(nil, errorNotFound)
 
 			// when
@@ -510,8 +494,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -530,8 +514,8 @@ var _ = Describe("Yggdrasil", func() {
 				}}
 
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(workloadData, nil)
 
 			// when
@@ -576,14 +560,14 @@ var _ = Describe("Yggdrasil", func() {
 				device = getDevice(deviceName)
 				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
 				deploy = getWorkload("workload1", testNamespace)
-				deployRepoMock.EXPECT().
-					Read(gomock.Any(), "workload1", testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
 
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
@@ -592,16 +576,13 @@ var _ = Describe("Yggdrasil", func() {
 			It("LogCollection is defined as expected", func() {
 
 				// given
-				Mockk8sClient.EXPECT().Get(
-					gomock.Any(),
-					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
-					gomock.Any()).
-					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
-						obj.(*corev1.ConfigMap).Data = map[string]string{
+				repositoryMock.EXPECT().GetConfigMap(
+					gomock.Any(), "syslog-config", testNamespace).
+					Return(&corev1.ConfigMap{
+						Data: map[string]string{
 							"Address": "127.0.0.1:512",
-						}
-					}).
-					Return(nil).
+						},
+					}, nil).
 					Times(1)
 
 				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
@@ -639,17 +620,13 @@ var _ = Describe("Yggdrasil", func() {
 			It("CM with invalid protocol", func() {
 
 				// given
-				Mockk8sClient.EXPECT().Get(
-					gomock.Any(),
-					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
-					gomock.Any()).
-					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
-						obj.(*corev1.ConfigMap).Data = map[string]string{
+				repositoryMock.EXPECT().GetConfigMap(gomock.Any(), "syslog-config", testNamespace).
+					Return(&corev1.ConfigMap{
+						Data: map[string]string{
 							"Address":  "127.0.0.1:512",
 							"Protocol": "invalid",
-						}
-					}).
-					Return(nil).
+						},
+					}, nil).
 					Times(1)
 
 				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
@@ -671,11 +648,9 @@ var _ = Describe("Yggdrasil", func() {
 			It("No valid cm", func() {
 
 				// given
-				Mockk8sClient.EXPECT().Get(
-					gomock.Any(),
-					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
-					gomock.Any()).
-					Return(fmt.Errorf("Invalid error")).
+				repositoryMock.EXPECT().GetConfigMap(
+					gomock.Any(), "syslog-config", testNamespace).
+					Return(nil, fmt.Errorf("Invalid error")).
 					Times(1)
 
 				device.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
@@ -711,8 +686,8 @@ var _ = Describe("Yggdrasil", func() {
 				device = getDevice(deviceName)
 				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 			})
@@ -746,8 +721,8 @@ var _ = Describe("Yggdrasil", func() {
 					}}
 
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-				deployRepoMock.EXPECT().
-					Read(gomock.Any(), "workload1", testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
 
 				allowListsMock.EXPECT().
@@ -775,8 +750,8 @@ var _ = Describe("Yggdrasil", func() {
 						Name: allowListName,
 					}}
 
-				deployRepoMock.EXPECT().
-					Read(gomock.Any(), "workload1", testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
 
 				allowListsMock.EXPECT().
@@ -817,8 +792,8 @@ var _ = Describe("Yggdrasil", func() {
 				}
 
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-				deployRepoMock.EXPECT().
-					Read(gomock.Any(), "workload1", testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
 
 				// when
@@ -843,8 +818,8 @@ var _ = Describe("Yggdrasil", func() {
 				}
 
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-				deployRepoMock.EXPECT().
-					Read(gomock.Any(), "workload1", testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
 
 				// when
@@ -892,14 +867,11 @@ var _ = Describe("Yggdrasil", func() {
 				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
 					ReceiverConfiguration: metricsReceiverConfig,
 				}
-				secretKey := client.ObjectKey{Namespace: testNamespace, Name: caSecretName}
-				Mockk8sClient.EXPECT().Get(gomock.Any(), secretKey, gomock.Any()).
-					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
-						Expect(obj).To(BeAssignableToTypeOf(&corev1.Secret{}))
-						secret := obj.(*corev1.Secret)
-						secret.Data = map[string][]byte{caSecretKeyName: []byte(caContent)}
-					}).
-					Return(nil).Times(1)
+				repositoryMock.EXPECT().GetSecret(gomock.Any(), caSecretName, testNamespace).
+					Return(&corev1.Secret{
+						Data: map[string][]byte{caSecretKeyName: []byte(caContent)},
+					}, nil).
+					Times(1)
 
 				// when
 				res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -950,7 +922,8 @@ var _ = Describe("Yggdrasil", func() {
 				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
 					ReceiverConfiguration: metricsReceiverConfig,
 				}
-				Mockk8sClient.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(errorNotFound).Times(1)
+				repositoryMock.EXPECT().GetSecret(gomock.Any(), gomock.Any(), gomock.Any()).
+					Return(nil, errorNotFound).Times(1)
 
 				// when
 				res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -967,8 +940,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -987,8 +960,8 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}}
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(workloadData, nil)
 
 			authFileContent := "authfile-content"
@@ -1019,8 +992,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1038,8 +1011,8 @@ var _ = Describe("Yggdrasil", func() {
 						},
 					},
 				}}
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(workloadData, nil)
 
 			registryAuth.EXPECT().
@@ -1062,8 +1035,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1103,12 +1076,12 @@ var _ = Describe("Yggdrasil", func() {
 					Data: &v1alpha1.DataConfiguration{},
 				}}
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(workloadData, nil)
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
-				Return(fmt.Errorf("test"))
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretNamespacedName.Name, secretNamespacedName.Namespace).
+				Return(nil, fmt.Errorf("test"))
 
 			// when
 			res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -1123,8 +1096,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1164,12 +1137,12 @@ var _ = Describe("Yggdrasil", func() {
 					Data: &v1alpha1.DataConfiguration{},
 				}}
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(workloadData, nil)
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
-				Return(errorNotFound)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretNamespacedName.Name, secretNamespacedName.Namespace).
+				Return(nil, errorNotFound)
 
 			// when
 			res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -1184,8 +1157,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1239,12 +1212,12 @@ var _ = Describe("Yggdrasil", func() {
 					Data: &v1alpha1.DataConfiguration{},
 				}}
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(workloadData, nil)
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretNamespacedName, gomock.Any()).
-				Return(errorNotFound)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretNamespacedName.Name, secretNamespacedName.Namespace).
+				Return(nil, errorNotFound)
 
 			// when
 			res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -1373,8 +1346,8 @@ var _ = Describe("Yggdrasil", func() {
 				device := getDevice(deviceName)
 				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
@@ -1392,16 +1365,16 @@ var _ = Describe("Yggdrasil", func() {
 						Data: &v1alpha1.DataConfiguration{},
 					}}
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
-				deployRepoMock.EXPECT().
-					Read(gomock.Any(), "workload1", testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 					Return(workloadData, nil)
 				secretDataMap := map[string][]byte{"key1": []byte("username"), "key2": []byte("password")}
-				Mockk8sClient.EXPECT().
-					Get(gomock.Any(), types.NamespacedName{Namespace: device.Namespace, Name: "secret"}, gomock.Any()).
-					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
-						obj.(*corev1.Secret).Data = secretDataMap
-					}).
-					Return(nil).Times(1)
+				repositoryMock.EXPECT().
+					GetSecret(gomock.Any(), "secret", device.Namespace).
+					Return(&corev1.Secret{
+						Data: secretDataMap,
+					}, nil).
+					Times(1)
 
 				// when
 				res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -1430,8 +1403,8 @@ var _ = Describe("Yggdrasil", func() {
 			device := getDevice(deviceName)
 			device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}, {Name: "workload2"}}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), deviceName, testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1616,11 +1589,11 @@ var _ = Describe("Yggdrasil", func() {
 				}}
 
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil).AnyTimes()
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload1", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 				Return(workloadData1, nil)
-			deployRepoMock.EXPECT().
-				Read(gomock.Any(), "workload2", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeWorkload(gomock.Any(), "workload2", testNamespace).
 				Return(workloadData2, nil)
 
 			secretName := types.NamespacedName{
@@ -1629,39 +1602,47 @@ var _ = Describe("Yggdrasil", func() {
 			secretDataMap := map[string][]byte{"key1": []byte("username"), "key2": []byte("password")}
 			secretDataJson := `{"key1":"dXNlcm5hbWU=","key2":"cGFzc3dvcmQ="}`
 			secretName.Name = "secret1"
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretName, gomock.Any()).
-				Return(nil).Times(1)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretName.Name, secretName.Namespace).
+				Return(&corev1.Secret{
+					ObjectMeta: v1.ObjectMeta{Name: secretName.Name},
+				}, nil).Times(1)
 			secretName.Name = "secret2"
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretName, gomock.Any()).
-				Return(nil).Times(1)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretName.Name, secretName.Namespace).
+				Return(&corev1.Secret{
+					ObjectMeta: v1.ObjectMeta{Name: secretName.Name},
+				}, nil).Times(1)
 			secretName.Name = "secret3"
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretName, gomock.Any()).
-				Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
-					obj.(*corev1.Secret).Data = secretDataMap
-				}).
-				Return(nil).Times(1)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretName.Name, gomock.Any()).
+				Return(&corev1.Secret{
+					ObjectMeta: v1.ObjectMeta{Name: secretName.Name},
+					Data:       secretDataMap,
+				}, nil).
+				Times(1)
 			secretName.Name = "secret4"
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretName, gomock.Any()).
-				Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
-					obj.(*corev1.Secret).Data = secretDataMap
-				}).
-				Return(nil).Times(1)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretName.Name, secretName.Namespace).
+				Return(&corev1.Secret{
+					ObjectMeta: v1.ObjectMeta{Name: secretName.Name},
+					Data:       secretDataMap,
+				}, nil).
+				Times(1)
 			secretName.Name = "secret5"
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretName, gomock.Any()).
-				Return(nil).Times(1)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretName.Name, secretName.Namespace).
+				Return(&corev1.Secret{
+					ObjectMeta: v1.ObjectMeta{Name: secretName.Name},
+				}, nil).Times(1)
 			secretName.Name = "optional1"
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretName, gomock.Any()).
-				Return(errorNotFound).Times(1)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretName.Name, secretName.Namespace).
+				Return(nil, errorNotFound).Times(1)
 			secretName.Name = "optional2"
-			Mockk8sClient.EXPECT().
-				Get(gomock.Any(), secretName, gomock.Any()).
-				Return(errorNotFound).Times(1)
+			repositoryMock.EXPECT().
+				GetSecret(gomock.Any(), secretName.Name, secretName.Namespace).
+				Return(nil, errorNotFound).Times(1)
 
 			// when
 			res := handler.GetDataMessageForDevice(deviceCtx, params)
@@ -1708,8 +1689,8 @@ var _ = Describe("Yggdrasil", func() {
 				},
 			}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1742,8 +1723,8 @@ var _ = Describe("Yggdrasil", func() {
 				},
 			}
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1785,8 +1766,8 @@ var _ = Describe("Yggdrasil", func() {
 			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
 				Return(nil, fmt.Errorf("boom!"))
 
-			edgeDeviceRepoMock.EXPECT().
-				Read(gomock.Any(), "foo", testNamespace).
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
 				Times(1)
 
@@ -1870,14 +1851,14 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
 				deploy = getWorkload("workload1", testNamespace)
-				deployRepoMock.EXPECT().
-					Read(gomock.Any(), "workload1", testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
 					Return(deploy, nil)
 
 				deviceSet = &v1alpha1.EdgeDeviceSet{
@@ -1885,8 +1866,8 @@ var _ = Describe("Yggdrasil", func() {
 					ObjectMeta: v1.ObjectMeta{Name: setName, Namespace: testNamespace},
 					Spec:       v1alpha1.EdgeDeviceSetSpec{},
 				}
-				deviceSetRepoMock.EXPECT().
-					Read(gomock.Any(), setName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDeviceSet(gomock.Any(), setName, testNamespace).
 					Return(deviceSet, nil)
 
 				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
@@ -1894,16 +1875,14 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("should map log collection", func() {
 				// given
-				Mockk8sClient.EXPECT().Get(
+				repositoryMock.EXPECT().GetConfigMap(
 					gomock.Any(),
-					types.NamespacedName{Namespace: testNamespace, Name: "syslog-config"},
-					gomock.Any()).
-					Do(func(ctx context.Context, key client.ObjectKey, obj client.Object) {
-						obj.(*corev1.ConfigMap).Data = map[string]string{
+					"syslog-config", testNamespace).
+					Return(&corev1.ConfigMap{
+						Data: map[string]string{
 							"Address": "127.0.0.1:512",
-						}
-					}).
-					Return(nil).
+						},
+					}, nil).
 					Times(1)
 
 				deviceSet.Spec.LogCollection = map[string]*v1alpha1.LogCollectionConfig{
@@ -2127,8 +2106,8 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Device not found", func() {
 				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(nil, errorNotFound).
 					Times(1)
 
@@ -2148,8 +2127,8 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Device cannot be retrieved", func() {
 				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(nil, fmt.Errorf("failed")).
 					Times(4)
 
@@ -2169,18 +2148,18 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Work without content", func() {
 				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					PatchEdgeDeviceStatus(gomock.Any(), device, gomock.Any()).
 					Return(nil).
 					Times(0)
 
-				edgeDeviceRepoMock.EXPECT().
-					UpdateLabels(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					UpdateEdgeDeviceLabels(gomock.Any(), device, gomock.Any()).
 					Return(nil).
 					Times(1)
 
@@ -2219,18 +2198,18 @@ var _ = Describe("Yggdrasil", func() {
 					Phase: "failing",
 				}}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					UpdateLabels(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					UpdateEdgeDeviceLabels(gomock.Any(), device, gomock.Any()).
 					Return(nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					PatchEdgeDeviceStatus(gomock.Any(), device, gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
 						Expect(edgeDevice.Status.Workloads[0].Phase).To(
@@ -2283,18 +2262,18 @@ var _ = Describe("Yggdrasil", func() {
 					Gpus:       []*v1alpha1.Gpu{},
 				}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					UpdateLabels(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					UpdateEdgeDeviceLabels(gomock.Any(), device, gomock.Any()).
 					Return(nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					PatchEdgeDeviceStatus(gomock.Any(), device, gomock.Any()).
 					Return(nil).
 					Times(0)
 
@@ -2339,18 +2318,18 @@ var _ = Describe("Yggdrasil", func() {
 					Phase: "failing",
 				}}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					UpdateLabels(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					UpdateEdgeDeviceLabels(gomock.Any(), device, gomock.Any()).
 					Return(nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), device, gomock.Any()).
+				repositoryMock.EXPECT().
+					PatchEdgeDeviceStatus(gomock.Any(), device, gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 						Expect(edgeDevice.Status.Workloads).To(HaveLen(1))
 						Expect(edgeDevice.Status.Workloads[0].Phase).To(
@@ -2416,8 +2395,8 @@ var _ = Describe("Yggdrasil", func() {
 
 				// updateDeviceStatus try to patch the status 4 times, and Read the
 				// device from repo too.
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					DoAndReturn(func(_, _, _ interface{}) (*v1alpha1.EdgeDevice, error) {
 						return device.DeepCopy(), nil
 					}).
@@ -2425,8 +2404,8 @@ var _ = Describe("Yggdrasil", func() {
 
 				patched := device.DeepCopy()
 				patched.Status.LastSyncedResourceVersion = content.Version
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), patched, gomock.Any()).
+				repositoryMock.EXPECT().
+					PatchEdgeDeviceStatus(gomock.Any(), patched, gomock.Any()).
 					Return(fmt.Errorf("Failed")).
 					Times(4)
 
@@ -2457,8 +2436,8 @@ var _ = Describe("Yggdrasil", func() {
 					Version: "1",
 				}
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					DoAndReturn(func(_, _, _ interface{}) (*v1alpha1.EdgeDevice, error) {
 						return device.DeepCopy(), nil
 					}).
@@ -2466,18 +2445,18 @@ var _ = Describe("Yggdrasil", func() {
 
 				patched := device.DeepCopy()
 				patched.Status.LastSyncedResourceVersion = content.Version
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), patched, gomock.Any()).
+				repositoryMock.EXPECT().
+					PatchEdgeDeviceStatus(gomock.Any(), patched, gomock.Any()).
 					Return(fmt.Errorf("Failed")).
 					Times(3)
 
-				edgeDeviceRepoMock.EXPECT().
-					PatchStatus(gomock.Any(), patched, gomock.Any()).
+				repositoryMock.EXPECT().
+					PatchEdgeDeviceStatus(gomock.Any(), patched, gomock.Any()).
 					Return(nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					UpdateLabels(gomock.Any(), patched, gomock.Any()).
+				repositoryMock.EXPECT().
+					UpdateEdgeDeviceLabels(gomock.Any(), patched, gomock.Any()).
 					Return(nil).
 					Times(1)
 
@@ -2509,8 +2488,8 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Empty enrolement information does not crash", func() {
 				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(device, nil).
 					Times(1)
 
@@ -2530,8 +2509,8 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("It's already created", func() {
 				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, targetNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, targetNamespace).
 					Return(device, nil).
 					Times(1)
 
@@ -2555,13 +2534,13 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Submitted correctly", func() {
 				// given
-				edgeDeviceSRRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, device.Namespace).
+				repositoryMock.EXPECT().
+					GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, device.Namespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
-				edgeDeviceSRRepoMock.EXPECT().
-					Create(gomock.Any(), gomock.Any()).
+				repositoryMock.EXPECT().
+					CreateEdgeDeviceSignedRequest(gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgedeviceSignedRequest *v1alpha1.EdgeDeviceSignedRequest) error {
 						Expect(edgedeviceSignedRequest.Name).To(Equal(deviceName))
 						Expect(edgedeviceSignedRequest.Spec.TargetNamespace).To(Equal(targetNamespace))
@@ -2569,8 +2548,8 @@ var _ = Describe("Yggdrasil", func() {
 					}).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, targetNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, targetNamespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
@@ -2594,18 +2573,18 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Create edgedevice signer request failed", func() {
 				// given
-				edgeDeviceSRRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, device.Namespace).
+				repositoryMock.EXPECT().
+					GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, device.Namespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
-				edgeDeviceSRRepoMock.EXPECT().
-					Create(gomock.Any(), gomock.Any()).
+				repositoryMock.EXPECT().
+					CreateEdgeDeviceSignedRequest(gomock.Any(), gomock.Any()).
 					Return(fmt.Errorf("failed")).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, targetNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, targetNamespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
@@ -2636,13 +2615,13 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 
-				edgeDeviceSRRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, device.Namespace).
+				repositoryMock.EXPECT().
+					GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, device.Namespace).
 					Return(edsr, nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, targetNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, targetNamespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
@@ -2673,18 +2652,18 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 
-				edgeDeviceSRRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, device.Namespace).
+				repositoryMock.EXPECT().
+					GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, device.Namespace).
 					Return(edsr, nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, targetNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, targetNamespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, "newOne").
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, "newOne").
 					Return(nil, nil).
 					Times(1)
 
@@ -2715,18 +2694,18 @@ var _ = Describe("Yggdrasil", func() {
 					},
 				}
 
-				edgeDeviceSRRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, device.Namespace).
+				repositoryMock.EXPECT().
+					GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, device.Namespace).
 					Return(edsr, nil).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, targetNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, targetNamespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, "newOne").
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, "newOne").
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 
@@ -2789,22 +2768,8 @@ var _ = Describe("Yggdrasil", func() {
 				BeforeEach(func() {
 					initKubeConfig()
 					MTLSConfig := mtls.NewMTLSConfig(k8sClient, testNamespace, []string{"foo.com"}, true)
-					handler = yggdrasil.NewYggdrasilHandler(
-						edgeDeviceSRRepoMock,
-						edgeDeviceRepoMock,
-						deployRepoMock,
-						deviceSetRepoMock,
-						nil,
-						Mockk8sClient,
-						testNamespace,
-						eventsRecorder,
-						registryAuth,
-						metricsMock,
-						allowListsMock,
-						configMap,
-						MTLSConfig,
-						logger.Sugar(),
-					)
+					handler = yggdrasil.NewYggdrasilHandler(nil, testNamespace, eventsRecorder,
+						registryAuth, metricsMock, allowListsMock, configMap, MTLSConfig, logger.Sugar(), repositoryMock)
 					_, _, err := MTLSConfig.InitCertificates()
 					Expect(err).ToNot(HaveOccurred())
 
@@ -2823,8 +2788,8 @@ var _ = Describe("Yggdrasil", func() {
 				It("No error on repo read, but there is no device", func() {
 
 					// given
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(nil, nil).
 						Times(1)
 
@@ -2860,13 +2825,13 @@ var _ = Describe("Yggdrasil", func() {
 					val := "true"                    // v1alpha1.EdgeDeviceSignedRequestLabelValue
 					device.ObjectMeta.Labels = map[string]string{key: val}
 
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
 						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, dvcCopy *v1alpha1.EdgeDevice) {
 							Expect(dvcCopy.ObjectMeta.Labels).To(HaveLen(1))
 							Expect(dvcCopy.ObjectMeta.Labels).To(Equal(map[string]string{
@@ -2878,8 +2843,8 @@ var _ = Describe("Yggdrasil", func() {
 						Return(nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						PatchStatus(gomock.Any(), device, gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDeviceStatus(gomock.Any(), device, gomock.Any()).
 						Return(nil).
 						Times(1)
 
@@ -2929,23 +2894,23 @@ var _ = Describe("Yggdrasil", func() {
 						},
 					}
 
-					edgeDeviceSRRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, testNamespace).
 						Return(edsr, nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, otherNS).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, otherNS).
 						Return(device, nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
 						Return(nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						PatchStatus(gomock.Any(), device, gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDeviceStatus(gomock.Any(), device, gomock.Any()).
 						Return(nil).
 						Times(1)
 
@@ -2983,18 +2948,18 @@ var _ = Describe("Yggdrasil", func() {
 
 				It("Device is already register, and send a CSR to renew", func() {
 					// given
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
 						Return(nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						PatchStatus(gomock.Any(), device, gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDeviceStatus(gomock.Any(), device, gomock.Any()).
 						Return(nil).
 						Times(1)
 
@@ -3030,13 +2995,13 @@ var _ = Describe("Yggdrasil", func() {
 
 				It("cannot patch device", func() {
 					// given
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
 						Times(1)
 
-					edgeDeviceRepoMock.EXPECT().
-						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
 						Return(fmt.Errorf("Failed")).
 						Times(1)
 
@@ -3064,8 +3029,8 @@ var _ = Describe("Yggdrasil", func() {
 
 				It("try to update a device that it's not his own", func() {
 					// given
-					edgeDeviceSRRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, device.Namespace).
+					repositoryMock.EXPECT().
+						GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, device.Namespace).
 						Return(nil, fmt.Errorf("Failed")).
 						Times(1)
 
@@ -3095,8 +3060,8 @@ var _ = Describe("Yggdrasil", func() {
 
 				It("Device is already register, and send a CSR to renew with invalid cert", func() {
 					// given
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
 						Times(1)
 
@@ -3121,8 +3086,8 @@ var _ = Describe("Yggdrasil", func() {
 				It("Device is not registered, and send a valid CSR, but not approved", func() {
 
 					// given
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(nil, errorNotFound).
 						Times(1)
 
@@ -3147,13 +3112,13 @@ var _ = Describe("Yggdrasil", func() {
 				It("Update device status failed", func() {
 					// retry on status is already tested on heartbeat section
 					// given
-					edgeDeviceRepoMock.EXPECT().
-						Read(gomock.Any(), deviceName, testNamespace).
+					repositoryMock.EXPECT().
+						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
 						Times(4)
 
-					edgeDeviceRepoMock.EXPECT().
-						PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDeviceStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 						Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {
 							Expect(edgeDevice.Name).To(Equal(deviceName))
 							Expect(edgeDevice.Namespace).To(Equal(testNamespace))
@@ -3162,8 +3127,8 @@ var _ = Describe("Yggdrasil", func() {
 						Return(fmt.Errorf("Failed")).
 						Times(4)
 
-					edgeDeviceRepoMock.EXPECT().
-						Patch(gomock.Any(), gomock.Any(), gomock.Any()).
+					repositoryMock.EXPECT().
+						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
 						Return(nil).
 						Times(1)
 
@@ -3192,8 +3157,8 @@ var _ = Describe("Yggdrasil", func() {
 
 			It("Read device from repository failed", func() {
 				// given
-				edgeDeviceRepoMock.EXPECT().
-					Read(gomock.Any(), deviceName, testNamespace).
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 					Return(nil, fmt.Errorf("Failed")).
 					Times(1)
 

@@ -15,6 +15,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
@@ -137,6 +138,8 @@ func main() {
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(c)
 	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(c)
 	edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(c)
+	backend := k8s.NewRepository(edgeDeviceSignedRequestRepository, edgeDeviceRepository, edgeWorkloadRepository,
+		edgeDeviceSetRepository, k8sClient)
 	claimer := storage.NewClaimer(c)
 
 	metricsObj := metrics.New()
@@ -153,12 +156,7 @@ func main() {
 	}()
 
 	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
-		edgeDeviceSignedRequestRepository,
-		edgeDeviceRepository,
-		edgeWorkloadRepository,
-		edgeDeviceSetRepository,
 		claimer,
-		k8sClient,
 		initialDeviceNamespace,
 		broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"}),
 		registryAuth,
@@ -167,6 +165,7 @@ func main() {
 		configmaps.NewConfigMap(k8sClient),
 		mtlsConfig,
 		logger,
+		backend,
 	)
 
 	var api *operations.FlottaManagementAPI
