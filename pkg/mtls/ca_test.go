@@ -12,7 +12,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
 	"go.uber.org/zap"
 	"math/big"
 	"net"
@@ -29,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 )
 

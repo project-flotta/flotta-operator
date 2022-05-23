@@ -2,13 +2,14 @@ package heartbeat
 
 import (
 	"context"
-	mtrcs "github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"time"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
+
+	mtrcs "github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 )
 
 type SynchronousHandler struct {

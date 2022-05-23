@@ -3,19 +3,6 @@ package yggdrasil
 import (
 	"context"
 	"encoding/json"
-	"github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/common/storage"
-	"github.com/project-flotta/flotta-operator/internal/common/utils"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
-	heartbeat2 "github.com/project-flotta/flotta-operator/internal/edgeapi/heartbeat"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"net/http"
 	"strings"
 	"time"
@@ -30,6 +17,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/common/utils"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
+	heartbeat2 "github.com/project-flotta/flotta-operator/internal/edgeapi/heartbeat"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	apioperations "github.com/project-flotta/flotta-operator/restapi/operations"
@@ -57,12 +57,12 @@ type Handler struct {
 	edgedeviceSignedRequestRepository edgedevicesignedrequest.Repository
 	deviceRepository                  edgedevice.Repository
 	workloadRepository                edgeworkload.Repository
-	initialNamespace string
-	metrics          metrics.Metrics
-	heartbeatHandler heartbeat2.Handler
-	mtlsConfig       *mtls.TLSConfig
-	configurationAssembler configurationAssembler
-	logger                 *zap.SugaredLogger
+	initialNamespace                  string
+	metrics                           metrics.Metrics
+	heartbeatHandler                  heartbeat2.Handler
+	mtlsConfig                        *mtls.TLSConfig
+	configurationAssembler            configurationAssembler
+	logger                            *zap.SugaredLogger
 }
 
 type keyMapType = map[string]interface{}

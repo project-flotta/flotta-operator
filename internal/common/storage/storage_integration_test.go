@@ -3,7 +3,6 @@ package storage_test
 import (
 	"context"
 	"encoding/base64"
-	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -21,6 +20,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"github.com/project-flotta/flotta-operator/models"
 )
 

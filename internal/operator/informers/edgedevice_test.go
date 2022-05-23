@@ -3,11 +3,11 @@ package informers_test
 import (
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
-	mtrcs "github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/operator/informers"
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	mtrcs "github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/operator/informers"
 )
 
 var _ = Describe("EdgeDevice informer event handler", func() {

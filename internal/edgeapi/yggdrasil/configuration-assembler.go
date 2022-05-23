@@ -4,14 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/project-flotta/flotta-operator/internal/common/labels"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/common/storage"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -24,17 +16,25 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/labels"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"github.com/project-flotta/flotta-operator/models"
 )
 
 type configurationAssembler struct {
-	allowLists devicemetrics.AllowListGenerator
-	claimer    *storage.Claimer
-	client     k8sclient.K8sClient
-	configMaps          configmaps.ConfigMap
-	deviceSetRepository edgedeviceset.Repository
-	workloadRepository  edgeworkload.Repository
-	recorder            record.EventRecorder
+	allowLists             devicemetrics.AllowListGenerator
+	claimer                *storage.Claimer
+	client                 k8sclient.K8sClient
+	configMaps             configmaps.ConfigMap
+	deviceSetRepository    edgedeviceset.Repository
+	workloadRepository     edgeworkload.Repository
+	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 }
 

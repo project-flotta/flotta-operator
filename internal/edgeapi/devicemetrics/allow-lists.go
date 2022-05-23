@@ -3,12 +3,12 @@ package devicemetrics
 import (
 	"context"
 	"fmt"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"github.com/project-flotta/flotta-operator/models"
 )
 
