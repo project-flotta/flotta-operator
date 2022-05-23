@@ -200,6 +200,7 @@ func main() {
 	handler, api, err = restapi.HandlerAPI(APIConfig)
 	if err != nil {
 		logger.Errorf("cannot start http server: %w", err)
+		os.Exit(1)
 	}
 
 	server := &http.Server{
