@@ -12,9 +12,10 @@ COPY vendor/ vendor/
 COPY main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
-COPY internal/ internal/
+COPY internal/common internal/common
+COPY internal/operator/informers internal/informers
 COPY models/ models/
-COPY watchers/ watchers/
+COPY internal/operator internal/operator
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -a -o manager main.go
 
