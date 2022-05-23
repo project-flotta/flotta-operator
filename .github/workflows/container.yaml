@@ -19,5 +19,5 @@ jobs:
 
       - name: Build & push the container image to quay
         run: |
-          IMG=quay.io/project-flotta/flotta-operator make docker-build
-          IMG=quay.io/project-flotta/flotta-operator make docker-push
+          HTTP_IMG=quay.io/project-flotta/flotta-edge-api IMG=quay.io/project-flotta/flotta-operator make docker-build
+          HTTP_IMG=quay.io/project-flotta/flotta-edge-api IMG=quay.io/project-flotta/flotta-operator make docker-push
