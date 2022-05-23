@@ -11,7 +11,8 @@ COPY vendor/ vendor/
 # Copy the go source
 COPY cmd/httpapi/main.go main.go
 COPY api/ api/
-COPY internal/ internal/
+COPY internal/common internal/common
+COPY internal/edgeapi internal/edgeapi
 COPY models/ models/
 COPY pkg/ pkg/
 COPY restapi/ restapi/

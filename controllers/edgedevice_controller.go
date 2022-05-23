@@ -18,6 +18,10 @@ package controllers
 
 import (
 	"context"
+	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"time"
 
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -30,10 +34,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	mgmtv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/storage"
 )
 
 // EdgeDeviceReconciler reconciles a EdgeDevice object
@@ -44,9 +44,9 @@ type EdgeDeviceReconciler struct {
 	EdgeDeviceSignedRequestRepository edgedevicesignedrequest.Repository
 	InitialDeviceNamespace            string
 	ObcAutoCreate                     bool
-	Claimer                           *storage.Claimer
-	Metrics                           metrics.Metrics
-	MaxConcurrentReconciles           int
+	Claimer                 *storage.Claimer
+	Metrics                 metrics.Metrics
+	MaxConcurrentReconciles int
 }
 
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
