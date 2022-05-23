@@ -36,8 +36,6 @@ spec:
         imagePullPolicy: IfNotPresent
         name: manager
         ports:
-          - containerPort: 8043
-            name: yggds
           - containerPort: 8080
             name: metrics
         securityContext:
@@ -63,20 +61,3 @@ spec:
             memory: 256Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: controller-manager
-  namespace: system
-  labels:
-    app: flotta-controller-manager
-spec:
-  ports:
-    - name: yggds
-      protocol: TCP
-      port: 8043
-      targetPort: yggds
-  selector:
-    app: flotta-controller-manager
-  type: ClusterIP

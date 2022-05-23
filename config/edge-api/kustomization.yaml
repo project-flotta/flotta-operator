@@ -1,0 +1,15 @@
+resources:
+- server.yaml
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+- envs:
+  - edge_api_config.properties
+  name: edge-api-config
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: edge-api
+  newName: quay.io/project-flotta/flotta-edge-api

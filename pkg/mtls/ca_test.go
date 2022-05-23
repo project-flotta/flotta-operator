@@ -12,6 +12,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"go.uber.org/zap"
 	"math/big"
 	"net"
 	"net/http"
@@ -41,7 +42,10 @@ const (
 )
 
 var _ = Describe("CA test", func() {
-
+	var (
+		log, _ = zap.NewDevelopment()
+		logger = log.Sugar()
+	)
 	Context("TLSConfig", func() {
 
 		var (
@@ -539,7 +543,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 			}
 
 			// when
-			res, err := mtls.VerifyRequest(r, 0, opts, CAChain, yggdrasil.AuthzKey)
+			res, err := mtls.VerifyRequest(r, 0, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 			// then
 			Expect(res).To(BeFalse())
@@ -561,7 +565,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeTrue())
@@ -578,7 +582,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeFalse())
@@ -595,7 +599,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeTrue())
@@ -624,7 +628,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeTrue())
@@ -648,7 +652,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeFalse())
@@ -665,7 +669,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeTrue())
@@ -683,7 +687,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeFalse())
@@ -701,7 +705,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeTrue())
@@ -731,7 +735,7 @@ KoZIhvcNAQEBBQA-----END CERTIFICATE REQUEST-----
 				}
 
 				// when
-				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey)
+				res, err := mtls.VerifyRequest(r, AuthType, opts, CAChain, yggdrasil.AuthzKey, logger)
 
 				// then
 				Expect(res).To(BeFalse())

@@ -10,7 +10,7 @@ OPTIONS:
    -i      IP address under which your Flotta edge API endpoint is accessible to the device.
            For testing, when your KUBECONFIG is pointing to cluster with Flotta operator deployed, you can run
 
-           kubectl port-forward service/flotta-operator-controller-manager -n flotta 8043 --address 0.0.0.0
+           kubectl port-forward service/flotta-edge-api -n flotta 8043 --address 0.0.0.0
 
            to make the Flotta API accessible from your machine
    -p      Port to connect to Flotta API, default 8043

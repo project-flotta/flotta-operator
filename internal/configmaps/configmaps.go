@@ -62,6 +62,10 @@ func (cm *configMap) Fetch(ctx context.Context, workload v1alpha1.EdgeWorkload, 
 			continue
 		}
 		configmapObj.ObjectMeta = metav1.ObjectMeta{Name: name}
+		configmapObj.TypeMeta = metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		}
 		obj, err := yaml.Marshal(configmapObj)
 		if err != nil {
 			return nil, err

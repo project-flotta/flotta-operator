@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	mtrcs "github.com/project-flotta/flotta-operator/internal/metrics"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
@@ -15,10 +15,13 @@ import (
 type SynchronousHandler struct {
 	deviceRepository edgedevice.Repository
 	updater          Updater
+	logger           *zap.SugaredLogger
 }
 
-func NewSynchronousHandler(deviceRepository edgedevice.Repository, recorder record.EventRecorder, metrics mtrcs.Metrics) *SynchronousHandler {
+func NewSynchronousHandler(deviceRepository edgedevice.Repository, recorder record.EventRecorder, metrics mtrcs.Metrics,
+	logger *zap.SugaredLogger) *SynchronousHandler {
 	return &SynchronousHandler{
+		logger:           logger,
 		deviceRepository: deviceRepository,
 		updater: Updater{
 			deviceRepository: deviceRepository,
@@ -52,9 +55,9 @@ func (h *SynchronousHandler) Process(ctx context.Context, notification Notificat
 }
 
 func (h *SynchronousHandler) process(ctx context.Context, notification Notification) (error, bool) {
-	logger := log.FromContext(ctx, "DeviceID", notification.DeviceID, "Namespace", notification.Namespace)
+	logger := h.logger.With("DeviceID", notification.DeviceID, "Namespace", notification.Namespace)
 	heartbeat := notification.Heartbeat
-	logger.V(1).Info("processing heartbeat", "content", heartbeat, "retry", notification.Retry)
+	logger.Debug("processing heartbeat", "content", heartbeat, "retry", notification.Retry)
 	edgeDevice, err := h.deviceRepository.Read(ctx, notification.DeviceID, notification.Namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {

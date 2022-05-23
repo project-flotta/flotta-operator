@@ -10,11 +10,11 @@ import (
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/configmaps"
@@ -62,6 +62,7 @@ type Handler struct {
 	heartbeatHandler                  heartbeat.Handler
 	mtlsConfig                        *mtls.TLSConfig
 	configurationAssembler            configurationAssembler
+	logger                            *zap.SugaredLogger
 }
 
 type keyMapType = map[string]interface{}
@@ -70,15 +71,17 @@ type secretMapType = map[string]keyMapType
 func NewYggdrasilHandler(deviceSignedRequestRepository edgedevicesignedrequest.Repository, deviceRepository edgedevice.Repository, workloadRepository edgeworkload.Repository,
 	groupRepository edgedeviceset.Repository, claimer *storage.Claimer, k8sClient k8sclient.K8sClient,
 	initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
-	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig) *Handler {
+	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig,
+	logger *zap.SugaredLogger) *Handler {
 	return &Handler{
 		edgedeviceSignedRequestRepository: deviceSignedRequestRepository,
 		deviceRepository:                  deviceRepository,
 		workloadRepository:                workloadRepository,
 		initialNamespace:                  initialNamespace,
 		metrics:                           metrics,
-		heartbeatHandler:                  heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics),
+		heartbeatHandler:                  heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics, logger),
 		mtlsConfig:                        mtlsConfig,
+		logger:                            logger,
 		configurationAssembler: configurationAssembler{
 			allowLists:             allowLists,
 			claimer:                claimer,
@@ -145,7 +148,7 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 		h.metrics.IncEdgeDeviceInvalidOwnerCounter()
 		return operations.NewGetControlMessageForDeviceForbidden()
 	}
-	logger := log.FromContext(ctx, "DeviceID", deviceID)
+	logger := h.logger.With("DeviceID", deviceID)
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -176,7 +179,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		h.metrics.IncEdgeDeviceInvalidOwnerCounter()
 		return operations.NewGetDataMessageForDeviceForbidden()
 	}
-	logger := log.FromContext(ctx, "DeviceID", deviceID)
+	logger := h.logger.With("DeviceID", deviceID)
 	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -224,7 +227,7 @@ func (h *Handler) PostControlMessageForDevice(ctx context.Context, params yggdra
 
 func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil.PostDataMessageForDeviceParams) middleware.Responder {
 	deviceID := params.DeviceID
-	logger := log.FromContext(ctx, "DeviceID", deviceID)
+	logger := h.logger.With("DeviceID", deviceID)
 	msg := params.Message
 	switch msg.Directive {
 	case "registration", "enrolment":
@@ -250,7 +253,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		})
 		if err != nil {
 			if errors.IsNotFound(err) {
-				logger.V(1).Info("Device not found")
+				logger.Debug("Device not found")
 				return operations.NewPostDataMessageForDeviceNotFound()
 			}
 			logger.Error(err, "Device not found")
@@ -263,7 +266,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.V(1).Info("received enrolment info", "content", enrolmentInfo)
+		logger.Debug("received enrolment info", "content", enrolmentInfo)
 		ns := h.initialNamespace
 		if enrolmentInfo.TargetNamespace != nil {
 			ns = *enrolmentInfo.TargetNamespace
@@ -316,7 +319,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.V(1).Info("received registration info", "content", registrationInfo)
+		logger.Debug("received registration info", "content", registrationInfo)
 		res := models.MessageResponse{
 			Directive: msg.Directive,
 			MessageID: msg.MessageID,
@@ -357,7 +360,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		// the first time that tries to register should be able to use register certificate.
 		if !isInit && !IsOwnDevice(ctx, deviceID) {
 			authKeyVal, _ := ctx.Value(AuthzKey).(mtls.RequestAuthVal)
-			logger.V(0).Info("Device tries to re-register with an invalid certificate", "certcn", authKeyVal.CommonName)
+			logger.Debug("Device tries to re-register with an invalid certificate", "certcn", authKeyVal.CommonName)
 			// At this moment, the registration certificate it's no longer valid,
 			// because the CR is already created, and need to be a device
 			// certificate.

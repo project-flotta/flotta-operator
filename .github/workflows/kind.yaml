@@ -41,9 +41,11 @@ jobs:
           # Deploy flotta operator
           sed -i 's/LOG_LEVEL=info/LOG_LEVEL=debug/g' config/manager/controller_manager_config.properties
           make build
-          IMG=flotta-operator:latest make docker-build
+          IMG=flotta-operator:latest HTTP_IMG=flotta-edge-api:latest make docker-build
+
           kind load docker-image flotta-operator:latest
-          timeout 2m make deploy IMG=flotta-operator TARGET=k8s || retVal=$?
+          kind load docker-image flotta-edge-api:latest
+          timeout 2m make deploy IMG=flotta-operator:latest HTTP_IMG=flotta-edge-api:latest TARGET=k8s || retVal=$?
           if [[ -n "$retVal" && $retVal -ne 124 ]]; then
             echo "Make run failed"; exit 1
           fi

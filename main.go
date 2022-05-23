@@ -18,34 +18,21 @@ package main
 
 import (
 	"context"
-	"crypto/x509"
-	"fmt"
-
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"strings"
 
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
-	"github.com/project-flotta/flotta-operator/internal/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/images"
 	"github.com/project-flotta/flotta-operator/internal/indexer"
 	"github.com/project-flotta/flotta-operator/internal/informers"
-	"github.com/project-flotta/flotta-operator/internal/k8sclient"
 	"github.com/project-flotta/flotta-operator/internal/metrics"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedeviceset"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/storage"
-	"github.com/project-flotta/flotta-operator/internal/yggdrasil"
-	"github.com/project-flotta/flotta-operator/pkg/mtls"
-	"github.com/project-flotta/flotta-operator/restapi"
-	"github.com/project-flotta/flotta-operator/restapi/operations"
-	watchers "github.com/project-flotta/flotta-operator/watchers"
+	"github.com/project-flotta/flotta-operator/watchers"
 	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -72,7 +59,7 @@ import (
 const (
 	initialDeviceNamespace   = "default"
 	defaultOperatorNamespace = "flotta"
-	defaultConfigMapName     = "flotta-operator-manager-config"
+	defaultConfigMapName     = "flotta-manager-config"
 	logLevelLabel            = "LOG_LEVEL"
 )
 
@@ -86,16 +73,6 @@ var (
 )
 
 var Config struct {
-
-	// The port of the HTTPs server
-	HttpsPort uint16 `envconfig:"HTTPS_PORT" default:"8043"`
-
-	// Domain where TLS certificate listen.
-	// FIXME check default here
-	Domain string `envconfig:"DOMAIN" default:"project-flotta.io"`
-
-	// If TLS server certificates should work on 127.0.0.1
-	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
 
 	// The address the metric endpoint binds to.
 	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`
@@ -117,9 +94,6 @@ var Config struct {
 
 	// Number of concurrent goroutines to create for handling EdgeWorkload reconcile
 	EdgeWorkloadConcurrency uint `envconfig:"EDGEWORKLOAD_CONCURRENCY" default:"5"`
-
-	// Client Certificate expiration time
-	ClientCertExpirationTime uint `envconfig:"CLIENT_CERT_EXPIRATION_DAYS" default:"30"`
 
 	// MaxConcurrentReconciles is the maximum number of concurrent Reconciles which can be run
 	MaxConcurrentReconciles uint `envconfig:"MAX_CONCURRENT_RECONCILES" default:"3"`
@@ -273,101 +247,6 @@ func main() {
 		os.Exit(1)
 	}
 	informer.AddEventHandler(informers.NewEdgeDeviceEventHandler(metricsObj))
-
-	registryAuth := images.NewRegistryAuth(mgr.GetClient())
-	go func() {
-
-		if !mgr.GetCache().WaitForCacheSync(context.TODO()) {
-			setupLog.Error(err, "Cache cannot start")
-			os.Exit(1)
-		}
-
-		mtlsConfig := mtls.NewMTLSConfig(mgr.GetClient(), operatorNamespace,
-			[]string{Config.Domain}, Config.TLSLocalhostEnabled)
-
-		err = mtlsConfig.SetClientExpiration(int(Config.ClientCertExpirationTime))
-		if err != nil {
-			setupLog.Error(err, "Cannot set MTLS client certificate expiration time")
-		}
-
-		tlsConfig, CACertChain, err := mtlsConfig.InitCertificates()
-		if err != nil {
-			setupLog.Error(err, "Cannot retrieve any MTLS configuration")
-			os.Exit(1)
-		}
-
-		// @TODO check here what to do with leftovers or if a new one is need to be created
-		err = mtlsConfig.CreateRegistrationClientCerts()
-		if err != nil {
-			setupLog.Error(err, "Cannot create registration client certificate")
-			os.Exit(1)
-		}
-
-		opts := x509.VerifyOptions{
-			Roots:         tlsConfig.ClientCAs,
-			Intermediates: x509.NewCertPool(),
-		}
-
-		k8sClient := k8sclient.NewK8sClient(mgr.GetClient())
-
-		edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(mgr.GetClient())
-		yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
-			edgeDeviceSignedRequestRepository,
-			edgeDeviceRepository,
-			edgeWorkloadRepository,
-			edgeDeviceSetRepository,
-			claimer,
-			k8sClient,
-			initialDeviceNamespace,
-			mgr.GetEventRecorderFor("edgeworkload-controller"),
-			registryAuth,
-			metricsObj,
-			devicemetrics.NewAllowListGenerator(k8sClient),
-			configmaps.NewConfigMap(k8sClient),
-			mtlsConfig,
-		)
-
-		var api *operations.FlottaManagementAPI
-		var APIHandler http.Handler
-
-		APIConfig := restapi.Config{
-			YggdrasilAPI: yggdrasilAPIHandler,
-			InnerMiddleware: func(h http.Handler) http.Handler {
-				// This is needed for one reason. Registration endpoint can be
-				// triggered with a certificate signed by the CA, but can be expired
-				// The main reason to allow expired certificates in this endpoint, it's
-				// to renew client certificates, and because some devices can be
-				// disconnected for days and does not have the option to renew it.
-				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					if r.TLS == nil {
-						w.WriteHeader(http.StatusBadRequest)
-						return
-					}
-
-					authType := yggdrasilAPIHandler.GetAuthType(r, api)
-					if ok, err := mtls.VerifyRequest(r, authType, opts, CACertChain, yggdrasil.AuthzKey); !ok {
-						metricsObj.IncEdgeDeviceFailedAuthenticationCounter()
-						setupLog.V(0).Info("cannot verify request:", "authType", authType, "method", r.Method, "url", r.URL, "err", err)
-						w.WriteHeader(http.StatusUnauthorized)
-						return
-					}
-					h.ServeHTTP(w, r)
-				})
-			},
-		}
-		APIHandler, api, err = restapi.HandlerAPI(APIConfig)
-
-		if err != nil {
-			setupLog.Error(err, "cannot start http server")
-		}
-
-		server := &http.Server{
-			Addr:      fmt.Sprintf(":%v", Config.HttpsPort),
-			TLSConfig: tlsConfig,
-			Handler:   APIHandler,
-		}
-		log.Fatal(server.ListenAndServeTLS("", ""))
-	}()
 
 	if isInCluster() {
 		k8sClient, err := kubernetes.NewForConfig(mgr.GetConfig())

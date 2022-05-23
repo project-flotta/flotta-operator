@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"time"
@@ -14,7 +15,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const (
@@ -206,7 +206,8 @@ func isClientCertificateSigned(PeerCertificates []*x509.Certificate, CAChain []*
 // It returns true if it's allowed, and in case of false will return an Error
 // with the main reason.
 // @TODO check here the list of rejected certificates.
-func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOptions, CACertChain []*x509.Certificate, authzKey RequestAuthKey) (bool, error) {
+func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOptions, CACertChain []*x509.Certificate,
+	authzKey RequestAuthKey, logger *zap.SugaredLogger) (bool, error) {
 
 	if len(r.TLS.PeerCertificates) == 0 {
 		return false, &NoClientCertSendError{}
@@ -236,7 +237,7 @@ func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOption
 		}
 
 		if _, err := cert.Verify(verifyOpts); err != nil {
-			log.Log.V(5).Info("Failed to verify client cert: %v", err)
+			logger.Error("Failed to verify client cert: %v", err)
 			return false, &ClientCertificateVerifyError{err}
 		}
 	}

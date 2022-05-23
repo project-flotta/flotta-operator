@@ -8,7 +8,7 @@ namespace: flotta
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: flotta-operator-
+namePrefix: flotta-
 
 resources:
   - ../base
@@ -19,7 +19,7 @@ patchesJson6902:
       group: route.openshift.io
       version: v1
       kind: Route
-      name: controller-manager
+      name: edge-api
     patch: |-
       - op: replace
         path: /spec/host

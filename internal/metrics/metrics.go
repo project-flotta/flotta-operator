@@ -10,12 +10,12 @@ import (
 
 // When adding metric names, see https://prometheus.io/docs/practices/naming/#metric-names
 const (
-	EdgeDeviceSuccessfulRegistrationQuery = "flotta_operator_edge_devices_successful_registration"
-	EdgeDeviceFailedRegistrationQuery     = "flotta_operator_edge_devices_failed_registration"
-	EdgeDeviceUnregistrationQuery         = "flotta_operator_edge_devices_unregistration"
-	EdgeDeviceHeartbeatQuery              = "flotta_operator_edge_devices_heartbeat"
-	EdgeDeviceFailedAuthentication        = "flotta_operator_edge_devices_failed_authentication"
-	EdgeDeviceInvalidOwner                = "flotta_operator_edge_devices_invalid_owner"
+	EdgeDeviceSuccessfulRegistrationQuery = "flotta_api_edge_devices_successful_registration"
+	EdgeDeviceFailedRegistrationQuery     = "flotta_api_edge_devices_failed_registration"
+	EdgeDeviceUnregistrationQuery         = "flotta_api_edge_devices_unregistration"
+	EdgeDeviceHeartbeatQuery              = "flotta_api_edge_devices_heartbeat"
+	EdgeDeviceFailedAuthentication        = "flotta_api_edge_devices_failed_authentication"
+	EdgeDeviceInvalidOwner                = "flotta_api_edge_devices_invalid_owner"
 )
 
 var (

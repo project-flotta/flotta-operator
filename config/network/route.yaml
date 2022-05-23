@@ -3,8 +3,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   labels:
-    app: flotta-controller-manager
-  name: controller-manager
+    app: flotta-edge-api
+  name: edge-api
   namespace: system
 spec:
   host: REPLACE_HOST
@@ -14,6 +14,6 @@ spec:
     termination: passthrough
   to:
     kind: Service
-    name: flotta-operator-controller-manager
+    name: flotta-edge-api
     weight: 100
   wildcardPolicy: None

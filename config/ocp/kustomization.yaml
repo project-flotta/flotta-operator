@@ -8,7 +8,7 @@ namespace: flotta
 # "wordpress" becomes "alices-wordpress".
 # Note that it should also match with the prefix (text before '-') of the namespace
 # field above.
-namePrefix: flotta-operator-
+namePrefix: flotta-
 images:
 - name: "gcr.io/kubebuilder/kube-rbac-proxy"
   newName: "registry.redhat.io/openshift4/ose-kube-rbac-proxy"
@@ -19,13 +19,14 @@ resources:
   - prometheus/prometheus_role.yaml
   - prometheus/prometheus_role_binding.yaml
   - prometheus/monitor.yaml
+  - prometheus/edge_api_monitor.yaml
 
 patchesJson6902:
   - target:
       group: route.openshift.io
       version: v1
       kind: Route
-      name: controller-manager
+      name: edge-api
     patch: |-
       - op: replace
         path: /spec/host

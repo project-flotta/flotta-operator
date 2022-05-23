@@ -1,0 +1,114 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: edge-api-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
+  - apiGroups:
+      - ""
+    resources:
+      - secrets
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - management.project-flotta.io
+    resources:
+      - edgedevices
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - management.project-flotta.io
+    resources:
+      - edgedevices/finalizers
+    verbs:
+      - update
+  - apiGroups:
+      - management.project-flotta.io
+    resources:
+      - edgedevices/status
+    verbs:
+      - get
+      - patch
+      - update
+  - apiGroups:
+    - management.project-flotta.io
+    resources:
+    - edgedevicesets
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - management.project-flotta.io
+    resources:
+    - edgedevicesets/status
+    verbs:
+    - get
+  - apiGroups:
+      - management.project-flotta.io
+    resources:
+      - edgedevicesignedrequest
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - management.project-flotta.io
+    resources:
+      - edgedevicesignedrequest/status
+    verbs:
+      - get
+  - apiGroups:
+      - management.project-flotta.io
+    resources:
+      - edgeworkloads
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - management.project-flotta.io
+    resources:
+      - edgeworkloads/status
+    verbs:
+      - get
+  - apiGroups:
+      - objectbucket.io
+    resources:
+      - objectbucketclaims
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - route.openshift.io
+    resources:
+      - routes
+    verbs:
+      - get
+      - list
+      - watch
