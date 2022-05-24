@@ -14,13 +14,19 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   kind:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@master
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.17
+
+      # Temporarly workaround: https://github.com/actions/virtual-environments/issues/5490
+      - name: Restart docker
+        run: |
+          sudo rm /etc/docker/daemon.json
+          sudo systemctl restart docker
 
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
