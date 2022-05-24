@@ -18,6 +18,13 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+
+	"github.com/kelseyhightower/envconfig"
+	routev1 "github.com/openshift/api/route/v1"
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
@@ -26,13 +33,6 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"github.com/project-flotta/flotta-operator/internal/operator/informers"
 	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
-	"io/ioutil"
-	"log"
-	"os"
-	"strings"
-
-	"github.com/kelseyhightower/envconfig"
-	routev1 "github.com/openshift/api/route/v1"
 	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)

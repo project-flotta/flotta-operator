@@ -3,15 +3,12 @@ package controllers_test
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/golang/mock/gomock"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/controllers"
-	edgedevice2 "github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"time"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/controllers"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/common/storage"
 )
 
 var _ = Describe("EdgeDevice controller", func() {
@@ -31,7 +33,7 @@ var _ = Describe("EdgeDevice controller", func() {
 		cancelContext        context.CancelFunc
 		signalContext        context.Context
 
-		edgeDeviceRepoMock   *edgedevice2.MockRepository
+		edgeDeviceRepoMock   *edgedevice.MockRepository
 		edgeDeviceSRRepoMock *edgedevicesignedrequest.MockRepository
 		k8sManager           manager.Manager
 
@@ -41,7 +43,7 @@ var _ = Describe("EdgeDevice controller", func() {
 	BeforeEach(func() {
 		k8sManager = getK8sManager(cfg)
 		mockCtrl := gomock.NewController(GinkgoT())
-		edgeDeviceRepository := edgedevice2.NewEdgeDeviceRepository(k8sClient)
+		edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(k8sClient)
 		edgeDeviceSRRepoMock = edgedevicesignedrequest.NewMockRepository(mockCtrl)
 		edgeDeviceReconciler = &controllers.EdgeDeviceReconciler{
 			Client:                            k8sClient,
@@ -61,7 +63,7 @@ var _ = Describe("EdgeDevice controller", func() {
 			Expect(err).ToNot(HaveOccurred())
 		}()
 
-		edgeDeviceRepoMock = edgedevice2.NewMockRepository(mockCtrl)
+		edgeDeviceRepoMock = edgedevice.NewMockRepository(mockCtrl)
 
 	})
 

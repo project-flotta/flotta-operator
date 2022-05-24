@@ -27,7 +27,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
-	heartbeat2 "github.com/project-flotta/flotta-operator/internal/edgeapi/heartbeat"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/heartbeat"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"github.com/project-flotta/flotta-operator/models"
@@ -59,7 +59,7 @@ type Handler struct {
 	workloadRepository                edgeworkload.Repository
 	initialNamespace                  string
 	metrics                           metrics.Metrics
-	heartbeatHandler                  heartbeat2.Handler
+	heartbeatHandler                  heartbeat.Handler
 	mtlsConfig                        *mtls.TLSConfig
 	configurationAssembler            configurationAssembler
 	logger                            *zap.SugaredLogger
@@ -79,7 +79,7 @@ func NewYggdrasilHandler(deviceSignedRequestRepository edgedevicesignedrequest.R
 		workloadRepository:                workloadRepository,
 		initialNamespace:                  initialNamespace,
 		metrics:                           metrics,
-		heartbeatHandler:                  heartbeat2.NewSynchronousHandler(deviceRepository, recorder, metrics, logger),
+		heartbeatHandler:                  heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics, logger),
 		mtlsConfig:                        mtlsConfig,
 		logger:                            logger,
 		configurationAssembler: configurationAssembler{
@@ -246,7 +246,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		err = h.heartbeatHandler.Process(ctx, heartbeat2.Notification{
+		err = h.heartbeatHandler.Process(ctx, heartbeat.Notification{
 			DeviceID:  deviceID,
 			Namespace: h.getNamespace(ctx),
 			Heartbeat: &hb,
