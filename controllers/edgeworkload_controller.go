@@ -19,21 +19,23 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"sync"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/labels"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/common/utils"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sync"
 )
 
 const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"

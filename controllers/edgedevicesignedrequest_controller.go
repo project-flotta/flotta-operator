@@ -2,10 +2,8 @@ package controllers
 
 import (
 	"context"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
+	"time"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -14,7 +12,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"time"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 )
 
 type EdgeDeviceSignedRequestReconciler struct {

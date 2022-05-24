@@ -7,11 +7,12 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
 )
 
 var _ = Describe("ConfigMap watcher", func() {

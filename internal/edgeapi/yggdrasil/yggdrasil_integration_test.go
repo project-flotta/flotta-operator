@@ -38,7 +38,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
-	yggdrasil2 "github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	api "github.com/project-flotta/flotta-operator/restapi/operations/yggdrasil"
@@ -67,7 +67,7 @@ var _ = Describe("Yggdrasil", func() {
 		deviceSetRepoMock    *edgedeviceset.MockRepository
 		metricsMock          *metrics.MockMetrics
 		registryAuth         *images.MockRegistryAuthAPI
-		handler              *yggdrasil2.Handler
+		handler              *yggdrasil.Handler
 		eventsRecorder       *record.FakeRecorder
 		Mockk8sClient        *k8sclient.MockK8sClient
 		allowListsMock       *devicemetrics.MockAllowListGenerator
@@ -117,7 +117,7 @@ var _ = Describe("Yggdrasil", func() {
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
 
-		handler = yggdrasil2.NewYggdrasilHandler(edgeDeviceSRRepoMock, edgeDeviceRepoMock, deployRepoMock, deviceSetRepoMock, nil, Mockk8sClient,
+		handler = yggdrasil.NewYggdrasilHandler(edgeDeviceSRRepoMock, edgeDeviceRepoMock, deployRepoMock, deviceSetRepoMock, nil, Mockk8sClient,
 			testNamespace, eventsRecorder, registryAuth, metricsMock, allowListsMock, configMap, nil, logger.Sugar())
 	})
 
@@ -870,7 +870,7 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
 				config := validateAndGetDeviceConfig(res)
 				Expect(config.Configuration.Metrics).ToNot(BeNil())
-				Expect(config.Configuration.Metrics.Receiver).To(Equal(yggdrasil2.GetDefaultMetricsReceiver()))
+				Expect(config.Configuration.Metrics.Receiver).To(Equal(yggdrasil.GetDefaultMetricsReceiver()))
 			})
 
 			It("receiver full configuration", func() {
@@ -2789,7 +2789,7 @@ var _ = Describe("Yggdrasil", func() {
 				BeforeEach(func() {
 					initKubeConfig()
 					MTLSConfig := mtls.NewMTLSConfig(k8sClient, testNamespace, []string{"foo.com"}, true)
-					handler = yggdrasil2.NewYggdrasilHandler(
+					handler = yggdrasil.NewYggdrasilHandler(
 						edgeDeviceSRRepoMock,
 						edgeDeviceRepoMock,
 						deployRepoMock,
