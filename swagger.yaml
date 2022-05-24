@@ -426,7 +426,11 @@ definitions:
     description: Configuration for data transfer
     type: object
     properties:
-      paths:
+      ingress:
+        type: array
+        items:
+          $ref: '#/definitions/data-path'
+      egress:
         type: array
         items:
           $ref: '#/definitions/data-path'

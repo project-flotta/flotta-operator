@@ -230,12 +230,21 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 			continue
 		}
 		var data *models.DataConfiguration
-		if spec.Data != nil && len(spec.Data.Paths) > 0 {
-			var paths []*models.DataPath
-			for _, path := range spec.Data.Paths {
-				paths = append(paths, &models.DataPath{Source: path.Source, Target: path.Target})
+		if spec.Data != nil {
+			if len(spec.Data.Egress) > 0 {
+				var e []*models.DataPath
+				for _, path := range spec.Data.Egress {
+					e = append(e, &models.DataPath{Source: path.Source, Target: path.Target})
+				}
+				data.Egress = e
 			}
-			data = &models.DataConfiguration{Paths: paths}
+			if len(spec.Data.Ingress) > 0 {
+				var i []*models.DataPath
+				for _, path := range spec.Data.Egress {
+					i = append(i, &models.DataPath{Source: path.Source, Target: path.Target})
+				}
+				data.Ingress = i
+			}
 		}
 
 		workload := models.Workload{
