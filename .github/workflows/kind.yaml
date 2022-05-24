@@ -11,6 +11,8 @@ on:  # yamllint disable-line rule:truthy
         description: 'Custom edgedevice testing image'
         default: 'quay.io/project-flotta/edgedevice:latest'
         required: true
+      artifact_url:
+        description: 'Custom edgedevice testing flotta-agent rpm artifact URL'
 
 jobs:
   kind:
@@ -36,6 +38,13 @@ jobs:
           version: "v0.11.1"
           config: hack/kind-config.yaml
 
+      - name: Download custom RPM
+        if: ${{ github.event.inputs.artifact_url != '' }}
+        run: |
+          ARTIFACT_ID=`basename "${{ github.event.inputs.artifact_url }}"`
+          curl -L -H "Authorization: Bearer ${{ secrets.TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/project-flotta/flotta-device-worker/actions/artifacts/$ARTIFACT_ID/zip -o my.zip
+          unzip my -d /var/tmp/flotta
+
       - name: Testing on KinD
         run: |
           # Print cluster info
@@ -59,6 +68,9 @@ jobs:
 
           # Run test
           INPUT_IMAGE="${{ github.event.inputs.image }}"
+          if [ -n "${{ github.event.inputs.artifact_url }}" ]; then
+            export TEST_RPM=/var/tmp/flotta/`ls /var/tmp/flotta/ | grep race`
+          fi
           TEST_IMAGE="${INPUT_IMAGE:-quay.io/project-flotta/edgedevice:latest}" make integration-test
 
       # collect logs always just in case the test fails

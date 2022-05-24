@@ -3,7 +3,6 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1"
 	"io/ioutil"
 	"os"
 	"path"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -243,6 +244,20 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 
 	if err := e.cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return err
+	}
+
+	if name, exists := os.LookupEnv("TEST_RPM"); name != "" && exists {
+		fp, err := archive.Tar(name, archive.Gzip)
+		if err != nil {
+			return err
+		}
+		err = e.cli.CopyToContainer(ctx, e.name, "/var/tmp", fp, types.CopyToContainerOptions{AllowOverwriteDirWithFile: true})
+		if err != nil {
+			return err
+		}
+		if _, err = e.Exec(fmt.Sprintf("dnf remove -y flotta-agent-race && dnf install -y /var/tmp/%s", filepath.Base(name))); err != nil {
+			return fmt.Errorf("cannot install custom rpm '%s': %v", name, err)
+		}
 	}
 
 	for _, cmd := range cmds {
