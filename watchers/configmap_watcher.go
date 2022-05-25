@@ -2,45 +2,47 @@ package watchers
 
 import (
 	"context"
-	"os"
-	"time"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/watch"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/util/retry"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	clientwatch "k8s.io/client-go/tools/watch"
 )
 
 var (
-	logger  logr.Logger
-	backoff = wait.Backoff{
-		Steps:    10,
-		Duration: 10 * time.Second,
-		Factor:   2.0,
-		Jitter:   0.1,
-		Cap:      2 * time.Hour,
-	}
+	logger logr.Logger
 )
 
-func WatchForChanges(clientset kubernetes.Interface, namespace string, configMapName string, dataField string, dataValue string, setupLogger logr.Logger) {
-	logger = setupLogger
-	logger.V(1).Info("watch for changes", "namespace", namespace, "configMap name", configMapName, "data field", dataField, "current value", dataValue)
-	for {
-		var watcher watch.Interface
-		err := createWatcher(clientset, namespace, configMapName, &watcher)
-		if err != nil {
-			logger.Error(err, "cannot create watcher", "namespace", namespace, "configMap name", configMapName)
-			os.Exit(1)
-		}
-
-		checkConfigMapChanges(watcher.ResultChan(), dataField, dataValue)
-	}
+// watcher implements config.Watch interface which will create a ConfigMapWatcher.
+type watcher struct {
+	configMapGetter v1.ConfigMapInterface
+	configMapName   string
 }
 
-func checkConfigMapChanges(eventChannel <-chan watch.Event, dataField string, dataValue string) {
+//go:generate mockgen -package=watchers -destination=mock_configmap.go k8s.io/client-go/kubernetes/typed/core/v1 ConfigMapInterface
+//go:generate mockgen -package=watchers -destination=mock_watcher.go k8s.io/apimachinery/pkg/watch Interface
+func WatchForChanges(cmi v1.ConfigMapInterface, configMapName string, dataField string, dataValue string, setupLogger logr.Logger, lastResourceVersion string, exitFunc func()) {
+	logger = setupLogger
+	logger.V(1).Info("watch for changes", "configMap name", configMapName, "data field", dataField, "current value", dataValue)
+
+	wc := watcher{
+		configMapGetter: cmi,
+		configMapName:   configMapName,
+	}
+
+	w, err := clientwatch.NewRetryWatcher(lastResourceVersion, wc)
+	if err != nil {
+		logger.Error(err, "cannot create watcher", "configMap name", configMapName)
+		exitFunc()
+	}
+
+	checkConfigMapChanges(w.ResultChan(), dataField, dataValue, exitFunc)
+}
+
+func checkConfigMapChanges(eventChannel <-chan watch.Event, dataField string, dataValue string, exitFunc func()) {
 	for {
 		event, open := <-eventChannel
 		if open {
@@ -52,7 +54,7 @@ func checkConfigMapChanges(eventChannel <-chan watch.Event, dataField string, da
 					if updatedValue, ok := updatedMap.Data[dataField]; ok {
 						if updatedValue != dataValue {
 							logger.Info("restarting pod to update the logging level", "current level", dataValue, "new level", updatedValue)
-							os.Exit(1)
+							exitFunc()
 						}
 					}
 				}
@@ -68,21 +70,10 @@ func checkConfigMapChanges(eventChannel <-chan watch.Event, dataField string, da
 	}
 }
 
-func createWatcher(clientset kubernetes.Interface, namespace string, configMapName string, watcher *watch.Interface) error {
-	err := retry.OnError(backoff, retriable, func() error {
-		var innerErr error
-		*watcher, innerErr = clientset.CoreV1().ConfigMaps(namespace).Watch(context.TODO(),
-			metav1.SingleObject(metav1.ObjectMeta{Name: configMapName, Namespace: namespace}))
-		if innerErr != nil {
-			logger.Info("cannot create watcher", "namespace", namespace, "configMap name", configMapName, "error", innerErr)
-		}
-		return innerErr
-	})
-	return err
-}
+func (w watcher) Watch(options metav1.ListOptions) (watch.Interface, error) {
+	options.FieldSelector = fields.OneTermEqualSelector("metadata.name", w.configMapName).String()
+	watcher, err := w.configMapGetter.Watch(context.Background(), options)
 
-func retriable(err error) bool {
-	retry := err != nil
-	logger.V(1).Info("cannot create watcher", "retriable", retry, "error", err)
-	return retry
+	return watcher, err
+
 }

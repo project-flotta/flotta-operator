@@ -262,7 +262,10 @@ func main() {
 			os.Exit(1)
 		}
 		setupLog.V(1).Info("operator configmap found", "operatorNamespace", operatorNamespace, "configmap name", defaultConfigMapName)
-		go watchers.WatchForChanges(k8sClient, operatorNamespace, defaultConfigMapName, logLevelLabel, currentConfigMap.Data[logLevelLabel], setupLog)
+
+		// get the configmap to be watched
+		configMapGetter := k8sClient.CoreV1().ConfigMaps(operatorNamespace)
+		go watchers.WatchForChanges(configMapGetter, defaultConfigMapName, logLevelLabel, currentConfigMap.Data[logLevelLabel], setupLog, currentConfigMap.ObjectMeta.ResourceVersion, func() { os.Exit(1) })
 	}
 
 	setupLog.Info("starting manager")
