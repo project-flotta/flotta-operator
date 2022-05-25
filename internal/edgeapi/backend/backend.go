@@ -57,7 +57,9 @@ func (b *backend) GetDeviceConfiguration(ctx context.Context, name, namespace st
 	if edgeDevice.DeletionTimestamp != nil {
 		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
 			err := b.repository.RemoveEdgeDeviceFinalizer(ctx, edgeDevice, YggdrasilWorkloadFinalizer)
-			return nil, err
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return b.assembler.GetDeviceConfiguration(ctx, edgeDevice, logger)

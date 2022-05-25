@@ -85,7 +85,7 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 		secretList, err = a.createSecretList(ctx, edgeWorkloads, edgeDevice)
 		if err != nil {
 			logger.Error(err, "failed reading secrets for device workloads")
-			return nil, fmt.Errorf("failed reading secrets for device workloads: %w", err)
+			return nil, fmt.Errorf("failed reading secrets for device workloads: %s", err.Error())
 		}
 	}
 
@@ -119,13 +119,13 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 	dc.Configuration.Metrics, err = a.getDeviceMetricsConfiguration(ctx, edgeDevice, deviceSet)
 	if err != nil {
 		logger.Error(err, "failed getting device metrics configuration")
-		return nil, fmt.Errorf("failed getting device metrics configuration")
+		return nil, fmt.Errorf("failed getting device metrics configuration: %s", err.Error())
 	}
 
 	dc.Configuration.LogCollection, err = a.getDeviceLogConfig(ctx, edgeDevice, deviceSet)
 	if err != nil {
 		logger.Error(err, "failed getting device log configuration")
-		return nil, fmt.Errorf("failed getting device log configuration: %w", err)
+		return nil, fmt.Errorf("failed getting device log configuration: %s", err.Error())
 	}
 
 	return &dc, nil
@@ -290,7 +290,7 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 			if allowListSpec := spec.Metrics.AllowList; allowListSpec != nil {
 				allowList, err := a.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, edgeworkload.Namespace)
 				if err != nil {
-					return nil, fmt.Errorf("Cannot get AllowList Metrics Confimap for %v: %w", edgeworkload.Name, err)
+					return nil, fmt.Errorf("cannot get AllowList Metrics Confimap for %v: %s", edgeworkload.Name, err.Error())
 				}
 				workload.Metrics.AllowList = allowList
 			}
@@ -312,8 +312,8 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 
 		configmapList, err := a.configMaps.Fetch(ctx, edgeworkload, device.Namespace)
 		if err != nil {
-			logger.Error(err, "Faled to fetch configmaps")
-			return nil, err
+			logger.Error(err, "failed to fetch configmaps")
+			return nil, fmt.Errorf("failed to fetch configmaps: %s", err.Error())
 		}
 		workload.Configmaps = configmapList
 		list = append(list, &workload)
