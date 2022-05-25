@@ -30,6 +30,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
@@ -202,6 +203,10 @@ var _ = Describe("Yggdrasil", func() {
 			repositoryMock.EXPECT().
 				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
+				Times(1)
+
+			metricsMock.EXPECT().
+				IncEdgeDeviceUnregistration().
 				Times(1)
 
 			// when
@@ -845,7 +850,7 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
 				config := validateAndGetDeviceConfig(res)
 				Expect(config.Configuration.Metrics).ToNot(BeNil())
-				Expect(config.Configuration.Metrics.Receiver).To(Equal(yggdrasil.GetDefaultMetricsReceiver()))
+				Expect(config.Configuration.Metrics.Receiver).To(Equal(backend.GetDefaultMetricsReceiver()))
 			})
 
 			It("receiver full configuration", func() {
@@ -2828,7 +2833,7 @@ var _ = Describe("Yggdrasil", func() {
 					repositoryMock.EXPECT().
 						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
-						Times(1)
+						Times(2)
 
 					repositoryMock.EXPECT().
 						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -2902,7 +2907,7 @@ var _ = Describe("Yggdrasil", func() {
 					repositoryMock.EXPECT().
 						GetEdgeDevice(gomock.Any(), deviceName, otherNS).
 						Return(device, nil).
-						Times(1)
+						Times(2)
 
 					repositoryMock.EXPECT().
 						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -2951,7 +2956,7 @@ var _ = Describe("Yggdrasil", func() {
 					repositoryMock.EXPECT().
 						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
-						Times(1)
+						Times(2)
 
 					repositoryMock.EXPECT().
 						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -2998,7 +3003,7 @@ var _ = Describe("Yggdrasil", func() {
 					repositoryMock.EXPECT().
 						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
-						Times(1)
+						Times(2)
 
 					repositoryMock.EXPECT().
 						PatchEdgeDevice(gomock.Any(), gomock.Any(), gomock.Any()).
@@ -3024,14 +3029,14 @@ var _ = Describe("Yggdrasil", func() {
 					res := handler.PostDataMessageForDevice(deviceCtx, params)
 
 					// then
-					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceBadRequest{}))
+					Expect(res).To(BeAssignableToTypeOf(&api.PostDataMessageForDeviceInternalServerError{}))
 				})
 
 				It("try to update a device that it's not his own", func() {
 					// given
 					repositoryMock.EXPECT().
 						GetEdgeDeviceSignedRequest(gomock.Any(), deviceName, device.Namespace).
-						Return(nil, fmt.Errorf("Failed")).
+						Return(nil, errorNotFound).
 						Times(1)
 
 					metricsMock.EXPECT().
@@ -3115,7 +3120,7 @@ var _ = Describe("Yggdrasil", func() {
 					repositoryMock.EXPECT().
 						GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
 						Return(device, nil).
-						Times(4)
+						Times(5)
 
 					repositoryMock.EXPECT().
 						PatchEdgeDeviceStatus(gomock.Any(), gomock.Any(), gomock.Any()).
