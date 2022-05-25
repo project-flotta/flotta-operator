@@ -20,9 +20,9 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/controllers"
-	"github.com/project-flotta/flotta-operator/internal/labels"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/labels"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 )
 
 var _ = Describe("Controllers", func() {
@@ -417,7 +417,7 @@ var _ = Describe("Controllers", func() {
 					Return(&v1alpha1.EdgeDevice{}, ReturnErr).
 					Times(1)
 
-					// when
+				// when
 				res, err := edgeWorkloadReconciler.Reconcile(context.TODO(), req)
 
 				// then
@@ -586,7 +586,7 @@ var _ = Describe("Controllers", func() {
 					Return(fmt.Errorf("FAILED")).
 					Times(1)
 
-					// this should be removed even if the first one failed
+				// this should be removed even if the first one failed
 				edgeDeviceRepoMock.EXPECT().
 					PatchStatus(gomock.Any(), gomock.Any(), gomock.Any()).
 					Do(func(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) {

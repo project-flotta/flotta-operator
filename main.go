@@ -25,14 +25,14 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
-	"github.com/project-flotta/flotta-operator/internal/indexer"
-	"github.com/project-flotta/flotta-operator/internal/informers"
-	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/storage"
-	"github.com/project-flotta/flotta-operator/watchers"
+	"github.com/project-flotta/flotta-operator/internal/common/indexer"
+	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/operator/informers"
+	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
 	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)

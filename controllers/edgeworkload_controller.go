@@ -31,11 +31,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/labels"
-	"github.com/project-flotta/flotta-operator/internal/metrics"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/utils"
+	"github.com/project-flotta/flotta-operator/internal/common/labels"
+	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/utils"
 )
 
 const YggdrasilDeviceReferenceFinalizer = "yggdrasil-device-reference-finalizer"

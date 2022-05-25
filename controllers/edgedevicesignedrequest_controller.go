@@ -15,8 +15,8 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 )
 
 type EdgeDeviceSignedRequestReconciler struct {
