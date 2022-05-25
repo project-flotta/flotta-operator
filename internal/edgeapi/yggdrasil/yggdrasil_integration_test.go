@@ -9,6 +9,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"path/filepath"
 	"strings"
 	"time"
@@ -202,6 +203,10 @@ var _ = Describe("Yggdrasil", func() {
 			repositoryMock.EXPECT().
 				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
+				Times(1)
+
+			metricsMock.EXPECT().
+				IncEdgeDeviceUnregistration().
 				Times(1)
 
 			// when
@@ -845,7 +850,7 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
 				config := validateAndGetDeviceConfig(res)
 				Expect(config.Configuration.Metrics).ToNot(BeNil())
-				Expect(config.Configuration.Metrics.Receiver).To(Equal(yggdrasil.GetDefaultMetricsReceiver()))
+				Expect(config.Configuration.Metrics.Receiver).To(Equal(backend.GetDefaultMetricsReceiver()))
 			})
 
 			It("receiver full configuration", func() {
