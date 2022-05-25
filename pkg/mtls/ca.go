@@ -5,12 +5,12 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"go.uber.org/zap"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilrand "k8s.io/apimachinery/pkg/util/rand"

@@ -281,7 +281,13 @@ func init() {
       "description": "Configuration for data transfer",
       "type": "object",
       "properties": {
-        "paths": {
+        "egress": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/data-path"
+          }
+        },
+        "ingress": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/data-path"
@@ -1340,7 +1346,13 @@ func init() {
       "description": "Configuration for data transfer",
       "type": "object",
       "properties": {
-        "paths": {
+        "egress": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/data-path"
+          }
+        },
+        "ingress": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/data-path"

@@ -38,7 +38,19 @@ spec:
             properties:
               data:
                 properties:
-                  paths:
+                  egress:
+                    items:
+                      properties:
+                        source:
+                          type: string
+                        target:
+                          type: string
+                      required:
+                      - source
+                      - target
+                      type: object
+                    type: array
+                  ingress:
                     items:
                       properties:
                         source:

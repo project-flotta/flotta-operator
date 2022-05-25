@@ -230,12 +230,8 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 			continue
 		}
 		var data *models.DataConfiguration
-		if spec.Data != nil && len(spec.Data.Paths) > 0 {
-			var paths []*models.DataPath
-			for _, path := range spec.Data.Paths {
-				paths = append(paths, &models.DataPath{Source: path.Source, Target: path.Target})
-			}
-			data = &models.DataConfiguration{Paths: paths}
+		if spec.Data != nil {
+			data = &models.DataConfiguration{Egress: toDataPath(spec.Data.Egress), Ingress: toDataPath(spec.Data.Ingress)}
 		}
 
 		workload := models.Workload{
@@ -533,4 +529,12 @@ func (a *configurationAssembler) getMetricsReceiverConfiguration(ctx context.Con
 	}
 
 	return result, nil
+}
+
+func toDataPath(input []v1alpha1.DataPath) []*models.DataPath {
+	var ret []*models.DataPath
+	for _, path := range input {
+		ret = append(ret, &models.DataPath{Source: path.Source, Target: path.Target})
+	}
+	return ret
 }

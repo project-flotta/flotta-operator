@@ -83,7 +83,8 @@ type NameRef struct {
 }
 
 type DataConfiguration struct {
-	Paths []DataPath `json:"paths,omitempty"`
+	Ingress []DataPath `json:"ingress,omitempty"`
+	Egress  []DataPath `json:"egress,omitempty"`
 }
 
 type DataPath struct {

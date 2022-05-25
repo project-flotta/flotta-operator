@@ -18,15 +18,22 @@ import (
 // swagger:model data-configuration
 type DataConfiguration struct {
 
-	// paths
-	Paths []*DataPath `json:"paths"`
+	// egress
+	Egress []*DataPath `json:"egress"`
+
+	// ingress
+	Ingress []*DataPath `json:"ingress"`
 }
 
 // Validate validates this data configuration
 func (m *DataConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validatePaths(formats); err != nil {
+	if err := m.validateEgress(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateIngress(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -36,21 +43,46 @@ func (m *DataConfiguration) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *DataConfiguration) validatePaths(formats strfmt.Registry) error {
+func (m *DataConfiguration) validateEgress(formats strfmt.Registry) error {
 
-	if swag.IsZero(m.Paths) { // not required
+	if swag.IsZero(m.Egress) { // not required
 		return nil
 	}
 
-	for i := 0; i < len(m.Paths); i++ {
-		if swag.IsZero(m.Paths[i]) { // not required
+	for i := 0; i < len(m.Egress); i++ {
+		if swag.IsZero(m.Egress[i]) { // not required
 			continue
 		}
 
-		if m.Paths[i] != nil {
-			if err := m.Paths[i].Validate(formats); err != nil {
+		if m.Egress[i] != nil {
+			if err := m.Egress[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("paths" + "." + strconv.Itoa(i))
+					return ve.ValidateName("egress" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *DataConfiguration) validateIngress(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.Ingress) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Ingress); i++ {
+		if swag.IsZero(m.Ingress[i]) { // not required
+			continue
+		}
+
+		if m.Ingress[i] != nil {
+			if err := m.Ingress[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("ingress" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
