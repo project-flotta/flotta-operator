@@ -12,15 +12,9 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/tools/record"
 
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/common/storage"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
+	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	apioperations "github.com/project-flotta/flotta-operator/restapi/operations"
@@ -36,7 +30,7 @@ const (
 )
 
 type Handler struct {
-	backend          backend.Backend
+	backend          backendapi.Backend
 	initialNamespace string
 	metrics          metrics.Metrics
 	heartbeatHandler *RetryingDelegatingHandler
@@ -44,26 +38,14 @@ type Handler struct {
 	logger           *zap.SugaredLogger
 }
 
-func NewYggdrasilHandler(claimer *storage.Claimer, initialNamespace string,
-	recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
-	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap,
-	mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger, repository k8s.RepositoryFacade) *Handler {
-	assembler := k8s.NewConfigurationAssembler(
-		allowLists,
-		claimer,
-		configMaps,
-		recorder,
-		registryAuth,
-		repository,
-	)
-	k8sBackend := k8s.NewBackend(repository, assembler, logger, initialNamespace, recorder)
+func NewYggdrasilHandler(initialNamespace string, metrics metrics.Metrics, mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger, backend backendapi.Backend) *Handler {
 	return &Handler{
 		initialNamespace: initialNamespace,
 		metrics:          metrics,
-		heartbeatHandler: NewRetryingDelegatingHandler(k8sBackend.GetHeartbeatHandler()),
+		heartbeatHandler: NewRetryingDelegatingHandler(backend.GetHeartbeatHandler()),
 		mtlsConfig:       mtlsConfig,
 		logger:           logger,
-		backend:          k8sBackend,
+		backend:          backend,
 	}
 }
 
@@ -202,7 +184,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		err = h.heartbeatHandler.Process(ctx, backend.Notification{
+		err = h.heartbeatHandler.Process(ctx, backendapi.Notification{
 			DeviceID:  deviceID,
 			Namespace: h.getNamespace(ctx),
 			Heartbeat: &hb,
@@ -260,7 +242,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				return operations.NewPostDataMessageForDeviceInternalServerError()
 			}
 
-			if _, ok := err.(*backend.NotApproved); !ok {
+			if _, ok := err.(*backendapi.NotApproved); !ok {
 				h.metrics.IncEdgeDeviceFailedRegistration()
 			}
 			return operations.NewPostDataMessageForDeviceNotFound()

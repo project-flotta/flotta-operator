@@ -140,7 +140,7 @@ func main() {
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(c)
 	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(c)
 	edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(c)
-	backend := k8s.NewRepository(edgeDeviceSignedRequestRepository, edgeDeviceRepository, edgeWorkloadRepository,
+	k8sRepository := k8s.NewRepository(edgeDeviceSignedRequestRepository, edgeDeviceRepository, edgeWorkloadRepository,
 		edgeDeviceSetRepository, k8sClient)
 	claimer := storage.NewClaimer(c)
 
@@ -157,17 +157,23 @@ func main() {
 		broadcaster.Shutdown()
 	}()
 
-	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
-		claimer,
-		initialDeviceNamespace,
-		broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"}),
-		registryAuth,
-		metricsObj,
+	eventRecorder := broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"})
+	assembler := k8s.NewConfigurationAssembler(
 		devicemetrics.NewAllowListGenerator(k8sClient),
+		claimer,
 		configmaps.NewConfigMap(k8sClient),
+		eventRecorder,
+		registryAuth,
+		k8sRepository,
+	)
+	k8sBackend := k8s.NewBackend(k8sRepository, assembler, logger, initialDeviceNamespace, eventRecorder)
+
+	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
+		initialDeviceNamespace,
+		metricsObj,
 		mtlsConfig,
 		logger,
-		backend,
+		k8sBackend,
 	)
 
 	var api *operations.FlottaManagementAPI

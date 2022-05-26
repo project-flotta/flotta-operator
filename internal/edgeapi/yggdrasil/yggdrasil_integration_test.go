@@ -101,8 +101,16 @@ var _ = Describe("Yggdrasil", func() {
 		eventsRecorder = record.NewFakeRecorder(1)
 		allowListsMock = devicemetrics.NewMockAllowListGenerator(mockCtrl)
 		configMap = configmaps.NewMockConfigMap(mockCtrl)
-		handler = yggdrasil.NewYggdrasilHandler(nil, testNamespace, eventsRecorder, registryAuth,
-			metricsMock, allowListsMock, configMap, nil, logger.Sugar(), repositoryMock)
+		assembler := k8s.NewConfigurationAssembler(
+			allowListsMock,
+			nil,
+			configMap,
+			eventsRecorder,
+			registryAuth,
+			repositoryMock,
+		)
+		backend := k8s.NewBackend(repositoryMock, assembler, logger.Sugar(), testNamespace, eventsRecorder)
+		handler = yggdrasil.NewYggdrasilHandler(testNamespace, metricsMock, nil, logger.Sugar(), backend)
 	})
 
 	AfterEach(func() {
@@ -2772,8 +2780,16 @@ var _ = Describe("Yggdrasil", func() {
 				BeforeEach(func() {
 					initKubeConfig()
 					MTLSConfig := mtls.NewMTLSConfig(k8sClient, testNamespace, []string{"foo.com"}, true)
-					handler = yggdrasil.NewYggdrasilHandler(nil, testNamespace, eventsRecorder,
-						registryAuth, metricsMock, allowListsMock, configMap, MTLSConfig, logger.Sugar(), repositoryMock)
+					assembler := k8s.NewConfigurationAssembler(
+						allowListsMock,
+						nil,
+						configMap,
+						eventsRecorder,
+						registryAuth,
+						repositoryMock,
+					)
+					backend := k8s.NewBackend(repositoryMock, assembler, logger.Sugar(), testNamespace, eventsRecorder)
+					handler = yggdrasil.NewYggdrasilHandler(testNamespace, metricsMock, MTLSConfig, logger.Sugar(), backend)
 					_, _, err := MTLSConfig.InitCertificates()
 					Expect(err).ToNot(HaveOccurred())
 
