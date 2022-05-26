@@ -3,16 +3,17 @@ package k8s
 import (
 	"context"
 	"fmt"
-	backend2 "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"time"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/utils"
+	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
@@ -30,10 +31,16 @@ type backend struct {
 	repository       RepositoryFacade
 	assembler        *ConfigurationAssembler
 	initialNamespace string
+	heartbeatHandler backendapi.HeartbeatHandler
 }
 
-func NewBackend(repository RepositoryFacade, assembler *ConfigurationAssembler, logger *zap.SugaredLogger, initialNamespace string) backend2.Backend {
-	return &backend{repository: repository, assembler: assembler, logger: logger, initialNamespace: initialNamespace}
+func NewBackend(repository RepositoryFacade, assembler *ConfigurationAssembler,
+	logger *zap.SugaredLogger, initialNamespace string, recorder record.EventRecorder) backendapi.Backend {
+	return &backend{repository: repository,
+		assembler:        assembler,
+		logger:           logger,
+		initialNamespace: initialNamespace,
+		heartbeatHandler: NewSynchronousHandler(repository, recorder, logger)}
 }
 
 func (b *backend) ShouldEdgeDeviceBeUnregistered(ctx context.Context, name, namespace string) (bool, error) {
@@ -131,7 +138,7 @@ func (b *backend) InitializeEdgeDeviceRegistration(ctx context.Context, name, id
 	dvc, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return false, "", backend2.NewNotApproved(err)
+			return false, "", backendapi.NewNotApproved(err)
 		}
 		return false, "", err
 	}
@@ -180,6 +187,10 @@ func (b *backend) FinalizeEdgeDeviceRegistration(ctx context.Context, name, name
 	return err
 }
 
+func (b *backend) GetHeartbeatHandler() backendapi.HeartbeatHandler {
+	return b.heartbeatHandler
+}
+
 func (b *backend) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeDevice, updateFunc func(d *v1alpha1.EdgeDevice)) error {
 	patch := client.MergeFrom(device.DeepCopy())
 	updateFunc(device)
@@ -204,4 +215,3 @@ func (b *backend) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeD
 	}
 	return err
 }
-

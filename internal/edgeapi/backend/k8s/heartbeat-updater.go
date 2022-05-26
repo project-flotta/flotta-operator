@@ -1,4 +1,4 @@
-package heartbeat
+package k8s
 
 import (
 	"context"
@@ -11,21 +11,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	mtrcs "github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
 	"github.com/project-flotta/flotta-operator/models"
 )
 
 type Updater struct {
-	repository k8s.RepositoryFacade
+	repository RepositoryFacade
 	recorder   record.EventRecorder
-	metrics    mtrcs.Metrics
 }
 
 func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, heartbeat *models.Heartbeat) error {
-	u.metrics.RecordEdgeDevicePresence(edgeDevice.Namespace, edgeDevice.Name)
-
 	edgeDeviceCopy := edgeDevice.DeepCopy()
 	patch := client.MergeFrom(edgeDeviceCopy)
 

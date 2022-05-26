@@ -35,9 +35,9 @@ type secretMapType = map[string]keyMapType
 type ConfigurationAssembler struct {
 	allowLists             devicemetrics.AllowListGenerator
 	claimer                *storage.Claimer
-	configMaps configmaps.ConfigMap
-	repository RepositoryFacade
-	recorder   record.EventRecorder
+	configMaps             configmaps.ConfigMap
+	repository             RepositoryFacade
+	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 }
 

@@ -20,7 +20,6 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/heartbeat"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
@@ -40,7 +39,7 @@ type Handler struct {
 	backend          backend.Backend
 	initialNamespace string
 	metrics          metrics.Metrics
-	heartbeatHandler heartbeat.Handler
+	heartbeatHandler *RetryingDelegatingHandler
 	mtlsConfig       *mtls.TLSConfig
 	logger           *zap.SugaredLogger
 }
@@ -57,13 +56,14 @@ func NewYggdrasilHandler(claimer *storage.Claimer, initialNamespace string,
 		registryAuth,
 		repository,
 	)
+	k8sBackend := k8s.NewBackend(repository, assembler, logger, initialNamespace, recorder)
 	return &Handler{
 		initialNamespace: initialNamespace,
 		metrics:          metrics,
-		heartbeatHandler: heartbeat.NewSynchronousHandler(repository, recorder, metrics, logger),
+		heartbeatHandler: NewRetryingDelegatingHandler(k8sBackend.GetHeartbeatHandler()),
 		mtlsConfig:       mtlsConfig,
 		logger:           logger,
-		backend:          k8s.NewBackend(repository, assembler, logger, initialNamespace),
+		backend:          k8sBackend,
 	}
 }
 
@@ -202,7 +202,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		err = h.heartbeatHandler.Process(ctx, heartbeat.Notification{
+		err = h.heartbeatHandler.Process(ctx, backend.Notification{
 			DeviceID:  deviceID,
 			Namespace: h.getNamespace(ctx),
 			Heartbeat: &hb,
@@ -215,6 +215,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			logger.Error(err, "Device not found")
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
+		h.metrics.RecordEdgeDevicePresence(h.getNamespace(ctx), deviceID)
 	case "enrolment":
 		contentJson, _ := json.Marshal(msg.Content)
 		enrolmentInfo := models.EnrolmentInfo{}
