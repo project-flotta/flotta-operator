@@ -1,4 +1,4 @@
-package backend
+package k8s
 
 import (
 	"context"
@@ -16,7 +16,6 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/labels"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
@@ -36,9 +35,9 @@ type secretMapType = map[string]keyMapType
 type ConfigurationAssembler struct {
 	allowLists             devicemetrics.AllowListGenerator
 	claimer                *storage.Claimer
-	configMaps             configmaps.ConfigMap
-	repository             k8s.RepositoryFacade
-	recorder               record.EventRecorder
+	configMaps configmaps.ConfigMap
+	repository RepositoryFacade
+	recorder   record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 }
 
@@ -47,7 +46,7 @@ func NewConfigurationAssembler(allowLists devicemetrics.AllowListGenerator,
 	configMaps configmaps.ConfigMap,
 	recorder record.EventRecorder,
 	registryAuthRepository images.RegistryAuthAPI,
-	repository k8s.RepositoryFacade) *ConfigurationAssembler {
+	repository RepositoryFacade) *ConfigurationAssembler {
 	return &ConfigurationAssembler{
 		allowLists:             allowLists,
 		claimer:                claimer,

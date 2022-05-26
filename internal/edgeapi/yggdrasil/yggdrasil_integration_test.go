@@ -30,7 +30,6 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
@@ -850,7 +849,7 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
 				config := validateAndGetDeviceConfig(res)
 				Expect(config.Configuration.Metrics).ToNot(BeNil())
-				Expect(config.Configuration.Metrics.Receiver).To(Equal(backend.GetDefaultMetricsReceiver()))
+				Expect(config.Configuration.Metrics.Receiver).To(Equal(k8s.GetDefaultMetricsReceiver()))
 			})
 
 			It("receiver full configuration", func() {

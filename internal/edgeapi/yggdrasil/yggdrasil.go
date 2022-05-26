@@ -49,7 +49,7 @@ func NewYggdrasilHandler(claimer *storage.Claimer, initialNamespace string,
 	recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
 	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap,
 	mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger, repository k8s.RepositoryFacade) *Handler {
-	assembler := backend.NewConfigurationAssembler(
+	assembler := k8s.NewConfigurationAssembler(
 		allowLists,
 		claimer,
 		configMaps,
@@ -63,7 +63,7 @@ func NewYggdrasilHandler(claimer *storage.Claimer, initialNamespace string,
 		heartbeatHandler: heartbeat.NewSynchronousHandler(repository, recorder, metrics, logger),
 		mtlsConfig:       mtlsConfig,
 		logger:           logger,
-		backend:          backend.NewBackend(repository, assembler, logger, initialNamespace),
+		backend:          k8s.NewBackend(repository, assembler, logger, initialNamespace),
 	}
 }
 

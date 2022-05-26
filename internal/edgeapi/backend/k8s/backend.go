@@ -1,8 +1,9 @@
-package backend
+package k8s
 
 import (
 	"context"
 	"fmt"
+	backend2 "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"time"
 
 	"go.uber.org/zap"
@@ -12,7 +13,6 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/utils"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
@@ -25,26 +25,14 @@ const (
 	AuthzKey mtls.RequestAuthKey = "APIAuthzkey"
 )
 
-type Backend interface {
-	ShouldEdgeDeviceBeUnregistered(ctx context.Context, name, namespace string) (bool, error)
-	GetDeviceConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error)
-	EnrolEdgeDevice(ctx context.Context, name string, enrolmentInfo *models.EnrolmentInfo) (bool, error)
-	InitializeEdgeDeviceRegistration(ctx context.Context, name, namespace string, matchesCertificate bool) (bool, string, error)
-	FinalizeEdgeDeviceRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error
-}
-
-type NotApproved struct {
-	cause error
-}
-
 type backend struct {
 	logger           *zap.SugaredLogger
-	repository       k8s.RepositoryFacade
+	repository       RepositoryFacade
 	assembler        *ConfigurationAssembler
 	initialNamespace string
 }
 
-func NewBackend(repository k8s.RepositoryFacade, assembler *ConfigurationAssembler, logger *zap.SugaredLogger, initialNamespace string) Backend {
+func NewBackend(repository RepositoryFacade, assembler *ConfigurationAssembler, logger *zap.SugaredLogger, initialNamespace string) backend2.Backend {
 	return &backend{repository: repository, assembler: assembler, logger: logger, initialNamespace: initialNamespace}
 }
 
@@ -143,7 +131,7 @@ func (b *backend) InitializeEdgeDeviceRegistration(ctx context.Context, name, id
 	dvc, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return false, "", NewNotApproved(err)
+			return false, "", backend2.NewNotApproved(err)
 		}
 		return false, "", err
 	}
@@ -217,16 +205,3 @@ func (b *backend) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeD
 	return err
 }
 
-func NewNotApproved(err error) *NotApproved {
-	return &NotApproved{
-		cause: err,
-	}
-}
-
-func (e *NotApproved) Error() string {
-	return "not approved"
-}
-
-func (e *NotApproved) Unwrap() error {
-	return e.cause
-}
