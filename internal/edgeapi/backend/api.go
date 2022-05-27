@@ -13,6 +13,7 @@ type Notification struct {
 	Retry     int32
 }
 
+//go:generate mockgen -package=backend -destination=mock_heartbeat-handler.go . HeartbeatHandler
 type HeartbeatHandler interface {
 	Process(ctx context.Context, notification Notification) (bool, error)
 }
