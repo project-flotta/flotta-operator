@@ -31,11 +31,11 @@ type backend struct {
 	repository       RepositoryFacade
 	assembler        *ConfigurationAssembler
 	initialNamespace string
-	heartbeatHandler backendapi.HeartbeatHandler
+	heartbeatHandler *SynchronousHandler
 }
 
 func NewBackend(repository RepositoryFacade, assembler *ConfigurationAssembler,
-	logger *zap.SugaredLogger, initialNamespace string, recorder record.EventRecorder) backendapi.Backend {
+	logger *zap.SugaredLogger, initialNamespace string, recorder record.EventRecorder) backendapi.EdgeDeviceBackend {
 	return &backend{repository: repository,
 		assembler:        assembler,
 		logger:           logger,
@@ -43,26 +43,26 @@ func NewBackend(repository RepositoryFacade, assembler *ConfigurationAssembler,
 		heartbeatHandler: NewSynchronousHandler(repository, recorder, logger)}
 }
 
-func (b *backend) ShouldEdgeDeviceBeUnregistered(ctx context.Context, name, namespace string) (bool, error) {
+func (b *backend) GetRegistrationStatus(ctx context.Context, name, namespace string) (backendapi.RegistrationStatus, error) {
 	edgeDevice, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
-		return false, err
+		return backendapi.Unknown, err
 	}
 
 	if edgeDevice.DeletionTimestamp == nil || utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
-		return false, nil
+		return backendapi.Registered, nil
 	}
 
 	if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilConnectionFinalizer) {
 		err = b.repository.RemoveEdgeDeviceFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
 		if err != nil {
-			return false, err
+			return backendapi.Registered, err
 		}
 	}
-	return true, nil
+	return backendapi.Unregistered, nil
 }
 
-func (b *backend) GetDeviceConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error) {
+func (b *backend) GetConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error) {
 	logger := b.logger.With("DeviceID", name)
 	edgeDevice, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
@@ -80,7 +80,7 @@ func (b *backend) GetDeviceConfiguration(ctx context.Context, name, namespace st
 	return b.assembler.GetDeviceConfiguration(ctx, edgeDevice, logger)
 }
 
-func (b *backend) EnrolEdgeDevice(ctx context.Context, name string, enrolmentInfo *models.EnrolmentInfo) (bool, error) {
+func (b *backend) Enrol(ctx context.Context, name string, enrolmentInfo *models.EnrolmentInfo) (bool, error) {
 	targetNamespace := b.initialNamespace
 	if enrolmentInfo.TargetNamespace != nil {
 		targetNamespace = *enrolmentInfo.TargetNamespace
@@ -122,14 +122,14 @@ func (b *backend) EnrolEdgeDevice(ctx context.Context, name string, enrolmentInf
 	return false, b.repository.CreateEdgeDeviceSignedRequest(ctx, edsr)
 }
 
-func (b *backend) InitializeEdgeDeviceRegistration(ctx context.Context, name, identityNamespace string, matchesCertificate bool) (bool, string, error) {
+func (b *backend) GetTargetNamespace(ctx context.Context, name, identityNamespace string, matchesCertificate bool) (string, error) {
 	logger := b.logger.With("DeviceID", name)
 	namespace := identityNamespace
 	if identityNamespace == b.initialNamespace && !matchesCertificate {
 		// check if it's a valid device, shouldn't match
 		esdr, err := b.repository.GetEdgeDeviceSignedRequest(ctx, name, b.initialNamespace)
 		if err != nil {
-			return false, "", err
+			return "", err
 		}
 		if esdr.Spec.TargetNamespace != "" {
 			namespace = esdr.Spec.TargetNamespace
@@ -138,13 +138,13 @@ func (b *backend) InitializeEdgeDeviceRegistration(ctx context.Context, name, id
 	dvc, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return false, "", backendapi.NewNotApproved(err)
+			return "", backendapi.NewNotApproved(err)
 		}
-		return false, "", err
+		return "", err
 	}
 
 	if dvc == nil {
-		return false, "", fmt.Errorf("device not found")
+		return "", fmt.Errorf("device not found")
 	}
 
 	isInit := false
@@ -159,13 +159,18 @@ func (b *backend) InitializeEdgeDeviceRegistration(ctx context.Context, name, id
 		// At this moment, the registration certificate it's no longer valid,
 		// because the CR is already created, and need to be a device
 		// certificate.
-		return false, "", fmt.Errorf("forbidden")
+		return "", fmt.Errorf("forbidden")
 	}
 
-	return isInit, namespace, nil
+	if isInit {
+		logger.Info("EdgeDevice registered correctly for first time")
+	} else {
+		logger.Info("EdgeDevice renew registration correctly")
+	}
+	return namespace, nil
 }
 
-func (b *backend) FinalizeEdgeDeviceRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error {
+func (b *backend) FinalizeRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error {
 	logger := b.logger.With("DeviceID", name)
 	dvc, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	deviceCopy := dvc.DeepCopy()
@@ -187,8 +192,8 @@ func (b *backend) FinalizeEdgeDeviceRegistration(ctx context.Context, name, name
 	return err
 }
 
-func (b *backend) GetHeartbeatHandler() backendapi.HeartbeatHandler {
-	return b.heartbeatHandler
+func (b *backend) UpdateStatus(ctx context.Context, notification backendapi.Notification) (bool, error) {
+	return b.heartbeatHandler.Process(ctx, notification)
 }
 
 func (b *backend) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeDevice, updateFunc func(d *v1alpha1.EdgeDevice)) error {

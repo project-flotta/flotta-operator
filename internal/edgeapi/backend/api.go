@@ -6,6 +6,14 @@ import (
 	"github.com/project-flotta/flotta-operator/models"
 )
 
+const (
+	Registered   = RegistrationStatus("registered")
+	Unregistered = RegistrationStatus("unregistered")
+	Unknown      = RegistrationStatus("unknown")
+)
+
+type RegistrationStatus string
+
 type Notification struct {
 	DeviceID  string
 	Namespace string
@@ -13,37 +21,29 @@ type Notification struct {
 	Retry     int32
 }
 
-//go:generate mockgen -package=backend -destination=mock_heartbeat-handler.go . HeartbeatHandler
-type HeartbeatHandler interface {
-	Process(ctx context.Context, notification Notification) (bool, error)
-}
+// EdgeDeviceBackend represents API provided by data storage service to support edge device lifecycle.
+type EdgeDeviceBackend interface {
+	// GetRegistrationStatus responds with status of a device registration: {enrolled, registered, unregistered}
+	GetRegistrationStatus(ctx context.Context, name, namespace string) (RegistrationStatus, error)
 
-// Backend represents API provided by data storage service to support edge device lifecycle.
-type Backend interface {
-	// ShouldEdgeDeviceBeUnregistered responds with true, when the device identified with name and namespace should be
-	// instructed to execute de-registration procedure
-	ShouldEdgeDeviceBeUnregistered(ctx context.Context, name, namespace string) (bool, error)
+	// GetConfiguration provides complete Edge Device configuration that should be applied to the device
+	GetConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error)
 
-	// GetDeviceConfiguration provides complete Edge Device configuration that should be applied to the device
-	GetDeviceConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error)
+	// Enrol records device willingness to be connected to the cluster.
+	Enrol(ctx context.Context, name string, enrolmentInfo *models.EnrolmentInfo) (bool, error)
 
-	// EnrolEdgeDevice records device willingness to be connected to the cluster.
-	EnrolEdgeDevice(ctx context.Context, name string, enrolmentInfo *models.EnrolmentInfo) (bool, error)
+	// GetTargetNamespace returns the namespace the device should belong to.
+	GetTargetNamespace(ctx context.Context, name, namespace string, matchesCertificate bool) (string, error)
 
-	// InitializeEdgeDeviceRegistration is called when device sends registration request (either to issue the mTLS certificate
-	// for the first time or renew it) and has to return information whether it is handling first registration request from the device,
-	// and namespace the device should be created in.
-	InitializeEdgeDeviceRegistration(ctx context.Context, name, namespace string, matchesCertificate bool) (bool, string, error)
-
-	// FinalizeEdgeDeviceRegistration is called during device registration request handling, after mTLS certificate has
+	// FinalizeRegistration is called during device registration request handling, after mTLS certificate has
 	// been correctly issued.
 	// The responsibility of the method is to potentially record information that the device is finally registered and
 	// what hardware configuration it has.
-	FinalizeEdgeDeviceRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error
+	FinalizeRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error
 
-	// GetHeartbeatHandler provides implementation of a HeartbeatHandler that should record current state of the device sent in
+	// UpdateStatus records current state of the device sent in a heartbeat message
 	// (i.e. workload status, events reported by the device, OS upgrade status).
-	GetHeartbeatHandler() HeartbeatHandler
+	UpdateStatus(ctx context.Context, notification Notification) (bool, error)
 }
 
 type NotApproved struct {

@@ -16,13 +16,13 @@ var _ = Describe("Heartbeat handler", func() {
 
 	var (
 		mockCtrl     *gomock.Controller
-		mockDelegate *backend.MockHeartbeatHandler
+		mockDelegate *yggdrasil.MockStatusUpdater
 		handler      *yggdrasil.RetryingDelegatingHandler
 	)
 
 	BeforeEach(func() {
 		mockCtrl = gomock.NewController(GinkgoT())
-		mockDelegate = backend.NewMockHeartbeatHandler(mockCtrl)
+		mockDelegate = yggdrasil.NewMockStatusUpdater(mockCtrl)
 
 		handler = yggdrasil.NewRetryingDelegatingHandler(mockDelegate)
 	})
@@ -37,7 +37,7 @@ var _ = Describe("Heartbeat handler", func() {
 		notification := backend.Notification{DeviceID: "1234"}
 
 		mockDelegate.EXPECT().
-			Process(ctx, notification).
+			UpdateStatus(ctx, notification).
 			Return(false, nil)
 
 		// when
@@ -54,10 +54,10 @@ var _ = Describe("Heartbeat handler", func() {
 		notification := backend.Notification{DeviceID: "1234"}
 		retryNotification := backend.Notification{DeviceID: "1234", Retry: 1}
 		errorCall := mockDelegate.EXPECT().
-			Process(ctx, notification).
+			UpdateStatus(ctx, notification).
 			Return(true, fmt.Errorf("boom"))
 		mockDelegate.EXPECT().
-			Process(ctx, retryNotification).
+			UpdateStatus(ctx, retryNotification).
 			Return(false, nil).
 			After(errorCall)
 
@@ -74,7 +74,7 @@ var _ = Describe("Heartbeat handler", func() {
 		notification := backend.Notification{DeviceID: "1234"}
 
 		mockDelegate.EXPECT().
-			Process(ctx, gomock.AssignableToTypeOf(notification)).
+			UpdateStatus(ctx, gomock.AssignableToTypeOf(notification)).
 			Return(true, fmt.Errorf("boom")).
 			Times(4)
 

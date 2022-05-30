@@ -30,7 +30,7 @@ const (
 )
 
 type Handler struct {
-	backend          backendapi.Backend
+	backend          backendapi.EdgeDeviceBackend
 	initialNamespace string
 	metrics          metrics.Metrics
 	heartbeatHandler *RetryingDelegatingHandler
@@ -38,11 +38,12 @@ type Handler struct {
 	logger           *zap.SugaredLogger
 }
 
-func NewYggdrasilHandler(initialNamespace string, metrics metrics.Metrics, mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger, backend backendapi.Backend) *Handler {
+func NewYggdrasilHandler(initialNamespace string, metrics metrics.Metrics, mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger,
+	backend backendapi.EdgeDeviceBackend) *Handler {
 	return &Handler{
 		initialNamespace: initialNamespace,
 		metrics:          metrics,
-		heartbeatHandler: NewRetryingDelegatingHandler(backend.GetHeartbeatHandler()),
+		heartbeatHandler: NewRetryingDelegatingHandler(backend),
 		mtlsConfig:       mtlsConfig,
 		logger:           logger,
 		backend:          backend,
@@ -105,7 +106,7 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 	}
 	logger := h.logger.With("DeviceID", deviceID)
 
-	deregister, err := h.backend.ShouldEdgeDeviceBeUnregistered(ctx, deviceID, h.getNamespace(ctx))
+	regStatus, err := h.backend.GetRegistrationStatus(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("edge device is not found")
@@ -115,7 +116,8 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 		return operations.NewGetControlMessageForDeviceInternalServerError()
 	}
 
-	if deregister {
+	switch regStatus {
+	case backendapi.Unregistered:
 		h.metrics.IncEdgeDeviceUnregistration()
 		message := h.createDisconnectCommand()
 		return operations.NewGetControlMessageForDeviceOK().WithPayload(message)
@@ -132,7 +134,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 	}
 	logger := h.logger.With("DeviceID", deviceID)
 
-	dc, err := h.backend.GetDeviceConfiguration(ctx, deviceID, h.getNamespace(ctx))
+	dc, err := h.backend.GetConfiguration(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("edge device is not found")
@@ -207,7 +209,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		}
 		logger.Debug("received enrolment info", "content", enrolmentInfo)
 
-		alreadyCreated, err := h.backend.EnrolEdgeDevice(ctx, deviceID, &enrolmentInfo)
+		alreadyCreated, err := h.backend.Enrol(ctx, deviceID, &enrolmentInfo)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
@@ -233,8 +235,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		content := models.RegistrationResponse{}
 		ns := h.getNamespace(ctx)
 
-		var isInit bool
-		isInit, ns, err = h.backend.InitializeEdgeDeviceRegistration(ctx, deviceID, ns, IsOwnDevice(ctx, deviceID))
+		ns, err = h.backend.GetTargetNamespace(ctx, deviceID, ns, IsOwnDevice(ctx, deviceID))
 		if err != nil {
 			logger.Error(err, "can't initialize edge device registration")
 			if !errors.IsNotFound(err) {
@@ -254,17 +255,12 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		content.Certificate = string(cert)
 
 		res.Content = content
-		err = h.backend.FinalizeEdgeDeviceRegistration(ctx, deviceID, ns, &registrationInfo)
+		err = h.backend.FinalizeRegistration(ctx, deviceID, ns, &registrationInfo)
 
 		if err != nil {
 			logger.Error(err, "cannot finalize device registration")
 			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
-		}
-		if isInit {
-			logger.Info("EdgeDevice registered correctly for first time")
-		} else {
-			logger.Info("EdgeDevice renew registration correctly")
 		}
 
 		h.metrics.IncEdgeDeviceSuccessfulRegistration()

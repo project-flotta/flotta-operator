@@ -7,11 +7,16 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 )
 
-type RetryingDelegatingHandler struct {
-	delegate backend.HeartbeatHandler
+//go:generate mockgen -package=yggdrasil -destination=mock_status-updater.go . StatusUpdater
+type StatusUpdater interface {
+	UpdateStatus(ctx context.Context, notification backend.Notification) (bool, error)
 }
 
-func NewRetryingDelegatingHandler(delegate backend.HeartbeatHandler) *RetryingDelegatingHandler {
+type RetryingDelegatingHandler struct {
+	delegate StatusUpdater
+}
+
+func NewRetryingDelegatingHandler(delegate StatusUpdater) *RetryingDelegatingHandler {
 	return &RetryingDelegatingHandler{delegate: delegate}
 }
 
@@ -20,7 +25,7 @@ func (h *RetryingDelegatingHandler) Process(ctx context.Context, notification ba
 	var err error
 	var retry bool
 	for i := 1; i < 5; i++ {
-		retry, err = h.delegate.Process(ctx, notification)
+		retry, err = h.delegate.UpdateStatus(ctx, notification)
 		if err == nil {
 			return nil
 		}
