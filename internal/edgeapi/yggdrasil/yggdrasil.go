@@ -116,8 +116,7 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 		return operations.NewGetControlMessageForDeviceInternalServerError()
 	}
 
-	switch regStatus {
-	case backendapi.Unregistered:
+	if regStatus == backendapi.Unregistered {
 		h.metrics.IncEdgeDeviceUnregistration()
 		message := h.createDisconnectCommand()
 		return operations.NewGetControlMessageForDeviceOK().WithPayload(message)
