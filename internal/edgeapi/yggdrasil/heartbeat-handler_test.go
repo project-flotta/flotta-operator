@@ -14,6 +14,10 @@ import (
 
 var _ = Describe("Heartbeat handler", func() {
 
+	const (
+		deviceID        = "dev-ns"
+		deviceNamespace = "dev-ns"
+	)
 	var (
 		mockCtrl     *gomock.Controller
 		mockDelegate *yggdrasil.MockStatusUpdater
@@ -34,14 +38,14 @@ var _ = Describe("Heartbeat handler", func() {
 	It("should call delegate", func() {
 		// given
 		ctx := context.TODO()
-		notification := backend.Notification{DeviceID: "1234"}
+		notification := backend.Notification{}
 
 		mockDelegate.EXPECT().
-			UpdateStatus(ctx, notification).
+			UpdateStatus(ctx, deviceID, deviceNamespace, notification).
 			Return(false, nil)
 
 		// when
-		err := handler.Process(ctx, notification)
+		err := handler.Process(ctx, deviceID, deviceNamespace, notification)
 
 		// then
 		Expect(err).ToNot(HaveOccurred())
@@ -51,18 +55,18 @@ var _ = Describe("Heartbeat handler", func() {
 	It("should retry calling delegate on error and succeed", func() {
 		// given
 		ctx := context.TODO()
-		notification := backend.Notification{DeviceID: "1234"}
-		retryNotification := backend.Notification{DeviceID: "1234", Retry: 1}
+		notification := backend.Notification{}
+		retryNotification := backend.Notification{Retry: 1}
 		errorCall := mockDelegate.EXPECT().
-			UpdateStatus(ctx, notification).
+			UpdateStatus(ctx, deviceID, deviceNamespace, notification).
 			Return(true, fmt.Errorf("boom"))
 		mockDelegate.EXPECT().
-			UpdateStatus(ctx, retryNotification).
+			UpdateStatus(ctx, deviceID, deviceNamespace, retryNotification).
 			Return(false, nil).
 			After(errorCall)
 
 		// when
-		err := handler.Process(ctx, notification)
+		err := handler.Process(ctx, deviceID, deviceNamespace, notification)
 
 		// then
 		Expect(err).ToNot(HaveOccurred())
@@ -71,15 +75,15 @@ var _ = Describe("Heartbeat handler", func() {
 	It("should retry calling delegate on error and eventually fail", func() {
 		// given
 		ctx := context.TODO()
-		notification := backend.Notification{DeviceID: "1234"}
+		notification := backend.Notification{}
 
 		mockDelegate.EXPECT().
-			UpdateStatus(ctx, gomock.AssignableToTypeOf(notification)).
+			UpdateStatus(ctx, deviceID, deviceNamespace, gomock.AssignableToTypeOf(notification)).
 			Return(true, fmt.Errorf("boom")).
 			Times(4)
 
 		// when
-		err := handler.Process(ctx, notification)
+		err := handler.Process(ctx, deviceID, deviceNamespace, notification)
 
 		// then
 		Expect(err).To(HaveOccurred())

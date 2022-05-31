@@ -8,24 +8,22 @@ import (
 
 const (
 	// Registered describes edge device that is fully authorized to communicate with the control plane
-	Registered   = RegistrationStatus("registered")
+	Registered = RegistrationStatus("registered")
 	// Unregistered describes edge device that is not authorized to communicate with the control plane and will be
 	// instructed to execute unregistration logic
 	Unregistered = RegistrationStatus("unregistered")
 	// Unknown signals that the status of the device can't be established (for example due to data retrieval errors)
-	Unknown      = RegistrationStatus("unknown")
+	Unknown = RegistrationStatus("unknown")
 )
 
 type RegistrationStatus string
 
 // Notification carries device heartbeat information
 type Notification struct {
-	DeviceID  string
-	Namespace string
 	// Heartbeat contains information sent by the device as part of the heartbeat
 	Heartbeat *models.Heartbeat
 	// Retry carries information about the retry number for the same heartbeat
-	Retry     int32
+	Retry int32
 }
 
 // EdgeDeviceBackend represents API provided by data storage service to support edge device lifecycle.
@@ -37,7 +35,7 @@ type EdgeDeviceBackend interface {
 	GetConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error)
 
 	// Enrol records device willingness to be connected to the cluster.
-	Enrol(ctx context.Context, name string, enrolmentInfo *models.EnrolmentInfo) (bool, error)
+	Enrol(ctx context.Context, name, namespace string, enrolmentInfo *models.EnrolmentInfo) (bool, error)
 
 	// GetTargetNamespace returns the namespace the device should belong to.
 	GetTargetNamespace(ctx context.Context, name, namespace string, matchesCertificate bool) (string, error)
@@ -50,7 +48,7 @@ type EdgeDeviceBackend interface {
 
 	// UpdateStatus records current state of the device sent in a heartbeat message
 	// (i.e. workload status, events reported by the device, OS upgrade status).
-	UpdateStatus(ctx context.Context, notification Notification) (bool, error)
+	UpdateStatus(ctx context.Context, name, namespace string, notification Notification) (bool, error)
 }
 
 type NotApproved struct {

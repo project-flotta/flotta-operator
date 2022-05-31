@@ -186,11 +186,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		err = h.heartbeatHandler.Process(ctx, backendapi.Notification{
-			DeviceID:  deviceID,
-			Namespace: h.getNamespace(ctx),
-			Heartbeat: &hb,
-		})
+		err = h.heartbeatHandler.Process(ctx, deviceID, h.getNamespace(ctx), backendapi.Notification{Heartbeat: &hb})
 		if err != nil {
 			if errors.IsNotFound(err) {
 				logger.Debug("Device not found")
@@ -208,8 +204,11 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
 		logger.Debug("received enrolment info", "content", enrolmentInfo)
-
-		alreadyCreated, err := h.backend.Enrol(ctx, deviceID, &enrolmentInfo)
+		targetNamespace := h.initialNamespace
+		if enrolmentInfo.TargetNamespace != nil {
+			targetNamespace = *enrolmentInfo.TargetNamespace
+		}
+		alreadyCreated, err := h.backend.Enrol(ctx, deviceID, targetNamespace, &enrolmentInfo)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}

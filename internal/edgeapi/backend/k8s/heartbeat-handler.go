@@ -28,11 +28,11 @@ func NewSynchronousHandler(repository RepositoryFacade, recorder record.EventRec
 	}
 }
 
-func (h *SynchronousHandler) Process(ctx context.Context, notification backendapi.Notification) (bool, error) {
-	logger := h.logger.With("DeviceID", notification.DeviceID, "Namespace", notification.Namespace)
+func (h *SynchronousHandler) Process(ctx context.Context, name, namespace string, notification backendapi.Notification) (bool, error) {
+	logger := h.logger.With("DeviceID", name, "Namespace", namespace)
 	hb := notification.Heartbeat
 	logger.Debug("processing heartbeat", "content", hb, "retry", notification.Retry)
-	edgeDevice, err := h.repository.GetEdgeDevice(ctx, notification.DeviceID, notification.Namespace)
+	edgeDevice, err := h.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return false, err

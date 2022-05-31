@@ -9,7 +9,7 @@ import (
 
 //go:generate mockgen -package=yggdrasil -destination=mock_status-updater.go . StatusUpdater
 type StatusUpdater interface {
-	UpdateStatus(ctx context.Context, notification backend.Notification) (bool, error)
+	UpdateStatus(ctx context.Context, name, namespace string, notification backend.Notification) (bool, error)
 }
 
 type RetryingDelegatingHandler struct {
@@ -20,12 +20,12 @@ func NewRetryingDelegatingHandler(delegate StatusUpdater) *RetryingDelegatingHan
 	return &RetryingDelegatingHandler{delegate: delegate}
 }
 
-func (h *RetryingDelegatingHandler) Process(ctx context.Context, notification backend.Notification) error {
+func (h *RetryingDelegatingHandler) Process(ctx context.Context, name, namespace string, notification backend.Notification) error {
 	// retry patching the edge device status
 	var err error
 	var retry bool
 	for i := 1; i < 5; i++ {
-		retry, err = h.delegate.UpdateStatus(ctx, notification)
+		retry, err = h.delegate.UpdateStatus(ctx, name, namespace, notification)
 		if err == nil {
 			return nil
 		}

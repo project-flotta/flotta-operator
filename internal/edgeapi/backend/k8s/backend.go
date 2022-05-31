@@ -80,12 +80,8 @@ func (b *backend) GetConfiguration(ctx context.Context, name, namespace string) 
 	return b.assembler.GetDeviceConfiguration(ctx, edgeDevice, logger)
 }
 
-func (b *backend) Enrol(ctx context.Context, name string, enrolmentInfo *models.EnrolmentInfo) (bool, error) {
-	targetNamespace := b.initialNamespace
-	if enrolmentInfo.TargetNamespace != nil {
-		targetNamespace = *enrolmentInfo.TargetNamespace
-	}
-	_, err := b.repository.GetEdgeDevice(ctx, name, targetNamespace)
+func (b *backend) Enrol(ctx context.Context, name, namespace string, enrolmentInfo *models.EnrolmentInfo) (bool, error) {
+	_, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err == nil {
 		// Device is already created.
 		return true, nil
@@ -94,7 +90,7 @@ func (b *backend) Enrol(ctx context.Context, name string, enrolmentInfo *models.
 	edsr, err := b.repository.GetEdgeDeviceSignedRequest(ctx, name, b.initialNamespace)
 	if err == nil {
 		// Is already created, but not approved
-		if edsr.Spec.TargetNamespace != targetNamespace {
+		if edsr.Spec.TargetNamespace != namespace {
 			_, err = b.repository.GetEdgeDevice(ctx, name, edsr.Spec.TargetNamespace)
 			if err == nil {
 				// Device is already created.
@@ -111,7 +107,7 @@ func (b *backend) Enrol(ctx context.Context, name string, enrolmentInfo *models.
 			Namespace: b.initialNamespace,
 		},
 		Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
-			TargetNamespace: targetNamespace,
+			TargetNamespace: namespace,
 			Approved:        false,
 			Features: &v1alpha1.Features{
 				Hardware: hardware.MapHardware(enrolmentInfo.Features.Hardware),
@@ -192,8 +188,8 @@ func (b *backend) FinalizeRegistration(ctx context.Context, name, namespace stri
 	return err
 }
 
-func (b *backend) UpdateStatus(ctx context.Context, notification backendapi.Notification) (bool, error) {
-	return b.heartbeatHandler.Process(ctx, notification)
+func (b *backend) UpdateStatus(ctx context.Context, name, namespace string, notification backendapi.Notification) (bool, error) {
+	return b.heartbeatHandler.Process(ctx, name, namespace, notification)
 }
 
 func (b *backend) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeDevice, updateFunc func(d *v1alpha1.EdgeDevice)) error {
