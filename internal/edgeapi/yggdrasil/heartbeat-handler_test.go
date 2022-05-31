@@ -3,7 +3,6 @@ package yggdrasil_test
 import (
 	"context"
 	"fmt"
-	"github.com/project-flotta/flotta-operator/models"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 var _ = Describe("Heartbeat handler", func() {

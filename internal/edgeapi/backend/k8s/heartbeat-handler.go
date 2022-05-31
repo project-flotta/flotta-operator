@@ -2,13 +2,13 @@ package k8s
 
 import (
 	"context"
-	"github.com/project-flotta/flotta-operator/models"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/tools/record"
 
 	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 type SynchronousHandler struct {
