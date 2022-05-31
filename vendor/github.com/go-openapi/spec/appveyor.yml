@@ -1,6 +1,6 @@
 version: "0.1.{build}"
 
-clone_folder: C:\go-openapi\analysis
+clone_folder: C:\go-openapi\spec
 shallow_clone: true # for startup speed
 pull_requests:
   do_not_increment_build_number: true
