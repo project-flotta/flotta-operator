@@ -7,23 +7,30 @@ import (
 )
 
 const (
+	// Registered describes edge device that is fully authorized to communicate with the control plane
 	Registered   = RegistrationStatus("registered")
+	// Unregistered describes edge device that is not authorized to communicate with the control plane and will be
+	// instructed to execute unregistration logic
 	Unregistered = RegistrationStatus("unregistered")
+	// Unknown signals that the status of the device can't be established (for example due to data retrieval errors)
 	Unknown      = RegistrationStatus("unknown")
 )
 
 type RegistrationStatus string
 
+// Notification carries device heartbeat information
 type Notification struct {
 	DeviceID  string
 	Namespace string
+	// Heartbeat contains information sent by the device as part of the heartbeat
 	Heartbeat *models.Heartbeat
+	// Retry carries information about the retry number for the same heartbeat
 	Retry     int32
 }
 
 // EdgeDeviceBackend represents API provided by data storage service to support edge device lifecycle.
 type EdgeDeviceBackend interface {
-	// GetRegistrationStatus responds with status of a device registration: {enrolled, registered, unregistered}
+	// GetRegistrationStatus responds with status of a device registration: {registered, unregistered, unknown}
 	GetRegistrationStatus(ctx context.Context, name, namespace string) (RegistrationStatus, error)
 
 	// GetConfiguration provides complete Edge Device configuration that should be applied to the device
