@@ -14,17 +14,12 @@ const (
 	Unregistered = RegistrationStatus("unregistered")
 	// Unknown signals that the status of the device can't be established (for example due to data retrieval errors)
 	Unknown = RegistrationStatus("unknown")
+
+	// RetryContextKey is a context key for a bool value describing whether the call is a retry call
+	RetryContextKey = "retry"
 )
 
 type RegistrationStatus string
-
-// Notification carries device heartbeat information
-type Notification struct {
-	// Heartbeat contains information sent by the device as part of the heartbeat
-	Heartbeat *models.Heartbeat
-	// Retry carries information about the retry number for the same heartbeat
-	Retry int32
-}
 
 // EdgeDeviceBackend represents API provided by data storage service to support edge device lifecycle.
 type EdgeDeviceBackend interface {
@@ -48,7 +43,8 @@ type EdgeDeviceBackend interface {
 
 	// UpdateStatus records current state of the device sent in a heartbeat message
 	// (i.e. workload status, events reported by the device, OS upgrade status).
-	UpdateStatus(ctx context.Context, name, namespace string, notification Notification) (bool, error)
+	// The context might contain value under RetryContextKey.
+	UpdateStatus(ctx context.Context, name, namespace string, heartbeat *models.Heartbeat) (bool, error)
 }
 
 // NotApproved is an error representing situation when edge device had been enrolled but hasn't been approved yet

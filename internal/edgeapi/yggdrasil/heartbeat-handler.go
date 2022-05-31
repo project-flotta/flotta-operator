@@ -5,11 +5,12 @@ import (
 	"time"
 
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
+	"github.com/project-flotta/flotta-operator/models"
 )
 
 //go:generate mockgen -package=yggdrasil -destination=mock_status-updater.go . StatusUpdater
 type StatusUpdater interface {
-	UpdateStatus(ctx context.Context, name, namespace string, notification backend.Notification) (bool, error)
+	UpdateStatus(ctx context.Context, name, namespace string, heartbeat *models.Heartbeat) (bool, error)
 }
 
 type RetryingDelegatingHandler struct {
@@ -20,12 +21,13 @@ func NewRetryingDelegatingHandler(delegate StatusUpdater) *RetryingDelegatingHan
 	return &RetryingDelegatingHandler{delegate: delegate}
 }
 
-func (h *RetryingDelegatingHandler) Process(ctx context.Context, name, namespace string, notification backend.Notification) error {
+func (h *RetryingDelegatingHandler) Process(ctx context.Context, name, namespace string, heartbeat *models.Heartbeat) error {
 	// retry patching the edge device status
 	var err error
 	var retry bool
 	for i := 1; i < 5; i++ {
-		retry, err = h.delegate.UpdateStatus(ctx, name, namespace, notification)
+		childCtx := context.WithValue(ctx, backend.RetryContextKey, retry)
+		retry, err = h.delegate.UpdateStatus(childCtx, name, namespace, heartbeat)
 		if err == nil {
 			return nil
 		}
@@ -33,7 +35,6 @@ func (h *RetryingDelegatingHandler) Process(ctx context.Context, name, namespace
 			break
 		}
 
-		notification.Retry++
 		time.Sleep(time.Duration(i*50) * time.Millisecond)
 	}
 	return err

@@ -9,8 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-
-	backend "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
+	models "github.com/project-flotta/flotta-operator/models"
 )
 
 // MockStatusUpdater is a mock of StatusUpdater interface.
@@ -37,7 +36,7 @@ func (m *MockStatusUpdater) EXPECT() *MockStatusUpdaterMockRecorder {
 }
 
 // UpdateStatus mocks base method.
-func (m *MockStatusUpdater) UpdateStatus(arg0 context.Context, arg1, arg2 string, arg3 backend.Notification) (bool, error) {
+func (m *MockStatusUpdater) UpdateStatus(arg0 context.Context, arg1, arg2 string, arg3 *models.Heartbeat) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateStatus", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(bool)

@@ -3,6 +3,7 @@ package yggdrasil_test
 import (
 	"context"
 	"fmt"
+	"github.com/project-flotta/flotta-operator/models"
 
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/ginkgo/v2"
@@ -38,14 +39,15 @@ var _ = Describe("Heartbeat handler", func() {
 	It("should call delegate", func() {
 		// given
 		ctx := context.TODO()
-		notification := backend.Notification{}
+		initialContext := context.WithValue(ctx, backend.RetryContextKey, false)
+		heartbeat := &models.Heartbeat{}
 
 		mockDelegate.EXPECT().
-			UpdateStatus(ctx, deviceID, deviceNamespace, notification).
+			UpdateStatus(initialContext, deviceID, deviceNamespace, heartbeat).
 			Return(false, nil)
 
 		// when
-		err := handler.Process(ctx, deviceID, deviceNamespace, notification)
+		err := handler.Process(ctx, deviceID, deviceNamespace, heartbeat)
 
 		// then
 		Expect(err).ToNot(HaveOccurred())
@@ -55,18 +57,19 @@ var _ = Describe("Heartbeat handler", func() {
 	It("should retry calling delegate on error and succeed", func() {
 		// given
 		ctx := context.TODO()
-		notification := backend.Notification{}
-		retryNotification := backend.Notification{Retry: 1}
+		heartbeat := &models.Heartbeat{}
+		initialContext := context.WithValue(ctx, backend.RetryContextKey, false)
+		retryContext := context.WithValue(ctx, backend.RetryContextKey, true)
 		errorCall := mockDelegate.EXPECT().
-			UpdateStatus(ctx, deviceID, deviceNamespace, notification).
+			UpdateStatus(initialContext, deviceID, deviceNamespace, heartbeat).
 			Return(true, fmt.Errorf("boom"))
 		mockDelegate.EXPECT().
-			UpdateStatus(ctx, deviceID, deviceNamespace, retryNotification).
+			UpdateStatus(retryContext, deviceID, deviceNamespace, heartbeat).
 			Return(false, nil).
 			After(errorCall)
 
 		// when
-		err := handler.Process(ctx, deviceID, deviceNamespace, notification)
+		err := handler.Process(ctx, deviceID, deviceNamespace, heartbeat)
 
 		// then
 		Expect(err).ToNot(HaveOccurred())
@@ -75,15 +78,22 @@ var _ = Describe("Heartbeat handler", func() {
 	It("should retry calling delegate on error and eventually fail", func() {
 		// given
 		ctx := context.TODO()
-		notification := backend.Notification{}
+		initialContext := context.WithValue(ctx, backend.RetryContextKey, false)
+		retryCtx := context.WithValue(ctx, backend.RetryContextKey, true)
+		heartbeat := &models.Heartbeat{}
+
+		initialCall := mockDelegate.EXPECT().
+			UpdateStatus(initialContext, deviceID, deviceNamespace, gomock.AssignableToTypeOf(heartbeat)).
+			Return(true, fmt.Errorf("boom"))
 
 		mockDelegate.EXPECT().
-			UpdateStatus(ctx, deviceID, deviceNamespace, gomock.AssignableToTypeOf(notification)).
+			UpdateStatus(retryCtx, deviceID, deviceNamespace, gomock.AssignableToTypeOf(heartbeat)).
 			Return(true, fmt.Errorf("boom")).
-			Times(4)
+			Times(3).
+			After(initialCall)
 
 		// when
-		err := handler.Process(ctx, deviceID, deviceNamespace, notification)
+		err := handler.Process(ctx, deviceID, deviceNamespace, heartbeat)
 
 		// then
 		Expect(err).To(HaveOccurred())

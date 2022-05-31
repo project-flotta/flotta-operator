@@ -188,8 +188,8 @@ func (b *backend) FinalizeRegistration(ctx context.Context, name, namespace stri
 	return err
 }
 
-func (b *backend) UpdateStatus(ctx context.Context, name, namespace string, notification backendapi.Notification) (bool, error) {
-	return b.heartbeatHandler.Process(ctx, name, namespace, notification)
+func (b *backend) UpdateStatus(ctx context.Context, name, namespace string, heartbeat *models.Heartbeat) (bool, error) {
+	return b.heartbeatHandler.Process(ctx, name, namespace, heartbeat)
 }
 
 func (b *backend) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeDevice, updateFunc func(d *v1alpha1.EdgeDevice)) error {

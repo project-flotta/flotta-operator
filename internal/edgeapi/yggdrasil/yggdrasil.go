@@ -185,7 +185,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		err = h.heartbeatHandler.Process(ctx, deviceID, h.getNamespace(ctx), backendapi.Notification{Heartbeat: &hb})
+		err = h.heartbeatHandler.Process(ctx, deviceID, h.getNamespace(ctx), &hb)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				logger.Debug("Device not found")

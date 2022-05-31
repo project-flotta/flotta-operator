@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"github.com/project-flotta/flotta-operator/models"
 
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -28,10 +29,11 @@ func NewSynchronousHandler(repository RepositoryFacade, recorder record.EventRec
 	}
 }
 
-func (h *SynchronousHandler) Process(ctx context.Context, name, namespace string, notification backendapi.Notification) (bool, error) {
+func (h *SynchronousHandler) Process(ctx context.Context, name, namespace string, heartbeat *models.Heartbeat) (bool, error) {
 	logger := h.logger.With("DeviceID", name, "Namespace", namespace)
-	hb := notification.Heartbeat
-	logger.Debug("processing heartbeat", "content", hb, "retry", notification.Retry)
+
+	retry := ctx.Value(backendapi.RetryContextKey)
+	logger.Debug("processing heartbeat", "content", heartbeat, "retry", retry)
 	edgeDevice, err := h.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -41,15 +43,15 @@ func (h *SynchronousHandler) Process(ctx context.Context, name, namespace string
 	}
 
 	// Produce k8s events based on the device-worker events:
-	if notification.Retry == 0 {
-		h.updater.processEvents(edgeDevice, hb.Events)
+	if retry == nil || !retry.(bool) {
+		h.updater.processEvents(edgeDevice, heartbeat.Events)
 	}
 
-	err = h.updater.updateStatus(ctx, edgeDevice, hb)
+	err = h.updater.updateStatus(ctx, edgeDevice, heartbeat)
 	if err != nil {
 		return true, err
 	}
-	err = h.updater.updateLabels(ctx, edgeDevice, hb)
+	err = h.updater.updateLabels(ctx, edgeDevice, heartbeat)
 	if err != nil {
 		return true, err
 	}
