@@ -139,7 +139,7 @@ func main() {
 	}()
 	eventRecorder := broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"})
 
-	backend := factory.CreateBackend(initialDeviceNamespace, c, logger, eventRecorder)
+	backend := factory.Create(initialDeviceNamespace, c, logger, eventRecorder)
 
 	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
 		initialDeviceNamespace,

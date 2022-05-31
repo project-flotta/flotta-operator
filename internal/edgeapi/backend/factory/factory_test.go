@@ -21,7 +21,7 @@ var _ = Describe("Backend factory", func() {
 		var c client.Client
 
 		// when
-		backend := factory.CreateBackend(namespace, c, logger, eventRecorder)
+		backend := factory.Create(namespace, c, logger, eventRecorder)
 
 		// then
 		Expect(backend).ToNot(BeNil())

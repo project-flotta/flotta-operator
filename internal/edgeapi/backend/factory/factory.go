@@ -18,7 +18,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 )
 
-func CreateBackend(initialDeviceNamespace string, client kubeclient.Client, logger *zap.SugaredLogger, eventRecorder record.EventRecorder) backend.EdgeDeviceBackend {
+func Create(initialDeviceNamespace string, client kubeclient.Client, logger *zap.SugaredLogger, eventRecorder record.EventRecorder) backend.EdgeDeviceBackend {
 	// For now just one implementation is supported
 	k8sClient := k8sclient.NewK8sClient(client)
 
