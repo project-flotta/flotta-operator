@@ -37,7 +37,7 @@ type EdgeDeviceBackend interface {
 	// Enrol records device willingness to be connected to the cluster.
 	Enrol(ctx context.Context, name, namespace string, enrolmentInfo *models.EnrolmentInfo) (bool, error)
 
-	// GetTargetNamespace returns the namespace the device should belong to.
+	// GetTargetNamespace returns the namespace the device should belong to. This method may return NotApproved error.
 	GetTargetNamespace(ctx context.Context, name, namespace string, matchesCertificate bool) (string, error)
 
 	// FinalizeRegistration is called during device registration request handling, after mTLS certificate has
@@ -51,10 +51,12 @@ type EdgeDeviceBackend interface {
 	UpdateStatus(ctx context.Context, name, namespace string, notification Notification) (bool, error)
 }
 
+// NotApproved is an error representing situation when edge device had been enrolled but hasn't been approved yet
 type NotApproved struct {
 	cause error
 }
 
+// NewNotApproved creates new NotApproved error with given detailed error cause.
 func NewNotApproved(err error) *NotApproved {
 	return &NotApproved{
 		cause: err,
