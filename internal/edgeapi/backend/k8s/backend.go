@@ -63,7 +63,7 @@ func (b *backend) GetRegistrationStatus(ctx context.Context, name, namespace str
 }
 
 func (b *backend) GetConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error) {
-	logger := b.logger.With("DeviceID", name)
+	logger := b.logger.With("DeviceID", name, "Namespace", namespace)
 	edgeDevice, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
 		return nil, err
@@ -167,7 +167,7 @@ func (b *backend) GetTargetNamespace(ctx context.Context, name, identityNamespac
 }
 
 func (b *backend) FinalizeRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error {
-	logger := b.logger.With("DeviceID", name)
+	logger := b.logger.With("DeviceID", name, "Namespace", namespace)
 	dvc, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	deviceCopy := dvc.DeepCopy()
 	deviceCopy.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
