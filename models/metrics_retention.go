@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
@@ -24,6 +26,11 @@ type MetricsRetention struct {
 
 // Validate validates this metrics retention
 func (m *MetricsRetention) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this metrics retention based on context it is used
+func (m *MetricsRetention) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

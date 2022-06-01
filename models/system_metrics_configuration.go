@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -41,7 +43,6 @@ func (m *SystemMetricsConfiguration) Validate(formats strfmt.Registry) error {
 }
 
 func (m *SystemMetricsConfiguration) validateAllowList(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.AllowList) { // not required
 		return nil
 	}
@@ -50,6 +51,38 @@ func (m *SystemMetricsConfiguration) validateAllowList(formats strfmt.Registry) 
 		if err := m.AllowList.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("allow_list")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("allow_list")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this system metrics configuration based on the context it is used
+func (m *SystemMetricsConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAllowList(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *SystemMetricsConfiguration) contextValidateAllowList(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.AllowList != nil {
+		if err := m.AllowList.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("allow_list")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("allow_list")
 			}
 			return err
 		}

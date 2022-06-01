@@ -65,7 +65,6 @@ func (o *PostDataMessageForDeviceReader) ReadResponse(response runtime.ClientRes
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
@@ -76,7 +75,7 @@ func NewPostDataMessageForDeviceOK() *PostDataMessageForDeviceOK {
 	return &PostDataMessageForDeviceOK{}
 }
 
-/*PostDataMessageForDeviceOK handles this case with default header values.
+/* PostDataMessageForDeviceOK describes a response with status code 200, with default header values.
 
 Success
 */
@@ -87,7 +86,6 @@ type PostDataMessageForDeviceOK struct {
 func (o *PostDataMessageForDeviceOK) Error() string {
 	return fmt.Sprintf("[POST /data/{device_id}/out][%d] postDataMessageForDeviceOK  %+v", 200, o.Payload)
 }
-
 func (o *PostDataMessageForDeviceOK) GetPayload() *models.MessageResponse {
 	return o.Payload
 }
@@ -109,7 +107,7 @@ func NewPostDataMessageForDeviceAlreadyReported() *PostDataMessageForDeviceAlrea
 	return &PostDataMessageForDeviceAlreadyReported{}
 }
 
-/*PostDataMessageForDeviceAlreadyReported handles this case with default header values.
+/* PostDataMessageForDeviceAlreadyReported describes a response with status code 208, with default header values.
 
 Already Reported
 */
@@ -130,7 +128,7 @@ func NewPostDataMessageForDeviceBadRequest() *PostDataMessageForDeviceBadRequest
 	return &PostDataMessageForDeviceBadRequest{}
 }
 
-/*PostDataMessageForDeviceBadRequest handles this case with default header values.
+/* PostDataMessageForDeviceBadRequest describes a response with status code 400, with default header values.
 
 Error
 */
@@ -151,7 +149,7 @@ func NewPostDataMessageForDeviceUnauthorized() *PostDataMessageForDeviceUnauthor
 	return &PostDataMessageForDeviceUnauthorized{}
 }
 
-/*PostDataMessageForDeviceUnauthorized handles this case with default header values.
+/* PostDataMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -172,7 +170,7 @@ func NewPostDataMessageForDeviceForbidden() *PostDataMessageForDeviceForbidden {
 	return &PostDataMessageForDeviceForbidden{}
 }
 
-/*PostDataMessageForDeviceForbidden handles this case with default header values.
+/* PostDataMessageForDeviceForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -193,7 +191,7 @@ func NewPostDataMessageForDeviceNotFound() *PostDataMessageForDeviceNotFound {
 	return &PostDataMessageForDeviceNotFound{}
 }
 
-/*PostDataMessageForDeviceNotFound handles this case with default header values.
+/* PostDataMessageForDeviceNotFound describes a response with status code 404, with default header values.
 
 Error
 */
@@ -214,7 +212,7 @@ func NewPostDataMessageForDeviceInternalServerError() *PostDataMessageForDeviceI
 	return &PostDataMessageForDeviceInternalServerError{}
 }
 
-/*PostDataMessageForDeviceInternalServerError handles this case with default header values.
+/* PostDataMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
 
 Error
 */

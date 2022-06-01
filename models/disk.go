@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -80,7 +82,6 @@ func (m *Disk) Validate(formats strfmt.Registry) error {
 }
 
 func (m *Disk) validateIoPerf(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.IoPerf) { // not required
 		return nil
 	}
@@ -89,6 +90,38 @@ func (m *Disk) validateIoPerf(formats strfmt.Registry) error {
 		if err := m.IoPerf.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("io_perf")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("io_perf")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this disk based on the context it is used
+func (m *Disk) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateIoPerf(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Disk) contextValidateIoPerf(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.IoPerf != nil {
+		if err := m.IoPerf.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("io_perf")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("io_perf")
 			}
 			return err
 		}

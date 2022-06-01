@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -49,7 +51,6 @@ func (m *MetricsConfiguration) Validate(formats strfmt.Registry) error {
 }
 
 func (m *MetricsConfiguration) validateReceiver(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Receiver) { // not required
 		return nil
 	}
@@ -58,6 +59,8 @@ func (m *MetricsConfiguration) validateReceiver(formats strfmt.Registry) error {
 		if err := m.Receiver.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("receiver")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("receiver")
 			}
 			return err
 		}
@@ -67,7 +70,6 @@ func (m *MetricsConfiguration) validateReceiver(formats strfmt.Registry) error {
 }
 
 func (m *MetricsConfiguration) validateRetention(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Retention) { // not required
 		return nil
 	}
@@ -76,6 +78,8 @@ func (m *MetricsConfiguration) validateRetention(formats strfmt.Registry) error 
 		if err := m.Retention.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("retention")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("retention")
 			}
 			return err
 		}
@@ -85,7 +89,6 @@ func (m *MetricsConfiguration) validateRetention(formats strfmt.Registry) error 
 }
 
 func (m *MetricsConfiguration) validateSystem(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.System) { // not required
 		return nil
 	}
@@ -94,6 +97,78 @@ func (m *MetricsConfiguration) validateSystem(formats strfmt.Registry) error {
 		if err := m.System.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("system")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("system")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this metrics configuration based on the context it is used
+func (m *MetricsConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateReceiver(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateRetention(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSystem(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *MetricsConfiguration) contextValidateReceiver(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Receiver != nil {
+		if err := m.Receiver.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("receiver")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("receiver")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *MetricsConfiguration) contextValidateRetention(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Retention != nil {
+		if err := m.Retention.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("retention")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("retention")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *MetricsConfiguration) contextValidateSystem(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.System != nil {
+		if err := m.System.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("system")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("system")
 			}
 			return err
 		}

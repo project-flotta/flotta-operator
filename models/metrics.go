@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -52,7 +54,6 @@ func (m *Metrics) Validate(formats strfmt.Registry) error {
 }
 
 func (m *Metrics) validateAllowList(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.AllowList) { // not required
 		return nil
 	}
@@ -61,6 +62,8 @@ func (m *Metrics) validateAllowList(formats strfmt.Registry) error {
 		if err := m.AllowList.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("allow_list")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("allow_list")
 			}
 			return err
 		}
@@ -70,7 +73,6 @@ func (m *Metrics) validateAllowList(formats strfmt.Registry) error {
 }
 
 func (m *Metrics) validateContainers(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Containers) { // not required
 		return nil
 	}
@@ -82,6 +84,60 @@ func (m *Metrics) validateContainers(formats strfmt.Registry) error {
 		}
 		if val, ok := m.Containers[k]; ok {
 			if err := val.Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("containers" + "." + k)
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("containers" + "." + k)
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this metrics based on the context it is used
+func (m *Metrics) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAllowList(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateContainers(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Metrics) contextValidateAllowList(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.AllowList != nil {
+		if err := m.AllowList.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("allow_list")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("allow_list")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Metrics) contextValidateContainers(ctx context.Context, formats strfmt.Registry) error {
+
+	for k := range m.Containers {
+
+		if val, ok := m.Containers[k]; ok {
+			if err := val.ContextValidate(ctx, formats); err != nil {
 				return err
 			}
 		}
