@@ -29,15 +29,7 @@ import (
 
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/common/storage"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/factory"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	"github.com/project-flotta/flotta-operator/restapi"
@@ -107,9 +99,8 @@ func main() {
 		logger.Errorf("Cannot create k8s client: %v", err)
 		panic(err.Error())
 	}
-	registryAuth := images.NewRegistryAuth(c)
-	mtlsConfig := mtls.NewMTLSConfig(c, operatorNamespace,
-		[]string{Config.Domain}, Config.TLSLocalhostEnabled)
+
+	mtlsConfig := mtls.NewMTLSConfig(c, operatorNamespace, []string{Config.Domain}, Config.TLSLocalhostEnabled)
 
 	err = mtlsConfig.SetClientExpiration(int(Config.ClientCertExpirationTime))
 	if err != nil {
@@ -134,13 +125,6 @@ func main() {
 		Intermediates: x509.NewCertPool(),
 	}
 
-	k8sClient := k8sclient.NewK8sClient(c)
-	edgeDeviceSignedRequestRepository := edgedevicesignedrequest.NewEdgedeviceSignedRequestRepository(c)
-	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(c)
-	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(c)
-	edgeDeviceSetRepository := edgedeviceset.NewEdgeDeviceSetRepository(c)
-	claimer := storage.NewClaimer(c)
-
 	metricsObj := metrics.New()
 
 	corev1Client, err := corev1client.NewForConfig(clientConfig)
@@ -153,22 +137,16 @@ func main() {
 	defer func() {
 		broadcaster.Shutdown()
 	}()
+	eventRecorder := broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"})
+
+	backend := factory.Create(initialDeviceNamespace, c, logger, eventRecorder)
 
 	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
-		edgeDeviceSignedRequestRepository,
-		edgeDeviceRepository,
-		edgeWorkloadRepository,
-		edgeDeviceSetRepository,
-		claimer,
-		k8sClient,
 		initialDeviceNamespace,
-		broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"}),
-		registryAuth,
 		metricsObj,
-		devicemetrics.NewAllowListGenerator(k8sClient),
-		configmaps.NewConfigMap(k8sClient),
 		mtlsConfig,
 		logger,
+		backend,
 	)
 
 	var api *operations.FlottaManagementAPI

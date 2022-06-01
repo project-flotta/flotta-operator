@@ -1,4 +1,4 @@
-package yggdrasil
+package k8s
 
 import (
 	"context"
@@ -11,41 +11,60 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/labels"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
 	"github.com/project-flotta/flotta-operator/models"
 )
 
-type configurationAssembler struct {
+var (
+	defaultHeartbeatConfiguration = models.HeartbeatConfiguration{
+		HardwareProfile: &models.HardwareProfileConfiguration{},
+		PeriodSeconds:   60,
+	}
+)
+
+type keyMapType = map[string]interface{}
+type secretMapType = map[string]keyMapType
+
+type ConfigurationAssembler struct {
 	allowLists             devicemetrics.AllowListGenerator
 	claimer                *storage.Claimer
-	client                 k8sclient.K8sClient
 	configMaps             configmaps.ConfigMap
-	deviceSetRepository    edgedeviceset.Repository
-	workloadRepository     edgeworkload.Repository
+	repository             RepositoryFacade
 	recorder               record.EventRecorder
 	registryAuthRepository images.RegistryAuthAPI
 }
 
-func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, logger *zap.SugaredLogger) (*models.DeviceConfigurationMessage, error) {
+func NewConfigurationAssembler(allowLists devicemetrics.AllowListGenerator,
+	claimer *storage.Claimer,
+	configMaps configmaps.ConfigMap,
+	recorder record.EventRecorder,
+	registryAuthRepository images.RegistryAuthAPI,
+	repository RepositoryFacade) *ConfigurationAssembler {
+	return &ConfigurationAssembler{
+		allowLists:             allowLists,
+		claimer:                claimer,
+		configMaps:             configMaps,
+		repository:             repository,
+		recorder:               recorder,
+		registryAuthRepository: registryAuthRepository,
+	}
+}
+
+func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, logger *zap.SugaredLogger) (*models.DeviceConfigurationMessage, error) {
 	var workloadList models.WorkloadList
 	var secretList models.SecretList
 	if edgeDevice.DeletionTimestamp == nil {
 		var edgeWorkloads []v1alpha1.EdgeWorkload
 
 		for _, workload := range edgeDevice.Status.Workloads {
-			edgeWorkload, err := a.workloadRepository.Read(ctx, workload.Name, edgeDevice.Namespace)
+			edgeWorkload, err := a.repository.GetEdgeWorkload(ctx, workload.Name, edgeDevice.Namespace)
 			if err != nil {
 				if !errors.IsNotFound(err) {
 					logger.Error(err, "cannot retrieve Edge Workloads")
@@ -65,7 +84,7 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 		secretList, err = a.createSecretList(ctx, edgeWorkloads, edgeDevice)
 		if err != nil {
 			logger.Error(err, "failed reading secrets for device workloads")
-			return nil, err
+			return nil, fmt.Errorf("failed reading secrets for device workloads: %s", err.Error())
 		}
 	}
 
@@ -81,7 +100,7 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 	if deviceSetName, ok := edgeDevice.Labels["flotta/member-of"]; ok {
 		logger.Debug("Device uses EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
 		var err error
-		deviceSet, err = a.deviceSetRepository.Read(ctx, deviceSetName, edgeDevice.Namespace)
+		deviceSet, err = a.repository.GetEdgeDeviceSet(ctx, deviceSetName, edgeDevice.Namespace)
 		if err != nil {
 			logger.Info("Cannot load EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
 			deviceSet = nil
@@ -99,13 +118,13 @@ func (a *configurationAssembler) getDeviceConfiguration(ctx context.Context, edg
 	dc.Configuration.Metrics, err = a.getDeviceMetricsConfiguration(ctx, edgeDevice, deviceSet)
 	if err != nil {
 		logger.Error(err, "failed getting device metrics configuration")
-		return nil, err
+		return nil, fmt.Errorf("failed getting device metrics configuration: %s", err.Error())
 	}
 
 	dc.Configuration.LogCollection, err = a.getDeviceLogConfig(ctx, edgeDevice, deviceSet)
 	if err != nil {
 		logger.Error(err, "failed getting device log configuration")
-		return nil, err
+		return nil, fmt.Errorf("failed getting device log configuration: %s", err.Error())
 	}
 
 	return &dc, nil
@@ -147,7 +166,7 @@ func getHeartbeatConfiguration(edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alp
 
 }
 
-func (a *configurationAssembler) getStorageConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alpha1.EdgeDeviceSet) (*models.StorageConfiguration, error) {
+func (a *ConfigurationAssembler) getStorageConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alpha1.EdgeDeviceSet) (*models.StorageConfiguration, error) {
 	storageSpec := edgeDevice.Spec.Storage
 	if deviceSet != nil {
 		storageSpec = deviceSet.Spec.Storage
@@ -170,7 +189,7 @@ func (a *configurationAssembler) getStorageConfiguration(ctx context.Context, ed
 	return nil, err
 }
 
-func (a *configurationAssembler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alpha1.EdgeDeviceSet) (*models.MetricsConfiguration, error) {
+func (a *ConfigurationAssembler) getDeviceMetricsConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alpha1.EdgeDeviceSet) (*models.MetricsConfiguration, error) {
 	metricsConfigSpec := edgeDevice.Spec.Metrics
 	if deviceSet != nil {
 		metricsConfigSpec = deviceSet.Spec.Metrics
@@ -217,7 +236,7 @@ func (a *configurationAssembler) getDeviceMetricsConfiguration(ctx context.Conte
 	return &metricsConfig, nil
 }
 
-func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger *zap.SugaredLogger, edgeworkloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
+func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap.SugaredLogger, edgeworkloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
 	list := models.WorkloadList{}
 	for _, edgeworkload := range edgeworkloads {
 		if edgeworkload.DeletionTimestamp != nil {
@@ -266,7 +285,7 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 			if allowListSpec := spec.Metrics.AllowList; allowListSpec != nil {
 				allowList, err := a.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, edgeworkload.Namespace)
 				if err != nil {
-					return nil, fmt.Errorf("Cannot get AllowList Metrics Confimap for %v: %w", edgeworkload.Name, err)
+					return nil, fmt.Errorf("cannot get AllowList Metrics Confimap for %v: %s", edgeworkload.Name, err.Error())
 				}
 				workload.Metrics.AllowList = allowList
 			}
@@ -288,8 +307,8 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 
 		configmapList, err := a.configMaps.Fetch(ctx, edgeworkload, device.Namespace)
 		if err != nil {
-			logger.Error(err, "Faled to fetch configmaps")
-			return nil, err
+			logger.Error(err, "failed to fetch configmaps")
+			return nil, fmt.Errorf("failed to fetch configmaps: %s", err.Error())
 		}
 		workload.Configmaps = configmapList
 		list = append(list, &workload)
@@ -297,7 +316,7 @@ func (a *configurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 	return list, nil
 }
 
-func (a *configurationAssembler) getAuthFile(ctx context.Context, imageRegistries *v1alpha1.ImageRegistriesConfiguration, namespace string) (string, error) {
+func (a *ConfigurationAssembler) getAuthFile(ctx context.Context, imageRegistries *v1alpha1.ImageRegistriesConfiguration, namespace string) (string, error) {
 	if imageRegistries != nil {
 		if secretRef := imageRegistries.AuthFileSecret; secretRef != nil {
 			authFile, err := a.registryAuthRepository.GetAuthFileFromSecret(ctx, namespace, secretRef.Name)
@@ -310,7 +329,7 @@ func (a *configurationAssembler) getAuthFile(ctx context.Context, imageRegistrie
 	return "", nil
 }
 
-func (a *configurationAssembler) createSecretList(ctx context.Context, workloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.SecretList, error) {
+func (a *ConfigurationAssembler) createSecretList(ctx context.Context, workloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.SecretList, error) {
 	list := models.SecretList{}
 
 	// create map of secret names and keys
@@ -341,10 +360,9 @@ func (a *configurationAssembler) createSecretList(ctx context.Context, workloads
 	return list, nil
 }
 
-func (a *configurationAssembler) readAndValidateSecret(ctx context.Context, secretName, secretNamespace string, secretKeys keyMapType) (*corev1.Secret, error) {
+func (a *ConfigurationAssembler) readAndValidateSecret(ctx context.Context, secretName, secretNamespace string, secretKeys keyMapType) (*corev1.Secret, error) {
 	optional := secretKeys == nil
-	secretObj := &corev1.Secret{ObjectMeta: metav1.ObjectMeta{Name: secretName, Namespace: secretNamespace}}
-	err := a.client.Get(ctx, client.ObjectKeyFromObject(secretObj), secretObj)
+	secretObj, err := a.repository.GetSecret(ctx, secretName, secretNamespace)
 	if err != nil {
 		if errors.IsNotFound(err) && optional {
 			return nil, nil
@@ -436,7 +454,7 @@ func extractSecretsFromEnv(env []corev1.EnvVar, secretMap secretMapType) {
 	}
 }
 
-func (a *configurationAssembler) getDeviceLogConfig(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alpha1.EdgeDeviceSet) (map[string]models.LogsCollectionInformation, error) {
+func (a *ConfigurationAssembler) getDeviceLogConfig(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alpha1.EdgeDeviceSet) (map[string]models.LogsCollectionInformation, error) {
 	logCollection := edgeDevice.Spec.LogCollection
 	if deviceSet != nil {
 		logCollection = deviceSet.Spec.LogCollection
@@ -464,11 +482,8 @@ func (a *configurationAssembler) getDeviceLogConfig(ctx context.Context, edgeDev
 	return res, nil
 }
 
-func (a *configurationAssembler) getDeviceSyslogLogConfig(ctx context.Context, namespace string, val *v1alpha1.LogCollectionConfig) (*models.LogsCollectionInformationSyslogConfig, error) {
-	cm := corev1.ConfigMap{}
-	err := a.client.Get(ctx,
-		client.ObjectKey{Namespace: namespace, Name: val.SyslogConfig.Name},
-		&cm)
+func (a *ConfigurationAssembler) getDeviceSyslogLogConfig(ctx context.Context, namespace string, val *v1alpha1.LogCollectionConfig) (*models.LogsCollectionInformationSyslogConfig, error) {
+	cm, err := a.repository.GetConfigMap(ctx, val.SyslogConfig.Name, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("cannot get syslogconfig from configmap %s: %w", val.SyslogConfig.Name, err)
 	}
@@ -494,7 +509,7 @@ func GetDefaultMetricsReceiver() *models.MetricsReceiverConfiguration {
 	}
 }
 
-func (a *configurationAssembler) getMetricsReceiverConfiguration(ctx context.Context, metrics *v1alpha1.MetricsConfiguration, namespace string) (*models.MetricsReceiverConfiguration, error) {
+func (a *ConfigurationAssembler) getMetricsReceiverConfiguration(ctx context.Context, metrics *v1alpha1.MetricsConfiguration, namespace string) (*models.MetricsReceiverConfiguration, error) {
 	result := GetDefaultMetricsReceiver()
 
 	if metrics != nil {
@@ -509,11 +524,8 @@ func (a *configurationAssembler) getMetricsReceiverConfiguration(ctx context.Con
 			result.URL = receiverConfig.URL
 
 			if result.URL != "" && strings.HasPrefix(result.URL, "https") && receiverConfig.CaSecretName != "" {
-				secret := corev1.Secret{ObjectMeta: metav1.ObjectMeta{
-					Name:      receiverConfig.CaSecretName,
-					Namespace: namespace,
-				}}
-				err := a.client.Get(ctx, client.ObjectKeyFromObject(&secret), &secret)
+				secret, err := a.repository.GetSecret(ctx, receiverConfig.CaSecretName, namespace)
+
 				if err != nil {
 					return nil, err
 				}

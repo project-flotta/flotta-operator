@@ -12,24 +12,9 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/tools/record"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedeviceset"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
-	"github.com/project-flotta/flotta-operator/internal/common/storage"
-	"github.com/project-flotta/flotta-operator/internal/common/utils"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/heartbeat"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
-	"github.com/project-flotta/flotta-operator/internal/edgeapi/k8sclient"
+	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	apioperations "github.com/project-flotta/flotta-operator/restapi/operations"
@@ -38,59 +23,30 @@ import (
 )
 
 const (
-	YggdrasilConnectionFinalizer                         = "yggdrasil-connection-finalizer"
-	YggdrasilWorkloadFinalizer                           = "yggdrasil-workload-finalizer"
 	YggdrasilRegisterAuth                                = 1
 	YggdrasilCompleteAuth                                = 0
 	AuthzKey                         mtls.RequestAuthKey = "APIAuthzkey"
 	YggrasilAPIRegistrationOperation                     = "PostDataMessageForDevice"
 )
 
-var (
-	defaultHeartbeatConfiguration = models.HeartbeatConfiguration{
-		HardwareProfile: &models.HardwareProfileConfiguration{},
-		PeriodSeconds:   60,
-	}
-)
-
 type Handler struct {
-	edgedeviceSignedRequestRepository edgedevicesignedrequest.Repository
-	deviceRepository                  edgedevice.Repository
-	workloadRepository                edgeworkload.Repository
-	initialNamespace                  string
-	metrics                           metrics.Metrics
-	heartbeatHandler                  heartbeat.Handler
-	mtlsConfig                        *mtls.TLSConfig
-	configurationAssembler            configurationAssembler
-	logger                            *zap.SugaredLogger
+	backend          backendapi.EdgeDeviceBackend
+	initialNamespace string
+	metrics          metrics.Metrics
+	heartbeatHandler *RetryingDelegatingHandler
+	mtlsConfig       *mtls.TLSConfig
+	logger           *zap.SugaredLogger
 }
 
-type keyMapType = map[string]interface{}
-type secretMapType = map[string]keyMapType
-
-func NewYggdrasilHandler(deviceSignedRequestRepository edgedevicesignedrequest.Repository, deviceRepository edgedevice.Repository, workloadRepository edgeworkload.Repository,
-	groupRepository edgedeviceset.Repository, claimer *storage.Claimer, k8sClient k8sclient.K8sClient,
-	initialNamespace string, recorder record.EventRecorder, registryAuth images.RegistryAuthAPI, metrics metrics.Metrics,
-	allowLists devicemetrics.AllowListGenerator, configMaps configmaps.ConfigMap, mtlsConfig *mtls.TLSConfig,
-	logger *zap.SugaredLogger) *Handler {
+func NewYggdrasilHandler(initialNamespace string, metrics metrics.Metrics, mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger,
+	backend backendapi.EdgeDeviceBackend) *Handler {
 	return &Handler{
-		edgedeviceSignedRequestRepository: deviceSignedRequestRepository,
-		deviceRepository:                  deviceRepository,
-		workloadRepository:                workloadRepository,
-		initialNamespace:                  initialNamespace,
-		metrics:                           metrics,
-		heartbeatHandler:                  heartbeat.NewSynchronousHandler(deviceRepository, recorder, metrics, logger),
-		mtlsConfig:                        mtlsConfig,
-		logger:                            logger,
-		configurationAssembler: configurationAssembler{
-			allowLists:             allowLists,
-			claimer:                claimer,
-			client:                 k8sClient,
-			configMaps:             configMaps,
-			workloadRepository:     workloadRepository,
-			deviceSetRepository:    groupRepository,
-			recorder:               recorder,
-			registryAuthRepository: registryAuth},
+		initialNamespace: initialNamespace,
+		metrics:          metrics,
+		heartbeatHandler: NewRetryingDelegatingHandler(backend),
+		mtlsConfig:       mtlsConfig,
+		logger:           logger,
+		backend:          backend,
 	}
 }
 
@@ -149,7 +105,8 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 		return operations.NewGetControlMessageForDeviceForbidden()
 	}
 	logger := h.logger.With("DeviceID", deviceID)
-	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.getNamespace(ctx))
+
+	regStatus, err := h.backend.GetRegistrationStatus(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("edge device is not found")
@@ -159,17 +116,12 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 		return operations.NewGetControlMessageForDeviceInternalServerError()
 	}
 
-	if edgeDevice.DeletionTimestamp != nil && !utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
-		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilConnectionFinalizer) {
-			err = h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
-			if err != nil {
-				return operations.NewGetControlMessageForDeviceInternalServerError()
-			}
-			h.metrics.IncEdgeDeviceUnregistration()
-		}
+	if regStatus == backendapi.Unregistered {
+		h.metrics.IncEdgeDeviceUnregistration()
 		message := h.createDisconnectCommand()
 		return operations.NewGetControlMessageForDeviceOK().WithPayload(message)
 	}
+
 	return operations.NewGetControlMessageForDeviceOK()
 }
 
@@ -180,27 +132,14 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 		return operations.NewGetDataMessageForDeviceForbidden()
 	}
 	logger := h.logger.With("DeviceID", deviceID)
-	edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.getNamespace(ctx))
+
+	dc, err := h.backend.GetConfiguration(ctx, deviceID, h.getNamespace(ctx))
 	if err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("edge device is not found")
 			return operations.NewGetDataMessageForDeviceNotFound()
 		}
-		logger.Error(err, "failed to get edge device")
-		return operations.NewGetDataMessageForDeviceInternalServerError()
-	}
-
-	if edgeDevice.DeletionTimestamp != nil {
-		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
-			err := h.deviceRepository.RemoveFinalizer(ctx, edgeDevice, YggdrasilWorkloadFinalizer)
-			if err != nil {
-				return operations.NewGetDataMessageForDeviceInternalServerError()
-			}
-		}
-	}
-	dc, err := h.configurationAssembler.getDeviceConfiguration(ctx, edgeDevice, logger)
-	if err != nil {
-		logger.Error(err, "failed to assemble edge device configuration")
+		logger.Error(err, "failed to get edge device configuration")
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
 
@@ -246,11 +185,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		err = h.heartbeatHandler.Process(ctx, heartbeat.Notification{
-			DeviceID:  deviceID,
-			Namespace: h.getNamespace(ctx),
-			Heartbeat: &hb,
-		})
+		err = h.heartbeatHandler.Process(ctx, deviceID, h.getNamespace(ctx), &hb)
 		if err != nil {
 			if errors.IsNotFound(err) {
 				logger.Debug("Device not found")
@@ -259,6 +194,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			logger.Error(err, "Device not found")
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
+		h.metrics.RecordEdgeDevicePresence(h.getNamespace(ctx), deviceID)
 	case "enrolment":
 		contentJson, _ := json.Marshal(msg.Content)
 		enrolmentInfo := models.EnrolmentInfo{}
@@ -267,49 +203,19 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
 		logger.Debug("received enrolment info", "content", enrolmentInfo)
-		ns := h.initialNamespace
+		targetNamespace := h.initialNamespace
 		if enrolmentInfo.TargetNamespace != nil {
-			ns = *enrolmentInfo.TargetNamespace
+			targetNamespace = *enrolmentInfo.TargetNamespace
 		}
-
-		_, err = h.deviceRepository.Read(ctx, deviceID, ns)
-		if err == nil {
-			// Device is already created.
-			return operations.NewPostDataMessageForDeviceAlreadyReported()
-		}
-
-		edsr, err := h.edgedeviceSignedRequestRepository.Read(ctx, deviceID, h.initialNamespace)
-		if err == nil {
-			// Is already created, but not approved
-			if edsr.Spec.TargetNamespace != ns {
-				_, err = h.deviceRepository.Read(ctx, deviceID, edsr.Spec.TargetNamespace)
-				if err == nil {
-					// Device is already created.
-					return operations.NewPostDataMessageForDeviceAlreadyReported()
-				}
-			}
-			return operations.NewPostDataMessageForDeviceOK()
-		}
-
-		edsr = &v1alpha1.EdgeDeviceSignedRequest{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      deviceID,
-				Namespace: h.initialNamespace,
-			},
-			Spec: v1alpha1.EdgeDeviceSignedRequestSpec{
-				TargetNamespace: ns,
-				Approved:        false,
-				Features: &v1alpha1.Features{
-					Hardware: hardware.MapHardware(enrolmentInfo.Features.Hardware),
-				},
-			},
-		}
-
-		err = h.edgedeviceSignedRequestRepository.Create(ctx, edsr)
+		alreadyCreated, err := h.backend.Enrol(ctx, deviceID, targetNamespace, &enrolmentInfo)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
+
+		if alreadyCreated {
+			return operations.NewPostDataMessageForDeviceAlreadyReported()
+		}
+
 		return operations.NewPostDataMessageForDeviceOK()
 	case "registration":
 		// register new edge device
@@ -327,47 +233,19 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		content := models.RegistrationResponse{}
 		ns := h.getNamespace(ctx)
 
-		if ns == h.initialNamespace && !IsOwnDevice(ctx, deviceID) {
-			// check if it's a valid device, shouldn't match
-			esdr, err := h.edgedeviceSignedRequestRepository.Read(ctx, deviceID, h.initialNamespace)
-			if err != nil {
-				h.metrics.IncEdgeDeviceFailedRegistration()
-				return operations.NewPostDataMessageForDeviceNotFound()
-			}
-			if esdr.Spec.TargetNamespace != "" {
-				ns = esdr.Spec.TargetNamespace
-			}
-		}
-		dvc, err := h.deviceRepository.Read(ctx, deviceID, ns)
+		ns, err = h.backend.GetTargetNamespace(ctx, deviceID, ns, IsOwnDevice(ctx, deviceID))
 		if err != nil {
+			logger.Error(err, "can't get target namespace for a device")
 			if !errors.IsNotFound(err) {
 				h.metrics.IncEdgeDeviceFailedRegistration()
 				return operations.NewPostDataMessageForDeviceInternalServerError()
 			}
+
+			if _, ok := err.(*backendapi.NotApproved); !ok {
+				h.metrics.IncEdgeDeviceFailedRegistration()
+			}
 			return operations.NewPostDataMessageForDeviceNotFound()
 		}
-
-		if dvc == nil {
-			h.metrics.IncEdgeDeviceFailedRegistration()
-			return operations.NewPostDataMessageForDeviceInternalServerError()
-		}
-
-		isInit := false
-		if dvc.ObjectMeta.Labels[v1alpha1.EdgeDeviceSignedRequestLabelName] == v1alpha1.EdgeDeviceSignedRequestLabelValue {
-			isInit = true
-		}
-
-		// the first time that tries to register should be able to use register certificate.
-		if !isInit && !IsOwnDevice(ctx, deviceID) {
-			authKeyVal, _ := ctx.Value(AuthzKey).(mtls.RequestAuthVal)
-			logger.Debug("Device tries to re-register with an invalid certificate", "certcn", authKeyVal.CommonName)
-			// At this moment, the registration certificate it's no longer valid,
-			// because the CR is already created, and need to be a device
-			// certificate.
-			h.metrics.IncEdgeDeviceFailedRegistration()
-			return operations.NewPostDataMessageForDeviceForbidden()
-		}
-
 		cert, err := h.mtlsConfig.SignCSR(registrationInfo.CertificateRequest, deviceID, ns)
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
@@ -375,35 +253,12 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		content.Certificate = string(cert)
 
 		res.Content = content
-		deviceCopy := dvc.DeepCopy()
-		deviceCopy.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
-		for key, val := range hardware.MapLabels(registrationInfo.Hardware) {
-			deviceCopy.ObjectMeta.Labels[key] = val
-		}
-		if isInit {
-			delete(deviceCopy.Labels, v1alpha1.EdgeDeviceSignedRequestLabelName)
-		}
-
-		err = h.deviceRepository.Patch(ctx, dvc, deviceCopy)
-		if err != nil {
-			logger.Error(err, "cannot update edgedevice")
-			h.metrics.IncEdgeDeviceFailedRegistration()
-			return operations.NewPostDataMessageForDeviceBadRequest()
-		}
-
-		err = h.updateDeviceStatus(ctx, dvc, func(device *v1alpha1.EdgeDevice) {
-			device.Status.Hardware = hardware.MapHardware(registrationInfo.Hardware)
-		})
+		err = h.backend.Register(ctx, deviceID, ns, &registrationInfo)
 
 		if err != nil {
-			logger.Error(err, "cannot update EdgeDevice status")
+			logger.Error(err, "cannot finalize device registration")
 			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
-		}
-		if isInit {
-			logger.Info("EdgeDevice registered correctly for first time")
-		} else {
-			logger.Info("EdgeDevice renew registration correctly")
 		}
 
 		h.metrics.IncEdgeDeviceSuccessfulRegistration()
@@ -413,31 +268,6 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		return operations.NewPostDataMessageForDeviceBadRequest()
 	}
 	return operations.NewPostDataMessageForDeviceOK()
-}
-
-func (h *Handler) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeDevice, updateFunc func(d *v1alpha1.EdgeDevice)) error {
-	patch := client.MergeFrom(device.DeepCopy())
-	updateFunc(device)
-	err := h.deviceRepository.PatchStatus(ctx, device, &patch)
-	if err == nil {
-		return nil
-	}
-
-	// retry patching the edge device status
-	for i := 1; i < 4; i++ {
-		time.Sleep(time.Duration(i*50) * time.Millisecond)
-		device2, err := h.deviceRepository.Read(ctx, device.Name, device.Namespace)
-		if err != nil {
-			continue
-		}
-		patch = client.MergeFrom(device2.DeepCopy())
-		updateFunc(device2)
-		err = h.deviceRepository.PatchStatus(ctx, device2, &patch)
-		if err == nil {
-			return nil
-		}
-	}
-	return err
 }
 
 func (h *Handler) createDisconnectCommand() *models.Message {
