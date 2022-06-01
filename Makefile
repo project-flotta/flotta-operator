@@ -161,6 +161,9 @@ run: manifests pre-build ## Run a controller from your host.
 	$(Q) kubectl create ns $(FLOTTA_OPERATOR_NAMESPACE) 2> /dev/null || exit 0
 	OBC_AUTO_CREATE=false ENABLE_WEBHOOKS=false LOG_LEVEL=debug go run -mod=vendor ./main.go
 
+http-api-run: ## Run HTTP API in localhost
+	METRICS_ADDR=":8089" go run cmd/httpapi/main.go
+
 docker-build: ## Build docker image with the manager.
 	$(DOCKER) build -t ${IMG} .
 	$(DOCKER) build -f build/httpapi/Dockerfile -t ${HTTP_IMG} .
