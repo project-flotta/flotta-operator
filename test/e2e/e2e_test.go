@@ -58,6 +58,32 @@ var _ = Describe("e2e", func() {
 	})
 
 	Context("Sanity", func() {
+		It("Check services are running after installation", func() {
+			// when
+			err := device.Register()
+			Expect(err).To(BeNil())
+
+			// Check the node_exporter service is running:
+			stdout, err := device.Exec("systemctl is-active node_exporter.service")
+			Expect(err).To(BeNil())
+			Expect(stdout).To(Equal("active"))
+
+			// Check the podman.socket is running:
+			stdout, err = device.Exec("systemctl --machine flotta@.host is-active --user podman.socket")
+			Expect(err).To(BeNil())
+			Expect(stdout).To(Equal("active"))
+
+			// Check the nftables.service is running:
+			stdout, err = device.Exec("systemctl is-active nftables.service")
+			Expect(err).To(BeNil())
+			Expect(stdout).To(Equal("active"))
+
+			// Check lingering of the flotta user:
+			stdout, err = device.Exec("loginctl show-user flotta --property=Linger")
+			Expect(err).To(BeNil())
+			Expect(stdout).To(Equal("Linger=yes"))
+		})
+
 		It("Deploy valid edgeworkload to registered device", func() {
 			// given
 			err := device.Register("dnf install ansible -y")
@@ -158,9 +184,9 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(Equal("0"))
 
 			// no pods running
-			stdout, err = device.Exec("podman ps --noheading | wc -l")
+			stdout, err = device.Exec("machinectl shell -q flotta@.host /usr/bin/podman ps --noheading | wc -l")
 			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("0"))
+			Expect(stdout).To(Equal("1")) // machinectl print one empty new line
 
 			// EdgeWorkload CR still exists
 			depCr, err := workload.Get("nginx")
@@ -203,9 +229,9 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("systemctl is-failed pod-*.service")
+			stdout, err := device.Exec("systemctl --machine flotta@.host is-failed --user pod-nginx_pod.service")
 			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("failed"))
+			Expect(stdout).To(BeElementOf([]string{"activating", "deactivating", "inactive"}))
 		})
 
 		It("Re-create the edgeworkload", func() {
@@ -259,7 +285,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman exec nginx_pod-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 
@@ -293,7 +319,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman exec nginx_pod-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 

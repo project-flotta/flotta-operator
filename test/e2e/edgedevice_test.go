@@ -3,7 +3,6 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1"
 	"io/ioutil"
 	"os"
 	"path"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -41,7 +42,7 @@ var localTestCertificates = []string{
 const (
 	EdgeDeviceImage string = "quay.io/project-flotta/edgedevice:latest"
 	Namespace       string = "default" // the namespace where flotta operator is running
-	waitTimeout     int    = 120
+	waitTimeout     int    = 180
 	sleepInterval   int    = 2
 )
 
@@ -158,11 +159,11 @@ func (e *edgeDeviceDocker) GetLogs(extraCommands ...string) (map[string]string, 
 	var err error
 	logsMap := make(map[string]string)
 	commands := []string{
-		"journalctl -u podman",
+		"machinectl shell -q flotta@.host /usr/bin/journalctl --no-pager --user -u podman",
 		"journalctl -u yggdrasild",
 		"ps aux",
-		"podman ps -a",
-		"systemctl status podman",
+		"systemctl --machine flotta@.host status --full --no-pager --user podman",
+		"machinectl shell -q flotta@.host /usr/bin/podman ps -a",
 		"systemctl status yggdrasild",
 	}
 	commands = append(commands, extraCommands...)
@@ -245,6 +246,26 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 		return err
 	}
 
+	if name, exists := os.LookupEnv("TEST_RPM"); name != "" && exists {
+		fp, err := archive.Tar(name, archive.Gzip)
+		if err != nil {
+			return err
+		}
+		err = e.cli.CopyToContainer(ctx, e.name, "/var/tmp", fp, types.CopyToContainerOptions{AllowOverwriteDirWithFile: true})
+		if err != nil {
+			return err
+		}
+		if _, err = e.Exec(fmt.Sprintf("dnf remove -y flotta-agent-race && dnf install -y /var/tmp/%s", filepath.Base(name))); err != nil {
+			return fmt.Errorf("cannot install custom rpm '%s': %v", name, err)
+		}
+	} else {
+		// We need to reinstall the flotta-agent-rpm, because we start the services,
+		// which are not running in build time, so we need to re-run post install scripts:
+		if _, err = e.Exec("dnf reinstall -y flotta-agent-race"); err != nil {
+			return fmt.Errorf("cannot reinstall flotta-agent rpm '%s': %v", name, err)
+		}
+	}
+
 	for _, cmd := range cmds {
 		if _, err = e.Exec(cmd); err != nil {
 			return fmt.Errorf("cannot execute register command '%s': %v", cmd, err)
@@ -257,10 +278,6 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 
 	if err := e.CopyCerts(); err != nil {
 		return fmt.Errorf("cannot copy certificates to device: %v", err)
-	}
-
-	if _, err = e.Exec("systemctl start podman"); err != nil {
-		return err
 	}
 
 	if _, err = e.Exec("systemctl start yggdrasild.service"); err != nil {
