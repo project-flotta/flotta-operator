@@ -29,7 +29,7 @@ func NewGetControlMessageForDevice(ctx *middleware.Context, handler GetControlMe
 	return &GetControlMessageForDevice{Context: ctx, Handler: handler}
 }
 
-/*GetControlMessageForDevice swagger:route GET /control/{device_id}/in yggdrasil getControlMessageForDevice
+/* GetControlMessageForDevice swagger:route GET /control/{device_id}/in yggdrasil getControlMessageForDevice
 
 Get control message for device API
 
@@ -42,17 +42,15 @@ type GetControlMessageForDevice struct {
 func (o *GetControlMessageForDevice) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
-		r = rCtx
+		*r = *rCtx
 	}
 	var Params = NewGetControlMessageForDeviceParams()
-
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
 	res := o.Handler.Handle(Params) // actually handle the request
-
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
 }

@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -71,7 +73,6 @@ func (m *Workload) Validate(formats strfmt.Registry) error {
 }
 
 func (m *Workload) validateConfigmaps(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Configmaps) { // not required
 		return nil
 	}
@@ -79,6 +80,8 @@ func (m *Workload) validateConfigmaps(formats strfmt.Registry) error {
 	if err := m.Configmaps.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("configmaps")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("configmaps")
 		}
 		return err
 	}
@@ -87,7 +90,6 @@ func (m *Workload) validateConfigmaps(formats strfmt.Registry) error {
 }
 
 func (m *Workload) validateData(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Data) { // not required
 		return nil
 	}
@@ -96,6 +98,8 @@ func (m *Workload) validateData(formats strfmt.Registry) error {
 		if err := m.Data.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("data")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("data")
 			}
 			return err
 		}
@@ -105,7 +109,6 @@ func (m *Workload) validateData(formats strfmt.Registry) error {
 }
 
 func (m *Workload) validateImageRegistries(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.ImageRegistries) { // not required
 		return nil
 	}
@@ -114,6 +117,8 @@ func (m *Workload) validateImageRegistries(formats strfmt.Registry) error {
 		if err := m.ImageRegistries.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("imageRegistries")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("imageRegistries")
 			}
 			return err
 		}
@@ -123,7 +128,6 @@ func (m *Workload) validateImageRegistries(formats strfmt.Registry) error {
 }
 
 func (m *Workload) validateMetrics(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Metrics) { // not required
 		return nil
 	}
@@ -132,6 +136,96 @@ func (m *Workload) validateMetrics(formats strfmt.Registry) error {
 		if err := m.Metrics.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("metrics")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("metrics")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this workload based on the context it is used
+func (m *Workload) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateConfigmaps(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateData(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateImageRegistries(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateMetrics(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Workload) contextValidateConfigmaps(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Configmaps.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("configmaps")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("configmaps")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *Workload) contextValidateData(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Data != nil {
+		if err := m.Data.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("data")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("data")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Workload) contextValidateImageRegistries(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.ImageRegistries != nil {
+		if err := m.ImageRegistries.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("imageRegistries")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("imageRegistries")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Workload) contextValidateMetrics(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Metrics != nil {
+		if err := m.Metrics.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("metrics")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("metrics")
 			}
 			return err
 		}

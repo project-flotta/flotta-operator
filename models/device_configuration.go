@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -64,7 +66,6 @@ func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 }
 
 func (m *DeviceConfiguration) validateHeartbeat(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Heartbeat) { // not required
 		return nil
 	}
@@ -73,6 +74,8 @@ func (m *DeviceConfiguration) validateHeartbeat(formats strfmt.Registry) error {
 		if err := m.Heartbeat.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("heartbeat")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("heartbeat")
 			}
 			return err
 		}
@@ -82,7 +85,6 @@ func (m *DeviceConfiguration) validateHeartbeat(formats strfmt.Registry) error {
 }
 
 func (m *DeviceConfiguration) validateLogCollection(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.LogCollection) { // not required
 		return nil
 	}
@@ -94,6 +96,11 @@ func (m *DeviceConfiguration) validateLogCollection(formats strfmt.Registry) err
 		}
 		if val, ok := m.LogCollection[k]; ok {
 			if err := val.Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("log-collection" + "." + k)
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("log-collection" + "." + k)
+				}
 				return err
 			}
 		}
@@ -104,7 +111,6 @@ func (m *DeviceConfiguration) validateLogCollection(formats strfmt.Registry) err
 }
 
 func (m *DeviceConfiguration) validateMetrics(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Metrics) { // not required
 		return nil
 	}
@@ -113,6 +119,8 @@ func (m *DeviceConfiguration) validateMetrics(formats strfmt.Registry) error {
 		if err := m.Metrics.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("metrics")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("metrics")
 			}
 			return err
 		}
@@ -122,7 +130,6 @@ func (m *DeviceConfiguration) validateMetrics(formats strfmt.Registry) error {
 }
 
 func (m *DeviceConfiguration) validateOs(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Os) { // not required
 		return nil
 	}
@@ -131,6 +138,8 @@ func (m *DeviceConfiguration) validateOs(formats strfmt.Registry) error {
 		if err := m.Os.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("os")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("os")
 			}
 			return err
 		}
@@ -140,7 +149,6 @@ func (m *DeviceConfiguration) validateOs(formats strfmt.Registry) error {
 }
 
 func (m *DeviceConfiguration) validateStorage(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Storage) { // not required
 		return nil
 	}
@@ -149,6 +157,117 @@ func (m *DeviceConfiguration) validateStorage(formats strfmt.Registry) error {
 		if err := m.Storage.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("storage")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storage")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this device configuration based on the context it is used
+func (m *DeviceConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateHeartbeat(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateLogCollection(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateMetrics(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateOs(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateStorage(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *DeviceConfiguration) contextValidateHeartbeat(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Heartbeat != nil {
+		if err := m.Heartbeat.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("heartbeat")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("heartbeat")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) contextValidateLogCollection(ctx context.Context, formats strfmt.Registry) error {
+
+	for k := range m.LogCollection {
+
+		if val, ok := m.LogCollection[k]; ok {
+			if err := val.ContextValidate(ctx, formats); err != nil {
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) contextValidateMetrics(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Metrics != nil {
+		if err := m.Metrics.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("metrics")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("metrics")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) contextValidateOs(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Os != nil {
+		if err := m.Os.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("os")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("os")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) contextValidateStorage(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Storage != nil {
+		if err := m.Storage.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("storage")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("storage")
 			}
 			return err
 		}

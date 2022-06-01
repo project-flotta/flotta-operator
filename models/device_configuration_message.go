@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
@@ -67,7 +69,6 @@ func (m *DeviceConfigurationMessage) Validate(formats strfmt.Registry) error {
 }
 
 func (m *DeviceConfigurationMessage) validateConfiguration(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Configuration) { // not required
 		return nil
 	}
@@ -76,6 +77,8 @@ func (m *DeviceConfigurationMessage) validateConfiguration(formats strfmt.Regist
 		if err := m.Configuration.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("configuration")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("configuration")
 			}
 			return err
 		}
@@ -85,7 +88,6 @@ func (m *DeviceConfigurationMessage) validateConfiguration(formats strfmt.Regist
 }
 
 func (m *DeviceConfigurationMessage) validateSecrets(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Secrets) { // not required
 		return nil
 	}
@@ -93,6 +95,8 @@ func (m *DeviceConfigurationMessage) validateSecrets(formats strfmt.Registry) er
 	if err := m.Secrets.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("secrets")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("secrets")
 		}
 		return err
 	}
@@ -101,7 +105,6 @@ func (m *DeviceConfigurationMessage) validateSecrets(formats strfmt.Registry) er
 }
 
 func (m *DeviceConfigurationMessage) validateWorkloads(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Workloads) { // not required
 		return nil
 	}
@@ -109,6 +112,8 @@ func (m *DeviceConfigurationMessage) validateWorkloads(formats strfmt.Registry) 
 	if err := m.Workloads.Validate(formats); err != nil {
 		if ve, ok := err.(*errors.Validation); ok {
 			return ve.ValidateName("workloads")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("workloads")
 		}
 		return err
 	}
@@ -117,12 +122,77 @@ func (m *DeviceConfigurationMessage) validateWorkloads(formats strfmt.Registry) 
 }
 
 func (m *DeviceConfigurationMessage) validateWorkloadsMonitoringInterval(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.WorkloadsMonitoringInterval) { // not required
 		return nil
 	}
 
-	if err := validate.MinimumInt("workloads_monitoring_interval", "body", int64(m.WorkloadsMonitoringInterval), 0, true); err != nil {
+	if err := validate.MinimumInt("workloads_monitoring_interval", "body", m.WorkloadsMonitoringInterval, 0, true); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this device configuration message based on the context it is used
+func (m *DeviceConfigurationMessage) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateConfiguration(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSecrets(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateWorkloads(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *DeviceConfigurationMessage) contextValidateConfiguration(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Configuration != nil {
+		if err := m.Configuration.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("configuration")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("configuration")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfigurationMessage) contextValidateSecrets(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Secrets.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("secrets")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("secrets")
+		}
+		return err
+	}
+
+	return nil
+}
+
+func (m *DeviceConfigurationMessage) contextValidateWorkloads(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.Workloads.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("workloads")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("workloads")
+		}
 		return err
 	}
 

@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
@@ -30,6 +32,11 @@ type MetricsReceiverConfiguration struct {
 
 // Validate validates this metrics receiver configuration
 func (m *MetricsReceiverConfiguration) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this metrics receiver configuration based on context it is used
+func (m *MetricsReceiverConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 

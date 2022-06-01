@@ -29,7 +29,7 @@ func NewPostControlMessageForDevice(ctx *middleware.Context, handler PostControl
 	return &PostControlMessageForDevice{Context: ctx, Handler: handler}
 }
 
-/*PostControlMessageForDevice swagger:route POST /control/{device_id}/out yggdrasil postControlMessageForDevice
+/* PostControlMessageForDevice swagger:route POST /control/{device_id}/out yggdrasil postControlMessageForDevice
 
 Post control message for device API
 
@@ -42,17 +42,15 @@ type PostControlMessageForDevice struct {
 func (o *PostControlMessageForDevice) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	route, rCtx, _ := o.Context.RouteInfo(r)
 	if rCtx != nil {
-		r = rCtx
+		*r = *rCtx
 	}
 	var Params = NewPostControlMessageForDeviceParams()
-
 	if err := o.Context.BindValidRequest(r, route, &Params); err != nil { // bind params
 		o.Context.Respond(rw, r, route.Produces, route, err)
 		return
 	}
 
 	res := o.Handler.Handle(Params) // actually handle the request
-
 	o.Context.Respond(rw, r, route.Produces, route, res)
 
 }

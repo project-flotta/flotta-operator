@@ -6,6 +6,7 @@ package yggdrasil
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"io"
 	"net/http"
 
@@ -13,12 +14,14 @@ import (
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/runtime/middleware"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/validate"
 
 	"github.com/project-flotta/flotta-operator/models"
 )
 
 // NewPostControlMessageForDeviceParams creates a new PostControlMessageForDeviceParams object
-// no default values defined in spec.
+//
+// There are no default values defined in the spec.
 func NewPostControlMessageForDeviceParams() PostControlMessageForDeviceParams {
 
 	return PostControlMessageForDeviceParams{}
@@ -74,6 +77,11 @@ func (o *PostControlMessageForDeviceParams) BindRequest(r *http.Request, route *
 				res = append(res, err)
 			}
 
+			ctx := validate.WithOperationRequest(context.Background())
+			if err := body.ContextValidate(ctx, route.Formats); err != nil {
+				res = append(res, err)
+			}
+
 			if len(res) == 0 {
 				o.Message = &body
 			}
@@ -96,7 +104,6 @@ func (o *PostControlMessageForDeviceParams) bindDeviceID(rawData []string, hasKe
 
 	// Required: true
 	// Parameter is provided by construction from the route
-
 	o.DeviceID = raw
 
 	return nil

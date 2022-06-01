@@ -14,7 +14,8 @@ import (
 )
 
 // NewGetDataMessageForDeviceParams creates a new GetDataMessageForDeviceParams object
-// no default values defined in spec.
+//
+// There are no default values defined in the spec.
 func NewGetDataMessageForDeviceParams() GetDataMessageForDeviceParams {
 
 	return GetDataMessageForDeviceParams{}
@@ -49,7 +50,6 @@ func (o *GetDataMessageForDeviceParams) BindRequest(r *http.Request, route *midd
 	if err := o.bindDeviceID(rDeviceID, rhkDeviceID, route.Formats); err != nil {
 		res = append(res, err)
 	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -65,7 +65,6 @@ func (o *GetDataMessageForDeviceParams) bindDeviceID(rawData []string, hasKey bo
 
 	// Required: true
 	// Parameter is provided by construction from the route
-
 	o.DeviceID = raw
 
 	return nil

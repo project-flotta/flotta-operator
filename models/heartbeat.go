@@ -6,6 +6,7 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 
@@ -71,7 +72,6 @@ func (m *Heartbeat) Validate(formats strfmt.Registry) error {
 }
 
 func (m *Heartbeat) validateEvents(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Events) { // not required
 		return nil
 	}
@@ -85,6 +85,8 @@ func (m *Heartbeat) validateEvents(formats strfmt.Registry) error {
 			if err := m.Events[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("events" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("events" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -96,7 +98,6 @@ func (m *Heartbeat) validateEvents(formats strfmt.Registry) error {
 }
 
 func (m *Heartbeat) validateHardware(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Hardware) { // not required
 		return nil
 	}
@@ -105,6 +106,8 @@ func (m *Heartbeat) validateHardware(formats strfmt.Registry) error {
 		if err := m.Hardware.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("hardware")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("hardware")
 			}
 			return err
 		}
@@ -143,7 +146,6 @@ func (m *Heartbeat) validateStatusEnum(path, location string, value string) erro
 }
 
 func (m *Heartbeat) validateStatus(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Status) { // not required
 		return nil
 	}
@@ -157,7 +159,6 @@ func (m *Heartbeat) validateStatus(formats strfmt.Registry) error {
 }
 
 func (m *Heartbeat) validateUpgrade(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Upgrade) { // not required
 		return nil
 	}
@@ -166,6 +167,8 @@ func (m *Heartbeat) validateUpgrade(formats strfmt.Registry) error {
 		if err := m.Upgrade.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
 				return ve.ValidateName("upgrade")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("upgrade")
 			}
 			return err
 		}
@@ -175,7 +178,6 @@ func (m *Heartbeat) validateUpgrade(formats strfmt.Registry) error {
 }
 
 func (m *Heartbeat) validateWorkloads(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Workloads) { // not required
 		return nil
 	}
@@ -189,6 +191,106 @@ func (m *Heartbeat) validateWorkloads(formats strfmt.Registry) error {
 			if err := m.Workloads[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
 					return ve.ValidateName("workloads" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("workloads" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this heartbeat based on the context it is used
+func (m *Heartbeat) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateEvents(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateHardware(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateUpgrade(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateWorkloads(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Heartbeat) contextValidateEvents(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Events); i++ {
+
+		if m.Events[i] != nil {
+			if err := m.Events[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("events" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("events" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *Heartbeat) contextValidateHardware(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Hardware != nil {
+		if err := m.Hardware.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("hardware")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("hardware")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Heartbeat) contextValidateUpgrade(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Upgrade != nil {
+		if err := m.Upgrade.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("upgrade")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("upgrade")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Heartbeat) contextValidateWorkloads(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Workloads); i++ {
+
+		if m.Workloads[i] != nil {
+			if err := m.Workloads[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("workloads" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("workloads" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

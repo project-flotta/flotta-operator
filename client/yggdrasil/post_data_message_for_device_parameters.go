@@ -18,61 +18,76 @@ import (
 	"github.com/project-flotta/flotta-operator/models"
 )
 
-// NewPostDataMessageForDeviceParams creates a new PostDataMessageForDeviceParams object
-// with the default values initialized.
+// NewPostDataMessageForDeviceParams creates a new PostDataMessageForDeviceParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewPostDataMessageForDeviceParams() *PostDataMessageForDeviceParams {
-	var ()
 	return &PostDataMessageForDeviceParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewPostDataMessageForDeviceParamsWithTimeout creates a new PostDataMessageForDeviceParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewPostDataMessageForDeviceParamsWithTimeout(timeout time.Duration) *PostDataMessageForDeviceParams {
-	var ()
 	return &PostDataMessageForDeviceParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewPostDataMessageForDeviceParamsWithContext creates a new PostDataMessageForDeviceParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewPostDataMessageForDeviceParamsWithContext(ctx context.Context) *PostDataMessageForDeviceParams {
-	var ()
 	return &PostDataMessageForDeviceParams{
-
 		Context: ctx,
 	}
 }
 
 // NewPostDataMessageForDeviceParamsWithHTTPClient creates a new PostDataMessageForDeviceParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewPostDataMessageForDeviceParamsWithHTTPClient(client *http.Client) *PostDataMessageForDeviceParams {
-	var ()
 	return &PostDataMessageForDeviceParams{
 		HTTPClient: client,
 	}
 }
 
-/*PostDataMessageForDeviceParams contains all the parameters to send to the API endpoint
-for the post data message for device operation typically these are written to a http.Request
+/* PostDataMessageForDeviceParams contains all the parameters to send to the API endpoint
+   for the post data message for device operation.
+
+   Typically these are written to a http.Request.
 */
 type PostDataMessageForDeviceParams struct {
 
-	/*DeviceID
-	  Device ID
+	/* DeviceID.
 
+	   Device ID
 	*/
 	DeviceID string
-	/*Message*/
+
+	// Message.
 	Message *models.Message
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the post data message for device params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PostDataMessageForDeviceParams) WithDefaults() *PostDataMessageForDeviceParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the post data message for device params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *PostDataMessageForDeviceParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the post data message for device params
@@ -142,7 +157,6 @@ func (o *PostDataMessageForDeviceParams) WriteToRequest(r runtime.ClientRequest,
 	if err := r.SetPathParam("device_id", o.DeviceID); err != nil {
 		return err
 	}
-
 	if o.Message != nil {
 		if err := r.SetBodyParam(o.Message); err != nil {
 			return err

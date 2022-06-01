@@ -16,59 +16,73 @@ import (
 	"github.com/go-openapi/strfmt"
 )
 
-// NewGetControlMessageForDeviceParams creates a new GetControlMessageForDeviceParams object
-// with the default values initialized.
+// NewGetControlMessageForDeviceParams creates a new GetControlMessageForDeviceParams object,
+// with the default timeout for this client.
+//
+// Default values are not hydrated, since defaults are normally applied by the API server side.
+//
+// To enforce default values in parameter, use SetDefaults or WithDefaults.
 func NewGetControlMessageForDeviceParams() *GetControlMessageForDeviceParams {
-	var ()
 	return &GetControlMessageForDeviceParams{
-
 		timeout: cr.DefaultTimeout,
 	}
 }
 
 // NewGetControlMessageForDeviceParamsWithTimeout creates a new GetControlMessageForDeviceParams object
-// with the default values initialized, and the ability to set a timeout on a request
+// with the ability to set a timeout on a request.
 func NewGetControlMessageForDeviceParamsWithTimeout(timeout time.Duration) *GetControlMessageForDeviceParams {
-	var ()
 	return &GetControlMessageForDeviceParams{
-
 		timeout: timeout,
 	}
 }
 
 // NewGetControlMessageForDeviceParamsWithContext creates a new GetControlMessageForDeviceParams object
-// with the default values initialized, and the ability to set a context for a request
+// with the ability to set a context for a request.
 func NewGetControlMessageForDeviceParamsWithContext(ctx context.Context) *GetControlMessageForDeviceParams {
-	var ()
 	return &GetControlMessageForDeviceParams{
-
 		Context: ctx,
 	}
 }
 
 // NewGetControlMessageForDeviceParamsWithHTTPClient creates a new GetControlMessageForDeviceParams object
-// with the default values initialized, and the ability to set a custom HTTPClient for a request
+// with the ability to set a custom HTTPClient for a request.
 func NewGetControlMessageForDeviceParamsWithHTTPClient(client *http.Client) *GetControlMessageForDeviceParams {
-	var ()
 	return &GetControlMessageForDeviceParams{
 		HTTPClient: client,
 	}
 }
 
-/*GetControlMessageForDeviceParams contains all the parameters to send to the API endpoint
-for the get control message for device operation typically these are written to a http.Request
+/* GetControlMessageForDeviceParams contains all the parameters to send to the API endpoint
+   for the get control message for device operation.
+
+   Typically these are written to a http.Request.
 */
 type GetControlMessageForDeviceParams struct {
 
-	/*DeviceID
-	  Device ID
+	/* DeviceID.
 
+	   Device ID
 	*/
 	DeviceID string
 
 	timeout    time.Duration
 	Context    context.Context
 	HTTPClient *http.Client
+}
+
+// WithDefaults hydrates default values in the get control message for device params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *GetControlMessageForDeviceParams) WithDefaults() *GetControlMessageForDeviceParams {
+	o.SetDefaults()
+	return o
+}
+
+// SetDefaults hydrates default values in the get control message for device params (not the query body).
+//
+// All values with no default are reset to their zero value.
+func (o *GetControlMessageForDeviceParams) SetDefaults() {
+	// no default values defined for this parameter
 }
 
 // WithTimeout adds the timeout to the get control message for device params

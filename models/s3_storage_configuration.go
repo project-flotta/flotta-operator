@@ -6,6 +6,8 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
+
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 )
@@ -39,6 +41,11 @@ type S3StorageConfiguration struct {
 
 // Validate validates this s3 storage configuration
 func (m *S3StorageConfiguration) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this s3 storage configuration based on context it is used
+func (m *S3StorageConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
