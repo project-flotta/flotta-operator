@@ -1,4 +1,3 @@
----
 swagger: '2.0'
 info:
   description: Flotta backend API for remote data storage
@@ -25,46 +24,15 @@ definitions:
       message:
         type: string
       device-configuration:
-        $ref: 'swagger.yaml#/definitions/device-configuration'
-  device-registration-request:
+        $ref: 'swagger.yaml/#definitions/device-configuration'
+  device-registration-status-response:
     type: object
     properties:
       status:
-        type: boolean
-  device-registration-response:
-    type: object
-    properties:
-      target-namespace:
         type: string
       message:
         type: string
 paths:
-  '/namespaces/{namespace}/devices/{device-id}/deregister':
-    get:
-      description: Confirms if a device can be deregistered
-      operationId: IsDeviceDeregistrable
-      parameters:
-        - in: path
-          name: namespace
-          description: Namespace where the device resides
-          type: string
-          required: true
-        - in: path
-          name: device-id
-          description: Device ID
-          type: string
-          required: true
-      responses:
-        '200':
-          description: Success
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-        default:
-          description: Error
-          schema:
-            $ref: '#/definitions/error'
   '/namespaces/{namespace}/devices/{device-id}/configuration':
     get:
       description: Returns the device configuration
@@ -93,7 +61,7 @@ paths:
           description: Error
           schema:
             $ref: '#/definitions/device-configuration-response'
-  '/namespaces/{namespace}/devices/{device-id}/enrol':
+  '/namespaces/{namespace}/devices/{device-id}/enrolment':
     post:
       description: Initiates the process of enrolling the device
       operationId: EnrolDevice
@@ -112,10 +80,12 @@ paths:
           name: enrolment-info
           required: true
           schema:
-            $ref: 'swagger.yaml#/definitions/enrolment-info'
+            $ref: 'swagger.yaml/#definitions/enrolment-info'
       responses:
         '200':
-          description: Success
+          description: OK
+        '201':
+          description: Created
         '401':
           description: Unauthorized
         '403':
@@ -124,10 +94,12 @@ paths:
           description: Error
           schema:
             $ref: '#/definitions/error'
-  '/namespaces/{namespace}/devices/{device-id}/register':
-    post:
-      description: Initializes the process of registering the device
-      operationId: InitializeDeviceRegistration
+  '/namespaces/{namespace}/devices/{device-id}/registration':
+    get:
+      description: >-
+        Returns a device registration status, which can be registered,
+        unregistered or unknown.
+      operationId: GetRegistrationStatus
       parameters:
         - in: path
           name: namespace
@@ -139,29 +111,20 @@ paths:
           description: Device ID
           type: string
           required: true
-        - in: body
-          name: registration-information
-          required: true
-          schema:
-            $ref: '#/definitions/device-registration-request'
       responses:
         '200':
-          description: Success
+          description: OK
           schema:
-            $ref: '#/definitions/device-registration-response'
+            $ref: '#/definitions/device-registration-status-response'
         '401':
           description: Unauthorized
         '403':
           description: Forbidden
-        default:
+        '500':
           description: Error
-          schema:
-            $ref: '#/definitions/device-registration-response'
     put:
-      description: >-
-        Updates the status of the device as registered and its hardware
-        configuration
-      operationId: FinalizeDeviceRegistration
+      description: Registers the device by providing its hardware configuration
+      operationId: RegisterDevice
       parameters:
         - in: path
           name: namespace
@@ -174,13 +137,13 @@ paths:
           type: string
           required: true
         - in: body
-          name: certificate-status
+          name: registration-info
           required: true
           schema:
             $ref: 'swagger.yaml/#definitions/registration-info'
       responses:
         '200':
-          description: Success
+          description: Updated
         '401':
           description: Unauthorized
         '403':
@@ -189,3 +152,32 @@ paths:
           description: Error
           schema:
             $ref: '#/definitions/error'
+  '/namespaces/{namespace}/devices/{device-id}/heartbeat':
+    put:
+      description: Updates the heartbeat information of the device.
+      operationId: UpdateHeartBeat
+      parameters:
+        - in: path
+          name: namespace
+          description: Namespace where the device resides
+          type: string
+          required: true
+        - in: path
+          name: device-id
+          description: Device ID
+          type: string
+          required: true
+        - in: body
+          name: heartbeat
+          required: true
+          schema:
+            $ref: 'swagger.yaml/#definitions/heartbeat'
+      responses:
+        '200':
+          description: Success
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Error
