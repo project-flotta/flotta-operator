@@ -235,7 +235,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		ns, err = h.backend.GetTargetNamespace(ctx, deviceID, ns, IsOwnDevice(ctx, deviceID))
 		if err != nil {
-			logger.Error(err, "can't initialize edge device registration")
+			logger.Error(err, "can't get target namespace for a device")
 			if !errors.IsNotFound(err) {
 				h.metrics.IncEdgeDeviceFailedRegistration()
 				return operations.NewPostDataMessageForDeviceInternalServerError()
