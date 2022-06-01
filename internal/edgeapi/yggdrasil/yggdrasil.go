@@ -253,7 +253,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		content.Certificate = string(cert)
 
 		res.Content = content
-		err = h.backend.FinalizeRegistration(ctx, deviceID, ns, &registrationInfo)
+		err = h.backend.Register(ctx, deviceID, ns, &registrationInfo)
 
 		if err != nil {
 			logger.Error(err, "cannot finalize device registration")

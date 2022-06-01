@@ -35,11 +35,11 @@ type EdgeDeviceBackend interface {
 	// GetTargetNamespace returns the namespace the device should belong to. This method may return NotApproved error.
 	GetTargetNamespace(ctx context.Context, name, namespace string, matchesCertificate bool) (string, error)
 
-	// FinalizeRegistration is called during device registration request handling, after mTLS certificate has
+	// Register is called during device registration request handling, after mTLS certificate has
 	// been correctly issued.
-	// The responsibility of the method is to potentially record information that the device is finally registered and
+	// The responsibility of the method is to  record information that the device is finally registered and
 	// what hardware configuration it has.
-	FinalizeRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error
+	Register(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error
 
 	// UpdateStatus records current state of the device sent in a heartbeat message
 	// (i.e. workload status, events reported by the device, OS upgrade status).

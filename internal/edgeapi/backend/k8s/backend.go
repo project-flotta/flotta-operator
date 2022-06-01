@@ -166,7 +166,7 @@ func (b *backend) GetTargetNamespace(ctx context.Context, name, identityNamespac
 	return namespace, nil
 }
 
-func (b *backend) FinalizeRegistration(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error {
+func (b *backend) Register(ctx context.Context, name, namespace string, registrationInfo *models.RegistrationInfo) error {
 	logger := b.logger.With("DeviceID", name, "Namespace", namespace)
 	dvc, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	deviceCopy := dvc.DeepCopy()
