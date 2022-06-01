@@ -44,9 +44,6 @@ import (
 const (
 	testNamespace = "test-ns"
 
-	YggdrasilWorkloadFinalizer   = "yggdrasil-workload-finalizer"
-	YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
-
 	MessageTypeData string              = "data"
 	AuthzKey        mtls.RequestAuthKey = "APIAuthzkey" // the same as yggdrasil one, but important if got changed
 )
@@ -202,7 +199,7 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(res).To(Equal(operations.NewGetControlMessageForDeviceInternalServerError()))
 		})
 
-		It("Delete without finalizer return ok", func() {
+		It("EdgeDevice removal causes disconnect command to be sent", func() {
 			// given
 			device := getDevice("foo")
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
@@ -224,36 +221,14 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(data.Payload.Type).To(Equal("command"))
 		})
 
-		It("Has the finalizer, will not be deleted", func() {
+		It("Finalizers don't prevent disconnect command from being sent", func() {
 			// given
 			device := getDevice("foo")
 			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
-			device.Finalizers = []string{YggdrasilWorkloadFinalizer, YggdrasilConnectionFinalizer}
+			device.Finalizers = []string{"yggdrasil-connection-finalizer"}
 			repositoryMock.EXPECT().
 				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
-				Times(1)
-
-			// when
-			res := handler.GetControlMessageForDevice(deviceCtx, params)
-			// then
-			Expect(res).To(Equal(operations.NewGetControlMessageForDeviceOK()))
-		})
-
-		It("With other finalizers, will be deleted", func() {
-			// given
-			device := getDevice("foo")
-			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
-			device.Finalizers = []string{YggdrasilConnectionFinalizer}
-
-			repositoryMock.EXPECT().
-				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
-
-			repositoryMock.EXPECT().
-				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
-				Return(nil).
 				Times(1)
 
 			metricsMock.EXPECT().
@@ -266,29 +241,6 @@ var _ = Describe("Yggdrasil", func() {
 
 			// then
 			Expect(data.Payload.Type).To(Equal("command"))
-		})
-
-		It("Remove finalizer failed", func() {
-			// given
-			device := getDevice("foo")
-			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
-			device.Finalizers = []string{YggdrasilConnectionFinalizer}
-
-			repositoryMock.EXPECT().
-				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
-
-			repositoryMock.EXPECT().
-				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilConnectionFinalizer).
-				Return(fmt.Errorf("Failed")).
-				Times(1)
-
-			// when
-			res := handler.GetControlMessageForDevice(deviceCtx, params)
-
-			// then
-			Expect(res).To(Equal(operations.NewGetControlMessageForDeviceInternalServerError()))
 		})
 
 	})
@@ -393,55 +345,6 @@ var _ = Describe("Yggdrasil", func() {
 			repositoryMock.EXPECT().
 				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
 				Return(device, nil).
-				Times(1)
-
-			// when
-			res := handler.GetDataMessageForDevice(deviceCtx, params)
-
-			// then
-			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
-			config := validateAndGetDeviceConfig(res)
-			Expect(config.DeviceID).To(Equal("foo"))
-			Expect(config.Workloads).To(HaveLen(0))
-		})
-
-		It("Delete finalizer failed", func() {
-			// given
-			device := getDevice("foo")
-			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
-			device.Finalizers = []string{YggdrasilWorkloadFinalizer}
-
-			repositoryMock.EXPECT().
-				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
-
-			repositoryMock.EXPECT().
-				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilWorkloadFinalizer).
-				Return(fmt.Errorf("Failed to remove")).
-				Times(1)
-
-			// when
-			res := handler.GetDataMessageForDevice(deviceCtx, params)
-
-			// then
-			Expect(res).To(Equal(operations.NewGetDataMessageForDeviceInternalServerError()))
-		})
-
-		It("Delete with finalizer works as expected", func() {
-			// given
-			device := getDevice("foo")
-			device.DeletionTimestamp = &v1.Time{Time: time.Now()}
-			device.Finalizers = []string{YggdrasilWorkloadFinalizer}
-
-			repositoryMock.EXPECT().
-				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
-
-			repositoryMock.EXPECT().
-				RemoveEdgeDeviceFinalizer(gomock.Any(), device, YggdrasilWorkloadFinalizer).
-				Return(nil).
 				Times(1)
 
 			// when
@@ -2856,9 +2759,7 @@ var _ = Describe("Yggdrasil", func() {
 							Expect(dvcCopy.ObjectMeta.Labels).To(HaveLen(1))
 							Expect(dvcCopy.ObjectMeta.Labels).To(Equal(map[string]string{
 								"device.hostname": "testfoo"}))
-							Expect(dvcCopy.ObjectMeta.Finalizers).To(HaveLen(2))
-							Expect(dvcCopy.ObjectMeta.Finalizers).To(ContainElement(YggdrasilWorkloadFinalizer))
-							Expect(dvcCopy.ObjectMeta.Finalizers).To(ContainElement(YggdrasilConnectionFinalizer))
+							Expect(dvcCopy.ObjectMeta.Finalizers).To(HaveLen(0))
 						}).
 						Return(nil).
 						Times(1)
