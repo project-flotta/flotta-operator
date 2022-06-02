@@ -13,7 +13,7 @@ import (
 	rtclient "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/project-flotta/flotta-operator/backend/client/operations"
+	"github.com/project-flotta/flotta-operator/backend/client/backend"
 )
 
 const (
@@ -58,12 +58,12 @@ func New(c Config) *FlottaBackendAPI {
 
 	cli := new(FlottaBackendAPI)
 	cli.Transport = transport
-	cli.Operations = operations.New(transport, strfmt.Default, c.AuthInfo)
+	cli.Backend = backend.New(transport, strfmt.Default, c.AuthInfo)
 	return cli
 }
 
 // FlottaBackendAPI is a client for flotta backend API
 type FlottaBackendAPI struct {
-	Operations *operations.Client
-	Transport  runtime.ClientTransport
+	Backend   *backend.Client
+	Transport runtime.ClientTransport
 }

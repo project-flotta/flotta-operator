@@ -17,10 +17,10 @@ import (
 // swagger:model device-registration-status-response
 type DeviceRegistrationStatusResponse struct {
 
-	// message
+	// Exposes the error message generated at the backend when there is an error (example HTTP code 500).
 	Message string `json:"message,omitempty"`
 
-	// status
+	// Returns the device registration status, which can be one of the following {registered, unregistered, unknown}.
 	Status string `json:"status,omitempty"`
 }
 

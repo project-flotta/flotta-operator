@@ -15,35 +15,36 @@ import (
 	"github.com/go-openapi/runtime/security"
 
 	"github.com/project-flotta/flotta-operator/backend/restapi/operations"
+	"github.com/project-flotta/flotta-operator/backend/restapi/operations/backend"
 )
 
 type contextKey string
 
 const AuthKey contextKey = "Auth"
 
-//go:generate mockery -name OperationsAPI -inpkg
+//go:generate mockery -name BackendAPI -inpkg
 
-/* OperationsAPI  */
-type OperationsAPI interface {
+/* BackendAPI  */
+type BackendAPI interface {
 	/* EnrolDevice Initiates the process of enrolling the device */
-	EnrolDevice(ctx context.Context, params operations.EnrolDeviceParams) middleware.Responder
+	EnrolDevice(ctx context.Context, params backend.EnrolDeviceParams) middleware.Responder
 
 	/* GetDeviceConfiguration Returns the device configuration */
-	GetDeviceConfiguration(ctx context.Context, params operations.GetDeviceConfigurationParams) middleware.Responder
+	GetDeviceConfiguration(ctx context.Context, params backend.GetDeviceConfigurationParams) middleware.Responder
 
 	/* GetRegistrationStatus Returns a device registration status, which can be registered, unregistered or unknown. */
-	GetRegistrationStatus(ctx context.Context, params operations.GetRegistrationStatusParams) middleware.Responder
+	GetRegistrationStatus(ctx context.Context, params backend.GetRegistrationStatusParams) middleware.Responder
 
 	/* RegisterDevice Registers the device by providing its hardware configuration */
-	RegisterDevice(ctx context.Context, params operations.RegisterDeviceParams) middleware.Responder
+	RegisterDevice(ctx context.Context, params backend.RegisterDeviceParams) middleware.Responder
 
 	/* UpdateHeartBeat Updates the heartbeat information of the device. */
-	UpdateHeartBeat(ctx context.Context, params operations.UpdateHeartBeatParams) middleware.Responder
+	UpdateHeartBeat(ctx context.Context, params backend.UpdateHeartBeatParams) middleware.Responder
 }
 
 // Config is configuration for Handler
 type Config struct {
-	OperationsAPI
+	BackendAPI
 	Logger func(string, ...interface{})
 	// InnerMiddleware is for the handler executors. These do not apply to the swagger.json document.
 	// The middleware executes after routing but before authentication, binding and validation
@@ -92,25 +93,25 @@ func HandlerAPI(c Config) (http.Handler, *operations.FlottaBackendAPIAPI, error)
 
 	api.JSONConsumer = runtime.JSONConsumer()
 	api.JSONProducer = runtime.JSONProducer()
-	api.EnrolDeviceHandler = operations.EnrolDeviceHandlerFunc(func(params operations.EnrolDeviceParams) middleware.Responder {
+	api.BackendEnrolDeviceHandler = backend.EnrolDeviceHandlerFunc(func(params backend.EnrolDeviceParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
-		return c.OperationsAPI.EnrolDevice(ctx, params)
+		return c.BackendAPI.EnrolDevice(ctx, params)
 	})
-	api.GetDeviceConfigurationHandler = operations.GetDeviceConfigurationHandlerFunc(func(params operations.GetDeviceConfigurationParams) middleware.Responder {
+	api.BackendGetDeviceConfigurationHandler = backend.GetDeviceConfigurationHandlerFunc(func(params backend.GetDeviceConfigurationParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
-		return c.OperationsAPI.GetDeviceConfiguration(ctx, params)
+		return c.BackendAPI.GetDeviceConfiguration(ctx, params)
 	})
-	api.GetRegistrationStatusHandler = operations.GetRegistrationStatusHandlerFunc(func(params operations.GetRegistrationStatusParams) middleware.Responder {
+	api.BackendGetRegistrationStatusHandler = backend.GetRegistrationStatusHandlerFunc(func(params backend.GetRegistrationStatusParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
-		return c.OperationsAPI.GetRegistrationStatus(ctx, params)
+		return c.BackendAPI.GetRegistrationStatus(ctx, params)
 	})
-	api.RegisterDeviceHandler = operations.RegisterDeviceHandlerFunc(func(params operations.RegisterDeviceParams) middleware.Responder {
+	api.BackendRegisterDeviceHandler = backend.RegisterDeviceHandlerFunc(func(params backend.RegisterDeviceParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
-		return c.OperationsAPI.RegisterDevice(ctx, params)
+		return c.BackendAPI.RegisterDevice(ctx, params)
 	})
-	api.UpdateHeartBeatHandler = operations.UpdateHeartBeatHandlerFunc(func(params operations.UpdateHeartBeatParams) middleware.Responder {
+	api.BackendUpdateHeartBeatHandler = backend.UpdateHeartBeatHandlerFunc(func(params backend.UpdateHeartBeatParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
-		return c.OperationsAPI.UpdateHeartBeat(ctx, params)
+		return c.BackendAPI.UpdateHeartBeat(ctx, params)
 	})
 	api.ServerShutdown = func() {}
 	return api.Serve(c.InnerMiddleware), api, nil

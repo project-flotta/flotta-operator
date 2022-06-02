@@ -18,6 +18,8 @@ import (
 	"github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+
+	"github.com/project-flotta/flotta-operator/backend/restapi/operations/backend"
 )
 
 // NewFlottaBackendAPIAPI creates a new FlottaBackendAPI instance
@@ -42,20 +44,20 @@ func NewFlottaBackendAPIAPI(spec *loads.Document) *FlottaBackendAPIAPI {
 
 		JSONProducer: runtime.JSONProducer(),
 
-		EnrolDeviceHandler: EnrolDeviceHandlerFunc(func(params EnrolDeviceParams) middleware.Responder {
-			return middleware.NotImplemented("operation EnrolDevice has not yet been implemented")
+		BackendEnrolDeviceHandler: backend.EnrolDeviceHandlerFunc(func(params backend.EnrolDeviceParams) middleware.Responder {
+			return middleware.NotImplemented("operation backend.EnrolDevice has not yet been implemented")
 		}),
-		GetDeviceConfigurationHandler: GetDeviceConfigurationHandlerFunc(func(params GetDeviceConfigurationParams) middleware.Responder {
-			return middleware.NotImplemented("operation GetDeviceConfiguration has not yet been implemented")
+		BackendGetDeviceConfigurationHandler: backend.GetDeviceConfigurationHandlerFunc(func(params backend.GetDeviceConfigurationParams) middleware.Responder {
+			return middleware.NotImplemented("operation backend.GetDeviceConfiguration has not yet been implemented")
 		}),
-		GetRegistrationStatusHandler: GetRegistrationStatusHandlerFunc(func(params GetRegistrationStatusParams) middleware.Responder {
-			return middleware.NotImplemented("operation GetRegistrationStatus has not yet been implemented")
+		BackendGetRegistrationStatusHandler: backend.GetRegistrationStatusHandlerFunc(func(params backend.GetRegistrationStatusParams) middleware.Responder {
+			return middleware.NotImplemented("operation backend.GetRegistrationStatus has not yet been implemented")
 		}),
-		RegisterDeviceHandler: RegisterDeviceHandlerFunc(func(params RegisterDeviceParams) middleware.Responder {
-			return middleware.NotImplemented("operation RegisterDevice has not yet been implemented")
+		BackendRegisterDeviceHandler: backend.RegisterDeviceHandlerFunc(func(params backend.RegisterDeviceParams) middleware.Responder {
+			return middleware.NotImplemented("operation backend.RegisterDevice has not yet been implemented")
 		}),
-		UpdateHeartBeatHandler: UpdateHeartBeatHandlerFunc(func(params UpdateHeartBeatParams) middleware.Responder {
-			return middleware.NotImplemented("operation UpdateHeartBeat has not yet been implemented")
+		BackendUpdateHeartBeatHandler: backend.UpdateHeartBeatHandlerFunc(func(params backend.UpdateHeartBeatParams) middleware.Responder {
+			return middleware.NotImplemented("operation backend.UpdateHeartBeat has not yet been implemented")
 		}),
 	}
 }
@@ -93,16 +95,16 @@ type FlottaBackendAPIAPI struct {
 	//   - application/json
 	JSONProducer runtime.Producer
 
-	// EnrolDeviceHandler sets the operation handler for the enrol device operation
-	EnrolDeviceHandler EnrolDeviceHandler
-	// GetDeviceConfigurationHandler sets the operation handler for the get device configuration operation
-	GetDeviceConfigurationHandler GetDeviceConfigurationHandler
-	// GetRegistrationStatusHandler sets the operation handler for the get registration status operation
-	GetRegistrationStatusHandler GetRegistrationStatusHandler
-	// RegisterDeviceHandler sets the operation handler for the register device operation
-	RegisterDeviceHandler RegisterDeviceHandler
-	// UpdateHeartBeatHandler sets the operation handler for the update heart beat operation
-	UpdateHeartBeatHandler UpdateHeartBeatHandler
+	// BackendEnrolDeviceHandler sets the operation handler for the enrol device operation
+	BackendEnrolDeviceHandler backend.EnrolDeviceHandler
+	// BackendGetDeviceConfigurationHandler sets the operation handler for the get device configuration operation
+	BackendGetDeviceConfigurationHandler backend.GetDeviceConfigurationHandler
+	// BackendGetRegistrationStatusHandler sets the operation handler for the get registration status operation
+	BackendGetRegistrationStatusHandler backend.GetRegistrationStatusHandler
+	// BackendRegisterDeviceHandler sets the operation handler for the register device operation
+	BackendRegisterDeviceHandler backend.RegisterDeviceHandler
+	// BackendUpdateHeartBeatHandler sets the operation handler for the update heart beat operation
+	BackendUpdateHeartBeatHandler backend.UpdateHeartBeatHandler
 
 	// ServeError is called when an error is received, there is a default handler
 	// but you can set your own with this
@@ -180,20 +182,20 @@ func (o *FlottaBackendAPIAPI) Validate() error {
 		unregistered = append(unregistered, "JSONProducer")
 	}
 
-	if o.EnrolDeviceHandler == nil {
-		unregistered = append(unregistered, "EnrolDeviceHandler")
+	if o.BackendEnrolDeviceHandler == nil {
+		unregistered = append(unregistered, "backend.EnrolDeviceHandler")
 	}
-	if o.GetDeviceConfigurationHandler == nil {
-		unregistered = append(unregistered, "GetDeviceConfigurationHandler")
+	if o.BackendGetDeviceConfigurationHandler == nil {
+		unregistered = append(unregistered, "backend.GetDeviceConfigurationHandler")
 	}
-	if o.GetRegistrationStatusHandler == nil {
-		unregistered = append(unregistered, "GetRegistrationStatusHandler")
+	if o.BackendGetRegistrationStatusHandler == nil {
+		unregistered = append(unregistered, "backend.GetRegistrationStatusHandler")
 	}
-	if o.RegisterDeviceHandler == nil {
-		unregistered = append(unregistered, "RegisterDeviceHandler")
+	if o.BackendRegisterDeviceHandler == nil {
+		unregistered = append(unregistered, "backend.RegisterDeviceHandler")
 	}
-	if o.UpdateHeartBeatHandler == nil {
-		unregistered = append(unregistered, "UpdateHeartBeatHandler")
+	if o.BackendUpdateHeartBeatHandler == nil {
+		unregistered = append(unregistered, "backend.UpdateHeartBeatHandler")
 	}
 
 	if len(unregistered) > 0 {
@@ -286,23 +288,23 @@ func (o *FlottaBackendAPIAPI) initHandlerCache() {
 	if o.handlers["POST"] == nil {
 		o.handlers["POST"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/namespaces/{namespace}/devices/{device-id}/enrolment"] = NewEnrolDevice(o.context, o.EnrolDeviceHandler)
+	o.handlers["POST"]["/namespaces/{namespace}/devices/{device-id}/enrolment"] = backend.NewEnrolDevice(o.context, o.BackendEnrolDeviceHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/configuration"] = NewGetDeviceConfiguration(o.context, o.GetDeviceConfigurationHandler)
+	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/configuration"] = backend.NewGetDeviceConfiguration(o.context, o.BackendGetDeviceConfigurationHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/registration"] = NewGetRegistrationStatus(o.context, o.GetRegistrationStatusHandler)
+	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/registration"] = backend.NewGetRegistrationStatus(o.context, o.BackendGetRegistrationStatusHandler)
 	if o.handlers["PUT"] == nil {
 		o.handlers["PUT"] = make(map[string]http.Handler)
 	}
-	o.handlers["PUT"]["/namespaces/{namespace}/devices/{device-id}/registration"] = NewRegisterDevice(o.context, o.RegisterDeviceHandler)
+	o.handlers["PUT"]["/namespaces/{namespace}/devices/{device-id}/registration"] = backend.NewRegisterDevice(o.context, o.BackendRegisterDeviceHandler)
 	if o.handlers["PUT"] == nil {
 		o.handlers["PUT"] = make(map[string]http.Handler)
 	}
-	o.handlers["PUT"]["/namespaces/{namespace}/devices/{device-id}/heartbeat"] = NewUpdateHeartBeat(o.context, o.UpdateHeartBeatHandler)
+	o.handlers["PUT"]["/namespaces/{namespace}/devices/{device-id}/heartbeat"] = backend.NewUpdateHeartBeat(o.context, o.BackendUpdateHeartBeatHandler)
 }
 
 // Serve creates a http handler to serve the API over HTTP

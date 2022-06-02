@@ -19,7 +19,7 @@ import (
 // swagger:model error
 type Error struct {
 
-	// message
+	// Exposes the error message generated at the backend when there is an error (example HTTP code 500).
 	// Required: true
 	Message *string `json:"message"`
 }

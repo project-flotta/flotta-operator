@@ -6,14 +6,14 @@ info:
   version: 1.0.0
   contact:
     name: Flotta flotta
-    url: https://github.com/project-flotta
+    url: 'https://github.com/project-flotta'
     email: flotta@redhat.com
   license:
     name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 tags:
   - name: backend
-    description: Edge device backend storage management    
+    description: Edge device backend storage management
 schemes:
   - https
 consumes:
@@ -29,13 +29,17 @@ definitions:
     properties:
       message:
         type: string
-        description: Returns the error message generated at the backend.
+        description: >-
+          Exposes the error message generated at the backend when there is an
+          error (example HTTP code 500).
   device-configuration-response:
     type: object
     properties:
       message:
         type: string
-        description: Returns the error message generated at the backend when there is an error at the backend (example HTTP code 500)
+        description: >-
+          Exposes the error message generated at the backend when there is an
+          error (example HTTP code 500).
       device-configuration:
         $ref: 'swagger.yaml#/definitions/device-configuration'
   device-registration-status-response:
@@ -43,15 +47,21 @@ definitions:
     properties:
       status:
         type: string
+        description: >-
+          Returns the device registration status, which can be one of the
+          following {registered, unregistered, unknown}.
       message:
         type: string
+        description: >-
+          Exposes the error message generated at the backend when there is an
+          error (example HTTP code 500).
 paths:
   '/namespaces/{namespace}/devices/{device-id}/configuration':
     get:
       description: Returns the device configuration
       operationId: GetDeviceConfiguration
       tags:
-        - backend      
+        - backend
       parameters:
         - in: path
           name: namespace
@@ -81,7 +91,7 @@ paths:
       description: Initiates the process of enrolling the device
       operationId: EnrolDevice
       tags:
-        - backend        
+        - backend
       parameters:
         - in: path
           name: namespace
@@ -118,7 +128,7 @@ paths:
         unregistered or unknown.
       operationId: GetRegistrationStatus
       tags:
-        - backend        
+        - backend
       parameters:
         - in: path
           name: namespace
@@ -139,13 +149,15 @@ paths:
           description: Unauthorized
         '403':
           description: Forbidden
-        '500':
+        default:
           description: Error
+          schema:
+            $ref: '#/definitions/device-registration-status-response'
     put:
       description: Registers the device by providing its hardware configuration
       operationId: RegisterDevice
       tags:
-        - backend        
+        - backend
       parameters:
         - in: path
           name: namespace
@@ -178,7 +190,7 @@ paths:
       description: Updates the heartbeat information of the device.
       operationId: UpdateHeartBeat
       tags:
-        - backend        
+        - backend
       parameters:
         - in: path
           name: namespace
@@ -202,5 +214,7 @@ paths:
           description: Unauthorized
         '403':
           description: Forbidden
-        '500':
+        default:
           description: Error
+          schema:
+            $ref: '#/definitions/error'
