@@ -4,6 +4,16 @@ info:
   description: Flotta backend API for remote data storage
   title: Flotta backend API
   version: 1.0.0
+  contact:
+    name: Flotta flotta
+    url: https://github.com/project-flotta
+    email: flotta@redhat.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+tags:
+  - name: backend
+    description: Edge device backend storage management    
 schemes:
   - https
 consumes:
@@ -19,13 +29,15 @@ definitions:
     properties:
       message:
         type: string
+        description: Returns the error message generated at the backend.
   device-configuration-response:
     type: object
     properties:
       message:
         type: string
+        description: Returns the error message generated at the backend when there is an error at the backend (example HTTP code 500)
       device-configuration:
-        $ref: 'swagger.yaml/#definitions/device-configuration'
+        $ref: 'swagger.yaml#/definitions/device-configuration'
   device-registration-status-response:
     type: object
     properties:
@@ -38,6 +50,8 @@ paths:
     get:
       description: Returns the device configuration
       operationId: GetDeviceConfiguration
+      tags:
+        - backend      
       parameters:
         - in: path
           name: namespace
@@ -66,6 +80,8 @@ paths:
     post:
       description: Initiates the process of enrolling the device
       operationId: EnrolDevice
+      tags:
+        - backend        
       parameters:
         - in: path
           name: namespace
@@ -81,7 +97,7 @@ paths:
           name: enrolment-info
           required: true
           schema:
-            $ref: 'swagger.yaml/#definitions/enrolment-info'
+            $ref: 'swagger.yaml#/definitions/enrolment-info'
       responses:
         '200':
           description: OK
@@ -101,6 +117,8 @@ paths:
         Returns a device registration status, which can be registered,
         unregistered or unknown.
       operationId: GetRegistrationStatus
+      tags:
+        - backend        
       parameters:
         - in: path
           name: namespace
@@ -126,6 +144,8 @@ paths:
     put:
       description: Registers the device by providing its hardware configuration
       operationId: RegisterDevice
+      tags:
+        - backend        
       parameters:
         - in: path
           name: namespace
@@ -141,7 +161,7 @@ paths:
           name: registration-info
           required: true
           schema:
-            $ref: 'swagger.yaml/#definitions/registration-info'
+            $ref: 'swagger.yaml#/definitions/registration-info'
       responses:
         '200':
           description: Updated
@@ -157,6 +177,8 @@ paths:
     put:
       description: Updates the heartbeat information of the device.
       operationId: UpdateHeartBeat
+      tags:
+        - backend        
       parameters:
         - in: path
           name: namespace
@@ -172,7 +194,7 @@ paths:
           name: heartbeat
           required: true
           schema:
-            $ref: 'swagger.yaml/#definitions/heartbeat'
+            $ref: 'swagger.yaml#/definitions/heartbeat'
       responses:
         '200':
           description: Success
