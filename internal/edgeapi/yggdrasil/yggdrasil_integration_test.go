@@ -178,11 +178,16 @@ var _ = Describe("Yggdrasil", func() {
 				Return(nil, errorNotFound).
 				Times(1)
 
+			metricsMock.EXPECT().
+				IncEdgeDeviceUnregistration().
+				Times(1)
+
 			// when
 			res := handler.GetControlMessageForDevice(deviceCtx, params)
+			data := res.(*api.GetControlMessageForDeviceOK)
 
 			// then
-			Expect(res).To(Equal(operations.NewGetControlMessageForDeviceNotFound()))
+			Expect(data.Payload.Type).To(Equal("command"))
 		})
 
 		It("Cannot retrieve device", func() {

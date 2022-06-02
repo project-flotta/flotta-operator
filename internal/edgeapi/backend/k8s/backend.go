@@ -42,6 +42,9 @@ func NewBackend(repository RepositoryFacade, assembler *ConfigurationAssembler,
 func (b *backend) GetRegistrationStatus(ctx context.Context, name, namespace string) (backendapi.RegistrationStatus, error) {
 	edgeDevice, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return backendapi.Unregistered, nil
+		}
 		return backendapi.Unknown, err
 	}
 
