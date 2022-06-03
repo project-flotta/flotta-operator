@@ -41,7 +41,7 @@ definitions:
           Exposes the error message generated at the backend when there is an
           error (example HTTP code 500).
       device-configuration:
-        $ref: 'swagger.yaml#/definitions/device-configuration'
+        $ref: 'swagger.yaml#/definitions/device-configuration-message'
   device-registration-status-response:
     type: object
     properties:

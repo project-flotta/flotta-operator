@@ -19,7 +19,7 @@ import (
 type DeviceConfigurationResponse struct {
 
 	// device configuration
-	DeviceConfiguration *DeviceConfiguration `json:"device-configuration,omitempty"`
+	DeviceConfiguration *DeviceConfigurationMessage `json:"device-configuration,omitempty"`
 
 	// Exposes the error message generated at the backend when there is an error (example HTTP code 500).
 	Message string `json:"message,omitempty"`

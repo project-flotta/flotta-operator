@@ -291,7 +291,7 @@ func init() {
       "type": "object",
       "properties": {
         "device-configuration": {
-          "$ref": "swagger.yaml#/definitions/device-configuration"
+          "$ref": "swagger.yaml#/definitions/device-configuration-message"
         },
         "message": {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
@@ -635,6 +635,32 @@ func init() {
         }
       }
     },
+    "configmapList": {
+      "description": "List of configmaps used by the workload",
+      "type": "array",
+      "items": {
+        "description": "ConfigMap kubernetes yaml specification",
+        "type": "string"
+      }
+    },
+    "containerMetrics": {
+      "description": "Metrics container configuration",
+      "type": "object",
+      "properties": {
+        "disabled": {
+          "type": "boolean"
+        },
+        "path": {
+          "description": "Path to use when retrieving metrics",
+          "type": "string"
+        },
+        "port": {
+          "description": "Port to use when retrieve the metrics",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "cpu": {
       "type": "object",
       "properties": {
@@ -658,11 +684,43 @@ func init() {
         }
       }
     },
+    "dataConfiguration": {
+      "description": "Configuration for data transfer",
+      "type": "object",
+      "properties": {
+        "egress": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dataPath"
+          }
+        },
+        "ingress": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/dataPath"
+          }
+        }
+      }
+    },
+    "dataPath": {
+      "description": "Device-to-control plane paths mapping",
+      "type": "object",
+      "properties": {
+        "source": {
+          "description": "Path in the workload container",
+          "type": "string"
+        },
+        "target": {
+          "description": "Path in the control plane storage",
+          "type": "string"
+        }
+      }
+    },
     "device-configuration-response": {
       "type": "object",
       "properties": {
         "device-configuration": {
-          "$ref": "#/definitions/deviceConfiguration"
+          "$ref": "#/definitions/deviceConfigurationMessage"
         },
         "message": {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
@@ -703,6 +761,36 @@ func init() {
         },
         "storage": {
           "$ref": "#/definitions/storageConfiguration"
+        }
+      }
+    },
+    "deviceConfigurationMessage": {
+      "type": "object",
+      "properties": {
+        "ansible_playbook": {
+          "type": "string"
+        },
+        "configuration": {
+          "$ref": "#/definitions/deviceConfiguration"
+        },
+        "device_id": {
+          "description": "Device identifier",
+          "type": "string"
+        },
+        "secrets": {
+          "$ref": "#/definitions/secretList"
+        },
+        "version": {
+          "type": "string"
+        },
+        "workloads": {
+          "$ref": "#/definitions/workloadList"
+        },
+        "workloads_monitoring_interval": {
+          "description": "Defines the interval in seconds between the attempts to evaluate the workloads status and restart those that failed",
+          "type": "integer",
+          "minimum": 0,
+          "exclusiveMinimum": true
         }
       }
     },
@@ -940,6 +1028,16 @@ func init() {
         }
       }
     },
+    "imageRegistries": {
+      "description": "Image registries configuration",
+      "type": "object",
+      "properties": {
+        "authFile": {
+          "description": "Image registries authfile created by executing ` + "`" + `podman login` + "`" + ` or ` + "`" + `docker login` + "`" + ` (i.e. ~/.docker/config.json). https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/#log-in-to-docker-hub describes how the file can be created and how it is structured.",
+          "type": "string"
+        }
+      }
+    },
     "interface": {
       "type": "object",
       "properties": {
@@ -1031,6 +1129,34 @@ func init() {
         },
         "usable_bytes": {
           "type": "integer"
+        }
+      }
+    },
+    "metrics": {
+      "description": "Metrics endpoint configuration",
+      "type": "object",
+      "properties": {
+        "allow_list": {
+          "$ref": "#/definitions/metricsAllowList"
+        },
+        "containers": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/containerMetrics"
+          }
+        },
+        "interval": {
+          "description": "Interval(in seconds) to scrape metrics endpoint.",
+          "type": "integer",
+          "format": "int32"
+        },
+        "path": {
+          "description": "Path to use when retrieving metrics",
+          "type": "string"
+        },
+        "port": {
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1151,6 +1277,26 @@ func init() {
         }
       }
     },
+    "secret": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "description": "The secret's data section in JSON format",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the secret",
+          "type": "string"
+        }
+      }
+    },
+    "secretList": {
+      "description": "List of secrets used by the workloads",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/secret"
+      }
+    },
     "storageConfiguration": {
       "type": "object",
       "properties": {
@@ -1212,6 +1358,52 @@ func init() {
         "last_upgrade_time": {
           "type": "string"
         }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "properties": {
+        "configmaps": {
+          "$ref": "#/definitions/configmapList"
+        },
+        "data": {
+          "$ref": "#/definitions/dataConfiguration"
+        },
+        "imageRegistries": {
+          "$ref": "#/definitions/imageRegistries"
+        },
+        "labels": {
+          "description": "Workload labels",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "log_collection": {
+          "description": "Log collection target for this workload",
+          "type": "string"
+        },
+        "metrics": {
+          "$ref": "#/definitions/metrics"
+        },
+        "name": {
+          "description": "Name of the workload",
+          "type": "string"
+        },
+        "namespace": {
+          "description": "Namespace of the workload",
+          "type": "string"
+        },
+        "specification": {
+          "type": "string"
+        }
+      }
+    },
+    "workloadList": {
+      "description": "List of workloads deployed to the device",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/workload"
       }
     },
     "workloadStatus": {
