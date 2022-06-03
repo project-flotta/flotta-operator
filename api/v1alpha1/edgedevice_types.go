@@ -194,6 +194,9 @@ type Hardware struct {
 
 	// system vendor
 	SystemVendor *SystemVendor `json:"systemVendor,omitempty"`
+
+	// host devices
+	HostDevices []*HostDevice `json:"hostDevices,omitempty"`
 }
 
 type Boot struct {
@@ -376,6 +379,27 @@ type SystemVendor struct {
 
 	// Whether the machine appears to be a virtual machine or not
 	Virtual bool `json:"virtual,omitempty"`
+}
+
+type HostDevice struct {
+
+	// path
+	Path string `json:"path,omitempty"`
+
+	// Device type
+	DeviceType string `json:"deviceType,omitempty"`
+
+	// owner id
+	UID int32 `json:"owner,omitempty"`
+
+	// group id
+	GID int32 `json:"group,omitempty"`
+
+	// Major
+	Major int32 `json:"major,omitempty"`
+
+	// Minor
+	Minor int32 `json:"minor,omitempty"`
 }
 
 //+kubebuilder:object:root=true

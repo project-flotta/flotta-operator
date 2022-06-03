@@ -31,6 +31,9 @@ type HardwareInfo struct {
 	// gpus
 	Gpus []*Gpu `json:"gpus"`
 
+	// host devices
+	HostDevices []*HostDevice `json:"host_devices"`
+
 	// hostname
 	Hostname string `json:"hostname,omitempty"`
 
@@ -61,6 +64,10 @@ func (m *HardwareInfo) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateGpus(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateHostDevices(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -162,6 +169,31 @@ func (m *HardwareInfo) validateGpus(formats strfmt.Registry) error {
 					return ve.ValidateName("gpus" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
 					return ce.ValidateName("gpus" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *HardwareInfo) validateHostDevices(formats strfmt.Registry) error {
+
+	if swag.IsZero(m.HostDevices) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.HostDevices); i++ {
+		if swag.IsZero(m.HostDevices[i]) { // not required
+			continue
+		}
+
+		if m.HostDevices[i] != nil {
+			if err := m.HostDevices[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("host_devices" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

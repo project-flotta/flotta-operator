@@ -297,6 +297,34 @@ spec:
                           type: string
                       type: object
                     type: array
+                  hostDevices:
+                    description: host devices
+                    items:
+                      properties:
+                        deviceType:
+                          description: Device type
+                          type: string
+                        group:
+                          description: group id
+                          format: int32
+                          type: integer
+                        major:
+                          description: Major
+                          format: int32
+                          type: integer
+                        minor:
+                          description: Minor
+                          format: int32
+                          type: integer
+                        owner:
+                          description: owner id
+                          format: int32
+                          type: integer
+                        path:
+                          description: path
+                          type: string
+                      type: object
+                    type: array
                   hostname:
                     description: hostname
                     type: string

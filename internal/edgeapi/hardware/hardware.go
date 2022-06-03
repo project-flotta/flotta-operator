@@ -46,12 +46,26 @@ func MapHardware(hardware *models.HardwareInfo) *v1alpha1.Hardware {
 		interfaces = append(interfaces, (*v1alpha1.Interface)(i))
 	}
 
+	hostDevices := []*v1alpha1.HostDevice{}
+	for _, h := range hardware.HostDevices {
+		hostDevice := v1alpha1.HostDevice{
+			Path:       h.Path,
+			DeviceType: h.DeviceType,
+			UID:        int32(h.UID),
+			GID:        int32(h.Gid),
+			Major:      int32(h.Major),
+			Minor:      int32(h.Minor),
+		}
+		hostDevices = append(hostDevices, &hostDevice)
+	}
+
 	hw := v1alpha1.Hardware{
 		Hostname: hardware.Hostname,
 
-		Gpus:       gpus,
-		Disks:      disks,
-		Interfaces: interfaces,
+		Gpus:        gpus,
+		Disks:       disks,
+		Interfaces:  interfaces,
+		HostDevices: hostDevices,
 	}
 	if hardware.Boot != nil {
 		hw.Boot = &v1alpha1.Boot{

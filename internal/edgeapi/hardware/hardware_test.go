@@ -125,6 +125,24 @@ var (
 			SerialNumber: testSerialNumber,
 			Virtual:      testVirtual,
 		},
+		HostDevices: []*models.HostDevice{
+			{
+				Path:       "/dev/loop1",
+				DeviceType: "block",
+				UID:        1,
+				Gid:        1,
+				Major:      1,
+				Minor:      1,
+			},
+			{
+				Path:       "/dev/loop2",
+				DeviceType: "char",
+				UID:        2,
+				Gid:        2,
+				Major:      2,
+				Minor:      2,
+			},
+		},
 	}
 )
 
@@ -207,6 +225,15 @@ var _ = Describe("Hardware", func() {
 			for i, inter := range input.Interfaces {
 				interV1 := result.Interfaces[i]
 				Expect(interV1).To(Equal((*v1alpha1.Interface)(inter)))
+			}
+			for i, dev := range input.HostDevices {
+				devV1 := result.HostDevices[i]
+				Expect(devV1.Path).To(Equal(dev.Path))
+				Expect(devV1.DeviceType).To(Equal(dev.DeviceType))
+				Expect(devV1.GID).To(Equal(int32(dev.Gid)))
+				Expect(devV1.UID).To(Equal(int32(dev.UID)))
+				Expect(devV1.Major).To(Equal(int32(dev.Major)))
+				Expect(devV1.Minor).To(Equal(int32(dev.Minor)))
 			}
 			Expect(result.Memory.PhysicalBytes).To(Equal(testPhysicalBytes))
 			Expect(result.Memory.UsableBytes).To(Equal(testUsableBytes))
