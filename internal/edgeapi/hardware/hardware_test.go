@@ -230,10 +230,10 @@ var _ = Describe("Hardware", func() {
 				devV1 := result.HostDevices[i]
 				Expect(devV1.Path).To(Equal(dev.Path))
 				Expect(devV1.DeviceType).To(Equal(dev.DeviceType))
-				Expect(devV1.GID).To(Equal(int32(dev.Gid)))
-				Expect(devV1.UID).To(Equal(int32(dev.UID)))
-				Expect(devV1.Major).To(Equal(int32(dev.Major)))
-				Expect(devV1.Minor).To(Equal(int32(dev.Minor)))
+				Expect(devV1.GID).To(Equal(uint32(dev.Gid)))
+				Expect(devV1.UID).To(Equal(uint32(dev.UID)))
+				Expect(devV1.Major).To(Equal(uint32(dev.Major)))
+				Expect(devV1.Minor).To(Equal(uint32(dev.Minor)))
 			}
 			Expect(result.Memory.PhysicalBytes).To(Equal(testPhysicalBytes))
 			Expect(result.Memory.UsableBytes).To(Equal(testUsableBytes))

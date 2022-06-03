@@ -191,22 +191,23 @@ spec:
                           type: object
                         type: array
                       hostDevices:
-                        description: host devices
+                        description: list of devices present on the edgedevice
                         items:
                           properties:
                             deviceType:
-                              description: Device type
+                              description: Device type block or character
                               type: string
                             group:
                               description: group id
                               format: int32
                               type: integer
                             major:
-                              description: Major
+                              description: Major ID identifying the class of the device
                               format: int32
                               type: integer
                             minor:
-                              description: Minor
+                              description: Minor ID identifying the instance of the
+                                device in the class
                               format: int32
                               type: integer
                             owner:
@@ -214,7 +215,7 @@ spec:
                               format: int32
                               type: integer
                             path:
-                              description: path
+                              description: path of the device (i.e. /dev/loop)
                               type: string
                           type: object
                         type: array

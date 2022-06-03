@@ -51,10 +51,10 @@ func MapHardware(hardware *models.HardwareInfo) *v1alpha1.Hardware {
 		hostDevice := v1alpha1.HostDevice{
 			Path:       h.Path,
 			DeviceType: h.DeviceType,
-			UID:        int32(h.UID),
-			GID:        int32(h.Gid),
-			Major:      int32(h.Major),
-			Minor:      int32(h.Minor),
+			UID:        uint32(h.UID),
+			GID:        uint32(h.Gid),
+			Major:      uint32(h.Major),
+			Minor:      uint32(h.Minor),
 		}
 		hostDevices = append(hostDevices, &hostDevice)
 	}
