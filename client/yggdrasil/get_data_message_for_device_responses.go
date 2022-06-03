@@ -53,7 +53,6 @@ func (o *GetDataMessageForDeviceReader) ReadResponse(response runtime.ClientResp
 			return nil, err
 		}
 		return nil, result
-
 	default:
 		return nil, runtime.NewAPIError("response status code does not match any response statuses defined for this endpoint in the swagger spec", response, response.Code())
 	}
@@ -64,7 +63,7 @@ func NewGetDataMessageForDeviceOK() *GetDataMessageForDeviceOK {
 	return &GetDataMessageForDeviceOK{}
 }
 
-/*GetDataMessageForDeviceOK handles this case with default header values.
+/* GetDataMessageForDeviceOK describes a response with status code 200, with default header values.
 
 Success
 */
@@ -75,7 +74,6 @@ type GetDataMessageForDeviceOK struct {
 func (o *GetDataMessageForDeviceOK) Error() string {
 	return fmt.Sprintf("[GET /data/{device_id}/in][%d] getDataMessageForDeviceOK  %+v", 200, o.Payload)
 }
-
 func (o *GetDataMessageForDeviceOK) GetPayload() *models.Message {
 	return o.Payload
 }
@@ -97,7 +95,7 @@ func NewGetDataMessageForDeviceUnauthorized() *GetDataMessageForDeviceUnauthoriz
 	return &GetDataMessageForDeviceUnauthorized{}
 }
 
-/*GetDataMessageForDeviceUnauthorized handles this case with default header values.
+/* GetDataMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -118,7 +116,7 @@ func NewGetDataMessageForDeviceForbidden() *GetDataMessageForDeviceForbidden {
 	return &GetDataMessageForDeviceForbidden{}
 }
 
-/*GetDataMessageForDeviceForbidden handles this case with default header values.
+/* GetDataMessageForDeviceForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -139,7 +137,7 @@ func NewGetDataMessageForDeviceNotFound() *GetDataMessageForDeviceNotFound {
 	return &GetDataMessageForDeviceNotFound{}
 }
 
-/*GetDataMessageForDeviceNotFound handles this case with default header values.
+/* GetDataMessageForDeviceNotFound describes a response with status code 404, with default header values.
 
 Error
 */
@@ -160,7 +158,7 @@ func NewGetDataMessageForDeviceInternalServerError() *GetDataMessageForDeviceInt
 	return &GetDataMessageForDeviceInternalServerError{}
 }
 
-/*GetDataMessageForDeviceInternalServerError handles this case with default header values.
+/* GetDataMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
 
 Error
 */

@@ -274,7 +274,7 @@ k8s-client-gen: client-gen lister-gen informer-gen ## Generate typed client for 
 	rm -rf gen-tmp
 
 validate-swagger: ## Validate swagger
-	$(DOCKER) run --rm -v $(PWD)/.spectral.yaml:/tmp/.spectral.yaml:z -v $(PWD)/swagger.yaml:/tmp/swagger.yaml:z stoplight/spectral lint --ruleset "/tmp/.spectral.yaml" /tmp/swagger.yaml
+	$(DOCKER) run --rm -v $(PWD)/.spectral.yaml:/tmp/.spectral.yaml:z -v $(PWD)/swagger.yaml:/tmp/swagger.yaml:z -v $(PWD)/swagger-backend.yaml:/tmp/swagger-backend.yaml:z stoplight/spectral lint --ruleset "/tmp/.spectral.yaml" /tmp/swagger.yaml /tmp/swagger-backend.yaml
 
 generate-agent-install-ostree:
 	sed -e "/<CA_PEM>/r /tmp/ca.pem" -e '/<CA_PEM>/d' \

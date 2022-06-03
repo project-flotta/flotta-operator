@@ -6,6 +6,7 @@ package models
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/go-openapi/errors"
@@ -71,7 +72,6 @@ func (m *HardwareProfileConfiguration) validateScopeEnum(path, location string, 
 }
 
 func (m *HardwareProfileConfiguration) validateScope(formats strfmt.Registry) error {
-
 	if swag.IsZero(m.Scope) { // not required
 		return nil
 	}
@@ -81,6 +81,11 @@ func (m *HardwareProfileConfiguration) validateScope(formats strfmt.Registry) er
 		return err
 	}
 
+	return nil
+}
+
+// ContextValidate validates this hardware profile configuration based on context it is used
+func (m *HardwareProfileConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
