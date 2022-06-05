@@ -14,7 +14,7 @@ import (
 
 // HostDevice host device
 //
-// swagger:model host_device
+// swagger:model hostDevice
 type HostDevice struct {
 
 	// Type of the device
