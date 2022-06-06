@@ -11,6 +11,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
+	"github.com/project-flotta/flotta-operator/internal/common/labels"
 )
 
 //go:generate mockgen -package=edgedevice -destination=mock_edgedevice.go . Repository
@@ -41,7 +42,7 @@ func (r *CRRepository) Read(ctx context.Context, name string, namespace string) 
 	return &edgeDevice, err
 }
 
-func (r *CRRepository) ReadForPlaybbokExecution(ctx context.Context, playbookExecutionName string, namespace string) (*v1alpha1.EdgeDevice, error) {
+func (r *CRRepository) ReadForPlaybookExecution(ctx context.Context, playbookExecutionName string, namespace string) (*v1alpha1.EdgeDevice, error) {
 	options := client.ListOptions{
 		Namespace: namespace,
 	}
@@ -105,7 +106,7 @@ func (r CRRepository) ListForWorkload(ctx context.Context, name string, namespac
 
 func (r CRRepository) ListForEdgeConfig(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error) {
 	var edl v1alpha1.EdgeDeviceList
-	err := r.client.List(ctx, &edl, client.MatchingFields{indexer.DeviceByConfigIndexKey: name}, client.InNamespace(namespace))
+	err := r.client.List(ctx, &edl, client.MatchingLabels{labels.ConfigLabelPrefix + indexer.DeviceByConfigIndexKey: name}, client.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}
