@@ -15,7 +15,7 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/project-flotta/flotta-operator/backend/models"
+	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 
 // NewEnrolDeviceParams creates a new EnrolDeviceParams object,
@@ -68,7 +68,7 @@ type EnrolDeviceParams struct {
 	DeviceID string
 
 	// EnrolmentInfo.
-	EnrolmentInfo *models.EnrolmentInfo
+	EnrolmentInfo commonmodel.EnrolmentInfo
 
 	/* Namespace.
 
@@ -141,13 +141,13 @@ func (o *EnrolDeviceParams) SetDeviceID(deviceID string) {
 }
 
 // WithEnrolmentInfo adds the enrolmentInfo to the enrol device params
-func (o *EnrolDeviceParams) WithEnrolmentInfo(enrolmentInfo *models.EnrolmentInfo) *EnrolDeviceParams {
+func (o *EnrolDeviceParams) WithEnrolmentInfo(enrolmentInfo commonmodel.EnrolmentInfo) *EnrolDeviceParams {
 	o.SetEnrolmentInfo(enrolmentInfo)
 	return o
 }
 
 // SetEnrolmentInfo adds the enrolmentInfo to the enrol device params
-func (o *EnrolDeviceParams) SetEnrolmentInfo(enrolmentInfo *models.EnrolmentInfo) {
+func (o *EnrolDeviceParams) SetEnrolmentInfo(enrolmentInfo commonmodel.EnrolmentInfo) {
 	o.EnrolmentInfo = enrolmentInfo
 }
 
@@ -174,10 +174,8 @@ func (o *EnrolDeviceParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 	if err := r.SetPathParam("device-id", o.DeviceID); err != nil {
 		return err
 	}
-	if o.EnrolmentInfo != nil {
-		if err := r.SetBodyParam(o.EnrolmentInfo); err != nil {
-			return err
-		}
+	if err := r.SetBodyParam(o.EnrolmentInfo); err != nil {
+		return err
 	}
 
 	// path param namespace

@@ -15,7 +15,7 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/project-flotta/flotta-operator/backend/models"
+	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 
 // NewUpdateHeartBeatParams creates a new UpdateHeartBeatParams object,
@@ -68,7 +68,7 @@ type UpdateHeartBeatParams struct {
 	DeviceID string
 
 	// Heartbeat.
-	Heartbeat *models.Heartbeat
+	Heartbeat commonmodel.Heartbeat
 
 	/* Namespace.
 
@@ -141,13 +141,13 @@ func (o *UpdateHeartBeatParams) SetDeviceID(deviceID string) {
 }
 
 // WithHeartbeat adds the heartbeat to the update heart beat params
-func (o *UpdateHeartBeatParams) WithHeartbeat(heartbeat *models.Heartbeat) *UpdateHeartBeatParams {
+func (o *UpdateHeartBeatParams) WithHeartbeat(heartbeat commonmodel.Heartbeat) *UpdateHeartBeatParams {
 	o.SetHeartbeat(heartbeat)
 	return o
 }
 
 // SetHeartbeat adds the heartbeat to the update heart beat params
-func (o *UpdateHeartBeatParams) SetHeartbeat(heartbeat *models.Heartbeat) {
+func (o *UpdateHeartBeatParams) SetHeartbeat(heartbeat commonmodel.Heartbeat) {
 	o.Heartbeat = heartbeat
 }
 
@@ -174,10 +174,8 @@ func (o *UpdateHeartBeatParams) WriteToRequest(r runtime.ClientRequest, reg strf
 	if err := r.SetPathParam("device-id", o.DeviceID); err != nil {
 		return err
 	}
-	if o.Heartbeat != nil {
-		if err := r.SetBodyParam(o.Heartbeat); err != nil {
-			return err
-		}
+	if err := r.SetBodyParam(o.Heartbeat); err != nil {
+		return err
 	}
 
 	// path param namespace

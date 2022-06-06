@@ -15,7 +15,7 @@ import (
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/project-flotta/flotta-operator/backend/models"
+	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 
 // NewRegisterDeviceParams creates a new RegisterDeviceParams object,
@@ -74,7 +74,7 @@ type RegisterDeviceParams struct {
 	Namespace string
 
 	// RegistrationInfo.
-	RegistrationInfo *models.RegistrationInfo
+	RegistrationInfo commonmodel.RegistrationInfo
 
 	timeout    time.Duration
 	Context    context.Context
@@ -152,13 +152,13 @@ func (o *RegisterDeviceParams) SetNamespace(namespace string) {
 }
 
 // WithRegistrationInfo adds the registrationInfo to the register device params
-func (o *RegisterDeviceParams) WithRegistrationInfo(registrationInfo *models.RegistrationInfo) *RegisterDeviceParams {
+func (o *RegisterDeviceParams) WithRegistrationInfo(registrationInfo commonmodel.RegistrationInfo) *RegisterDeviceParams {
 	o.SetRegistrationInfo(registrationInfo)
 	return o
 }
 
 // SetRegistrationInfo adds the registrationInfo to the register device params
-func (o *RegisterDeviceParams) SetRegistrationInfo(registrationInfo *models.RegistrationInfo) {
+func (o *RegisterDeviceParams) SetRegistrationInfo(registrationInfo commonmodel.RegistrationInfo) {
 	o.RegistrationInfo = registrationInfo
 }
 
@@ -179,10 +179,8 @@ func (o *RegisterDeviceParams) WriteToRequest(r runtime.ClientRequest, reg strfm
 	if err := r.SetPathParam("namespace", o.Namespace); err != nil {
 		return err
 	}
-	if o.RegistrationInfo != nil {
-		if err := r.SetBodyParam(o.RegistrationInfo); err != nil {
-			return err
-		}
+	if err := r.SetBodyParam(o.RegistrationInfo); err != nil {
+		return err
 	}
 
 	if len(res) > 0 {

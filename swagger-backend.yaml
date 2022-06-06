@@ -41,7 +41,11 @@ definitions:
           Exposes the error message generated at the backend when there is an
           error (example HTTP code 500).
       device-configuration:
-        $ref: 'swagger.yaml#/definitions/device-configuration-message'
+        x-go-type:
+          type: DeviceConfigurationMessage
+          import:
+            package: github.com/project-flotta/flotta-operator/models
+            alias: commonmodel
   device-registration-status-response:
     type: object
     properties:
@@ -107,7 +111,11 @@ paths:
           name: enrolment-info
           required: true
           schema:
-            $ref: 'swagger.yaml#/definitions/enrolment-info'
+            x-go-type:
+              type: EnrolmentInfo
+              import:
+                package: github.com/project-flotta/flotta-operator/models
+                alias: commonmodel
       responses:
         '200':
           description: OK
@@ -173,7 +181,11 @@ paths:
           name: registration-info
           required: true
           schema:
-            $ref: 'swagger.yaml#/definitions/registration-info'
+            x-go-type:
+              type: RegistrationInfo
+              import:
+                package: github.com/project-flotta/flotta-operator/models
+                alias: commonmodel
       responses:
         '200':
           description: Updated
@@ -206,7 +218,12 @@ paths:
           name: heartbeat
           required: true
           schema:
-            $ref: 'swagger.yaml#/definitions/heartbeat'
+            type: object
+            x-go-type:
+              type: Heartbeat
+              import:
+                package: github.com/project-flotta/flotta-operator/models
+                alias: commonmodel
       responses:
         '200':
           description: Success

@@ -16,7 +16,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 
-	"github.com/project-flotta/flotta-operator/backend/models"
+	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 
 // NewUpdateHeartBeatParams creates a new UpdateHeartBeatParams object
@@ -45,7 +45,7 @@ type UpdateHeartBeatParams struct {
 	  Required: true
 	  In: body
 	*/
-	Heartbeat *models.Heartbeat
+	Heartbeat commonmodel.Heartbeat
 	/*Namespace where the device resides
 	  Required: true
 	  In: path
@@ -69,7 +69,7 @@ func (o *UpdateHeartBeatParams) BindRequest(r *http.Request, route *middleware.M
 
 	if runtime.HasBody(r) {
 		defer r.Body.Close()
-		var body models.Heartbeat
+		var body commonmodel.Heartbeat
 		if err := route.Consumer.Consume(r.Body, &body); err != nil {
 			if err == io.EOF {
 				res = append(res, errors.Required("heartbeat", "body", ""))
@@ -88,7 +88,7 @@ func (o *UpdateHeartBeatParams) BindRequest(r *http.Request, route *middleware.M
 			}
 
 			if len(res) == 0 {
-				o.Heartbeat = &body
+				o.Heartbeat = body
 			}
 		}
 	} else {

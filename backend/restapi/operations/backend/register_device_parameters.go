@@ -16,7 +16,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 
-	"github.com/project-flotta/flotta-operator/backend/models"
+	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 
 // NewRegisterDeviceParams creates a new RegisterDeviceParams object
@@ -50,7 +50,7 @@ type RegisterDeviceParams struct {
 	  Required: true
 	  In: body
 	*/
-	RegistrationInfo *models.RegistrationInfo
+	RegistrationInfo commonmodel.RegistrationInfo
 }
 
 // BindRequest both binds and validates a request, it assumes that complex things implement a Validatable(strfmt.Registry) error interface
@@ -74,7 +74,7 @@ func (o *RegisterDeviceParams) BindRequest(r *http.Request, route *middleware.Ma
 
 	if runtime.HasBody(r) {
 		defer r.Body.Close()
-		var body models.RegistrationInfo
+		var body commonmodel.RegistrationInfo
 		if err := route.Consumer.Consume(r.Body, &body); err != nil {
 			if err == io.EOF {
 				res = append(res, errors.Required("registrationInfo", "body", ""))
@@ -93,7 +93,7 @@ func (o *RegisterDeviceParams) BindRequest(r *http.Request, route *middleware.Ma
 			}
 
 			if len(res) == 0 {
-				o.RegistrationInfo = &body
+				o.RegistrationInfo = body
 			}
 		}
 	} else {
