@@ -11,6 +11,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 
 // DeviceConfigurationResponse device configuration response
@@ -19,7 +20,7 @@ import (
 type DeviceConfigurationResponse struct {
 
 	// device configuration
-	DeviceConfiguration *DeviceConfigurationMessage `json:"device-configuration,omitempty"`
+	DeviceConfiguration commonmodel.DeviceConfigurationMessage `json:"device-configuration,omitempty"`
 
 	// Exposes the error message generated at the backend when there is an error (example HTTP code 500).
 	Message string `json:"message,omitempty"`
@@ -44,47 +45,20 @@ func (m *DeviceConfigurationResponse) validateDeviceConfiguration(formats strfmt
 		return nil
 	}
 
-	if m.DeviceConfiguration != nil {
-		if err := m.DeviceConfiguration.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("device-configuration")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("device-configuration")
-			}
-			return err
+	if err := m.DeviceConfiguration.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("device-configuration")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("device-configuration")
 		}
+		return err
 	}
 
 	return nil
 }
 
-// ContextValidate validate this device configuration response based on the context it is used
+// ContextValidate validates this device configuration response based on context it is used
 func (m *DeviceConfigurationResponse) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateDeviceConfiguration(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *DeviceConfigurationResponse) contextValidateDeviceConfiguration(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.DeviceConfiguration != nil {
-		if err := m.DeviceConfiguration.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("device-configuration")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("device-configuration")
-			}
-			return err
-		}
-	}
-
 	return nil
 }
 

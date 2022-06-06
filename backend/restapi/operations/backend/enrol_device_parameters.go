@@ -16,7 +16,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/validate"
 
-	"github.com/project-flotta/flotta-operator/backend/models"
+	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 
 // NewEnrolDeviceParams creates a new EnrolDeviceParams object
@@ -45,7 +45,7 @@ type EnrolDeviceParams struct {
 	  Required: true
 	  In: body
 	*/
-	EnrolmentInfo *models.EnrolmentInfo
+	EnrolmentInfo commonmodel.EnrolmentInfo
 	/*Namespace where the device resides
 	  Required: true
 	  In: path
@@ -69,7 +69,7 @@ func (o *EnrolDeviceParams) BindRequest(r *http.Request, route *middleware.Match
 
 	if runtime.HasBody(r) {
 		defer r.Body.Close()
-		var body models.EnrolmentInfo
+		var body commonmodel.EnrolmentInfo
 		if err := route.Consumer.Consume(r.Body, &body); err != nil {
 			if err == io.EOF {
 				res = append(res, errors.Required("enrolmentInfo", "body", ""))
@@ -88,7 +88,7 @@ func (o *EnrolDeviceParams) BindRequest(r *http.Request, route *middleware.Match
 			}
 
 			if len(res) == 0 {
-				o.EnrolmentInfo = &body
+				o.EnrolmentInfo = body
 			}
 		}
 	} else {
