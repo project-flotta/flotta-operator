@@ -110,8 +110,7 @@ var _ = Describe("PlaybookExecution controller", func() {
 		})
 		It("Cannot get playbookexecution", func() {
 			// given
-			returnErr := errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
-
+			returnErr := errors.NewNotFound(schema.GroupResource{Group: "notfound", Resource: "notfound"}, "notfound")
 			playbookExecutionRepoMock.EXPECT().
 				Read(gomock.Any(), gomock.Any(), namespace).
 				Return(nil, returnErr).
@@ -120,8 +119,8 @@ var _ = Describe("PlaybookExecution controller", func() {
 			res, err := playbookExecutionReconciler.Reconcile(context.TODO(), req)
 
 			// then
-			Expect(err).To(HaveOccurred())
-			Expect(res).To(Equal(reconcile.Result{Requeue: true, RequeueAfter: 0}))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 		})
 	})
 
