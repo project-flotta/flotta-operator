@@ -2268,10 +2268,11 @@ var _ = Describe("Yggdrasil", func() {
 				}}
 				device.Status.LastSyncedResourceVersion = content.Version
 				device.Status.Hardware = &v1alpha1.Hardware{
-					Hostname:   content.Hardware.Hostname,
-					Disks:      []*v1alpha1.Disk{},
-					Interfaces: []*v1alpha1.Interface{},
-					Gpus:       []*v1alpha1.Gpu{},
+					Hostname:    content.Hardware.Hostname,
+					Disks:       []*v1alpha1.Disk{},
+					Interfaces:  []*v1alpha1.Interface{},
+					Gpus:        []*v1alpha1.Gpu{},
+					HostDevices: []*v1alpha1.HostDevice{},
 				}
 
 				repositoryMock.EXPECT().

@@ -502,6 +502,10 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/gpu'
+      host_devices:
+        type: array
+        items:
+          $ref: '#/definitions/host_device'
 
   interface:
     type: object
@@ -648,6 +652,28 @@ definitions:
       address:
         description: Device address (for example "0000:00:02.0")
         type: string
+
+  host_device:
+    type: object
+    properties:
+      path:
+        description: Path of the device
+        type: string
+      device_type:
+        description: Type of the device
+        type: string
+      uid:
+        description: Owner id
+        type: integer
+      gid:
+        description: Group id
+        type: integer
+      major:
+        description: Major of the device
+        type: integer
+      minor:
+        description: Minor of the device
+        type: integer
 
   heartbeat:
     type: object

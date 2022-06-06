@@ -194,6 +194,9 @@ type Hardware struct {
 
 	// system vendor
 	SystemVendor *SystemVendor `json:"systemVendor,omitempty"`
+
+	// list of devices present on the edgedevice
+	HostDevices []*HostDevice `json:"hostDevices,omitempty"`
 }
 
 type Boot struct {
@@ -376,6 +379,27 @@ type SystemVendor struct {
 
 	// Whether the machine appears to be a virtual machine or not
 	Virtual bool `json:"virtual,omitempty"`
+}
+
+type HostDevice struct {
+
+	// path of the device (i.e. /dev/loop)
+	Path string `json:"path,omitempty"`
+
+	// Device type block or character
+	DeviceType string `json:"deviceType,omitempty"`
+
+	// owner id
+	UID uint32 `json:"owner,omitempty"`
+
+	// group id
+	GID uint32 `json:"group,omitempty"`
+
+	// Major ID identifying the class of the device
+	Major uint32 `json:"major,omitempty"`
+
+	// Minor ID identifying the instance of the device in the class
+	Minor uint32 `json:"minor,omitempty"`
 }
 
 //+kubebuilder:object:root=true

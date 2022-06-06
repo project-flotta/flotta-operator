@@ -951,6 +951,12 @@ func init() {
             "$ref": "#/definitions/gpu"
           }
         },
+        "host_devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hostDevice"
+          }
+        },
         "hostname": {
           "type": "string"
         },
@@ -1024,6 +1030,35 @@ func init() {
           "$ref": "#/definitions/hardwareProfileConfiguration"
         },
         "period_seconds": {
+          "type": "integer"
+        }
+      }
+    },
+    "hostDevice": {
+      "type": "object",
+      "properties": {
+        "device_type": {
+          "description": "Type of the device",
+          "type": "string"
+        },
+        "gid": {
+          "description": "Group id",
+          "type": "integer"
+        },
+        "major": {
+          "description": "Major of the device",
+          "type": "integer"
+        },
+        "minor": {
+          "description": "Minor of the device",
+          "type": "integer"
+        },
+        "path": {
+          "description": "Path of the device",
+          "type": "string"
+        },
+        "uid": {
+          "description": "Owner id",
           "type": "integer"
         }
       }
