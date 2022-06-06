@@ -27,9 +27,6 @@ type API interface {
 	   GetRegistrationStatus Returns a device registration status, which can be registered, unregistered or unknown.*/
 	GetRegistrationStatus(ctx context.Context, params *GetRegistrationStatusParams) (*GetRegistrationStatusOK, error)
 	/*
-	   GetTargetNamespace Returns target namespace for the device*/
-	GetTargetNamespace(ctx context.Context, params *GetTargetNamespaceParams) (*GetTargetNamespaceOK, error)
-	/*
 	   RegisterDevice Registers the device by providing its hardware configuration*/
 	RegisterDevice(ctx context.Context, params *RegisterDeviceParams) (*RegisterDeviceOK, error)
 	/*
@@ -130,30 +127,6 @@ func (a *Client) GetRegistrationStatus(ctx context.Context, params *GetRegistrat
 		return nil, err
 	}
 	return result.(*GetRegistrationStatusOK), nil
-
-}
-
-/*
-GetTargetNamespace Returns target namespace for the device
-*/
-func (a *Client) GetTargetNamespace(ctx context.Context, params *GetTargetNamespaceParams) (*GetTargetNamespaceOK, error) {
-
-	result, err := a.transport.Submit(&runtime.ClientOperation{
-		ID:                 "GetTargetNamespace",
-		Method:             "GET",
-		PathPattern:        "/namespaces/{namespace}/devices/{device-id}/registration/namespace",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"https"},
-		Params:             params,
-		Reader:             &GetTargetNamespaceReader{formats: a.formats},
-		Context:            ctx,
-		Client:             params.HTTPClient,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return result.(*GetTargetNamespaceOK), nil
 
 }
 

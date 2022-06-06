@@ -303,58 +303,6 @@ func init() {
           }
         }
       }
-    },
-    "/namespaces/{namespace}/devices/{device-id}/registration/namespace": {
-      "get": {
-        "description": "Returns target namespace for the device",
-        "tags": [
-          "backend"
-        ],
-        "operationId": "GetTargetNamespace",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Namespace where the device was originally created in",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Device ID",
-            "name": "device-id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "boolean",
-            "description": "Information whether device presented certificate corresponding to its id. In contrast to a registration certificate.",
-            "name": "matches-certificate",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/device-registration-target-namespace-response"
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "default": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/device-registration-target-namespace-response"
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -383,21 +331,12 @@ func init() {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
           "type": "string"
         },
-        "status": {
-          "description": "Returns the device registration status, which can be one of the following {registered, unregistered, unknown}.",
-          "type": "string"
-        }
-      }
-    },
-    "device-registration-target-namespace-response": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
+        "namespace": {
+          "description": "Namespace the device should be or was finally placed during registration.",
           "type": "string"
         },
-        "namespace": {
-          "description": "Contains namespace the device should be finally placed during registration.",
+        "status": {
+          "description": "Returns the device registration status, which can be one of the following {registered, unregistered, unknown}.",
           "type": "string"
         }
       }
@@ -708,58 +647,6 @@ func init() {
           }
         }
       }
-    },
-    "/namespaces/{namespace}/devices/{device-id}/registration/namespace": {
-      "get": {
-        "description": "Returns target namespace for the device",
-        "tags": [
-          "backend"
-        ],
-        "operationId": "GetTargetNamespace",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Namespace where the device was originally created in",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Device ID",
-            "name": "device-id",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "boolean",
-            "description": "Information whether device presented certificate corresponding to its id. In contrast to a registration certificate.",
-            "name": "matches-certificate",
-            "in": "query",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "$ref": "#/definitions/device-registration-target-namespace-response"
-            }
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "default": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/device-registration-target-namespace-response"
-            }
-          }
-        }
-      }
     }
   },
   "definitions": {
@@ -788,21 +675,12 @@ func init() {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
           "type": "string"
         },
-        "status": {
-          "description": "Returns the device registration status, which can be one of the following {registered, unregistered, unknown}.",
-          "type": "string"
-        }
-      }
-    },
-    "device-registration-target-namespace-response": {
-      "type": "object",
-      "properties": {
-        "message": {
-          "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
+        "namespace": {
+          "description": "Namespace the device should be or was finally placed during registration.",
           "type": "string"
         },
-        "namespace": {
-          "description": "Contains namespace the device should be finally placed during registration.",
+        "status": {
+          "description": "Returns the device registration status, which can be one of the following {registered, unregistered, unknown}.",
           "type": "string"
         }
       }

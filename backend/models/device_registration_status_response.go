@@ -20,6 +20,9 @@ type DeviceRegistrationStatusResponse struct {
 	// Exposes the error message generated at the backend when there is an error (example HTTP code 500).
 	Message string `json:"message,omitempty"`
 
+	// Namespace the device should be or was finally placed during registration.
+	Namespace string `json:"namespace,omitempty"`
+
 	// Returns the device registration status, which can be one of the following {registered, unregistered, unknown}.
 	Status string `json:"status,omitempty"`
 }

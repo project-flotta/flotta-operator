@@ -65,22 +65,6 @@ func (_m *MockBackendAPI) GetRegistrationStatus(ctx context.Context, params back
 	return r0
 }
 
-// GetTargetNamespace provides a mock function with given fields: ctx, params
-func (_m *MockBackendAPI) GetTargetNamespace(ctx context.Context, params backend.GetTargetNamespaceParams) middleware.Responder {
-	ret := _m.Called(ctx, params)
-
-	var r0 middleware.Responder
-	if rf, ok := ret.Get(0).(func(context.Context, backend.GetTargetNamespaceParams) middleware.Responder); ok {
-		r0 = rf(ctx, params)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(middleware.Responder)
-		}
-	}
-
-	return r0
-}
-
 // RegisterDevice provides a mock function with given fields: ctx, params
 func (_m *MockBackendAPI) RegisterDevice(ctx context.Context, params backend.RegisterDeviceParams) middleware.Responder {
 	ret := _m.Called(ctx, params)

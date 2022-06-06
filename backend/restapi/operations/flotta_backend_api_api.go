@@ -53,9 +53,6 @@ func NewFlottaBackendAPIAPI(spec *loads.Document) *FlottaBackendAPIAPI {
 		BackendGetRegistrationStatusHandler: backend.GetRegistrationStatusHandlerFunc(func(params backend.GetRegistrationStatusParams) middleware.Responder {
 			return middleware.NotImplemented("operation backend.GetRegistrationStatus has not yet been implemented")
 		}),
-		BackendGetTargetNamespaceHandler: backend.GetTargetNamespaceHandlerFunc(func(params backend.GetTargetNamespaceParams) middleware.Responder {
-			return middleware.NotImplemented("operation backend.GetTargetNamespace has not yet been implemented")
-		}),
 		BackendRegisterDeviceHandler: backend.RegisterDeviceHandlerFunc(func(params backend.RegisterDeviceParams) middleware.Responder {
 			return middleware.NotImplemented("operation backend.RegisterDevice has not yet been implemented")
 		}),
@@ -104,8 +101,6 @@ type FlottaBackendAPIAPI struct {
 	BackendGetDeviceConfigurationHandler backend.GetDeviceConfigurationHandler
 	// BackendGetRegistrationStatusHandler sets the operation handler for the get registration status operation
 	BackendGetRegistrationStatusHandler backend.GetRegistrationStatusHandler
-	// BackendGetTargetNamespaceHandler sets the operation handler for the get target namespace operation
-	BackendGetTargetNamespaceHandler backend.GetTargetNamespaceHandler
 	// BackendRegisterDeviceHandler sets the operation handler for the register device operation
 	BackendRegisterDeviceHandler backend.RegisterDeviceHandler
 	// BackendUpdateHeartBeatHandler sets the operation handler for the update heart beat operation
@@ -195,9 +190,6 @@ func (o *FlottaBackendAPIAPI) Validate() error {
 	}
 	if o.BackendGetRegistrationStatusHandler == nil {
 		unregistered = append(unregistered, "backend.GetRegistrationStatusHandler")
-	}
-	if o.BackendGetTargetNamespaceHandler == nil {
-		unregistered = append(unregistered, "backend.GetTargetNamespaceHandler")
 	}
 	if o.BackendRegisterDeviceHandler == nil {
 		unregistered = append(unregistered, "backend.RegisterDeviceHandler")
@@ -305,10 +297,6 @@ func (o *FlottaBackendAPIAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/registration"] = backend.NewGetRegistrationStatus(o.context, o.BackendGetRegistrationStatusHandler)
-	if o.handlers["GET"] == nil {
-		o.handlers["GET"] = make(map[string]http.Handler)
-	}
-	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/registration/namespace"] = backend.NewGetTargetNamespace(o.context, o.BackendGetTargetNamespaceHandler)
 	if o.handlers["PUT"] == nil {
 		o.handlers["PUT"] = make(map[string]http.Handler)
 	}
