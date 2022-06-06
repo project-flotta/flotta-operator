@@ -35,6 +35,9 @@ type BackendAPI interface {
 	/* GetRegistrationStatus Returns a device registration status, which can be registered, unregistered or unknown. */
 	GetRegistrationStatus(ctx context.Context, params backend.GetRegistrationStatusParams) middleware.Responder
 
+	/* GetTargetNamespace Returns target namespace for the device */
+	GetTargetNamespace(ctx context.Context, params backend.GetTargetNamespaceParams) middleware.Responder
+
 	/* RegisterDevice Registers the device by providing its hardware configuration */
 	RegisterDevice(ctx context.Context, params backend.RegisterDeviceParams) middleware.Responder
 
@@ -104,6 +107,10 @@ func HandlerAPI(c Config) (http.Handler, *operations.FlottaBackendAPIAPI, error)
 	api.BackendGetRegistrationStatusHandler = backend.GetRegistrationStatusHandlerFunc(func(params backend.GetRegistrationStatusParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
 		return c.BackendAPI.GetRegistrationStatus(ctx, params)
+	})
+	api.BackendGetTargetNamespaceHandler = backend.GetTargetNamespaceHandlerFunc(func(params backend.GetTargetNamespaceParams) middleware.Responder {
+		ctx := params.HTTPRequest.Context()
+		return c.BackendAPI.GetTargetNamespace(ctx, params)
 	})
 	api.BackendRegisterDeviceHandler = backend.RegisterDeviceHandlerFunc(func(params backend.RegisterDeviceParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()

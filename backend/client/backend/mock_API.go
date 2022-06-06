@@ -91,6 +91,29 @@ func (_m *MockAPI) GetRegistrationStatus(ctx context.Context, params *GetRegistr
 	return r0, r1
 }
 
+// GetTargetNamespace provides a mock function with given fields: ctx, params
+func (_m *MockAPI) GetTargetNamespace(ctx context.Context, params *GetTargetNamespaceParams) (*GetTargetNamespaceOK, error) {
+	ret := _m.Called(ctx, params)
+
+	var r0 *GetTargetNamespaceOK
+	if rf, ok := ret.Get(0).(func(context.Context, *GetTargetNamespaceParams) *GetTargetNamespaceOK); ok {
+		r0 = rf(ctx, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*GetTargetNamespaceOK)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *GetTargetNamespaceParams) error); ok {
+		r1 = rf(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RegisterDevice provides a mock function with given fields: ctx, params
 func (_m *MockAPI) RegisterDevice(ctx context.Context, params *RegisterDeviceParams) (*RegisterDeviceOK, error) {
 	ret := _m.Called(ctx, params)

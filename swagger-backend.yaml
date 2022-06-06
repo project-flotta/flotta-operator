@@ -59,6 +59,18 @@ definitions:
         description: >-
           Exposes the error message generated at the backend when there is an
           error (example HTTP code 500).
+  device-registration-target-namespace-response:
+    type: object
+    properties:
+      namespace:
+        type: string
+        description: >-
+          Contains namespace the device should be finally placed during registration.
+      message:
+        type: string
+        description: >-
+          Exposes the error message generated at the backend when there is an
+          error (example HTTP code 500).
 paths:
   '/namespaces/{namespace}/devices/{device-id}/configuration':
     get:
@@ -197,6 +209,44 @@ paths:
           description: Error
           schema:
             $ref: '#/definitions/error'
+  '/namespaces/{namespace}/devices/{device-id}/registration/namespace':
+    get:
+      description: >-
+        Returns target namespace for the device
+      operationId: GetTargetNamespace
+      tags:
+        - backend
+      parameters:
+        - in: path
+          name: namespace
+          description: Namespace where the device was originally created in
+          type: string
+          required: true
+        - in: path
+          name: device-id
+          description: Device ID
+          type: string
+          required: true
+        - in: query
+          name: matches-certificate
+          description: >-
+            Information whether device presented certificate corresponding to its id.
+            In contrast to a registration certificate.
+          type: boolean
+          required: true
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/device-registration-target-namespace-response'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        default:
+          description: Error
+          schema:
+            $ref: '#/definitions/device-registration-target-namespace-response'
   '/namespaces/{namespace}/devices/{device-id}/heartbeat':
     put:
       description: Updates the heartbeat information of the device.
