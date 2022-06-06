@@ -40,9 +40,13 @@ jobs:
 
       - name: Download custom RPM
         if: ${{ github.event.inputs.artifact_url != '' }}
-        run: |
+        run: >
           ARTIFACT_ID=`basename "${{ github.event.inputs.artifact_url }}"`
-          curl -L -H "Authorization: Bearer ${{ secrets.TOKEN }}" -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/project-flotta/flotta-device-worker/actions/artifacts/$ARTIFACT_ID/zip -o my.zip
+
+          curl -L -H "Authorization: Bearer ${{ secrets.TOKEN }}" -H "Accept: application/vnd.github.v3+json"
+            https://api.github.com/repos/project-flotta/flotta-device-worker/actions/artifacts/$ARTIFACT_ID/zip
+            -o my.zip
+
           unzip my -d /var/tmp/flotta
 
       - name: Testing on KinD
