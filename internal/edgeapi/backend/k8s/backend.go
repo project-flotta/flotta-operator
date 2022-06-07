@@ -12,7 +12,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/common/utils"
 	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
 	"github.com/project-flotta/flotta-operator/models"
@@ -20,9 +19,6 @@ import (
 )
 
 const (
-	YggdrasilConnectionFinalizer = "yggdrasil-connection-finalizer"
-	YggdrasilWorkloadFinalizer   = "yggdrasil-workload-finalizer"
-
 	AuthzKey mtls.RequestAuthKey = "APIAuthzkey"
 )
 
@@ -46,20 +42,17 @@ func NewBackend(repository RepositoryFacade, assembler *ConfigurationAssembler,
 func (b *backend) GetRegistrationStatus(ctx context.Context, name, namespace string) (backendapi.RegistrationStatus, error) {
 	edgeDevice, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return backendapi.Unregistered, nil
+		}
 		return backendapi.Unknown, err
 	}
 
-	if edgeDevice.DeletionTimestamp == nil || utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
-		return backendapi.Registered, nil
+	if edgeDevice.DeletionTimestamp != nil {
+		return backendapi.Unregistered, nil
 	}
 
-	if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilConnectionFinalizer) {
-		err = b.repository.RemoveEdgeDeviceFinalizer(ctx, edgeDevice, YggdrasilConnectionFinalizer)
-		if err != nil {
-			return backendapi.Registered, err
-		}
-	}
-	return backendapi.Unregistered, nil
+	return backendapi.Registered, nil
 }
 
 func (b *backend) GetConfiguration(ctx context.Context, name, namespace string) (*models.DeviceConfigurationMessage, error) {
@@ -69,14 +62,6 @@ func (b *backend) GetConfiguration(ctx context.Context, name, namespace string) 
 		return nil, err
 	}
 
-	if edgeDevice.DeletionTimestamp != nil {
-		if utils.HasFinalizer(&edgeDevice.ObjectMeta, YggdrasilWorkloadFinalizer) {
-			err := b.repository.RemoveEdgeDeviceFinalizer(ctx, edgeDevice, YggdrasilWorkloadFinalizer)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
 	return b.assembler.GetDeviceConfiguration(ctx, edgeDevice, logger)
 }
 
@@ -170,7 +155,6 @@ func (b *backend) Register(ctx context.Context, name, namespace string, registra
 	logger := b.logger.With("DeviceID", name, "Namespace", namespace)
 	dvc, err := b.repository.GetEdgeDevice(ctx, name, namespace)
 	deviceCopy := dvc.DeepCopy()
-	deviceCopy.Finalizers = []string{YggdrasilConnectionFinalizer, YggdrasilWorkloadFinalizer}
 	for key, val := range hardware.MapLabels(registrationInfo.Hardware) {
 		deviceCopy.ObjectMeta.Labels[key] = val
 	}

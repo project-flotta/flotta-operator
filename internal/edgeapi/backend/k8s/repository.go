@@ -19,7 +19,6 @@ type EdgeDeviceRepository interface {
 	PatchEdgeDeviceStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, patch *client.Patch) error
 	UpdateEdgeDeviceLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error
 	PatchEdgeDevice(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
-	RemoveEdgeDeviceFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error
 }
 
 type EdgeDeviceSignedRequestRepository interface {
@@ -85,10 +84,6 @@ func (b *repositoryFacade) UpdateEdgeDeviceLabels(ctx context.Context, device *v
 
 func (b *repositoryFacade) PatchEdgeDevice(ctx context.Context, old, new *v1alpha1.EdgeDevice) error {
 	return b.deviceRepository.Patch(ctx, old, new)
-}
-
-func (b *repositoryFacade) RemoveEdgeDeviceFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error {
-	return b.deviceRepository.RemoveFinalizer(ctx, edgeDevice, finalizer)
 }
 
 func (b *repositoryFacade) GetEdgeDeviceSignedRequest(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeDeviceSignedRequest, error) {

@@ -3,6 +3,7 @@ package e2e_test
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/generated/clientset/versioned/typed/v1alpha1"
@@ -159,9 +160,10 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("ls /etc/yggdrasil/device/ | wc -l")
-			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("0"))
+			Eventually(func() (string, error) {
+				return device.Exec("ls /etc/yggdrasil/device/ | wc -l")
+			}).WithTimeout(180 * time.Second).Should(Equal("0"))
+
 		})
 
 		It("Unregister device with running workloads", func() {
@@ -179,12 +181,12 @@ var _ = Describe("e2e", func() {
 
 			// then
 			// properly cleaned ygg dir
-			stdout, err := device.Exec("ls /etc/yggdrasil/device/ | wc -l")
-			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("0"))
+			Eventually(func() (string, error) {
+				return device.Exec("ls /etc/yggdrasil/device/ | wc -l")
+			}).WithTimeout(180 * time.Second).Should(Equal("0"))
 
 			// no pods running
-			stdout, err = device.Exec("machinectl shell -q flotta@.host /usr/bin/podman ps --noheading | wc -l")
+			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman ps --noheading | wc -l")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("1")) // machinectl print one empty new line
 
