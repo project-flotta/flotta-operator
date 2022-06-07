@@ -1,14 +1,12 @@
 package factory_test
 
 import (
-	"crypto/tls"
-	"time"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/zap"
 	"k8s.io/client-go/tools/record"
 
+	"github.com/project-flotta/flotta-operator/internal/edgeapi"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/factory"
 )
 
@@ -17,53 +15,40 @@ const namespace = "some-ns"
 var logger, _ = zap.NewDevelopment()
 
 var _ = Describe("Backend factory", func() {
+	var backendFactory factory.Factory
 
-	It("should create k8s backend", func() {
-		// given
-		factory := factory.Factory{
+	BeforeEach(func() {
+		backendFactory = factory.Factory{
 			InitialDeviceNamespace: namespace,
 			Logger:                 logger.Sugar(),
 			Client:                 nil,
 			EventRecorder:          record.NewFakeRecorder(1),
 		}
+	})
 
+	DescribeTable("should create backend", func(config edgeapi.Config) {
 		// when
-		backend, _ := factory.Create("", time.Second)
+		backend, err := backendFactory.Create(config)
 
 		// then
 		Expect(backend).ToNot(BeNil())
-	})
+		Expect(err).ToNot(HaveOccurred())
+	},
+		Entry("k8s", edgeapi.Config{Backend: "crd"}),
+		Entry("remote HTTP", edgeapi.Config{Backend: "remote", RemoteBackendURL: "http://project-flotta.com"}),
+		Entry("remote HTTPS", edgeapi.Config{Backend: "remote", RemoteBackendURL: "https://project-flotta.com"}),
+	)
 
-	It("should create remote HTTP backend", func() {
-		// given
-		factory := factory.Factory{
-			InitialDeviceNamespace: namespace,
-			Logger:                 logger.Sugar(),
-			Client:                 nil,
-			EventRecorder:          record.NewFakeRecorder(1),
-		}
-
+	DescribeTable("should fail creating backend", func(config edgeapi.Config) {
 		// when
-		backend, _ := factory.Create("http://project-flotta.com", time.Second)
+		backend, err := backendFactory.Create(config)
 
 		// then
-		Expect(backend).ToNot(BeNil())
-	})
-
-	It("should create remote HTTPS backend", func() {
-		// given
-		factory := factory.Factory{
-			InitialDeviceNamespace: namespace,
-			Logger:                 logger.Sugar(),
-			Client:                 nil,
-			EventRecorder:          record.NewFakeRecorder(1),
-			TLSConfig:              &tls.Config{},
-		}
-
-		// when
-		backend, _ := factory.Create("https://project-flotta.com", time.Second)
-
-		// then
-		Expect(backend).ToNot(BeNil())
-	})
+		Expect(err).To(HaveOccurred())
+		Expect(backend).To(BeNil())
+	},
+		Entry("illegal backend", edgeapi.Config{Backend: "foo"}),
+		Entry("empty remote URL", edgeapi.Config{Backend: "remote"}),
+		Entry("malformed remote URL", edgeapi.Config{Backend: "remote", RemoteBackendURL: "http://pr oject-flotta.com"}),
+	)
 })

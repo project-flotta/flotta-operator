@@ -2,6 +2,7 @@ package factory
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/k8s"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/remote"
@@ -33,17 +35,22 @@ type Factory struct {
 	TLSConfig              *tls.Config
 }
 
-func (f *Factory) Create(remoteBackendURL string, remoteBackendTimeout time.Duration) (backend.EdgeDeviceBackend, error) {
-	if remoteBackendURL == "" {
-		f.Logger.Infof("Using Kubernetes, CRD-based backend")
+func (f *Factory) Create(config edgeapi.Config) (backend.EdgeDeviceBackend, error) {
+	switch config.Backend {
+	case "remote":
+		return f.createRemoteBackend(config.RemoteBackendURL, config.RemoteBackendTimeout)
+	case "crd":
 		return f.createK8sBackend(), nil
+	default:
+		return nil, fmt.Errorf("unsupported backend type: %s", config.Backend)
 	}
-
-	f.Logger.Infof("Using remote, HTTP-based backend")
-	return f.createRemoteBackend(remoteBackendURL, remoteBackendTimeout)
 }
 
 func (f *Factory) createRemoteBackend(remoteBackendURL string, remoteBackendTimeout time.Duration) (backend.EdgeDeviceBackend, error) {
+	f.Logger.Infof("Using remote, HTTP-based backend")
+	if remoteBackendURL == "" {
+		return nil, fmt.Errorf("remote backend URL cannot be empty")
+	}
 	backendURL, err := url.Parse(remoteBackendURL)
 	if err != nil {
 		return nil, err
@@ -63,7 +70,8 @@ func (f *Factory) createRemoteBackend(remoteBackendURL string, remoteBackendTime
 }
 
 func (f *Factory) createK8sBackend() backend.EdgeDeviceBackend {
-	// For now just one implementation is supported
+	f.Logger.Infof("Using Kubernetes, CRD-based backend")
+
 	k8sClient := k8sclient.NewK8sClient(f.Client)
 
 	edgeDeviceSignedRequestRepository := edgedevicesignedrequest.NewEdgedeviceSignedRequestRepository(f.Client)

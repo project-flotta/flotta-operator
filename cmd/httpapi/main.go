@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -31,6 +30,7 @@ import (
 
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/edgeapi"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/factory"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
@@ -47,37 +47,7 @@ var (
 	scheme            = runtime.NewScheme()
 )
 
-var Config struct {
-
-	// The port of the HTTPs server
-	HttpsPort uint16 `envconfig:"HTTPS_PORT" default:"8043"`
-
-	// Domain where TLS certificate listen.
-	// FIXME check default here
-	Domain string `envconfig:"DOMAIN" default:"project-flotta.io"`
-
-	// If TLS server certificates should work on 127.0.0.1
-	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
-
-	// The address the metric endpoint binds to.
-	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`
-
-	// Verbosity of the logger.
-	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
-
-	// Client Certificate expiration time
-	ClientCertExpirationTime uint `envconfig:"CLIENT_CERT_EXPIRATION_DAYS" default:"30"`
-
-	// Kubeconfig specifies path to a kubeconfig file if the server is run outside of a cluster
-	Kubeconfig string `envconfig:"KUBECONFIG" default:""`
-
-	// RemoteBackendURL contains URL to a remote data store that should be used instead of the default CRD-based one.
-	// For HTTPS mTLS connections server cert and CA will be used.
-	RemoteBackendURL string `envconfig:"REMOTE_BACKEND_URL" default:""`
-
-	// RemoteBackendTimeout specifies timeout. Has to be parsable to time.Duration
-	RemoteBackendTimeout time.Duration `envconfig:"REMOT_BACKEND_TIMEOUT" default:"5s"`
-}
+var Config edgeapi.Config
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -155,7 +125,7 @@ func main() {
 		EventRecorder:          eventRecorder,
 		TLSConfig:              tlsConfig,
 	}
-	backend, _ := backendFactory.Create(Config.RemoteBackendURL, Config.RemoteBackendTimeout)
+	backend, _ := backendFactory.Create(Config)
 
 	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
 		initialDeviceNamespace,
