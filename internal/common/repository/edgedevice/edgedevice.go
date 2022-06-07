@@ -20,6 +20,7 @@ type Repository interface {
 	Patch(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
 	ListForSelector(ctx context.Context, selector *metav1.LabelSelector, namespace string) ([]v1alpha1.EdgeDevice, error)
 	ListForWorkload(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error)
+	RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error
 	UpdateLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error
 }
 
@@ -76,6 +77,25 @@ func (r CRRepository) ListForWorkload(ctx context.Context, name string, namespac
 	}
 
 	return edl.Items, nil
+}
+
+func (r *CRRepository) RemoveFinalizer(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, finalizer string) error {
+	cp := edgeDevice.DeepCopy()
+
+	var finalizers []string
+	for _, f := range cp.Finalizers {
+		if f != finalizer {
+			finalizers = append(finalizers, f)
+		}
+	}
+	cp.Finalizers = finalizers
+
+	err := r.Patch(ctx, edgeDevice, cp)
+	if err == nil {
+		edgeDevice.Finalizers = cp.Finalizers
+	}
+
+	return nil
 }
 
 func (r *CRRepository) UpdateLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error {

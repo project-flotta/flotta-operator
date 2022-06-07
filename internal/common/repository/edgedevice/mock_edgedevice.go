@@ -125,6 +125,20 @@ func (mr *MockRepositoryMockRecorder) Read(arg0, arg1, arg2 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockRepository)(nil).Read), arg0, arg1, arg2)
 }
 
+// RemoveFinalizer mocks base method.
+func (m *MockRepository) RemoveFinalizer(arg0 context.Context, arg1 *v1alpha1.EdgeDevice, arg2 string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveFinalizer", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveFinalizer indicates an expected call of RemoveFinalizer.
+func (mr *MockRepositoryMockRecorder) RemoveFinalizer(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFinalizer", reflect.TypeOf((*MockRepository)(nil).RemoveFinalizer), arg0, arg1, arg2)
+}
+
 // UpdateLabels mocks base method.
 func (m *MockRepository) UpdateLabels(arg0 context.Context, arg1 *v1alpha1.EdgeDevice, arg2 map[string]string) error {
 	m.ctrl.T.Helper()
