@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -69,6 +70,13 @@ var Config struct {
 
 	// Kubeconfig specifies path to a kubeconfig file if the server is run outside of a cluster
 	Kubeconfig string `envconfig:"KUBECONFIG" default:""`
+
+	// RemoteBackendURL contains URL to a remote data store that should be used instead of the default CRD-based one.
+	// For HTTPS mTLS connections server cert and CA will be used.
+	RemoteBackendURL string `envconfig:"REMOTE_BACKEND_URL" default:""`
+
+	// RemoteBackendTimeout specifies timeout. Has to be parsable to time.Duration
+	RemoteBackendTimeout time.Duration `envconfig:"REMOT_BACKEND_TIMEOUT" default:"5s"`
 }
 
 func init() {
@@ -140,7 +148,14 @@ func main() {
 	}()
 	eventRecorder := broadcaster.NewRecorder(scheme, corev1.EventSource{Component: "flotta-edge-api"})
 
-	backend := factory.Create(initialDeviceNamespace, c, logger, eventRecorder)
+	backendFactory := factory.Factory{
+		InitialDeviceNamespace: initialDeviceNamespace,
+		Logger:                 logger,
+		Client:                 c,
+		EventRecorder:          eventRecorder,
+		TLSConfig:              tlsConfig,
+	}
+	backend, _ := backendFactory.Create(Config.RemoteBackendURL, Config.RemoteBackendTimeout)
 
 	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
 		initialDeviceNamespace,

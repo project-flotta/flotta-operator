@@ -16,6 +16,7 @@ COPY internal/edgeapi internal/edgeapi
 COPY models/ models/
 COPY pkg/ pkg/
 COPY restapi/ restapi/
+COPY backend/ backend/
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -a -o flotta-edge-api main.go
 
