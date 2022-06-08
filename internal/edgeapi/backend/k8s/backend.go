@@ -104,6 +104,10 @@ func (b *backend) Enrol(ctx context.Context, name, namespace string, enrolmentIn
 	return false, b.repository.CreateEdgeDeviceSignedRequest(ctx, edsr)
 }
 
+func (b *backend) GetEdgeDevice(ctx context.Context, name, namespace string) (*v1alpha1.EdgeDevice, error) {
+	return b.repository.GetEdgeDevice(ctx, name, namespace)
+}
+
 func (b *backend) GetTargetNamespace(ctx context.Context, name, identityNamespace string, matchesCertificate bool) (string, error) {
 	logger := b.logger.With("DeviceID", name)
 	namespace := identityNamespace
