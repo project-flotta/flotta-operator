@@ -34,11 +34,6 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
-	"github.com/project-flotta/flotta-operator/internal/common/utils"
-)
-
-const (
-	DeviceFinalizer = "device-finalizer"
 )
 
 // EdgeDeviceReconciler reconciles a EdgeDevice object
@@ -85,10 +80,15 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	}
 
 	if edgeDevice.DeletionTimestamp != nil {
-		if err := r.removeRelatedEDSR(ctx, edgeDevice); err != nil {
+		edsr, err := r.EdgeDeviceSignedRequestRepository.Read(ctx, edgeDevice.Name, r.InitialDeviceNamespace)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				return ctrl.Result{}, nil
+			}
 			return ctrl.Result{Requeue: true}, err
 		}
-		return ctrl.Result{}, r.removeFinalizer(ctx, edgeDevice)
+		err = r.EdgeDeviceSignedRequestRepository.Delete(ctx, edsr)
+		return ctrl.Result{}, err
 	}
 
 	if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice.Spec.Storage) {
@@ -108,27 +108,6 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 	return ctrl.Result{}, nil
-}
-
-func (r *EdgeDeviceReconciler) removeRelatedEDSR(ctx context.Context, edgeDevice *mgmtv1alpha1.EdgeDevice) error {
-	edsr, err := r.EdgeDeviceSignedRequestRepository.Read(ctx, edgeDevice.Name, r.InitialDeviceNamespace)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
-		}
-		return err
-	}
-
-	return r.EdgeDeviceSignedRequestRepository.Delete(ctx, edsr)
-}
-
-func (r *EdgeDeviceReconciler) removeFinalizer(ctx context.Context, edgeDevice *mgmtv1alpha1.EdgeDevice) error {
-	if utils.HasFinalizer(&edgeDevice.ObjectMeta, DeviceFinalizer) {
-		if err := r.EdgeDeviceRepository.RemoveFinalizer(ctx, edgeDevice, DeviceFinalizer); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (r *EdgeDeviceReconciler) createOrGetObc(ctx context.Context, edgeDevice *mgmtv1alpha1.EdgeDevice) (*obv1.ObjectBucketClaim, error) {

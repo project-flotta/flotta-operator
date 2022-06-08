@@ -87,9 +87,6 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 			Labels: map[string]string{
 				v1alpha1.EdgeDeviceSignedRequestLabelName: v1alpha1.EdgeDeviceSignedRequestLabelValue,
 			},
-			Finalizers: []string{
-				DeviceFinalizer,
-			},
 		},
 		Spec: managementv1alpha1.EdgeDeviceSpec{
 			RequestTime: &now,
