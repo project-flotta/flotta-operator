@@ -10,6 +10,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
@@ -108,7 +109,19 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	if err := r.setControllerReference(ctx, edsr, device); err != nil {
+		logger.Error(err, "cannot set edsr controller reference")
+		return ctrl.Result{Requeue: true}, err
+	}
 	return ctrl.Result{}, nil
+}
+
+func (r *EdgeDeviceSignedRequestReconciler) setControllerReference(ctx context.Context, edsr *managementv1alpha1.EdgeDeviceSignedRequest, device *managementv1alpha1.EdgeDevice) error {
+	edsrCopy := edsr.DeepCopy()
+	if err := controllerutil.SetControllerReference(device, edsr, r.Scheme); err != nil {
+		return err
+	}
+	return r.EdgedeviceSignedRequestRepository.Patch(ctx, edsrCopy, edsr)
 }
 
 func (r *EdgeDeviceSignedRequestReconciler) markStatusPending(ctx context.Context, edsr *v1alpha1.EdgeDeviceSignedRequest) error {

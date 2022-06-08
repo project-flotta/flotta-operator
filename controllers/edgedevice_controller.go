@@ -79,18 +79,6 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if edgeDevice.DeletionTimestamp != nil {
-		edsr, err := r.EdgeDeviceSignedRequestRepository.Read(ctx, edgeDevice.Name, r.InitialDeviceNamespace)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return ctrl.Result{}, nil
-			}
-			return ctrl.Result{Requeue: true}, err
-		}
-		err = r.EdgeDeviceSignedRequestRepository.Delete(ctx, edsr)
-		return ctrl.Result{}, err
-	}
-
 	if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice.Spec.Storage) {
 		return ctrl.Result{}, nil
 	}
