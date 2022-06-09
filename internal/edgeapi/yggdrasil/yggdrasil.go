@@ -15,9 +15,9 @@ import (
 
 	"github.com/project-flotta/flotta-operator/internal/common/labels"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
-	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
-	"github.com/project-flotta/flotta-operator/internal/common/utils"
+	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	apioperations "github.com/project-flotta/flotta-operator/restapi/operations"
@@ -33,25 +33,32 @@ const (
 )
 
 type Handler struct {
-	backend          backendapi.EdgeDeviceBackend
-	playbookExecutionRepository       playbookexecution.Repository
-	initialNamespace string
-	metrics          metrics.Metrics
-	heartbeatHandler *RetryingDelegatingHandler
-	mtlsConfig       *mtls.TLSConfig
-	logger           *zap.SugaredLogger
+	backend                     backendapi.EdgeDeviceBackend
+	initialNamespace            string
+	metrics                     metrics.Metrics
+	heartbeatHandler            *RetryingDelegatingHandler
+	mtlsConfig                  *mtls.TLSConfig
+	edgeDeviceRepository        edgedevice.Repository
+	playbookExecutionRepository playbookexecution.Repository
+	logger                      *zap.SugaredLogger
 }
 
-func NewYggdrasilHandler(initialNamespace string, metrics metrics.Metrics, mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger,
-	backend backendapi.EdgeDeviceBackend) *Handler {
+func NewYggdrasilHandler(
+	initialNamespace string,
+	metrics metrics.Metrics,
+	mtlsConfig *mtls.TLSConfig,
+	logger *zap.SugaredLogger,
+	backend backendapi.EdgeDeviceBackend,
+	edgeDeviceRepository edgedevice.Repository,
+	playbookExecutionRepository playbookexecution.Repository) *Handler {
 	return &Handler{
-		playbookExecutionRepository:       playbookExecutionRepository,
-		initialNamespace: initialNamespace,
-		metrics:          metrics,
-		heartbeatHandler: NewRetryingDelegatingHandler(backend),
-		mtlsConfig:       mtlsConfig,
-		logger:           logger,
-		backend:          backend,
+		initialNamespace:     initialNamespace,
+		metrics:              metrics,
+		heartbeatHandler:     NewRetryingDelegatingHandler(backend),
+		mtlsConfig:           mtlsConfig,
+		edgeDeviceRepository: edgeDeviceRepository,
+		logger:               logger,
+		backend:              backend,
 	}
 }
 
@@ -269,7 +276,9 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		h.metrics.IncEdgeDeviceSuccessfulRegistration()
 		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 	case "ansible":
-		edgeDevice, err := h.deviceRepository.Read(ctx, deviceID, h.getNamespace(ctx))
+		ns := h.getNamespace(ctx)
+
+		edgeDevice, err := h.edgeDeviceRepository.Read(ctx, deviceID, ns)
 		if err != nil {
 			if !errors.IsNotFound(err) {
 				h.metrics.IncEdgeDeviceFailedRegistration()
@@ -291,6 +300,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				if playbookExecution == nil {
 					return operations.NewGetDataMessageForDeviceInternalServerError()
 				}
+
 				message := models.Message{
 					Type:      models.MessageTypeData,
 					Metadata:  map[string]string{"ansible-playbook": "true"},
