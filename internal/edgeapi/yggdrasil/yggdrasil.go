@@ -13,7 +13,10 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/project-flotta/flotta-operator/internal/common/labels"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
 	backendapi "github.com/project-flotta/flotta-operator/internal/edgeapi/backend"
 	"github.com/project-flotta/flotta-operator/models"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
@@ -30,23 +33,32 @@ const (
 )
 
 type Handler struct {
-	backend          backendapi.EdgeDeviceBackend
-	initialNamespace string
-	metrics          metrics.Metrics
-	heartbeatHandler *RetryingDelegatingHandler
-	mtlsConfig       *mtls.TLSConfig
-	logger           *zap.SugaredLogger
+	backend                     backendapi.EdgeDeviceBackend
+	initialNamespace            string
+	metrics                     metrics.Metrics
+	heartbeatHandler            *RetryingDelegatingHandler
+	mtlsConfig                  *mtls.TLSConfig
+	edgeDeviceRepository        edgedevice.Repository
+	playbookExecutionRepository playbookexecution.Repository
+	logger                      *zap.SugaredLogger
 }
 
-func NewYggdrasilHandler(initialNamespace string, metrics metrics.Metrics, mtlsConfig *mtls.TLSConfig, logger *zap.SugaredLogger,
-	backend backendapi.EdgeDeviceBackend) *Handler {
+func NewYggdrasilHandler(
+	initialNamespace string,
+	metrics metrics.Metrics,
+	mtlsConfig *mtls.TLSConfig,
+	logger *zap.SugaredLogger,
+	backend backendapi.EdgeDeviceBackend,
+	edgeDeviceRepository edgedevice.Repository,
+	playbookExecutionRepository playbookexecution.Repository) *Handler {
 	return &Handler{
-		initialNamespace: initialNamespace,
-		metrics:          metrics,
-		heartbeatHandler: NewRetryingDelegatingHandler(backend),
-		mtlsConfig:       mtlsConfig,
-		logger:           logger,
-		backend:          backend,
+		initialNamespace:     initialNamespace,
+		metrics:              metrics,
+		heartbeatHandler:     NewRetryingDelegatingHandler(backend),
+		mtlsConfig:           mtlsConfig,
+		edgeDeviceRepository: edgeDeviceRepository,
+		logger:               logger,
+		backend:              backend,
 	}
 }
 
@@ -263,6 +275,44 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		h.metrics.IncEdgeDeviceSuccessfulRegistration()
 		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
+	case "ansible":
+		ns := h.getNamespace(ctx)
+
+		edgeDevice, err := h.edgeDeviceRepository.Read(ctx, deviceID, ns)
+		if err != nil {
+			if !errors.IsNotFound(err) {
+				h.metrics.IncEdgeDeviceFailedRegistration()
+				return operations.NewPostDataMessageForDeviceInternalServerError()
+			}
+			return operations.NewPostDataMessageForDeviceNotFound()
+		}
+
+		for labelName, labelValue := range edgeDevice.ObjectMeta.Labels {
+			if labels.IsConfigLabel(labelName) { //FIXME: what if the are multiple config labels?
+
+				playbookExecution, err := h.playbookExecutionRepository.Read(ctx, labelValue, h.getNamespace(ctx))
+				if err != nil {
+					if errors.IsNotFound(err) {
+						return operations.NewGetDataMessageForDeviceNotFound()
+					}
+					return operations.NewGetDataMessageForDeviceInternalServerError()
+				}
+				if playbookExecution == nil {
+					return operations.NewGetDataMessageForDeviceInternalServerError()
+				}
+
+				message := models.Message{
+					Type:      models.MessageTypeData,
+					Metadata:  map[string]string{"ansible-playbook": "true"},
+					Directive: "ansible",
+					MessageID: uuid.New().String(),
+					Version:   1,
+					Sent:      strfmt.DateTime(time.Now()),
+					Content:   playbookExecution,
+				}
+				return operations.NewGetDataMessageForDeviceOK().WithPayload(&message)
+			}
+		}
 	default:
 		logger.Info("received unknown message", "message", msg)
 		return operations.NewPostDataMessageForDeviceBadRequest()

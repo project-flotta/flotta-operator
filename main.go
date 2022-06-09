@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+
 	"io/ioutil"
 	"log"
 	"os"
@@ -25,15 +26,18 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"github.com/project-flotta/flotta-operator/internal/operator/informers"
 	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
-	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -41,9 +45,6 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/controllers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -53,6 +54,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -94,6 +99,9 @@ var Config struct {
 
 	// Number of concurrent goroutines to create for handling EdgeWorkload reconcile
 	EdgeWorkloadConcurrency uint `envconfig:"EDGEWORKLOAD_CONCURRENCY" default:"5"`
+
+	// Number of concurrent goroutines to create for handling EdgeConfig reconcile
+	EdgeConfigConcurrency uint `envconfig:"EDGECONFIG_CONCURRENCY" default:"5"`
 
 	// MaxConcurrentReconciles is the maximum number of concurrent Reconciles which can be run
 	MaxConcurrentReconciles uint `envconfig:"MAX_CONCURRENT_RECONCILES" default:"3"`
@@ -222,6 +230,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	edgeConfigRepository := edgeconfig.NewEdgeConfigRepository(mgr.GetClient())
+	playbookExecutionRepository := playbookexecution.NewPlaybookExecutionRepository(mgr.GetClient())
+
+	if err = (&controllers.EdgeConfigReconciler{
+		Client:                      mgr.GetClient(),
+		Scheme:                      mgr.GetScheme(),
+		EdgeConfigRepository:        edgeConfigRepository,
+		EdgeDeviceRepository:        edgeDeviceRepository,
+		PlaybookExecutionRepository: playbookExecutionRepository,
+		Concurrency:                 Config.EdgeConfigConcurrency,
+		ExecuteConcurrent:           controllers.ExecuteConcurrent,
+		MaxConcurrentReconciles:     int(Config.MaxConcurrentReconciles),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "EdgeConfig")
+		os.Exit(1)
+	}
+
 	// webhooks
 	if Config.EnableWebhooks {
 		if err = (&v1alpha1.EdgeWorkload{}).SetupWebhookWithManager(mgr); err != nil {
@@ -230,6 +255,15 @@ func main() {
 		}
 	}
 
+	if err = (&controllers.PlaybookExecutionReconciler{
+		Client:                      mgr.GetClient(),
+		Scheme:                      mgr.GetScheme(),
+		EdgeDeviceRepository:        edgeDeviceRepository,
+		PlaybookExecutionRepository: playbookExecutionRepository,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "PlaybookExecution")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -285,6 +319,11 @@ func addIndexersToCache(mgr manager.Manager) {
 	err = mgr.GetFieldIndexer().IndexField(ctx, &managementv1alpha1.EdgeWorkload{}, indexer.WorkloadByDeviceIndexKey, indexer.WorkloadByDeviceIndexFunc)
 	if err != nil {
 		setupLog.Error(err, "Failed to create indexer for EdgeWorkload")
+		os.Exit(1)
+	}
+	err = mgr.GetFieldIndexer().IndexField(ctx, &managementv1alpha1.EdgeDevice{}, indexer.DeviceByConfigIndexKey, indexer.DeviceByConfigIndexFunc)
+	if err != nil {
+		setupLog.Error(err, "Failed to create indexer for EdgeConfig")
 		os.Exit(1)
 	}
 }

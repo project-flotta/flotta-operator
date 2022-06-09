@@ -9,6 +9,7 @@ const (
 	DoesNotExistLabel   = "doesnotexist"
 	WorkloadLabelPrefix = "workload/"
 	SelectorLabelPrefix = "selector/"
+	ConfigLabelPrefix   = "config/"
 )
 
 func WorkloadLabel(workloadName string) string {
@@ -21,6 +22,10 @@ func IsWorkloadLabel(label string) bool {
 
 func IsSelectorLabel(label string) bool {
 	return strings.HasPrefix(label, SelectorLabelPrefix)
+}
+
+func IsConfigLabel(label string) bool {
+	return strings.HasPrefix(label, ConfigLabelPrefix)
 }
 
 func CreateSelectorLabel(label string) string {

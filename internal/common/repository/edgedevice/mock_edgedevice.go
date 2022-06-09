@@ -52,6 +52,21 @@ func (mr *MockRepositoryMockRecorder) Create(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), arg0, arg1)
 }
 
+// ListForEdgeConfig mocks base method.
+func (m *MockRepository) ListForEdgeConfig(arg0 context.Context, arg1, arg2 string) ([]v1alpha1.EdgeDevice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListForEdgeConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]v1alpha1.EdgeDevice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListForEdgeConfig indicates an expected call of ListForEdgeConfig.
+func (mr *MockRepositoryMockRecorder) ListForEdgeConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListForEdgeConfig", reflect.TypeOf((*MockRepository)(nil).ListForEdgeConfig), arg0, arg1, arg2)
+}
+
 // ListForSelector mocks base method.
 func (m *MockRepository) ListForSelector(arg0 context.Context, arg1 *v1.LabelSelector, arg2 string) ([]v1alpha1.EdgeDevice, error) {
 	m.ctrl.T.Helper()
@@ -123,6 +138,21 @@ func (m *MockRepository) Read(arg0 context.Context, arg1, arg2 string) (*v1alpha
 func (mr *MockRepositoryMockRecorder) Read(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockRepository)(nil).Read), arg0, arg1, arg2)
+}
+
+// ReadForPlaybookExecution mocks base method.
+func (m *MockRepository) ReadForPlaybookExecution(arg0 context.Context, arg1, arg2 string) (*v1alpha1.EdgeDevice, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReadForPlaybookExecution", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*v1alpha1.EdgeDevice)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ReadForPlaybookExecution indicates an expected call of ReadForPlaybookExecution.
+func (mr *MockRepositoryMockRecorder) ReadForPlaybookExecution(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReadForPlaybookExecution", reflect.TypeOf((*MockRepository)(nil).ReadForPlaybookExecution), arg0, arg1, arg2)
 }
 
 // RemoveFinalizer mocks base method.
