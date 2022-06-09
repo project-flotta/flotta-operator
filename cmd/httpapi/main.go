@@ -30,9 +30,10 @@ import (
 
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/backend/factory"
-	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/yggdrasil"
 	"github.com/project-flotta/flotta-operator/pkg/mtls"
 	"github.com/project-flotta/flotta-operator/restapi"
@@ -106,6 +107,8 @@ func main() {
 	}
 
 	playbookExecutionRepository := playbookexecution.NewPlaybookExecutionRepository(c)
+	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(c)
+
 	metricsObj := metrics.New()
 
 	corev1Client, err := corev1client.NewForConfig(clientConfig)
@@ -130,12 +133,13 @@ func main() {
 	backend, _ := backendFactory.Create(Config)
 
 	yggdrasilAPIHandler := yggdrasil.NewYggdrasilHandler(
-		playbookExecutionRepository,
 		initialDeviceNamespace,
 		metricsObj,
 		mtlsConfig,
 		logger,
 		backend,
+		edgeDeviceRepository,
+		playbookExecutionRepository,
 	)
 
 	var api *operations.FlottaManagementAPI
