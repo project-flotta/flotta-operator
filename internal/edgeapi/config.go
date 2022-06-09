@@ -34,5 +34,5 @@ type Config struct {
 	RemoteBackendURL string `envconfig:"REMOTE_BACKEND_URL" default:""`
 
 	// RemoteBackendTimeout specifies timeout. Has to be parsable to time.Duration
-	RemoteBackendTimeout time.Duration `envconfig:"REMOT_BACKEND_TIMEOUT" default:"5s"`
+	RemoteBackendTimeout time.Duration `envconfig:"REMOTE_BACKEND_TIMEOUT" default:"5s"`
 }
