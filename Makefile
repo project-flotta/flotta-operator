@@ -152,20 +152,20 @@ pre-build: ## Generate code, format it and organize imports before executing bui
 pre-build: generate fmt imports vet
 
 build: pre-build ## Build manager binary.
-	go build -mod=vendor -o bin/manager main.go
+	go build -mod=vendor -o bin/manager cmd/manager/main.go
 
 fast-build: generate ## Fast build manager binary for local dev.
-	go build -mod=vendor -o bin/manager main.go
+	go build -mod=vendor -o bin/manager cmd/manager/main.go
 
 run: manifests pre-build ## Run a controller from your host.
 	$(Q) kubectl create ns $(FLOTTA_OPERATOR_NAMESPACE) 2> /dev/null || exit 0
-	OBC_AUTO_CREATE=false ENABLE_WEBHOOKS=false LOG_LEVEL=debug go run -mod=vendor ./main.go
+	OBC_AUTO_CREATE=false ENABLE_WEBHOOKS=false LOG_LEVEL=debug go run -mod=vendor cmd/manager/main.go
 
 http-api-run: ## Run HTTP API in localhost
 	METRICS_ADDR=":8089" go run cmd/httpapi/main.go
 
 docker-build: ## Build docker image with the manager.
-	$(DOCKER) build -t ${IMG} .
+	$(DOCKER) build -f build/manager/Dockerfile -t ${IMG} .
 	$(DOCKER) build -f build/httpapi/Dockerfile -t ${HTTP_IMG} .
 
 
