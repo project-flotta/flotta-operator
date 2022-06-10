@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/kelseyhightower/envconfig"
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
@@ -170,9 +171,10 @@ func main() {
 	}
 
 	server := &http.Server{
-		Addr:      fmt.Sprintf(":%v", Config.HttpsPort),
-		TLSConfig: tlsConfig,
-		Handler:   handler,
+		Addr:              fmt.Sprintf(":%v", Config.HttpsPort),
+		TLSConfig:         tlsConfig,
+		Handler:           handler,
+		ReadHeaderTimeout: 32 * time.Second,
 	}
 	go func() {
 		logger.Fatal(server.ListenAndServeTLS("", ""))
