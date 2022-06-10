@@ -228,6 +228,24 @@ func init() {
         }
       }
     },
+    "component-metrics-configuration": {
+      "description": "Device component's metrics gathering configuration. Used by the system (aka node-exporter) and data transfer services.",
+      "type": "object",
+      "properties": {
+        "allow_list": {
+          "$ref": "#/definitions/metrics-allow-list"
+        },
+        "disabled": {
+          "description": "When true, turns metrics collection off. False by default.",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "Interval(in seconds) to scrape metrics endpoint.",
+          "type": "integer",
+          "format": "int32"
+        }
+      }
+    },
     "configmap-list": {
       "description": "List of configmaps used by the workload",
       "type": "array",
@@ -828,6 +846,9 @@ func init() {
       "description": "Defines metrics configuration for the device",
       "type": "object",
       "properties": {
+        "data-transfer": {
+          "$ref": "#/definitions/component-metrics-configuration"
+        },
         "receiver": {
           "$ref": "#/definitions/metrics-receiver-configuration"
         },
@@ -835,7 +856,7 @@ func init() {
           "$ref": "#/definitions/metrics-retention"
         },
         "system": {
-          "$ref": "#/definitions/system-metrics-configuration"
+          "$ref": "#/definitions/component-metrics-configuration"
         }
       }
     },
@@ -984,24 +1005,6 @@ func init() {
       "properties": {
         "s3": {
           "$ref": "#/definitions/s3-storage-configuration"
-        }
-      }
-    },
-    "system-metrics-configuration": {
-      "description": "System metrics gathering configuration",
-      "type": "object",
-      "properties": {
-        "allow_list": {
-          "$ref": "#/definitions/metrics-allow-list"
-        },
-        "disabled": {
-          "description": "When true, turns system metrics collection off. False by default.",
-          "type": "boolean"
-        },
-        "interval": {
-          "description": "Interval(in seconds) to scrape metrics endpoint.",
-          "type": "integer",
-          "format": "int32"
         }
       }
     },
@@ -1358,6 +1361,24 @@ func init() {
         },
         "pxe_interface": {
           "type": "string"
+        }
+      }
+    },
+    "component-metrics-configuration": {
+      "description": "Device component's metrics gathering configuration. Used by the system (aka node-exporter) and data transfer services.",
+      "type": "object",
+      "properties": {
+        "allow_list": {
+          "$ref": "#/definitions/metrics-allow-list"
+        },
+        "disabled": {
+          "description": "When true, turns metrics collection off. False by default.",
+          "type": "boolean"
+        },
+        "interval": {
+          "description": "Interval(in seconds) to scrape metrics endpoint.",
+          "type": "integer",
+          "format": "int32"
         }
       }
     },
@@ -1962,6 +1983,9 @@ func init() {
       "description": "Defines metrics configuration for the device",
       "type": "object",
       "properties": {
+        "data-transfer": {
+          "$ref": "#/definitions/component-metrics-configuration"
+        },
         "receiver": {
           "$ref": "#/definitions/metrics-receiver-configuration"
         },
@@ -1969,7 +1993,7 @@ func init() {
           "$ref": "#/definitions/metrics-retention"
         },
         "system": {
-          "$ref": "#/definitions/system-metrics-configuration"
+          "$ref": "#/definitions/component-metrics-configuration"
         }
       }
     },
@@ -2118,24 +2142,6 @@ func init() {
       "properties": {
         "s3": {
           "$ref": "#/definitions/s3-storage-configuration"
-        }
-      }
-    },
-    "system-metrics-configuration": {
-      "description": "System metrics gathering configuration",
-      "type": "object",
-      "properties": {
-        "allow_list": {
-          "$ref": "#/definitions/metrics-allow-list"
-        },
-        "disabled": {
-          "description": "When true, turns system metrics collection off. False by default.",
-          "type": "boolean"
-        },
-        "interval": {
-          "description": "Interval(in seconds) to scrape metrics endpoint.",
-          "type": "integer",
-          "format": "int32"
         }
       }
     },

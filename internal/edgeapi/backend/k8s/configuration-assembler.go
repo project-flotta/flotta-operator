@@ -219,7 +219,7 @@ func (a *ConfigurationAssembler) getDeviceMetricsConfiguration(ctx context.Conte
 
 	systemMetrics := metricsConfigSpec.SystemMetrics
 	if systemMetrics != nil {
-		metricsConfig.System = &models.SystemMetricsConfiguration{
+		metricsConfig.System = &models.ComponentMetricsConfiguration{
 			Interval: systemMetrics.Interval,
 			Disabled: systemMetrics.Disabled,
 		}
@@ -231,6 +231,22 @@ func (a *ConfigurationAssembler) getDeviceMetricsConfiguration(ctx context.Conte
 				return nil, err
 			}
 			metricsConfig.System.AllowList = allowList
+		}
+	}
+	dataTransferMetrics := metricsConfigSpec.DataTransferMetrics
+	if dataTransferMetrics != nil {
+		metricsConfig.DataTransfer = &models.ComponentMetricsConfiguration{
+			Interval: dataTransferMetrics.Interval,
+			Disabled: dataTransferMetrics.Disabled,
+		}
+
+		allowListSpec := dataTransferMetrics.AllowList
+		if allowListSpec != nil {
+			allowList, err := a.allowLists.GenerateFromConfigMap(ctx, allowListSpec.Name, edgeDevice.Namespace)
+			if err != nil {
+				return nil, err
+			}
+			metricsConfig.DataTransfer.AllowList = allowList
 		}
 	}
 

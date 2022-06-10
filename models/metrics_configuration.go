@@ -18,6 +18,9 @@ import (
 // swagger:model metrics-configuration
 type MetricsConfiguration struct {
 
+	// data transfer
+	DataTransfer *ComponentMetricsConfiguration `json:"data-transfer,omitempty"`
+
 	// receiver
 	Receiver *MetricsReceiverConfiguration `json:"receiver,omitempty"`
 
@@ -25,12 +28,16 @@ type MetricsConfiguration struct {
 	Retention *MetricsRetention `json:"retention,omitempty"`
 
 	// system
-	System *SystemMetricsConfiguration `json:"system,omitempty"`
+	System *ComponentMetricsConfiguration `json:"system,omitempty"`
 }
 
 // Validate validates this metrics configuration
 func (m *MetricsConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateDataTransfer(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateReceiver(formats); err != nil {
 		res = append(res, err)
@@ -47,6 +54,25 @@ func (m *MetricsConfiguration) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *MetricsConfiguration) validateDataTransfer(formats strfmt.Registry) error {
+	if swag.IsZero(m.DataTransfer) { // not required
+		return nil
+	}
+
+	if m.DataTransfer != nil {
+		if err := m.DataTransfer.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("data-transfer")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("data-transfer")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -111,6 +137,10 @@ func (m *MetricsConfiguration) validateSystem(formats strfmt.Registry) error {
 func (m *MetricsConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateDataTransfer(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateReceiver(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -126,6 +156,22 @@ func (m *MetricsConfiguration) ContextValidate(ctx context.Context, formats strf
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *MetricsConfiguration) contextValidateDataTransfer(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.DataTransfer != nil {
+		if err := m.DataTransfer.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("data-transfer")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("data-transfer")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

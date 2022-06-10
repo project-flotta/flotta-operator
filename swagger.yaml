@@ -285,7 +285,9 @@ definitions:
       retention:
         $ref: '#/definitions/metrics-retention'
       system:
-        $ref: '#/definitions/system-metrics-configuration'
+        $ref: '#/definitions/component-metrics-configuration'
+      data-transfer:
+        $ref: '#/definitions/component-metrics-configuration'        
       receiver:
         $ref: '#/definitions/metrics-receiver-configuration'
 
@@ -302,8 +304,8 @@ definitions:
         type: integer
         format: int32
 
-  system-metrics-configuration:
-    description: System metrics gathering configuration
+  component-metrics-configuration:
+    description: Device component's metrics gathering configuration. Used by the system (aka node-exporter) and data transfer services.
     type: object
     properties:
       interval:
@@ -313,7 +315,7 @@ definitions:
       allow_list:
         $ref: '#/definitions/metrics-allow-list'
       disabled:
-        description: When true, turns system metrics collection off. False by default.
+        description: When true, turns metrics collection off. False by default.
         type: boolean
 
   metrics-allow-list:

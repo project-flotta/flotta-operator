@@ -13,23 +13,23 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// SystemMetricsConfiguration System metrics gathering configuration
+// ComponentMetricsConfiguration Device component's metrics gathering configuration. Used by the system (aka node-exporter) and data transfer services.
 //
-// swagger:model system-metrics-configuration
-type SystemMetricsConfiguration struct {
+// swagger:model component-metrics-configuration
+type ComponentMetricsConfiguration struct {
 
 	// allow list
 	AllowList *MetricsAllowList `json:"allow_list,omitempty"`
 
-	// When true, turns system metrics collection off. False by default.
+	// When true, turns metrics collection off. False by default.
 	Disabled bool `json:"disabled,omitempty"`
 
 	// Interval(in seconds) to scrape metrics endpoint.
 	Interval int32 `json:"interval,omitempty"`
 }
 
-// Validate validates this system metrics configuration
-func (m *SystemMetricsConfiguration) Validate(formats strfmt.Registry) error {
+// Validate validates this component metrics configuration
+func (m *ComponentMetricsConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateAllowList(formats); err != nil {
@@ -42,7 +42,7 @@ func (m *SystemMetricsConfiguration) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *SystemMetricsConfiguration) validateAllowList(formats strfmt.Registry) error {
+func (m *ComponentMetricsConfiguration) validateAllowList(formats strfmt.Registry) error {
 	if swag.IsZero(m.AllowList) { // not required
 		return nil
 	}
@@ -61,8 +61,8 @@ func (m *SystemMetricsConfiguration) validateAllowList(formats strfmt.Registry) 
 	return nil
 }
 
-// ContextValidate validate this system metrics configuration based on the context it is used
-func (m *SystemMetricsConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validate this component metrics configuration based on the context it is used
+func (m *ComponentMetricsConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.contextValidateAllowList(ctx, formats); err != nil {
@@ -75,7 +75,7 @@ func (m *SystemMetricsConfiguration) ContextValidate(ctx context.Context, format
 	return nil
 }
 
-func (m *SystemMetricsConfiguration) contextValidateAllowList(ctx context.Context, formats strfmt.Registry) error {
+func (m *ComponentMetricsConfiguration) contextValidateAllowList(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.AllowList != nil {
 		if err := m.AllowList.ContextValidate(ctx, formats); err != nil {
@@ -92,7 +92,7 @@ func (m *SystemMetricsConfiguration) contextValidateAllowList(ctx context.Contex
 }
 
 // MarshalBinary interface implementation
-func (m *SystemMetricsConfiguration) MarshalBinary() ([]byte, error) {
+func (m *ComponentMetricsConfiguration) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -100,8 +100,8 @@ func (m *SystemMetricsConfiguration) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *SystemMetricsConfiguration) UnmarshalBinary(b []byte) error {
-	var res SystemMetricsConfiguration
+func (m *ComponentMetricsConfiguration) UnmarshalBinary(b []byte) error {
+	var res ComponentMetricsConfiguration
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
