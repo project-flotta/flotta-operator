@@ -9,7 +9,7 @@ COPY go.sum go.sum
 COPY vendor/ vendor/
 
 # Copy the go source
-COPY main.go main.go
+COPY cmd/manager/main.go main.go
 COPY api/ api/
 COPY controllers/ controllers/
 COPY internal/common internal/common
