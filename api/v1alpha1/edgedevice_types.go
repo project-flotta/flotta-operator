@@ -38,6 +38,7 @@ type EdgeDeviceSpec struct {
 	Storage       *Storage                        `json:"storage,omitempty"`
 	Metrics       *MetricsConfiguration           `json:"metrics,omitempty"`
 	LogCollection map[string]*LogCollectionConfig `json:"logCollection,omitempty"`
+	Mounts        []*Mount                        `json:"mounts,omitempty"`
 }
 
 type MetricsReceiverConfiguration struct {
@@ -197,6 +198,9 @@ type Hardware struct {
 
 	// list of devices present on the edgedevice
 	HostDevices []*HostDevice `json:"hostDevices,omitempty"`
+
+	// list of all mounts found on edgedevice
+	Mounts []*Mount `json:"mounts,omitempty"`
 }
 
 type Boot struct {
@@ -400,6 +404,20 @@ type HostDevice struct {
 
 	// Minor ID identifying the instance of the device in the class
 	Minor uint32 `json:"minor,omitempty"`
+}
+
+type Mount struct {
+	// Device path to be mounted
+	Device string `json:"device,omitempty"`
+
+	// Destination directory path
+	Directory string `json:"folder,omitempty"`
+
+	// Mount type: (i.e ext4)
+	Type string `json:"type,omitempty"`
+
+	// Mount options (i.e. rw, suid, dev)
+	Options string `json:"options,omitempty"`
 }
 
 //+kubebuilder:object:root=true

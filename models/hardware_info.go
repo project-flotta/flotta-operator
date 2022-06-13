@@ -43,6 +43,9 @@ type HardwareInfo struct {
 	// memory
 	Memory *Memory `json:"memory,omitempty"`
 
+	// mounts
+	Mounts []*Mount `json:"mounts"`
+
 	// system vendor
 	SystemVendor *SystemVendor `json:"system_vendor,omitempty"`
 }
@@ -76,6 +79,10 @@ func (m *HardwareInfo) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMemory(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMounts(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -250,6 +257,32 @@ func (m *HardwareInfo) validateMemory(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *HardwareInfo) validateMounts(formats strfmt.Registry) error {
+	if swag.IsZero(m.Mounts) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Mounts); i++ {
+		if swag.IsZero(m.Mounts[i]) { // not required
+			continue
+		}
+
+		if m.Mounts[i] != nil {
+			if err := m.Mounts[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("mounts" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("mounts" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *HardwareInfo) validateSystemVendor(formats strfmt.Registry) error {
 	if swag.IsZero(m.SystemVendor) { // not required
 		return nil
@@ -298,6 +331,10 @@ func (m *HardwareInfo) ContextValidate(ctx context.Context, formats strfmt.Regis
 	}
 
 	if err := m.contextValidateMemory(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateMounts(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -434,6 +471,26 @@ func (m *HardwareInfo) contextValidateMemory(ctx context.Context, formats strfmt
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *HardwareInfo) contextValidateMounts(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Mounts); i++ {
+
+		if m.Mounts[i] != nil {
+			if err := m.Mounts[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("mounts" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("mounts" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

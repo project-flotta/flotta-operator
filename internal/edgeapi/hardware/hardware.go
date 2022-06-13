@@ -102,6 +102,20 @@ func MapHardware(hardware *models.HardwareInfo) *v1alpha1.Hardware {
 			Virtual:      systemVendor.Virtual,
 		}
 	}
+
+	hw.Mounts = make([]*v1alpha1.Mount, 0, len(hardware.Mounts))
+	for _, m := range hardware.Mounts {
+		mount := *m
+		mm := &v1alpha1.Mount{
+			Device:    mount.Device,
+			Directory: mount.Directory,
+			Type:      mount.Type,
+			Options:   mount.Options,
+		}
+
+		hw.Mounts = append(hw.Mounts, mm)
+	}
+
 	return &hw
 }
 

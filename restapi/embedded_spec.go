@@ -324,6 +324,12 @@ func init() {
         "metrics": {
           "$ref": "#/definitions/metrics-configuration"
         },
+        "mounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/mount"
+          }
+        },
         "os": {
           "$ref": "#/definitions/os-information"
         },
@@ -523,6 +529,12 @@ func init() {
         },
         "memory": {
           "$ref": "#/definitions/memory"
+        },
+        "mounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/mount"
+          }
         },
         "system_vendor": {
           "$ref": "#/definitions/system_vendor"
@@ -857,6 +869,27 @@ func init() {
           "description": "Maximum size of metrics stored on disk",
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "mount": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "description": "path of the device to be mounted",
+          "type": "string"
+        },
+        "directory": {
+          "description": "destination directory",
+          "type": "string"
+        },
+        "options": {
+          "description": "mount options",
+          "type": "string"
+        },
+        "type": {
+          "description": "type of the mount",
+          "type": "string"
         }
       }
     },
@@ -1424,6 +1457,12 @@ func init() {
         "metrics": {
           "$ref": "#/definitions/metrics-configuration"
         },
+        "mounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/mount"
+          }
+        },
         "os": {
           "$ref": "#/definitions/os-information"
         },
@@ -1624,6 +1663,12 @@ func init() {
         },
         "memory": {
           "$ref": "#/definitions/memory"
+        },
+        "mounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/mount"
+          }
         },
         "system_vendor": {
           "$ref": "#/definitions/system_vendor"
@@ -1958,6 +2003,27 @@ func init() {
           "description": "Maximum size of metrics stored on disk",
           "type": "integer",
           "format": "int32"
+        }
+      }
+    },
+    "mount": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "description": "path of the device to be mounted",
+          "type": "string"
+        },
+        "directory": {
+          "description": "destination directory",
+          "type": "string"
+        },
+        "options": {
+          "description": "mount options",
+          "type": "string"
+        },
+        "type": {
+          "description": "type of the mount",
+          "type": "string"
         }
       }
     },

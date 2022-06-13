@@ -186,6 +186,10 @@ definitions:
         type: object
         additionalProperties:
           $ref: '#/definitions/logs-collection-information'
+      mounts:
+        type: array
+        items:
+          $ref: '#/definitions/mount'
 
   metrics-receiver-configuration:
     type: object
@@ -506,6 +510,10 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/host_device'
+      mounts:
+        type: array
+        items:
+          $ref: '#/definitions/mount'
 
   interface:
     type: object
@@ -674,6 +682,22 @@ definitions:
       minor:
         description: Minor of the device
         type: integer
+
+  mount:
+    type: object
+    properties:
+      device:
+        description: path of the device to be mounted
+        type: string
+      directory:
+        description: destination directory
+        type: string
+      type:
+        description: type of the mount
+        type: string
+      options:
+        description: mount options
+        type: string
 
   heartbeat:
     type: object
