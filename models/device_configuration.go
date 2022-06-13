@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -28,6 +29,9 @@ type DeviceConfiguration struct {
 	// metrics
 	Metrics *MetricsConfiguration `json:"metrics,omitempty"`
 
+	// mounts
+	Mounts []*Mount `json:"mounts"`
+
 	// os
 	Os *OsInformation `json:"os,omitempty"`
 
@@ -48,6 +52,10 @@ func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMetrics(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMounts(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -129,6 +137,32 @@ func (m *DeviceConfiguration) validateMetrics(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *DeviceConfiguration) validateMounts(formats strfmt.Registry) error {
+	if swag.IsZero(m.Mounts) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Mounts); i++ {
+		if swag.IsZero(m.Mounts[i]) { // not required
+			continue
+		}
+
+		if m.Mounts[i] != nil {
+			if err := m.Mounts[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("mounts" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("mounts" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *DeviceConfiguration) validateOs(formats strfmt.Registry) error {
 	if swag.IsZero(m.Os) { // not required
 		return nil
@@ -180,6 +214,10 @@ func (m *DeviceConfiguration) ContextValidate(ctx context.Context, formats strfm
 	}
 
 	if err := m.contextValidateMetrics(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateMounts(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -239,6 +277,26 @@ func (m *DeviceConfiguration) contextValidateMetrics(ctx context.Context, format
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *DeviceConfiguration) contextValidateMounts(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Mounts); i++ {
+
+		if m.Mounts[i] != nil {
+			if err := m.Mounts[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("mounts" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("mounts" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

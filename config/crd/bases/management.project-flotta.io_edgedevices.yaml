@@ -131,6 +131,23 @@ spec:
                         type: integer
                     type: object
                 type: object
+              mounts:
+                items:
+                  properties:
+                    device:
+                      description: Device path to be mounted
+                      type: string
+                    folder:
+                      description: Destination directory path
+                      type: string
+                    options:
+                      description: Mount options (i.e. rw, suid, dev)
+                      type: string
+                    type:
+                      description: 'Mount type: (i.e ext4)'
+                      type: string
+                  type: object
+                type: array
               osInformation:
                 description: OsInformation carries information about commit ID of
                   the OS Image deployed to the device
@@ -393,6 +410,24 @@ spec:
                         format: int64
                         type: integer
                     type: object
+                  mounts:
+                    description: list of all mounts found on edgedevice
+                    items:
+                      properties:
+                        device:
+                          description: Device path to be mounted
+                          type: string
+                        folder:
+                          description: Destination directory path
+                          type: string
+                        options:
+                          description: Mount options (i.e. rw, suid, dev)
+                          type: string
+                        type:
+                          description: 'Mount type: (i.e ext4)'
+                          type: string
+                      type: object
+                    type: array
                   systemVendor:
                     description: system vendor
                     properties:

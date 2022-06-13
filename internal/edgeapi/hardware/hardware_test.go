@@ -143,6 +143,20 @@ var (
 				Minor:      2,
 			},
 		},
+		Mounts: []*models.Mount{
+			{
+				Device:    "/dev/loop1",
+				Directory: "/mnt",
+				Type:      "ext4",
+				Options:   "options",
+			},
+			{
+				Device:    "/dev/loop2",
+				Directory: "/mnt",
+				Type:      "ext4",
+				Options:   "options",
+			},
+		},
 	}
 )
 
@@ -234,6 +248,13 @@ var _ = Describe("Hardware", func() {
 				Expect(devV1.UID).To(Equal(uint32(dev.UID)))
 				Expect(devV1.Major).To(Equal(uint32(dev.Major)))
 				Expect(devV1.Minor).To(Equal(uint32(dev.Minor)))
+			}
+			for i, mount := range input.Mounts {
+				mountV1 := result.Mounts[i]
+				Expect(mountV1.Device).To(Equal(mount.Device))
+				Expect(mountV1.Directory).To(Equal(mount.Directory))
+				Expect(mountV1.Type).To(Equal(mount.Type))
+				Expect(mountV1.Options).To(Equal(mount.Options))
 			}
 			Expect(result.Memory.PhysicalBytes).To(Equal(testPhysicalBytes))
 			Expect(result.Memory.UsableBytes).To(Equal(testUsableBytes))

@@ -39,6 +39,8 @@ type EdgeDeviceSetSpec struct {
 	LogCollection map[string]*LogCollectionConfig `json:"logCollection,omitempty"`
 	// OsInformation carries information about commit ID of the OS Image deployed to the device
 	OsInformation *OsInformation `json:"osInformation,omitempty"`
+	// Mounts contains mount configuration
+	Mounts []*Mount `json:"mounts,omitempty"`
 }
 
 // EdgeDeviceSetStatus defines the observed state of EdgeDeviceSet

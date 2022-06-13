@@ -1670,6 +1670,37 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(*config.Configuration.Metrics.System.AllowList).To(Equal(allowList))
 		})
 
+		It("should map mount configuration", func() {
+			// given
+			device := getDevice("foo")
+			device.Spec.Mounts = []*v1alpha1.Mount{
+				{
+					Device:    "/dev/loop1",
+					Directory: "/mnt",
+					Type:      "ext4",
+					Options:   "options",
+				},
+			}
+
+			repositoryMock.EXPECT().
+				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
+				Return(device, nil).
+				Times(1)
+
+			// when
+			res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+			// then
+			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+			config := validateAndGetDeviceConfig(res)
+
+			Expect(len(config.Configuration.Mounts)).To(Equal(1))
+			Expect(config.Configuration.Mounts[0].Device).To(Equal(device.Spec.Mounts[0].Device))
+			Expect(config.Configuration.Mounts[0].Directory).To(Equal(device.Spec.Mounts[0].Directory))
+			Expect(config.Configuration.Mounts[0].Type).To(Equal(device.Spec.Mounts[0].Type))
+			Expect(config.Configuration.Mounts[0].Options).To(Equal(device.Spec.Mounts[0].Options))
+		})
+
 		It("should fail when allow-list generation fails", func() {
 			// given
 			const allowListName = "a-name"
@@ -2181,6 +2212,7 @@ var _ = Describe("Yggdrasil", func() {
 					Interfaces:  []*v1alpha1.Interface{},
 					Gpus:        []*v1alpha1.Gpu{},
 					HostDevices: []*v1alpha1.HostDevice{},
+					Mounts:      []*v1alpha1.Mount{},
 				}
 
 				repositoryMock.EXPECT().

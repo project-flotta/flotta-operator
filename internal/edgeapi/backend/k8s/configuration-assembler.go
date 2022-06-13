@@ -108,6 +108,7 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 	}
 	dc.Configuration.Heartbeat = getHeartbeatConfiguration(edgeDevice, deviceSet)
 	dc.Configuration.Os = getOsConfiguration(edgeDevice, deviceSet)
+	dc.Configuration.Mounts = a.getMountConfiguration(ctx, edgeDevice, deviceSet)
 
 	var err error
 	dc.Configuration.Storage, err = a.getStorageConfiguration(ctx, edgeDevice, deviceSet)
@@ -234,6 +235,35 @@ func (a *ConfigurationAssembler) getDeviceMetricsConfiguration(ctx context.Conte
 	}
 
 	return &metricsConfig, nil
+}
+
+func (a *ConfigurationAssembler) getMountConfiguration(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, deviceSet *v1alpha1.EdgeDeviceSet) []*models.Mount {
+	mountConfigSpec := edgeDevice.Spec.Mounts
+	if deviceSet != nil {
+		mountConfigSpec = deviceSet.Spec.Mounts
+	}
+
+	if mountConfigSpec == nil {
+		return []*models.Mount{}
+	}
+
+	mounts := make([]*models.Mount, 0, len(mountConfigSpec))
+	for _, m := range mountConfigSpec {
+		if m == nil {
+			continue
+		}
+
+		mount := &models.Mount{
+			Device:    (*m).Device,
+			Directory: (*m).Directory,
+			Type:      (*m).Type,
+			Options:   (*m).Options,
+		}
+
+		mounts = append(mounts, mount)
+	}
+
+	return mounts
 }
 
 func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap.SugaredLogger, edgeworkloads []v1alpha1.EdgeWorkload, device *v1alpha1.EdgeDevice) (models.WorkloadList, error) {
