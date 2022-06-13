@@ -25,6 +25,8 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	routev1 "github.com/openshift/api/route/v1"
+	"go.uber.org/zap/zapcore"
+
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
@@ -33,7 +35,6 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"github.com/project-flotta/flotta-operator/internal/operator/informers"
 	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
-	"go.uber.org/zap/zapcore"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -41,9 +42,6 @@ import (
 	"k8s.io/client-go/util/flowcontrol"
 
 	obv1 "github.com/kube-object-storage/lib-bucket-provisioner/pkg/apis/objectbucket.io/v1alpha1"
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/controllers"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -53,6 +51,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
+	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
