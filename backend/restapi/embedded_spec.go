@@ -303,6 +303,51 @@ func init() {
           }
         }
       }
+    },
+    "/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions": {
+      "post": {
+        "description": "Returns the playbook executions.",
+        "tags": [
+          "backend"
+        ],
+        "operationId": "GetPlaybookExecutions",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Namespace where the device resides",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Device ID",
+            "name": "device-id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/playbook-executions-response"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "default": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -351,6 +396,25 @@ func init() {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
           "type": "string"
         }
+      }
+    },
+    "playbook-executions-response": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ansible-playbook": {
+            "description": "Returns the ansible playbook as a string.",
+            "type": "string"
+          }
+        }
+      },
+      "x-go-type": {
+        "import": {
+          "alias": "commonmodel",
+          "package": "github.com/project-flotta/flotta-operator/models"
+        },
+        "type": "PlaybookExecutionsResponse"
       }
     }
   },
@@ -647,9 +711,63 @@ func init() {
           }
         }
       }
+    },
+    "/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions": {
+      "post": {
+        "description": "Returns the playbook executions.",
+        "tags": [
+          "backend"
+        ],
+        "operationId": "GetPlaybookExecutions",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Namespace where the device resides",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Device ID",
+            "name": "device-id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/playbook-executions-response"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "default": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
     }
   },
   "definitions": {
+    "PlaybookExecutionsResponseItems0": {
+      "type": "object",
+      "properties": {
+        "ansible-playbook": {
+          "description": "Returns the ansible playbook as a string.",
+          "type": "string"
+        }
+      }
+    },
     "device-configuration-response": {
       "type": "object",
       "properties": {
@@ -695,6 +813,19 @@ func init() {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
           "type": "string"
         }
+      }
+    },
+    "playbook-executions-response": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PlaybookExecutionsResponseItems0"
+      },
+      "x-go-type": {
+        "import": {
+          "alias": "commonmodel",
+          "package": "github.com/project-flotta/flotta-operator/models"
+        },
+        "type": "PlaybookExecutionsResponse"
       }
     }
   },

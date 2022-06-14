@@ -68,6 +68,29 @@ func (_m *MockAPI) GetDeviceConfiguration(ctx context.Context, params *GetDevice
 	return r0, r1
 }
 
+// GetPlaybookExecutions provides a mock function with given fields: ctx, params
+func (_m *MockAPI) GetPlaybookExecutions(ctx context.Context, params *GetPlaybookExecutionsParams) (*GetPlaybookExecutionsOK, error) {
+	ret := _m.Called(ctx, params)
+
+	var r0 *GetPlaybookExecutionsOK
+	if rf, ok := ret.Get(0).(func(context.Context, *GetPlaybookExecutionsParams) *GetPlaybookExecutionsOK); ok {
+		r0 = rf(ctx, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*GetPlaybookExecutionsOK)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *GetPlaybookExecutionsParams) error); ok {
+		r1 = rf(ctx, params)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetRegistrationStatus provides a mock function with given fields: ctx, params
 func (_m *MockAPI) GetRegistrationStatus(ctx context.Context, params *GetRegistrationStatusParams) (*GetRegistrationStatusOK, error) {
 	ret := _m.Called(ctx, params)

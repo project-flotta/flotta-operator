@@ -134,6 +134,15 @@ func (h *happyHandler) UpdateHeartBeat(_ context.Context, params backend.UpdateH
 	return backend.NewUpdateHeartBeatOK()
 }
 
+func (h *happyHandler) GetPlaybookExecutions(_ context.Context, _ backend.GetPlaybookExecutionsParams) middleware.Responder {
+	return backend.NewGetPlaybookExecutionsOK().
+		WithPayload(models2.PlaybookExecutionsResponse{
+			&models2.PlaybookExecutionsResponseItems0{
+				AnsiblePlaybook: "fake-test-playbook",
+			},
+		})
+}
+
 func (h *failingHandler) EnrolDevice(_ context.Context, params backend.EnrolDeviceParams) middleware.Responder {
 	h.enrolments = append(h.enrolments, messageDescriptor{
 		deviceID:  params.DeviceID,
@@ -169,6 +178,9 @@ func (h *failingHandler) UpdateHeartBeat(_ context.Context, params backend.Updat
 	return backend.NewUpdateHeartBeatDefault(500)
 }
 
+func (h *failingHandler) GetPlaybookExecutions(_ context.Context, _ backend.GetPlaybookExecutionsParams) middleware.Responder {
+	return backend.NewGetPlaybookExecutionsDefault(500)
+}
 func (h *commonRecorder) GetHeartbeats() []messageDescriptor {
 	return h.heartbeats
 }

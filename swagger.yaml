@@ -778,3 +778,13 @@ definitions:
         type: object
       content:
         description: Content
+
+  playbook-executions-response:
+    type: array
+    items:
+      type: object
+      properties:
+        ansible-playbook:
+          type: string
+          description: >-
+            Returns the ansible playbook as a string.
