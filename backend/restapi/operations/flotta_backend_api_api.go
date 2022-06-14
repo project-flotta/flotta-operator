@@ -50,6 +50,9 @@ func NewFlottaBackendAPIAPI(spec *loads.Document) *FlottaBackendAPIAPI {
 		BackendGetDeviceConfigurationHandler: backend.GetDeviceConfigurationHandlerFunc(func(params backend.GetDeviceConfigurationParams) middleware.Responder {
 			return middleware.NotImplemented("operation backend.GetDeviceConfiguration has not yet been implemented")
 		}),
+		BackendGetPlaybookExecutionsHandler: backend.GetPlaybookExecutionsHandlerFunc(func(params backend.GetPlaybookExecutionsParams) middleware.Responder {
+			return middleware.NotImplemented("operation backend.GetPlaybookExecutions has not yet been implemented")
+		}),
 		BackendGetRegistrationStatusHandler: backend.GetRegistrationStatusHandlerFunc(func(params backend.GetRegistrationStatusParams) middleware.Responder {
 			return middleware.NotImplemented("operation backend.GetRegistrationStatus has not yet been implemented")
 		}),
@@ -99,6 +102,8 @@ type FlottaBackendAPIAPI struct {
 	BackendEnrolDeviceHandler backend.EnrolDeviceHandler
 	// BackendGetDeviceConfigurationHandler sets the operation handler for the get device configuration operation
 	BackendGetDeviceConfigurationHandler backend.GetDeviceConfigurationHandler
+	// BackendGetPlaybookExecutionsHandler sets the operation handler for the get playbook executions operation
+	BackendGetPlaybookExecutionsHandler backend.GetPlaybookExecutionsHandler
 	// BackendGetRegistrationStatusHandler sets the operation handler for the get registration status operation
 	BackendGetRegistrationStatusHandler backend.GetRegistrationStatusHandler
 	// BackendRegisterDeviceHandler sets the operation handler for the register device operation
@@ -187,6 +192,9 @@ func (o *FlottaBackendAPIAPI) Validate() error {
 	}
 	if o.BackendGetDeviceConfigurationHandler == nil {
 		unregistered = append(unregistered, "backend.GetDeviceConfigurationHandler")
+	}
+	if o.BackendGetPlaybookExecutionsHandler == nil {
+		unregistered = append(unregistered, "backend.GetPlaybookExecutionsHandler")
 	}
 	if o.BackendGetRegistrationStatusHandler == nil {
 		unregistered = append(unregistered, "backend.GetRegistrationStatusHandler")
@@ -293,6 +301,10 @@ func (o *FlottaBackendAPIAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/configuration"] = backend.NewGetDeviceConfiguration(o.context, o.BackendGetDeviceConfigurationHandler)
+	if o.handlers["POST"] == nil {
+		o.handlers["POST"] = make(map[string]http.Handler)
+	}
+	o.handlers["POST"]["/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions"] = backend.NewGetPlaybookExecutions(o.context, o.BackendGetPlaybookExecutionsHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

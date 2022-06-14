@@ -32,6 +32,9 @@ type BackendAPI interface {
 	/* GetDeviceConfiguration Returns the device configuration */
 	GetDeviceConfiguration(ctx context.Context, params backend.GetDeviceConfigurationParams) middleware.Responder
 
+	/* GetPlaybookExecutions Returns the playbook executions. */
+	GetPlaybookExecutions(ctx context.Context, params backend.GetPlaybookExecutionsParams) middleware.Responder
+
 	/* GetRegistrationStatus Returns a device registration status, which can be registered, unregistered or unknown. */
 	GetRegistrationStatus(ctx context.Context, params backend.GetRegistrationStatusParams) middleware.Responder
 
@@ -100,6 +103,10 @@ func HandlerAPI(c Config) (http.Handler, *operations.FlottaBackendAPIAPI, error)
 	api.BackendGetDeviceConfigurationHandler = backend.GetDeviceConfigurationHandlerFunc(func(params backend.GetDeviceConfigurationParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()
 		return c.BackendAPI.GetDeviceConfiguration(ctx, params)
+	})
+	api.BackendGetPlaybookExecutionsHandler = backend.GetPlaybookExecutionsHandlerFunc(func(params backend.GetPlaybookExecutionsParams) middleware.Responder {
+		ctx := params.HTTPRequest.Context()
+		return c.BackendAPI.GetPlaybookExecutions(ctx, params)
 	})
 	api.BackendGetRegistrationStatusHandler = backend.GetRegistrationStatusHandlerFunc(func(params backend.GetRegistrationStatusParams) middleware.Responder {
 		ctx := params.HTTPRequest.Context()

@@ -911,6 +911,18 @@ func init() {
         }
       }
     },
+    "playbook-executions-response": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "ansible-playbook": {
+            "description": "Returns the ansible playbook as a string.",
+            "type": "string"
+          }
+        }
+      }
+    },
     "registration-info": {
       "type": "object",
       "properties": {
@@ -1346,6 +1358,15 @@ func init() {
           "type": "string"
         },
         "protocol": {
+          "type": "string"
+        }
+      }
+    },
+    "PlaybookExecutionsResponseItems0": {
+      "type": "object",
+      "properties": {
+        "ansible-playbook": {
+          "description": "Returns the ansible playbook as a string.",
           "type": "string"
         }
       }
@@ -2043,6 +2064,12 @@ func init() {
           "description": "the URL of the hosted commits web server",
           "type": "string"
         }
+      }
+    },
+    "playbook-executions-response": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/PlaybookExecutionsResponseItems0"
       }
     },
     "registration-info": {
