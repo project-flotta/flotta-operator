@@ -37,7 +37,7 @@ jobs:
     - name: Checking generated files are up to date
       run: |
         if [[ $(git ls-files --others --exclude-standard) ]]; then git ls-files --others --exclude-standard; echo "These files are not tracked by git"; exit 1; fi
-        git diff --quiet config/ internal/ client/ restapi/ generated/ || (echo "There are not committed changes"; git diff config/ internal/ client/ restapi/ generated/ | tee; exit 1)
+        if [ -n "$(git status --porcelain)" ]; then echo "There are uncommitted changes:"; git status --short; exit 1; fi
 
   Coverage:
     needs: build
