@@ -99,8 +99,13 @@ var _ = Describe("e2e", func() {
 			err = device.WaitForWorkloadState("nginx", "Running")
 			Expect(err).To(BeNil(), "cannot get workload status for nginx workload")
 
+			// check systemd service
+			stdout, err := device.Exec("systemctl --machine flotta@.host is-active --user nginx.service")
+			Expect(err).To(BeNil())
+			Expect(stdout).To(Equal("active"))
+
 			// Check the nginx is serving content:
-			stdout, err := device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
+			stdout, err = device.Exec(fmt.Sprintf("curl http://localhost:%d", hostPort))
 			Expect(err).To(BeNil())
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
 		})
@@ -251,7 +256,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("sudo -u flotta systemctl is-failed --user pod-nginx_pod.service")
+			stdout, err := device.Exec("sudo -u flotta systemctl is-failed --user nginx.service")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(BeElementOf([]string{"activating", "deactivating", "inactive"}))
 		})
@@ -307,7 +312,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("sudo -u flotta /usr/bin/podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("sudo -u flotta /usr/bin/podman exec nginx-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 
@@ -341,7 +346,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("sudo -u flotta /usr/bin/podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("sudo -u flotta /usr/bin/podman exec nginx-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 
