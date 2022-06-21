@@ -25,6 +25,11 @@ DOCKER ?= docker
 # Kubectl command
 KUBECTL ?= kubectl
 
+# for cert-installer
+CERT_MANAGER_VERSION ?= v1.7.1
+OS = $(shell go env GOOS)
+ARCH = $(shell go env GOARCH)
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -199,7 +204,7 @@ ifeq ($(TARGET), k8s)
 else ifeq ($(TARGET), ocp)
 	$(KUSTOMIZE) build config/ocp | kubectl delete -f -
 endif
-	kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
+	kubectl delete -f https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cert-manager.yaml
 
 $(eval TMP_ODIR := $(shell mktemp -d))
 gen-manifests: manifests kustomize ## Generates manifests for deploying the operator into $(TARGET)-flotta-operator.yaml
@@ -225,9 +230,9 @@ install-router:
 	$(KUBECTL) wait --for=condition=Ready pods --all -n openshift-ingress --timeout=60s
 
 install-cert-manager: ## Install cert-manager dependency
-install-cert-manager:
+install-cert-manager: cmctl
 	$(KUBECTL) apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.7.1/cert-manager.yaml
-	$(KUBECTL) wait --for=condition=Ready pods --all -n cert-manager --timeout=60s
+	${CMCTL} check api --wait=5m
 
 CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
 controller-gen: ## Download controller-gen locally if necessary.
@@ -297,6 +302,14 @@ generate-agent-install-dnf:
 
 agent-install-scripts: get-certs generate-agent-install-ostree generate-agent-install-dnf
 
+CMCTL = $(shell pwd)/bin/cmctl
+
+.PHONY: cmctl
+cmctl: ## Download cmctl locally if necessary.
+ifeq ("$(wildcard $(CMCTL))","")
+	curl -sSL -o /tmp/cmctl.tar.gz https://github.com/cert-manager/cert-manager/releases/download/${CERT_MANAGER_VERSION}/cmctl-${OS}-${ARCH}.tar.gz
+	tar xzf /tmp/cmctl.tar.gz -C $(shell pwd)/bin/ cmctl
+endif
 
 # go-install-tool will 'go install' any package $2 and install it to $1.
 PROJECT_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))
