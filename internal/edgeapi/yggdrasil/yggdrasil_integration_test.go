@@ -1627,108 +1627,179 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(config.Configuration.Metrics.Retention.MaxHours).To(Equal(maxHours))
 		})
 
-		It("should map system metrics", func() {
-			// given
-			const allowListName = "a-name"
-			interval := int32(3600)
+		When("system metrics", func() {
 
-			device := getDevice("foo")
-			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
-				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
-					Interval: interval,
-					Disabled: true,
-					AllowList: &v1alpha1.NameRef{
-						Name: allowListName,
+			It("should map metrics", func() {
+				// given
+				const allowListName = "a-name"
+				interval := int32(3600)
+
+				device := getDevice("foo")
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					SystemMetrics: &v1alpha1.ComponentMetricsConfiguration{
+						Interval: interval,
+						Disabled: true,
+						AllowList: &v1alpha1.NameRef{
+							Name: allowListName,
+						},
 					},
-				},
-			}
+				}
 
-			repositoryMock.EXPECT().
-				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), "foo", testNamespace).
+					Return(device, nil).
+					Times(1)
 
-			allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
-			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
-				Return(&allowList, nil)
+				allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
+				allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
+					Return(&allowList, nil)
 
-			// when
-			res := handler.GetDataMessageForDevice(deviceCtx, params)
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
 
-			// then
-			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
-			config := validateAndGetDeviceConfig(res)
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
 
-			Expect(config.Configuration.Metrics).ToNot(BeNil())
-			Expect(config.Configuration.Metrics.System).ToNot(BeNil())
+				Expect(config.Configuration.Metrics).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.System).ToNot(BeNil())
 
-			Expect(config.Configuration.Metrics.System.Interval).To(Equal(interval))
+				Expect(config.Configuration.Metrics.System.Interval).To(Equal(interval))
 
-			Expect(config.Configuration.Metrics.System.Disabled).To(BeTrue())
+				Expect(config.Configuration.Metrics.System.Disabled).To(BeTrue())
 
-			Expect(config.Configuration.Metrics.System.AllowList).ToNot(BeNil())
-			Expect(*config.Configuration.Metrics.System.AllowList).To(Equal(allowList))
-		})
+				Expect(config.Configuration.Metrics.System.AllowList).ToNot(BeNil())
+				Expect(*config.Configuration.Metrics.System.AllowList).To(Equal(allowList))
+			})
 
-		It("should map mount configuration", func() {
-			// given
-			device := getDevice("foo")
-			device.Spec.Mounts = []*v1alpha1.Mount{
-				{
-					Device:    "/dev/loop1",
-					Directory: "/mnt",
-					Type:      "ext4",
-					Options:   "options",
-				},
-			}
-
-			repositoryMock.EXPECT().
-				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
-
-			// when
-			res := handler.GetDataMessageForDevice(deviceCtx, params)
-
-			// then
-			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
-			config := validateAndGetDeviceConfig(res)
-
-			Expect(len(config.Configuration.Mounts)).To(Equal(1))
-			Expect(config.Configuration.Mounts[0].Device).To(Equal(device.Spec.Mounts[0].Device))
-			Expect(config.Configuration.Mounts[0].Directory).To(Equal(device.Spec.Mounts[0].Directory))
-			Expect(config.Configuration.Mounts[0].Type).To(Equal(device.Spec.Mounts[0].Type))
-			Expect(config.Configuration.Mounts[0].Options).To(Equal(device.Spec.Mounts[0].Options))
-		})
-
-		It("should fail when allow-list generation fails", func() {
-			// given
-			const allowListName = "a-name"
-
-			device := getDevice("foo")
-			device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
-				SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
-					AllowList: &v1alpha1.NameRef{
-						Name: allowListName,
+			It("should map mount configuration", func() {
+				// given
+				device := getDevice("foo")
+				device.Spec.Mounts = []*v1alpha1.Mount{
+					{
+						Device:    "/dev/loop1",
+						Directory: "/mnt",
+						Type:      "ext4",
+						Options:   "options",
 					},
-				},
-			}
+				}
 
-			allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
-				Return(nil, fmt.Errorf("boom!"))
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), "foo", testNamespace).
+					Return(device, nil).
+					Times(1)
 
-			repositoryMock.EXPECT().
-				GetEdgeDevice(gomock.Any(), "foo", testNamespace).
-				Return(device, nil).
-				Times(1)
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
 
-			// when
-			res := handler.GetDataMessageForDevice(deviceCtx, params)
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
 
-			// then
-			Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
+				Expect(len(config.Configuration.Mounts)).To(Equal(1))
+				Expect(config.Configuration.Mounts[0].Device).To(Equal(device.Spec.Mounts[0].Device))
+				Expect(config.Configuration.Mounts[0].Directory).To(Equal(device.Spec.Mounts[0].Directory))
+				Expect(config.Configuration.Mounts[0].Type).To(Equal(device.Spec.Mounts[0].Type))
+				Expect(config.Configuration.Mounts[0].Options).To(Equal(device.Spec.Mounts[0].Options))
+			})
+
+			It("should fail when allow-list generation fails", func() {
+				// given
+				const allowListName = "a-name"
+
+				device := getDevice("foo")
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					SystemMetrics: &v1alpha1.ComponentMetricsConfiguration{
+						AllowList: &v1alpha1.NameRef{
+							Name: allowListName,
+						},
+					},
+				}
+
+				allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
+					Return(nil, fmt.Errorf("boom!"))
+
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), "foo", testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
+			})
 		})
+		When("data transfer metrics", func() {
 
+			It("should map metrics", func() {
+				// given
+				const allowListName = "a-name"
+				interval := int32(3600)
+
+				device := getDevice("foo")
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					DataTransferMetrics: &v1alpha1.ComponentMetricsConfiguration{
+						Interval: interval,
+						Disabled: true,
+						AllowList: &v1alpha1.NameRef{
+							Name: allowListName,
+						},
+					},
+				}
+
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), "foo", testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				allowList := models.MetricsAllowList{Names: []string{"fizz", "buzz"}}
+				allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
+					Return(&allowList, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.Configuration.Metrics).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.DataTransfer).ToNot(BeNil())
+				Expect(config.Configuration.Metrics.DataTransfer).To(Equal(
+					&models.ComponentMetricsConfiguration{Interval: interval, Disabled: true, AllowList: &allowList}))
+
+			})
+
+			It("should fail when allow-list generation fails", func() {
+				// given
+				const allowListName = "a-name"
+
+				device := getDevice("foo")
+				device.Spec.Metrics = &v1alpha1.MetricsConfiguration{
+					DataTransferMetrics: &v1alpha1.ComponentMetricsConfiguration{
+						AllowList: &v1alpha1.NameRef{
+							Name: allowListName,
+						},
+					},
+				}
+
+				allowListsMock.EXPECT().GenerateFromConfigMap(gomock.Any(), allowListName, device.Namespace).
+					Return(nil, fmt.Errorf("boom!"))
+
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), "foo", testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceInternalServerError{}))
+			})
+		})
 		Context("With EdgeDeviceSet", func() {
 			var (
 				deviceName = "foo"
@@ -1781,7 +1852,7 @@ var _ = Describe("Yggdrasil", func() {
 						MaxMiB:   123,
 						MaxHours: 123,
 					},
-					SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
+					SystemMetrics: &v1alpha1.ComponentMetricsConfiguration{
 						Interval:  123,
 						Disabled:  false,
 						AllowList: nil,
@@ -1880,7 +1951,7 @@ var _ = Describe("Yggdrasil", func() {
 						MaxMiB:   maxMiB,
 						MaxHours: maxHours,
 					},
-					SystemMetrics: &v1alpha1.SystemMetricsConfiguration{
+					SystemMetrics: &v1alpha1.ComponentMetricsConfiguration{
 						Interval: interval,
 						Disabled: true,
 						AllowList: &v1alpha1.NameRef{

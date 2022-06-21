@@ -63,12 +63,13 @@ type LogCollectionConfig struct {
 }
 
 type MetricsConfiguration struct {
-	Retention             *Retention                    `json:"retention,omitempty"`
-	SystemMetrics         *SystemMetricsConfiguration   `json:"system,omitempty"`
-	ReceiverConfiguration *MetricsReceiverConfiguration `json:"receiverConfiguration,omitempty"`
+	Retention             *Retention                     `json:"retention,omitempty"`
+	SystemMetrics         *ComponentMetricsConfiguration `json:"system,omitempty"`
+	DataTransferMetrics   *ComponentMetricsConfiguration `json:"dataTransfer,omitempty"`
+	ReceiverConfiguration *MetricsReceiverConfiguration  `json:"receiverConfiguration,omitempty"`
 }
 
-type SystemMetricsConfiguration struct {
+type ComponentMetricsConfiguration struct {
 	// Interval(in seconds) to scrape system metrics.
 	// +kubebuilder:validation:Minimum=0
 	// +kubebuilder:default=60
