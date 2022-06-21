@@ -112,7 +112,7 @@ func (h *Handler) GetControlMessageForDevice(ctx context.Context, params yggdras
 			logger.Info("edge device is not found")
 			return operations.NewGetControlMessageForDeviceNotFound()
 		}
-		logger.Error(err, "failed to get edge device")
+		logger.With("err", err).Error("failed to get edge device")
 		return operations.NewGetControlMessageForDeviceInternalServerError()
 	}
 
@@ -139,7 +139,7 @@ func (h *Handler) GetDataMessageForDevice(ctx context.Context, params yggdrasil.
 			logger.Info("edge device is not found")
 			return operations.NewGetDataMessageForDeviceNotFound()
 		}
-		logger.Error(err, "failed to get edge device configuration")
+		logger.With("err", err).Error("failed to get edge device configuration")
 		return operations.NewGetDataMessageForDeviceInternalServerError()
 	}
 
@@ -191,7 +191,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				logger.Debug("Device not found")
 				return operations.NewPostDataMessageForDeviceNotFound()
 			}
-			logger.Error(err, "Device not found")
+			logger.With("err", err).Error("Device not found")
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 		h.metrics.RecordEdgeDevicePresence(h.getNamespace(ctx), deviceID)
@@ -202,7 +202,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.Debug("received enrolment info", "content", enrolmentInfo)
+		logger.With("content", enrolmentInfo).Debug("received enrolment info")
 		targetNamespace := h.initialNamespace
 		if enrolmentInfo.TargetNamespace != nil {
 			targetNamespace = *enrolmentInfo.TargetNamespace
@@ -225,7 +225,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if err != nil {
 			return operations.NewPostDataMessageForDeviceBadRequest()
 		}
-		logger.Debug("received registration info", "content", registrationInfo)
+		logger.With("content", registrationInfo).Debug("received registration info")
 		res := models.MessageResponse{
 			Directive: msg.Directive,
 			MessageID: msg.MessageID,
@@ -235,7 +235,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 
 		ns, err = h.backend.GetTargetNamespace(ctx, deviceID, ns, IsOwnDevice(ctx, deviceID))
 		if err != nil {
-			logger.Error(err, "can't get target namespace for a device")
+			logger.With("err", err).Error("can't get target namespace for a device")
 			if !errors.IsNotFound(err) {
 				h.metrics.IncEdgeDeviceFailedRegistration()
 				return operations.NewPostDataMessageForDeviceInternalServerError()
@@ -256,7 +256,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		err = h.backend.Register(ctx, deviceID, ns, &registrationInfo)
 
 		if err != nil {
-			logger.Error(err, "cannot finalize device registration")
+			logger.With("err", err).Error("cannot finalize device registration")
 			h.metrics.IncEdgeDeviceFailedRegistration()
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
@@ -264,7 +264,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		h.metrics.IncEdgeDeviceSuccessfulRegistration()
 		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 	default:
-		logger.Info("received unknown message", "message", msg)
+		logger.With("message", msg).Info("received unknown message")
 		return operations.NewPostDataMessageForDeviceBadRequest()
 	}
 	return operations.NewPostDataMessageForDeviceOK()

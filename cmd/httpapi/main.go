@@ -156,7 +156,7 @@ func main() {
 				authType := yggdrasilAPIHandler.GetAuthType(r, api)
 				if ok, err := mtls.VerifyRequest(r, authType, opts, CACertChain, yggdrasil.AuthzKey, logger); !ok {
 					metricsObj.IncEdgeDeviceFailedAuthenticationCounter()
-					logger.Info("cannot verify request:", "authType", authType, "method", r.Method, "url", r.URL, "err", err)
+					logger.With("authType", authType, "method", r.Method, "url", r.URL, "err", err).Info("cannot verify request")
 					w.WriteHeader(http.StatusUnauthorized)
 					return
 				}

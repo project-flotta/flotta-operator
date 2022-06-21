@@ -33,7 +33,7 @@ func (h *SynchronousHandler) Process(ctx context.Context, name, namespace string
 	logger := h.logger.With("DeviceID", name, "Namespace", namespace)
 
 	retry := ctx.Value(backendapi.RetryContextKey)
-	logger.Debug("processing heartbeat", "content", heartbeat, "retry", retry)
+	logger.With("content", heartbeat, "retry", retry).Debug("processing heartbeat")
 	edgeDevice, err := h.repository.GetEdgeDevice(ctx, name, namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {

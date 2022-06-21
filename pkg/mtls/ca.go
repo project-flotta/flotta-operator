@@ -237,7 +237,7 @@ func VerifyRequest(r *http.Request, verifyType int, verifyOpts x509.VerifyOption
 		}
 
 		if _, err := cert.Verify(verifyOpts); err != nil {
-			logger.Error("Failed to verify client cert: %v", err)
+			logger.Errorf("Failed to verify client cert: %v", err)
 			return false, &ClientCertificateVerifyError{err}
 		}
 	}

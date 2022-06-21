@@ -67,7 +67,7 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 			edgeWorkload, err := a.repository.GetEdgeWorkload(ctx, workload.Name, edgeDevice.Namespace)
 			if err != nil {
 				if !errors.IsNotFound(err) {
-					logger.Error(err, "cannot retrieve Edge Workloads")
+					logger.With("err", err).Error("cannot retrieve Edge Workloads")
 					return nil, err
 				}
 				continue
@@ -83,7 +83,7 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 		}
 		secretList, err = a.createSecretList(ctx, edgeWorkloads, edgeDevice)
 		if err != nil {
-			logger.Error(err, "failed reading secrets for device workloads")
+			logger.With("err", err).Error("failed reading secrets for device workloads")
 			return nil, fmt.Errorf("failed reading secrets for device workloads: %s", err.Error())
 		}
 	}
@@ -98,11 +98,11 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 
 	var deviceSet *v1alpha1.EdgeDeviceSet
 	if deviceSetName, ok := edgeDevice.Labels["flotta/member-of"]; ok {
-		logger.Debug("Device uses EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
+		logger.With("edgeDeviceSet", deviceSetName).Debug("Device uses EdgeDeviceSet")
 		var err error
 		deviceSet, err = a.repository.GetEdgeDeviceSet(ctx, deviceSetName, edgeDevice.Namespace)
 		if err != nil {
-			logger.Info("Cannot load EdgeDeviceSet", "edgeDeviceSet", deviceSetName)
+			logger.With("edgeDeviceSet", deviceSetName).Info("Cannot load EdgeDeviceSet")
 			deviceSet = nil
 		}
 	}
@@ -113,18 +113,18 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 	var err error
 	dc.Configuration.Storage, err = a.getStorageConfiguration(ctx, edgeDevice, deviceSet)
 	if err != nil {
-		logger.Error(err, "failed to get storage configuration for device")
+		logger.With("err", err).Error("failed to get storage configuration for device")
 	}
 
 	dc.Configuration.Metrics, err = a.getDeviceMetricsConfiguration(ctx, edgeDevice, deviceSet)
 	if err != nil {
-		logger.Error(err, "failed getting device metrics configuration")
+		logger.With("err", err).Error("failed getting device metrics configuration")
 		return nil, fmt.Errorf("failed getting device metrics configuration: %s", err.Error())
 	}
 
 	dc.Configuration.LogCollection, err = a.getDeviceLogConfig(ctx, edgeDevice, deviceSet)
 	if err != nil {
-		logger.Error(err, "failed getting device log configuration")
+		logger.With("err", err).Error("failed getting device log configuration")
 		return nil, fmt.Errorf("failed getting device log configuration: %s", err.Error())
 	}
 
@@ -291,7 +291,7 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 		spec := edgeworkload.Spec
 		podSpec, err := yaml.Marshal(spec.Pod.Spec)
 		if err != nil {
-			logger.Error(err, "cannot marshal pod specification", "edgeworkload name", edgeworkload.Name)
+			logger.With("err", err, "edgeworkload name", edgeworkload.Name).Error("cannot marshal pod specification")
 			continue
 		}
 		var data *models.DataConfiguration
@@ -311,7 +311,7 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 		if err != nil {
 			msg := fmt.Sprintf("Auth file secret %s used by edgeworkload %s/%s is missing", spec.ImageRegistries.AuthFileSecret.Name, edgeworkload.Namespace, edgeworkload.Name)
 			a.recorder.Event(device, corev1.EventTypeWarning, "Misconfiguration", msg)
-			logger.Error(err, msg)
+			logger.With("err", err).Error(msg)
 			return nil, err
 		}
 		if authFile != "" {
@@ -353,7 +353,7 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 
 		configmapList, err := a.configMaps.Fetch(ctx, edgeworkload, device.Namespace)
 		if err != nil {
-			logger.Error(err, "failed to fetch configmaps")
+			logger.With("err", err).Error("failed to fetch configmaps")
 			return nil, fmt.Errorf("failed to fetch configmaps: %s", err.Error())
 		}
 		workload.Configmaps = configmapList
