@@ -136,7 +136,7 @@ func (b *backend) GetTargetNamespace(ctx context.Context, name, identityNamespac
 	// the first time that tries to register should be able to use register certificate.
 	if !isInit && !matchesCertificate {
 		authKeyVal, _ := ctx.Value(AuthzKey).(mtls.RequestAuthVal)
-		logger.Debug("Device tries to re-register with an invalid certificate", "certcn", authKeyVal.CommonName)
+		logger.With("certcn", authKeyVal.CommonName).Debug("Device tries to re-register with an invalid certificate")
 		// At this moment, the registration certificate it's no longer valid,
 		// because the CR is already created, and need to be a device
 		// certificate.
@@ -162,7 +162,7 @@ func (b *backend) Register(ctx context.Context, name, namespace string, registra
 
 	err = b.repository.PatchEdgeDevice(ctx, dvc, deviceCopy)
 	if err != nil {
-		logger.Error(err, "cannot update edgedevice")
+		logger.With("err", err).Error("cannot update edgedevice")
 		return err
 	}
 
