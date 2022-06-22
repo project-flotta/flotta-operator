@@ -12,7 +12,7 @@ import (
 	strfmt "github.com/go-openapi/strfmt"
 )
 
-//go:generate mockery -name API -inpkg
+//go:generate mockery --name API --inpackage
 
 // API is the interface of the backend client
 type API interface {

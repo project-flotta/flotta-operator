@@ -22,7 +22,7 @@ type contextKey string
 
 const AuthKey contextKey = "Auth"
 
-//go:generate mockery -name YggdrasilAPI -inpkg
+//go:generate mockery --name YggdrasilAPI --inpackage
 
 /* YggdrasilAPI  */
 type YggdrasilAPI interface {

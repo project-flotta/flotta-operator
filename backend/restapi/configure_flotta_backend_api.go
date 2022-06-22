@@ -22,7 +22,7 @@ type contextKey string
 
 const AuthKey contextKey = "Auth"
 
-//go:generate mockery -name BackendAPI -inpkg
+//go:generate mockery --name BackendAPI --inpackage
 
 /* BackendAPI  */
 type BackendAPI interface {
