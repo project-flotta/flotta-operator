@@ -135,7 +135,7 @@ test-coverage:
 	go tool cover --html=cover.out
 
 vendor:
-	go mod tidy -go=1.17
+	go mod tidy -go=1.18
 	go mod vendor
 
 get-certs: # Write certificates to /tmp/ folder

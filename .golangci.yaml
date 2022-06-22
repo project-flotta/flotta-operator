@@ -51,7 +51,7 @@ run:
   allow-parallel-runners: false
 
   # Define the Go version limit.
-  go: '1.17'
+  go: '1.18'
 
 # output configuration options
 output:

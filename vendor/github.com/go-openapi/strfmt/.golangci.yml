@@ -34,6 +34,10 @@ linters:
     - gomnd
     - godot
     - exhaustivestruct
+    - paralleltest
+    - varnamelen
+    - ireturn
+    #- thelper
 
 issues:
   exclude-rules:
