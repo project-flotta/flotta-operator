@@ -78,4 +78,4 @@ jobs:
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
         with:
-          args: '-no-fail -exclude-generated  ./...'
+          args: '-exclude-generated  ./...'
