@@ -69,7 +69,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 
 generate-tools:
 ifeq (, $(shell which mockery))
-	(cd /tmp && go install github.com/vektra/mockery/...@v1.1.2)
+	(cd /tmp && go install github.com/vektra/mockery/v2@v2.13.1)
 endif
 ifeq (, $(shell which mockgen))
 	(cd /tmp/ && go install github.com/golang/mock/mockgen@v1.6.0)
@@ -92,7 +92,7 @@ vet: ## Run go vet against code.
 gosec: ## Run gosec locally
 	$(DOCKER) run --rm -v $(PWD):/opt/data/:z docker.io/securego/gosec -exclude-generated /opt/data/...
 
-GO_IMAGE=golang:1.17.8-alpine3.14
+GO_IMAGE=golang:1.18.3-alpine3.16
 GOIMPORTS_IMAGE=golang.org/x/tools/cmd/goimports@latest
 FILES_LIST=$(shell ls -d */ | grep -v -E "vendor|tools|test|client|restapi|models|generated")
 MODULE_NAME=$(shell head -n 1 go.mod | cut -d '/' -f 3)
