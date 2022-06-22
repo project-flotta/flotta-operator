@@ -19,7 +19,7 @@ const (
 
 func WorkloadByDeviceIndexFunc(obj ctrlruntimeclient.Object) []string {
 	workload, ok := obj.(*v1alpha1.EdgeWorkload)
-	if !ok {
+	if !ok || workload.DeletionTimestamp != nil {
 		return []string{}
 	}
 	var keys []string

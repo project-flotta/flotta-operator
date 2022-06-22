@@ -104,6 +104,26 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
 		})
+		It("Deploy then remove valid edgeworkload to registered device", func() {
+			// given
+			err := device.Register()
+			Expect(err).To(BeNil())
+
+			// when
+			w, err := workload.Create(edgeworkloadDeviceId("nginx", device.GetId(), hostPort, nginxPort))
+			Expect(err).To(BeNil())
+
+			// then
+			// Check the edgedevice report proper state of workload:
+			err = device.WaitForWorkloadState("nginx", "Running")
+			Expect(err).To(BeNil(), "cannot get workload status for nginx workload")
+			// Check there is no Workload attached to the device after the workload is deleted
+			err = workload.Remove(w.Name)
+			Expect(err).To(BeNil())
+			e, err := device.Get()
+			Expect(err).To(BeNil())
+			Expect(len(e.Status.Workloads)).To(Equal(0))
+		})
 
 		It("Deploy valid edgeworkload to registered device where pod and container name is different", func() {
 			// given
