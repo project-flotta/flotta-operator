@@ -64,6 +64,10 @@ cat <<EOF > /etc/pki/consumer/cert.pem
 <CERT_PEM>
 EOF
 
+function get_client_id() {
+  cat /etc/machine-id
+}
+
 cat <<EOF > /etc/yggdrasil/config.toml
 <CONFIG_TOML>
 EOF

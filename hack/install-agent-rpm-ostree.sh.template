@@ -41,7 +41,6 @@ fi
 
 
 curl https://copr.fedorainfracloud.org/coprs/project-flotta/flotta/repo/fedora-35/project-flotta-flotta-fedora-35.repo -o /etc/yum.repos.d/project-flotta.repo
-
 rpm-ostree install node_exporter yggdrasil flotta-agent
 
 cat <<EOF >> /etc/hosts
@@ -61,6 +60,15 @@ cat <<EOF > /etc/pki/consumer/cert.pem
 <CERT_PEM>
 EOF
 
+
+function get_client_id() {
+  if [ -f "/etc/device-credentials" ]; then
+    /usr/libexec/fdo/fdo-owner-tool dump-device-credential /etc/device-credentials | grep "Device GUID" | awk '{print $NF}'
+  else
+    cat /etc/machine-id
+  fi
+}
+
 mkdir -p /var/yggdrasil-init
 cat <<EOF >/usr/local/bin/init-yggrasild.sh
 #!/bin/bash
@@ -69,6 +77,7 @@ cat <<INTERNAL > /etc/yggdrasil/config.toml
 INTERNAL
 
 systemctl disable init-yggd.service
+sed -i "s/FLOTTA_XDG_RUNTIME_DIR=/FLOTTA_XDG_RUNTIME_DIR=\/run\/user\/\$(id -u flotta)/g" /etc/yggdrasil/workers/device-worker.toml
 
 rm /etc/systemd/system/init-yggd.service
 rm -rf /usr/local/bin/init-yggrasild.sh
@@ -93,8 +102,8 @@ chmod 644 /etc/systemd/system/init-yggd.service
 
 systemctl enable init-yggd.service
 
-ln -s /usr/lib/systemd/system/podman.service /etc/systemd/system/default.target.wants/podman.service
-ln -s /usr/lib/systemd/system/podman.socket /etc/systemd/system/sockets.target.wants/podman.socket
+systemctl enable podman.service
+systemctl enable podman.socket
 ln -s /usr/lib/systemd/system/node_exporter.service /etc/systemd/system/multi-user.target.wants/node_exporter.service
 ln -s /usr/lib/systemd/system/yggdrasild.service /etc/systemd/system/multi-user.target.wants/yggdrasild.service
 ln -s /usr/lib/systemd/system/nftables.service /etc/systemd/system/multi-user.target.wants/nftables.service
