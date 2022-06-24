@@ -1000,6 +1000,16 @@ func init() {
         "$ref": "#/definitions/secret"
       }
     },
+    "security-context": {
+      "description": "Security context used for the workload",
+      "type": "object",
+      "properties": {
+        "runAsRoot": {
+          "description": "Determines if the containers in the workload should run under the root user. By default workloads are run by a non-root user.",
+          "type": "boolean"
+        }
+      }
+    },
     "storage-configuration": {
       "type": "object",
       "properties": {
@@ -1078,6 +1088,9 @@ func init() {
         "namespace": {
           "description": "Namespace of the workload",
           "type": "string"
+        },
+        "securityContext": {
+          "$ref": "#/definitions/security-context"
         },
         "specification": {
           "type": "string"
@@ -2137,6 +2150,16 @@ func init() {
         "$ref": "#/definitions/secret"
       }
     },
+    "security-context": {
+      "description": "Security context used for the workload",
+      "type": "object",
+      "properties": {
+        "runAsRoot": {
+          "description": "Determines if the containers in the workload should run under the root user. By default workloads are run by a non-root user.",
+          "type": "boolean"
+        }
+      }
+    },
     "storage-configuration": {
       "type": "object",
       "properties": {
@@ -2215,6 +2238,9 @@ func init() {
         "namespace": {
           "description": "Namespace of the workload",
           "type": "string"
+        },
+        "securityContext": {
+          "$ref": "#/definitions/security-context"
         },
         "specification": {
           "type": "string"

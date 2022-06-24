@@ -7207,6 +7207,16 @@ spec:
                 required:
                 - spec
                 type: object
+              securityContext:
+                description: EdgeWorkloadSecurityContext holds workload-level security
+                  attributes
+                properties:
+                  runByRoot:
+                    description: RunByRoot determines if the containers in the workload
+                      should run under the root user. By default workloads are run
+                      by a non-root user.
+                    type: boolean
+                type: object
               type:
                 type: string
             required:

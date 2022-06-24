@@ -42,6 +42,9 @@ type Workload struct {
 	// Namespace of the workload
 	Namespace string `json:"namespace,omitempty"`
 
+	// security context
+	SecurityContext *SecurityContext `json:"securityContext,omitempty"`
+
 	// specification
 	Specification string `json:"specification,omitempty"`
 }
@@ -63,6 +66,10 @@ func (m *Workload) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMetrics(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSecurityContext(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -146,6 +153,25 @@ func (m *Workload) validateMetrics(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Workload) validateSecurityContext(formats strfmt.Registry) error {
+	if swag.IsZero(m.SecurityContext) { // not required
+		return nil
+	}
+
+	if m.SecurityContext != nil {
+		if err := m.SecurityContext.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("securityContext")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("securityContext")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
 // ContextValidate validate this workload based on the context it is used
 func (m *Workload) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -163,6 +189,10 @@ func (m *Workload) ContextValidate(ctx context.Context, formats strfmt.Registry)
 	}
 
 	if err := m.contextValidateMetrics(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateSecurityContext(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -226,6 +256,22 @@ func (m *Workload) contextValidateMetrics(ctx context.Context, formats strfmt.Re
 				return ve.ValidateName("metrics")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
 				return ce.ValidateName("metrics")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *Workload) contextValidateSecurityContext(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SecurityContext != nil {
+		if err := m.SecurityContext.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("securityContext")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("securityContext")
 			}
 			return err
 		}
