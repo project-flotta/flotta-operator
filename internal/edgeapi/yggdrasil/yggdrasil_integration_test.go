@@ -61,6 +61,7 @@ var _ = Describe("Yggdrasil", func() {
 
 		errorNotFound = errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
 		boolTrue      = true
+		boolFalse     = false
 
 		k8sClient client.Client
 		testEnv   *envtest.Environment
@@ -428,9 +429,10 @@ var _ = Describe("Yggdrasil", func() {
 					DeviceSelector: &v1.LabelSelector{
 						MatchLabels: map[string]string{"test": "test"},
 					},
-					Type: "pod",
-					Pod:  v1alpha1.Pod{},
-					Data: &v1alpha1.DataConfiguration{},
+					Type:            "pod",
+					Pod:             v1alpha1.Pod{},
+					Data:            &v1alpha1.DataConfiguration{},
+					SecurityContext: &v1alpha1.EdgeWorkloadSecurityContext{RunByRoot: &boolTrue},
 				}}
 
 			configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
@@ -451,6 +453,128 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(workload.Name).To(Equal("workload1"))
 			Expect(workload.Namespace).To(Equal("default"))
 			Expect(workload.ImageRegistries).To(BeNil())
+			Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunAsRoot: boolTrue}))
+		})
+
+		Context("Security Context", func() {
+
+			const (
+				deviceName       = "foo"
+				workloadName     = "workload1"
+				defaultNamespace = "default"
+			)
+
+			BeforeEach(func() {
+				// given
+				device := getDevice(deviceName)
+				device.Status.Workloads = []v1alpha1.Workload{{Name: workloadName}}
+
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+			})
+
+			It("has RunByRoot as true when specified as such in the edgeworkload", func() {
+				workloadData := &v1alpha1.EdgeWorkload{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      workloadName,
+						Namespace: defaultNamespace,
+					},
+					Spec: v1alpha1.EdgeWorkloadSpec{
+						DeviceSelector: &v1.LabelSelector{
+							MatchLabels: map[string]string{"test": "test"},
+						},
+						Type:            "pod",
+						SecurityContext: &v1alpha1.EdgeWorkloadSecurityContext{RunByRoot: &boolTrue},
+					}}
+
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), workloadName, testNamespace).
+					Return(workloadData, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				workload := config.Workloads[0]
+				Expect(workload.Name).To(Equal(workloadName))
+				Expect(workload.Namespace).To(Equal(defaultNamespace))
+				Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunAsRoot: boolTrue}))
+			})
+
+			It("has RunByRoot as false when specified as such in the edgeworkload", func() {
+				workloadData := &v1alpha1.EdgeWorkload{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      workloadName,
+						Namespace: defaultNamespace,
+					},
+					Spec: v1alpha1.EdgeWorkloadSpec{
+						DeviceSelector: &v1.LabelSelector{
+							MatchLabels: map[string]string{"test": "test"},
+						},
+						Type:            "pod",
+						SecurityContext: &v1alpha1.EdgeWorkloadSecurityContext{RunByRoot: &boolFalse},
+					}}
+
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), workloadName, testNamespace).
+					Return(workloadData, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				workload := config.Workloads[0]
+				Expect(workload.Name).To(Equal(workloadName))
+				Expect(workload.Namespace).To(Equal(defaultNamespace))
+				Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunAsRoot: boolFalse}))
+			})
+
+			It("has the Security Context undefined in the workload when it is not defined in the edgeworkload", func() {
+				workloadData := &v1alpha1.EdgeWorkload{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      workloadName,
+						Namespace: defaultNamespace,
+					},
+					Spec: v1alpha1.EdgeWorkloadSpec{
+						DeviceSelector: &v1.LabelSelector{
+							MatchLabels: map[string]string{"test": "test"},
+						},
+						Type: "pod",
+					}}
+
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), workloadName, testNamespace).
+					Return(workloadData, nil)
+
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				workload := config.Workloads[0]
+				Expect(workload.Name).To(Equal(workloadName))
+				Expect(workload.Namespace).To(Equal(defaultNamespace))
+				Expect(workload.SecurityContext).To(BeNil())
+			})
 		})
 
 		Context("Logs", func() {

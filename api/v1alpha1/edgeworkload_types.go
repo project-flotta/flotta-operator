@@ -33,6 +33,7 @@ type EdgeWorkloadSpec struct {
 	Data            *DataConfiguration             `json:"data,omitempty"`
 	ImageRegistries *ImageRegistriesConfiguration  `json:"imageRegistries,omitempty"`
 	Metrics         *ContainerMetricsConfiguration `json:"metrics,omitempty"`
+	SecurityContext *EdgeWorkloadSecurityContext   `json:"securityContext,omitempty"`
 
 	// LogCollection is the logCollection property to be used to collect logs
 	// from this endpoint. This key is what is defined on the edgedevice
@@ -40,6 +41,12 @@ type EdgeWorkloadSpec struct {
 	LogCollection string `json:"logCollection,omitempty"`
 }
 
+// EdgeWorkloadSecurityContext holds workload-level security attributes
+type EdgeWorkloadSecurityContext struct {
+	// RunByRoot determines if the containers in the workload should run under the root user. By default
+	// workloads are run by a non-root user.
+	RunByRoot *bool `json:"runByRoot,omitempty"`
+}
 type ImageRegistriesConfiguration struct {
 	AuthFileSecret *NameRef `json:"secretRef,omitempty"`
 }

@@ -344,6 +344,8 @@ definitions:
       log_collection:
         description: Log collection target for this workload
         type: string
+      securityContext:
+        $ref: '#/definitions/security-context'
   secret-list:
     description: List of secrets used by the workloads
     type: array
@@ -773,3 +775,10 @@ definitions:
         type: object
       content:
         description: Content
+  security-context:
+    description: Security context used for the workload
+    type: object
+    properties:
+      runAsRoot:
+        description: Determines if the containers in the workload should run under the root user. By default workloads are run by a non-root user.
+        type: boolean

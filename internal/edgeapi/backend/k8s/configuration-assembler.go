@@ -298,14 +298,19 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 		if spec.Data != nil {
 			data = &models.DataConfiguration{Egress: toDataPath(spec.Data.Egress), Ingress: toDataPath(spec.Data.Ingress)}
 		}
+		var secContext *models.SecurityContext
+		if spec.SecurityContext != nil && spec.SecurityContext.RunByRoot != nil {
+			secContext = &models.SecurityContext{RunAsRoot: *spec.SecurityContext.RunByRoot}
+		}
 
 		workload := models.Workload{
-			Name:          edgeworkload.Name,
-			Namespace:     edgeworkload.Namespace,
-			Labels:        labels.GetPodmanLabels(edgeworkload.Labels),
-			Specification: string(podSpec),
-			Data:          data,
-			LogCollection: spec.LogCollection,
+			Name:            edgeworkload.Name,
+			Namespace:       edgeworkload.Namespace,
+			Labels:          labels.GetPodmanLabels(edgeworkload.Labels),
+			Specification:   string(podSpec),
+			Data:            data,
+			LogCollection:   spec.LogCollection,
+			SecurityContext: secContext,
 		}
 		authFile, err := a.getAuthFile(ctx, spec.ImageRegistries, edgeworkload.Namespace)
 		if err != nil {
