@@ -1004,7 +1004,7 @@ func init() {
       "description": "Security context used for the workload",
       "type": "object",
       "properties": {
-        "runAsRoot": {
+        "runByRoot": {
           "description": "Determines if the containers in the workload should run under the root user. By default workloads are run by a non-root user.",
           "type": "boolean"
         }
@@ -2154,7 +2154,7 @@ func init() {
       "description": "Security context used for the workload",
       "type": "object",
       "properties": {
-        "runAsRoot": {
+        "runByRoot": {
           "description": "Determines if the containers in the workload should run under the root user. By default workloads are run by a non-root user.",
           "type": "boolean"
         }

@@ -18,7 +18,7 @@ import (
 type SecurityContext struct {
 
 	// Determines if the containers in the workload should run under the root user. By default workloads are run by a non-root user.
-	RunAsRoot bool `json:"runAsRoot,omitempty"`
+	RunByRoot bool `json:"runByRoot,omitempty"`
 }
 
 // Validate validates this security context

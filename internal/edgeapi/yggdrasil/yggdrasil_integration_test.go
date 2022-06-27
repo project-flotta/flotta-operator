@@ -453,7 +453,7 @@ var _ = Describe("Yggdrasil", func() {
 			Expect(workload.Name).To(Equal("workload1"))
 			Expect(workload.Namespace).To(Equal("default"))
 			Expect(workload.ImageRegistries).To(BeNil())
-			Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunAsRoot: boolTrue}))
+			Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunByRoot: boolTrue}))
 		})
 
 		Context("Security Context", func() {
@@ -506,7 +506,7 @@ var _ = Describe("Yggdrasil", func() {
 				workload := config.Workloads[0]
 				Expect(workload.Name).To(Equal(workloadName))
 				Expect(workload.Namespace).To(Equal(defaultNamespace))
-				Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunAsRoot: boolTrue}))
+				Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunByRoot: boolTrue}))
 			})
 
 			It("has RunByRoot as false when specified as such in the edgeworkload", func() {
@@ -540,7 +540,7 @@ var _ = Describe("Yggdrasil", func() {
 				workload := config.Workloads[0]
 				Expect(workload.Name).To(Equal(workloadName))
 				Expect(workload.Namespace).To(Equal(defaultNamespace))
-				Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunAsRoot: boolFalse}))
+				Expect(workload.SecurityContext).To(Equal(&models.SecurityContext{RunByRoot: boolFalse}))
 			})
 
 			It("has the Security Context undefined in the workload when it is not defined in the edgeworkload", func() {

@@ -300,7 +300,7 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 		}
 		var secContext *models.SecurityContext
 		if spec.SecurityContext != nil && spec.SecurityContext.RunByRoot != nil {
-			secContext = &models.SecurityContext{RunAsRoot: *spec.SecurityContext.RunByRoot}
+			secContext = &models.SecurityContext{RunByRoot: *spec.SecurityContext.RunByRoot}
 		}
 
 		workload := models.Workload{
