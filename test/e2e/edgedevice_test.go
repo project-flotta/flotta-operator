@@ -159,12 +159,13 @@ func (e *edgeDeviceDocker) GetLogs(extraCommands ...string) (map[string]string, 
 	var err error
 	logsMap := make(map[string]string)
 	commands := []string{
-		"machinectl shell -q flotta@.host /usr/bin/journalctl --no-pager --user -u podman",
+		"sudo -u flotta /usr/bin/journalctl --no-pager --user -u podman",
 		"journalctl -u yggdrasild",
 		"ps aux",
-		"systemctl --machine flotta@.host status --full --no-pager --user podman",
-		"machinectl shell -q flotta@.host /usr/bin/podman ps -a",
+		"sudo -u flotta systemctl status --full --no-pager --user podman",
+		"sudo -u flotta /usr/bin/podman ps -a",
 		"systemctl status yggdrasild",
+		"sudo -u flotta systemctl status --user",
 	}
 	commands = append(commands, extraCommands...)
 
@@ -237,7 +238,11 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 		image = name
 	}
 	ctx := context.Background()
-	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: image}, &container.HostConfig{Privileged: true, ExtraHosts: []string{"project-flotta.io:172.17.0.1"}}, nil, nil, e.name)
+	resp, err := e.cli.ContainerCreate(ctx, &container.Config{Image: image}, &container.HostConfig{
+		Privileged:   true,
+		CgroupnsMode: "private",
+		ExtraHosts:   []string{"project-flotta.io:172.17.0.1"},
+	}, nil, nil, e.name)
 	if err != nil {
 		return err
 	}
