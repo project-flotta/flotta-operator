@@ -70,7 +70,7 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(Equal("active"))
 
 			// Check the podman.socket is running:
-			stdout, err = device.Exec("systemctl --machine flotta@.host is-active --user podman.socket")
+			stdout, err = device.Exec("sudo -u flotta systemctl is-active --user podman.socket")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("active"))
 
@@ -206,9 +206,9 @@ var _ = Describe("e2e", func() {
 			}).WithTimeout(180 * time.Second).Should(Equal("0"))
 
 			// no pods running
-			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman ps --noheading | wc -l")
+			stdout, err := device.Exec("sudo -u flotta /usr/bin/podman ps --noheading | wc -l")
 			Expect(err).To(BeNil())
-			Expect(stdout).To(Equal("1")) // machinectl print one empty new line
+			Expect(stdout).To(Equal("0"))
 
 			// EdgeWorkload CR still exists
 			depCr, err := workload.Get("nginx")
@@ -251,7 +251,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("systemctl --machine flotta@.host is-failed --user pod-nginx_pod.service")
+			stdout, err := device.Exec("sudo -u flotta systemctl is-failed --user pod-nginx_pod.service")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(BeElementOf([]string{"activating", "deactivating", "inactive"}))
 		})
@@ -307,7 +307,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("sudo -u flotta /usr/bin/podman exec nginx_pod-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 
@@ -341,7 +341,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 
 			// then
-			stdout, err := device.Exec("machinectl shell -q flotta@.host /usr/bin/podman exec nginx_pod-nginx env | grep key1")
+			stdout, err := device.Exec("sudo -u flotta /usr/bin/podman exec nginx_pod-nginx env | grep key1")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("key1=config1"))
 

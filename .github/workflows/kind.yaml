@@ -29,6 +29,7 @@ jobs:
         run: |
           sudo rm /etc/docker/daemon.json
           sudo systemctl restart docker
+          docker system info
 
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
@@ -49,7 +50,7 @@ jobs:
 
           unzip my -d /var/tmp/flotta
 
-      - name: Testing on KinD
+      - name: Prepare KinD
         run: |
           # Print cluster info
           kubectl cluster-info
@@ -70,6 +71,8 @@ jobs:
           fi
           kubectl wait --timeout=120s --for=condition=Ready pods --all -n flotta
 
+      - name: Testing on KinD
+        run: |
           # Run test
           INPUT_IMAGE="${{ github.event.inputs.image }}"
           if [ -n "${{ github.event.inputs.artifact_url }}" ]; then
