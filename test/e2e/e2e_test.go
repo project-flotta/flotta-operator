@@ -100,7 +100,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil(), "cannot get workload status for nginx workload")
 
 			// check systemd service
-			stdout, err := device.Exec("systemctl --machine flotta@.host is-active --user nginx.service")
+			stdout, err := device.Exec("sudo -u flotta systemctl is-active --user nginx.service")
 			Expect(err).To(BeNil())
 			Expect(stdout).To(Equal("active"))
 
@@ -109,6 +109,7 @@ var _ = Describe("e2e", func() {
 			Expect(err).To(BeNil())
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
 		})
+
 		It("Deploy then remove valid edgeworkload to registered device", func() {
 			// given
 			err := device.Register()
