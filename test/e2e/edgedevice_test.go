@@ -103,6 +103,7 @@ func (e *edgeDeviceDocker) WaitForWorkloadState(workloadName string, workloadPha
 			}
 		}
 		ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since workloadName didn't match any workload\n")
+		ginkgo.GinkgoT().Logf("Device Status :%+v", device.Status)
 		return false
 	})
 }
