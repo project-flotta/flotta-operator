@@ -10,4 +10,3 @@ Where the following can be found:
 - Getting started guides
 - Flotta Operations
 - Dev Guides
-1
