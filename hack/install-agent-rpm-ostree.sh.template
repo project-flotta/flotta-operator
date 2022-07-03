@@ -89,6 +89,7 @@ cat <<EOF >/etc/systemd/system/init-yggd.service
 [Unit]
 Description=Initialize yggdrasild configuration.
 Before=yggdrasild.service
+After=flotta-agent.service
 
 [Service]
 Type=simple
