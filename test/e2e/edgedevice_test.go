@@ -102,8 +102,7 @@ func (e *edgeDeviceDocker) WaitForWorkloadState(workloadName string, workloadPha
 				return true
 			}
 		}
-		ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since workloadName didn't match any workload\n")
-		ginkgo.GinkgoT().Logf("Device Status :%+v", device.Status)
+		ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since workloadName didn't match any workload, status: %v\n", device.Status)
 		return false
 	})
 }
@@ -165,9 +164,7 @@ func (e *edgeDeviceDocker) GetLogs(extraCommands ...string) (map[string]string, 
 		"ps aux",
 		"sudo -u flotta systemctl status --full --no-pager --user podman",
 		"sudo -u flotta /usr/bin/podman ps -a",
-		"sudo -u flotta /usr/bin/podman pod ps -a",
-		"ls /etc/yggdrasil/device/volumes/ -lah",
-		"ls /etc/yggdrasil/device/ -lah",
+		"sudo -u flotta /usr/bin/podman pod ps",
 		"systemctl status yggdrasild",
 		"sudo -u flotta systemctl status --user",
 	}
