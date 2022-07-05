@@ -35,6 +35,9 @@ type EdgeDeviceBackend interface {
 	// GetTargetNamespace returns the namespace the device should belong to. This method may return NotApproved error.
 	GetTargetNamespace(ctx context.Context, name, namespace string, matchesCertificate bool) (string, error)
 
+	// GetExecutionPlaybook Return the ansible playbook.
+	GetPlaybookExecutions(ctx context.Context, edgeDeviceName, namespace string) (*models.PlaybookExecutionsResponse, error)
+
 	// Register is called during device registration request handling, after mTLS certificate has
 	// been correctly issued.
 	// The responsibility of the method is to  record information that the device is finally registered and
