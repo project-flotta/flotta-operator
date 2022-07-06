@@ -2051,6 +2051,85 @@ var _ = Describe("Yggdrasil", func() {
 				Expect(config.Configuration.Storage).To(BeNil())
 			})
 		})
+		Context("workload annotations and labels", func() {
+			It("should propagate Labels with prefix 'podman/'", func() {
+				// given
+				deviceName := "foo"
+				device := getDevice(deviceName)
+				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
+
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				workloadData := &v1alpha1.EdgeWorkload{
+					ObjectMeta: v1.ObjectMeta{
+						Name:      "workload1",
+						Namespace: "default",
+						Labels:    map[string]string{"podman/label1": "1"},
+					},
+					Spec: v1alpha1.EdgeWorkloadSpec{
+						Type: "pod",
+						Pod:  v1alpha1.Pod{},
+					}}
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
+					Return(workloadData, nil)
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				workload := config.Workloads[0]
+				Expect(workload.Name).To(Equal("workload1"))
+				Expect(workload.Labels).To(Equal(map[string]string{"label1": "1"}))
+			})
+
+			It("should propagate Annotations with prefix 'podman/'", func() {
+				// given
+				deviceName := "foo"
+				device := getDevice(deviceName)
+				device.Status.Workloads = []v1alpha1.Workload{{Name: "workload1"}}
+
+				repositoryMock.EXPECT().
+					GetEdgeDevice(gomock.Any(), deviceName, testNamespace).
+					Return(device, nil).
+					Times(1)
+
+				workloadData := &v1alpha1.EdgeWorkload{
+					ObjectMeta: v1.ObjectMeta{
+						Name:        "workload1",
+						Namespace:   "default",
+						Annotations: map[string]string{"podman/annotate1": "1"},
+					},
+					Spec: v1alpha1.EdgeWorkloadSpec{
+						Type: "pod",
+						Pod:  v1alpha1.Pod{},
+					}}
+				configMap.EXPECT().Fetch(gomock.Any(), gomock.Any(), gomock.Any()).Return(models.ConfigmapList{}, nil)
+				repositoryMock.EXPECT().
+					GetEdgeWorkload(gomock.Any(), "workload1", testNamespace).
+					Return(workloadData, nil)
+				// when
+				res := handler.GetDataMessageForDevice(deviceCtx, params)
+
+				// then
+				Expect(res).To(BeAssignableToTypeOf(&operations.GetDataMessageForDeviceOK{}))
+				config := validateAndGetDeviceConfig(res)
+
+				Expect(config.DeviceID).To(Equal(deviceName))
+				Expect(config.Workloads).To(HaveLen(1))
+				workload := config.Workloads[0]
+				Expect(workload.Name).To(Equal("workload1"))
+				Expect(workload.Annotations).To(Equal(map[string]string{"annotate1": "1"}))
+			})
+		})
 	})
 
 	Context("PostDataMessageForDevice", func() {

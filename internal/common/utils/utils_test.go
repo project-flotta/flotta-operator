@@ -266,4 +266,31 @@ var _ = Describe("Utils", func() {
 			Expect(ok).To(BeTrue())
 		})
 	})
+	Context("FilterByPodmanPrefix", func() {
+		It("should return empty with an empty map", func() {
+			// given
+			aMap := map[string]string{}
+			// when
+			ret := utils.FilterByPodmanPrefix(aMap)
+			// then
+			Expect(ret).To(BeEmpty())
+
+		})
+		It("should return no keys when none match the 'podman/' prefix", func() {
+			// given
+			aMap := map[string]string{"noMatch": "1", "podman-/this-key": "1"}
+			// when
+			ret := utils.FilterByPodmanPrefix(aMap)
+			// then
+			Expect(ret).To(BeEmpty())
+		})
+		It("should return a key value pair with the 'podman/' removed when a match is found", func() {
+			// given
+			aMap := map[string]string{"noMatch": "1", "podman/pod_label": "1"}
+			// when
+			ret := utils.FilterByPodmanPrefix(aMap)
+			// then
+			Expect(ret).To(BeEquivalentTo(map[string]string{"pod_label": "1"}))
+		})
+	})
 })
