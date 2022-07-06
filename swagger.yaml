@@ -344,6 +344,11 @@ definitions:
       log_collection:
         description: Log collection target for this workload
         type: string
+      annotations:
+        type: object
+        description: Workload Annotations
+        additionalProperties:
+          type: string
   secret-list:
     description: List of secrets used by the workloads
     type: array

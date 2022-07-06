@@ -1048,6 +1048,13 @@ func init() {
     "workload": {
       "type": "object",
       "properties": {
+        "annotations": {
+          "description": "Workload Annotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "configmaps": {
           "$ref": "#/definitions/configmap-list"
         },
@@ -2185,6 +2192,13 @@ func init() {
     "workload": {
       "type": "object",
       "properties": {
+        "annotations": {
+          "description": "Workload Annotations",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "configmaps": {
           "$ref": "#/definitions/configmap-list"
         },
