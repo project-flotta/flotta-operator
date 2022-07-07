@@ -128,7 +128,7 @@ func ExtractInfoFromEnv(env []corev1.EnvVar, configmapMap MapType, ref GetRefEnv
 // And secondly, of those keys that have the "podman/" prefix, it uses the remaining part of the key as the new key in the returning map with the same value as in the original map
 // e.g. 'podman/this-is-my-key:1' is stored in the returning map as 'this-is-my-key:1'
 func FilterByPodmanPrefix(keyValues map[string]string) map[string]string {
-	ret := map[string]string{}
+	ret := make(map[string]string, len(keyValues))
 	for key, value := range keyValues {
 		if strings.HasPrefix(key, "podman/") {
 			ret[key[7:]] = value
