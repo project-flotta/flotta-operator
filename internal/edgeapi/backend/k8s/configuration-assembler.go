@@ -14,8 +14,8 @@ import (
 	"k8s.io/client-go/tools/record"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
-	"github.com/project-flotta/flotta-operator/internal/common/labels"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
+	"github.com/project-flotta/flotta-operator/internal/common/utils"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/configmaps"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/devicemetrics"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/images"
@@ -302,7 +302,8 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 		workload := models.Workload{
 			Name:          edgeworkload.Name,
 			Namespace:     edgeworkload.Namespace,
-			Labels:        labels.GetPodmanLabels(edgeworkload.Labels),
+			Annotations:   utils.FilterByPodmanPrefix(edgeworkload.Annotations),
+			Labels:        utils.FilterByPodmanPrefix(edgeworkload.Labels),
 			Specification: string(podSpec),
 			Data:          data,
 			LogCollection: spec.LogCollection,

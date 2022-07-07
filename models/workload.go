@@ -18,6 +18,9 @@ import (
 // swagger:model workload
 type Workload struct {
 
+	// Workload Annotations
+	Annotations map[string]string `json:"annotations,omitempty"`
+
 	// configmaps
 	Configmaps ConfigmapList `json:"configmaps,omitempty"`
 
