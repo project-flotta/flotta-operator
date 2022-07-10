@@ -16,16 +16,20 @@ OPTIONS:
 
            to make the Flotta API accessible from your machine
    -p      Port to connect to Flotta API, default 8043
+   -t      Indicates if to use testing repository, default is false
+   -v      Specifies the Fedora version to install, default is 35
 EOF
 }
 
 FLOTTA_PORT=8043
 
-while getopts "i:h:p:" option; do
+while getopts "i:p:t:v:h" option; do
     case "${option}"
     in
         i) FLOTTA_API_IP=${OPTARG};;
         p) FLOTTA_PORT=${OPTARG};;
+        t) TESTING_REPO=0;;
+        v) VERSION=${OPTARG};;
         h)
             usage
             exit 0
@@ -43,8 +47,22 @@ if [[ -z $FLOTTA_API_IP ]]; then
     exit 1
 fi
 
-curl https://copr.fedorainfracloud.org/coprs/project-flotta/flotta/repo/fedora-35/project-flotta-flotta-fedora-35.repo -o /etc/yum.repos.d/project-flotta.repo
+if [[ -z $VERSION ]]; then
+    VERSION=35
+fi
 
+TESTING_SUFFIX=""
+if [[ -n $TESTING_REPO ]]; then
+    TESTING_SUFFIX="-testing"
+fi
+
+# check if Fedora's version is 35 which requires a different RPM repo for podman4
+if [[ $VERSION -eq 35 ]]; then
+    curl -s https://copr.fedorainfracloud.org/coprs/rhcontainerbot/podman4/repo/fedora-35/rhcontainerbot-podman4-fedora-35.repo -o /etc/yum.repos.d/podman4-fedora-35.repo
+    dnf -y --best install podman
+fi
+
+curl -s https://copr.fedorainfracloud.org/coprs/project-flotta/flotta${TESTING_SUFFIX}/repo/fedora-${VERSION}/project-flotta-flotta-fedora-${VERSION}.repo -o /etc/yum.repos.d/project-flotta.repo
 dnf -y install node_exporter yggdrasil flotta-agent
 
 cat <<EOF >> /etc/hosts
@@ -72,8 +90,9 @@ cat <<EOF > /etc/yggdrasil/config.toml
 <CONFIG_TOML>
 EOF
 
-systemctl disable --now firewalld.service
-systemctl enable --now nftables.service
-systemctl enable --now podman.service
-systemctl enable --now podman.socket
-systemctl enable --now yggdrasild.service
+systemctl disable firewalld.service
+systemctl enable nftables.service
+systemctl enable podman.service
+systemctl enable podman.socket
+systemctl enable yggdrasild.service
+systemctl reboot
