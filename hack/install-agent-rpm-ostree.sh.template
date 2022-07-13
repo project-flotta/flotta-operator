@@ -105,6 +105,7 @@ systemctl enable init-yggd.service
 
 systemctl enable podman.service
 systemctl enable podman.socket
+systemctl is-active firewalld && systemctl disable firewalld; systemctl stop firewalld || true
 ln -s /usr/lib/systemd/system/node_exporter.service /etc/systemd/system/multi-user.target.wants/node_exporter.service
 ln -s /usr/lib/systemd/system/yggdrasild.service /etc/systemd/system/multi-user.target.wants/yggdrasild.service
 ln -s /usr/lib/systemd/system/nftables.service /etc/systemd/system/multi-user.target.wants/nftables.service
