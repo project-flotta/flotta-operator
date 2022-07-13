@@ -1,6 +1,6 @@
 # VERSION defines the project version.
 # Update this value when you upgrade the version of your project.
-VERSION ?= 0.1.0
+VERSION ?= 0.2.0
 
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 IMAGE_TAG_BASE ?= project-flotta.io/flotta-operator
