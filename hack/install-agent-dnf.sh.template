@@ -92,7 +92,5 @@ EOF
 
 systemctl disable firewalld.service
 systemctl enable nftables.service
-systemctl enable podman.service
-systemctl enable podman.socket
 systemctl enable yggdrasild.service
 systemctl reboot
