@@ -17,19 +17,17 @@ OPTIONS:
            to make the Flotta API accessible from your machine
    -p      Port to connect to Flotta API, default 8043
    -t      Indicates if to use testing repository, default is false
-   -v      Specifies the Fedora version to install, default is 35
 EOF
 }
 
 FLOTTA_PORT=8043
 
-while getopts "i:p:t:v:h" option; do
+while getopts "i:p:t:h" option; do
     case "${option}"
     in
         i) FLOTTA_API_IP=${OPTARG};;
         p) FLOTTA_PORT=${OPTARG};;
         t) TESTING_REPO=0;;
-        v) VERSION=${OPTARG};;
         h)
             usage
             exit 0
@@ -47,6 +45,7 @@ if [[ -z $FLOTTA_API_IP ]]; then
     exit 1
 fi
 
+VERSION=$(grep ^VERSION_ID /etc/os-release | cut -d= -f2)
 if [[ -z $VERSION ]]; then
     VERSION=35
 fi
