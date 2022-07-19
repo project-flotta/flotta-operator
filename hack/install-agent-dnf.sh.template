@@ -58,8 +58,10 @@ fi
 # check if Fedora's version is 35 which requires a different RPM repo for podman4
 if [[ $VERSION -eq 35 ]]; then
     curl -s https://copr.fedorainfracloud.org/coprs/rhcontainerbot/podman4/repo/fedora-35/rhcontainerbot-podman4-fedora-35.repo -o /etc/yum.repos.d/podman4-fedora-35.repo
-    dnf -y --best install podman
 fi
+
+# podman-4.2.0~rc1-2 is needed to support annotations to pods via 'play kube'
+dnf -y --best install podman --enablerepo=updates-testing
 
 curl -s https://copr.fedorainfracloud.org/coprs/project-flotta/flotta${TESTING_SUFFIX}/repo/fedora-${VERSION}/project-flotta-flotta-fedora-${VERSION}.repo -o /etc/yum.repos.d/project-flotta.repo
 dnf -y install node_exporter yggdrasil flotta-agent
