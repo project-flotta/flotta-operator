@@ -192,10 +192,14 @@ func (b *backend) GetPlaybookExecutions(ctx context.Context, deviceID, namespace
 				logger.Error(err, "cannot get playbook execution", "playbook execution name", labelValue, "namespace", namespace)
 				return nil, err
 			}
-			playbookResponseItem := &models.PlaybookExecutionsResponseItems0{
-				AnsiblePlaybook: string(playbookExecution.Spec.Playbook.Content),
-			}
-			response = append(response, playbookResponseItem)
+			// structObj := models.AnsiblePlaybook{AnsiblePlaybookString: string(playbookExecution.Spec.Playbook.Content)}
+
+			// testArray := models.AnsiblePlaybook{string(playbookExecution.Spec.Playbook.Content)}
+			// arrayTest := []*models.AnsiblePlaybook{&testArray, &testArray}
+			// playbookResponseItem := models.PlaybookExecutionsResponse{
+			// 	&models.AnsiblePlaybook{string(playbookExecution.Spec.Playbook.Content)},
+			// }
+			response = append(response, &models.AnsiblePlaybook{AnsiblePlaybookString: string(playbookExecution.Spec.Playbook.Content)})
 		}
 	}
 	return &response, nil

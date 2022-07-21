@@ -137,8 +137,8 @@ func (h *happyHandler) UpdateHeartBeat(_ context.Context, params backend.UpdateH
 func (h *happyHandler) GetPlaybookExecutions(_ context.Context, _ backend.GetPlaybookExecutionsParams) middleware.Responder {
 	return backend.NewGetPlaybookExecutionsOK().
 		WithPayload(models2.PlaybookExecutionsResponse{
-			&models2.PlaybookExecutionsResponseItems0{
-				AnsiblePlaybook: "fake-test-playbook",
+			&models2.AnsiblePlaybook{
+				AnsiblePlaybookString: "test-playbook",
 			},
 		})
 }

@@ -779,12 +779,15 @@ definitions:
       content:
         description: Content
 
+  ansible-playbook:
+    type: object
+    properties:
+      ansible-playbook-string:
+        type: string
+        description: >-
+          Returns the ansible playbook as a string.
+
   playbook-executions-response:
     type: array
     items:
-      type: object
-      properties:
-        ansible-playbook:
-          type: string
-          description: >-
-            Returns the ansible playbook as a string.
+      $ref: '#/definitions/ansible-playbook'

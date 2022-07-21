@@ -17,7 +17,7 @@ import (
 // PlaybookExecutionsResponse playbook executions response
 //
 // swagger:model playbook-executions-response
-type PlaybookExecutionsResponse []*PlaybookExecutionsResponseItems0
+type PlaybookExecutionsResponse []*AnsiblePlaybook
 
 // Validate validates this playbook executions response
 func (m PlaybookExecutionsResponse) Validate(formats strfmt.Registry) error {
@@ -69,42 +69,5 @@ func (m PlaybookExecutionsResponse) ContextValidate(ctx context.Context, formats
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-// PlaybookExecutionsResponseItems0 playbook executions response items0
-//
-// swagger:model PlaybookExecutionsResponseItems0
-type PlaybookExecutionsResponseItems0 struct {
-
-	// Returns the ansible playbook as a string.
-	AnsiblePlaybook string `json:"ansible-playbook,omitempty"`
-}
-
-// Validate validates this playbook executions response items0
-func (m *PlaybookExecutionsResponseItems0) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// ContextValidate validates this playbook executions response items0 based on context it is used
-func (m *PlaybookExecutionsResponseItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *PlaybookExecutionsResponseItems0) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *PlaybookExecutionsResponseItems0) UnmarshalBinary(b []byte) error {
-	var res PlaybookExecutionsResponseItems0
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
 	return nil
 }

@@ -331,7 +331,13 @@ func init() {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/playbook-executions-response"
+              "x-go-type": {
+                "import": {
+                  "alias": "commonmodel",
+                  "package": "github.com/project-flotta/flotta-operator/models"
+                },
+                "type": "PlaybookExecutionsResponse"
+              }
             }
           },
           "401": {
@@ -396,25 +402,6 @@ func init() {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
           "type": "string"
         }
-      }
-    },
-    "playbook-executions-response": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "ansible-playbook": {
-            "description": "Returns the ansible playbook as a string.",
-            "type": "string"
-          }
-        }
-      },
-      "x-go-type": {
-        "import": {
-          "alias": "commonmodel",
-          "package": "github.com/project-flotta/flotta-operator/models"
-        },
-        "type": "PlaybookExecutionsResponse"
       }
     }
   },
@@ -739,7 +726,13 @@ func init() {
           "200": {
             "description": "OK",
             "schema": {
-              "$ref": "#/definitions/playbook-executions-response"
+              "x-go-type": {
+                "import": {
+                  "alias": "commonmodel",
+                  "package": "github.com/project-flotta/flotta-operator/models"
+                },
+                "type": "PlaybookExecutionsResponse"
+              }
             }
           },
           "401": {
@@ -759,15 +752,6 @@ func init() {
     }
   },
   "definitions": {
-    "PlaybookExecutionsResponseItems0": {
-      "type": "object",
-      "properties": {
-        "ansible-playbook": {
-          "description": "Returns the ansible playbook as a string.",
-          "type": "string"
-        }
-      }
-    },
     "device-configuration-response": {
       "type": "object",
       "properties": {
@@ -813,19 +797,6 @@ func init() {
           "description": "Exposes the error message generated at the backend when there is an error (example HTTP code 500).",
           "type": "string"
         }
-      }
-    },
-    "playbook-executions-response": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/PlaybookExecutionsResponseItems0"
-      },
-      "x-go-type": {
-        "import": {
-          "alias": "commonmodel",
-          "package": "github.com/project-flotta/flotta-operator/models"
-        },
-        "type": "PlaybookExecutionsResponse"
       }
     }
   },
