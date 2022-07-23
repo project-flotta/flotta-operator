@@ -14,14 +14,16 @@ OPTIONS:
 
            kubectl port-forward service/flotta-edge-api -n flotta 8043 --address 0.0.0.0
    -p      Port to connect to Flotta API, default 8043
+   -t      Indicates if to use testing repository, default is false
 EOF
 }
 
-while getopts "i:h:p:" option; do
+while getopts "i:h:p:t" option; do
     case "${option}"
     in
         i) FLOTTA_API_IP=${OPTARG};;
         p) FLOTTA_PORT=${OPTARG};;
+        t) TESTING_REPO=0;;
         h)
             usage
             exit 0
@@ -39,8 +41,13 @@ if [[ -z $FLOTTA_API_IP ]]; then
     exit 1
 fi
 
+TESTING_SUFFIX=""
+if [[ -n $TESTING_REPO ]]; then
+    TESTING_SUFFIX="-testing"
+fi
 
-curl https://copr.fedorainfracloud.org/coprs/project-flotta/flotta/repo/fedora-35/project-flotta-flotta-fedora-35.repo -o /etc/yum.repos.d/project-flotta.repo
+VERSION=$(grep ^VERSION_ID /etc/os-release | cut -d= -f2)
+curl -s https://copr.fedorainfracloud.org/coprs/project-flotta/flotta${TESTING_SUFFIX}/repo/fedora-${VERSION}/project-flotta-flotta-fedora-${VERSION}.repo -o /etc/yum.repos.d/project-flotta.repo
 rpm-ostree install node_exporter yggdrasil flotta-agent
 
 cat <<EOF >> /etc/hosts
