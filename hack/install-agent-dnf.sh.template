@@ -51,12 +51,15 @@ if [[ -n $TESTING_REPO ]]; then
     TESTING_SUFFIX="-testing"
 fi
 
+# TODO: When podman rpms are available, use them from updates/updates-testing repo
+#       For now, we'll use podman from copr/project-flotta since podman-4.2 are missing from updates-testing repo
 # podman-4.2.0~rc1-2 is needed to support annotations to pods via 'play kube'
-dnf -y --best install podman --enablerepo=updates-testing
+# dnf -y --best install podman --enablerepo=updates-testing
 
 VERSION=$(grep ^VERSION_ID /etc/os-release | cut -d= -f2)
 curl -s https://copr.fedorainfracloud.org/coprs/project-flotta/flotta${TESTING_SUFFIX}/repo/fedora-${VERSION}/project-flotta-flotta-fedora-${VERSION}.repo -o /etc/yum.repos.d/project-flotta.repo
-dnf -y install node_exporter yggdrasil flotta-agent
+dnf clean all
+dnf --best -y install podman node_exporter yggdrasil flotta-agent
 
 cat <<EOF >> /etc/hosts
 $FLOTTA_API_IP project-flotta.io
