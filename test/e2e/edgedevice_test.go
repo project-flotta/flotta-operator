@@ -261,7 +261,7 @@ func (e *edgeDeviceDocker) Register(cmds ...string) error {
 		if err != nil {
 			return err
 		}
-		if _, err = e.Exec(fmt.Sprintf("dnf remove -y flotta-agent-race && dnf install -y /var/tmp/%s", filepath.Base(name))); err != nil {
+		if _, err = e.Exec(fmt.Sprintf("dnf remove -y flotta-agent-race && dnf install -y /var/tmp/%s && systemctl restart flotta-agent", filepath.Base(name))); err != nil {
 			return fmt.Errorf("cannot install custom rpm '%s': %v", name, err)
 		}
 	} else {
