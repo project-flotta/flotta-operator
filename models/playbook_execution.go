@@ -12,27 +12,27 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// AnsiblePlaybook ansible playbook
+// PlaybookExecution playbook execution
 //
-// swagger:model ansible-playbook
-type AnsiblePlaybook struct {
+// swagger:model playbook-execution
+type PlaybookExecution struct {
 
 	// Returns the ansible playbook as a string.
 	AnsiblePlaybookString string `json:"ansible-playbook-string,omitempty"`
 }
 
-// Validate validates this ansible playbook
-func (m *AnsiblePlaybook) Validate(formats strfmt.Registry) error {
+// Validate validates this playbook execution
+func (m *PlaybookExecution) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this ansible playbook based on context it is used
-func (m *AnsiblePlaybook) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validates this playbook execution based on context it is used
+func (m *PlaybookExecution) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *AnsiblePlaybook) MarshalBinary() ([]byte, error) {
+func (m *PlaybookExecution) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -40,8 +40,8 @@ func (m *AnsiblePlaybook) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *AnsiblePlaybook) UnmarshalBinary(b []byte) error {
-	var res AnsiblePlaybook
+func (m *PlaybookExecution) UnmarshalBinary(b []byte) error {
+	var res PlaybookExecution
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

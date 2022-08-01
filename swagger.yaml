@@ -779,7 +779,7 @@ definitions:
       content:
         description: Content
 
-  ansible-playbook:
+  playbook-execution:
     type: object
     properties:
       ansible-playbook-string:
@@ -790,4 +790,4 @@ definitions:
   playbook-executions-response:
     type: array
     items:
-      $ref: '#/definitions/ansible-playbook'
+      $ref: '#/definitions/playbook-execution'

@@ -17,7 +17,7 @@ import (
 // PlaybookExecutionsResponse playbook executions response
 //
 // swagger:model playbook-executions-response
-type PlaybookExecutionsResponse []*AnsiblePlaybook
+type PlaybookExecutionsResponse []*PlaybookExecution
 
 // Validate validates this playbook executions response
 func (m PlaybookExecutionsResponse) Validate(formats strfmt.Registry) error {

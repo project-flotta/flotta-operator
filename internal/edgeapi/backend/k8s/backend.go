@@ -199,7 +199,7 @@ func (b *backend) GetPlaybookExecutions(ctx context.Context, deviceID, namespace
 			// playbookResponseItem := models.PlaybookExecutionsResponse{
 			// 	&models.AnsiblePlaybook{string(playbookExecution.Spec.Playbook.Content)},
 			// }
-			response = append(response, &models.AnsiblePlaybook{AnsiblePlaybookString: string(playbookExecution.Spec.Playbook.Content)})
+			response = append(response, &models.PlaybookExecution{AnsiblePlaybookString: string(playbookExecution.Spec.Playbook.Content)})
 		}
 	}
 	return &response, nil

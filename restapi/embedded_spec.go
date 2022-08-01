@@ -217,15 +217,6 @@ func init() {
     }
   },
   "definitions": {
-    "ansible-playbook": {
-      "type": "object",
-      "properties": {
-        "ansible-playbook-string": {
-          "description": "Returns the ansible playbook as a string.",
-          "type": "string"
-        }
-      }
-    },
     "boot": {
       "type": "object",
       "properties": {
@@ -941,10 +932,19 @@ func init() {
         }
       }
     },
+    "playbook-execution": {
+      "type": "object",
+      "properties": {
+        "ansible-playbook-string": {
+          "description": "Returns the ansible playbook as a string.",
+          "type": "string"
+        }
+      }
+    },
     "playbook-executions-response": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/ansible-playbook"
+        "$ref": "#/definitions/playbook-execution"
       }
     },
     "registration-info": {
@@ -1371,15 +1371,6 @@ func init() {
           "type": "string"
         },
         "protocol": {
-          "type": "string"
-        }
-      }
-    },
-    "ansible-playbook": {
-      "type": "object",
-      "properties": {
-        "ansible-playbook-string": {
-          "description": "Returns the ansible playbook as a string.",
           "type": "string"
         }
       }
@@ -2100,10 +2091,19 @@ func init() {
         }
       }
     },
+    "playbook-execution": {
+      "type": "object",
+      "properties": {
+        "ansible-playbook-string": {
+          "description": "Returns the ansible playbook as a string.",
+          "type": "string"
+        }
+      }
+    },
     "playbook-executions-response": {
       "type": "array",
       "items": {
-        "$ref": "#/definitions/ansible-playbook"
+        "$ref": "#/definitions/playbook-execution"
       }
     },
     "registration-info": {
