@@ -48,6 +48,22 @@ func (_m *MockBackendAPI) GetDeviceConfiguration(ctx context.Context, params bac
 	return r0
 }
 
+// GetPlaybookExecutions provides a mock function with given fields: ctx, params
+func (_m *MockBackendAPI) GetPlaybookExecutions(ctx context.Context, params backend.GetPlaybookExecutionsParams) middleware.Responder {
+	ret := _m.Called(ctx, params)
+
+	var r0 middleware.Responder
+	if rf, ok := ret.Get(0).(func(context.Context, backend.GetPlaybookExecutionsParams) middleware.Responder); ok {
+		r0 = rf(ctx, params)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(middleware.Responder)
+		}
+	}
+
+	return r0
+}
+
 // GetRegistrationStatus provides a mock function with given fields: ctx, params
 func (_m *MockBackendAPI) GetRegistrationStatus(ctx context.Context, params backend.GetRegistrationStatusParams) middleware.Responder {
 	ret := _m.Called(ctx, params)

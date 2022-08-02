@@ -23,6 +23,9 @@ type API interface {
 	   GetDeviceConfiguration Returns the device configuration*/
 	GetDeviceConfiguration(ctx context.Context, params *GetDeviceConfigurationParams) (*GetDeviceConfigurationOK, error)
 	/*
+	   GetPlaybookExecutions Returns the playbook executions.*/
+	GetPlaybookExecutions(ctx context.Context, params *GetPlaybookExecutionsParams) (*GetPlaybookExecutionsOK, error)
+	/*
 	   GetRegistrationStatus Returns a device registration status, which can be registered, unregistered or unknown.*/
 	GetRegistrationStatus(ctx context.Context, params *GetRegistrationStatusParams) (*GetRegistrationStatusOK, error)
 	/*
@@ -102,6 +105,30 @@ func (a *Client) GetDeviceConfiguration(ctx context.Context, params *GetDeviceCo
 		return nil, err
 	}
 	return result.(*GetDeviceConfigurationOK), nil
+
+}
+
+/*
+GetPlaybookExecutions Returns the playbook executions.
+*/
+func (a *Client) GetPlaybookExecutions(ctx context.Context, params *GetPlaybookExecutionsParams) (*GetPlaybookExecutionsOK, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "GetPlaybookExecutions",
+		Method:             "POST",
+		PathPattern:        "/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"https"},
+		Params:             params,
+		Reader:             &GetPlaybookExecutionsReader{formats: a.formats},
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*GetPlaybookExecutionsOK), nil
 
 }
 

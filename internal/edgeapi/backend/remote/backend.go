@@ -123,3 +123,16 @@ func (b *backend) getRegistrationStatus(ctx context.Context, name string, namesp
 	payload := response.Payload
 	return payload, nil
 }
+func (b *backend) GetPlaybookExecutions(ctx context.Context, name string, namespace string) ([]*models.PlaybookExecution, error) {
+	request := backendclient.NewGetPlaybookExecutionsParams().
+		WithNamespace(namespace).
+		WithDeviceID(name)
+
+	response, err := b.backendApi.Backend.GetPlaybookExecutions(ctx, request)
+	if err != nil {
+		b.logger.With("PlaybookExecutionID", name, "Namespace", namespace).
+			Warnf("Error while getting playbook execution: %s", err.Error())
+		return nil, err
+	}
+	return response.Payload, nil
+}
