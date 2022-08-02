@@ -351,6 +351,12 @@ func init() {
         "os": {
           "$ref": "#/definitions/os-information"
         },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/profile"
+          }
+        },
         "storage": {
           "$ref": "#/definitions/storage-configuration"
         }
@@ -947,6 +953,31 @@ func init() {
         "$ref": "#/definitions/playbook-execution"
       }
     },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "expression": {
+                "description": "expression",
+                "type": "string"
+              },
+              "name": {
+                "description": "name of the condition",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "name": {
+          "description": "name of the profile",
+          "type": "string"
+        }
+      }
+    },
     "registration-info": {
       "type": "object",
       "properties": {
@@ -1101,6 +1132,12 @@ func init() {
           "description": "Namespace of the workload",
           "type": "string"
         },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workload-profile"
+          }
+        },
         "specification": {
           "type": "string"
         }
@@ -1111,6 +1148,20 @@ func init() {
       "type": "array",
       "items": {
         "$ref": "#/definitions/workload"
+      }
+    },
+    "workload-profile": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string"
+        }
       }
     },
     "workload-status": {
@@ -1375,6 +1426,19 @@ func init() {
         }
       }
     },
+    "ProfileConditionsItems0": {
+      "type": "object",
+      "properties": {
+        "expression": {
+          "description": "expression",
+          "type": "string"
+        },
+        "name": {
+          "description": "name of the condition",
+          "type": "string"
+        }
+      }
+    },
     "boot": {
       "type": "object",
       "properties": {
@@ -1508,6 +1572,12 @@ func init() {
         },
         "os": {
           "$ref": "#/definitions/os-information"
+        },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/profile"
+          }
         },
         "storage": {
           "$ref": "#/definitions/storage-configuration"
@@ -2106,6 +2176,21 @@ func init() {
         "$ref": "#/definitions/playbook-execution"
       }
     },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ProfileConditionsItems0"
+          }
+        },
+        "name": {
+          "description": "name of the profile",
+          "type": "string"
+        }
+      }
+    },
     "registration-info": {
       "type": "object",
       "properties": {
@@ -2260,6 +2345,12 @@ func init() {
           "description": "Namespace of the workload",
           "type": "string"
         },
+        "profiles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/workload-profile"
+          }
+        },
         "specification": {
           "type": "string"
         }
@@ -2270,6 +2361,20 @@ func init() {
       "type": "array",
       "items": {
         "$ref": "#/definitions/workload"
+      }
+    },
+    "workload-profile": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "name": {
+          "type": "string"
+        }
       }
     },
     "workload-status": {

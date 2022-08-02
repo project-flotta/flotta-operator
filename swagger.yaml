@@ -184,6 +184,10 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/mount'
+      profiles:
+        type: array
+        items:
+          $ref: '#/definitions/profile'
 
   metrics-receiver-configuration:
     type: object
@@ -331,6 +335,10 @@ definitions:
         description: Workload labels
         additionalProperties:
           type: string
+      profiles:
+        type: array
+        items:
+          $ref: '#/definitions/workload-profile'
       specification:
         type: string
       data:
@@ -677,6 +685,33 @@ definitions:
       options:
         description: mount options
         type: string
+      
+  profile:
+    type: object
+    properties:
+      name:
+        description: name of the profile
+        type: string
+      conditions:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              description: name of the condition
+              type: string
+            expression:
+              description: expression
+              type: string
+  workload-profile:
+    type: object
+    properties:
+      name:
+        type: string
+      conditions:
+        type: array
+        items:
+          type: string
 
   heartbeat:
     type: object

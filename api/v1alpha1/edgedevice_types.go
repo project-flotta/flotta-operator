@@ -39,6 +39,7 @@ type EdgeDeviceSpec struct {
 	Metrics       *MetricsConfiguration           `json:"metrics,omitempty"`
 	LogCollection map[string]*LogCollectionConfig `json:"logCollection,omitempty"`
 	Mounts        []*Mount                        `json:"mounts,omitempty"`
+	Profiles      []*Profile                      `json:"profiles,omitempty"`
 }
 
 type MetricsReceiverConfiguration struct {
@@ -419,6 +420,16 @@ type Mount struct {
 
 	// Mount options (i.e. rw, suid, dev)
 	Options string `json:"options,omitempty"`
+}
+
+type Profile struct {
+	Name       string       `json:"name,omitempty"`
+	Conditions []*Condition `json:"conditions,omitempty"`
+}
+
+type Condition struct {
+	Name       string `json:"name,omitempty"`
+	Expression string `json:"expression,omitempty"`
 }
 
 //+kubebuilder:object:root=true

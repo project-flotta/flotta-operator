@@ -7207,6 +7207,17 @@ spec:
                 required:
                 - spec
                 type: object
+              profiles:
+                items:
+                  properties:
+                    conditions:
+                      items:
+                        type: string
+                      type: array
+                    name:
+                      type: string
+                  type: object
+                type: array
               type:
                 type: string
             required:

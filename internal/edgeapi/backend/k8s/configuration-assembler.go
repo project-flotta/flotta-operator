@@ -110,6 +110,21 @@ func (a *ConfigurationAssembler) GetDeviceConfiguration(ctx context.Context, edg
 	dc.Configuration.Os = getOsConfiguration(edgeDevice, deviceSet)
 	dc.Configuration.Mounts = a.getMountConfiguration(ctx, edgeDevice, deviceSet)
 
+	dc.Configuration.Profiles = make([]*models.Profile, 0, len(edgeDevice.Spec.Profiles))
+	for _, p := range edgeDevice.Spec.Profiles {
+		conditions := make([]*models.ProfileConditionsItems0, 0, len(p.Conditions))
+		for _, c := range p.Conditions {
+			conditions = append(conditions, &models.ProfileConditionsItems0{
+				Name:       c.Name,
+				Expression: c.Expression,
+			})
+		}
+		dc.Configuration.Profiles = append(dc.Configuration.Profiles, &models.Profile{
+			Name:       p.Name,
+			Conditions: conditions,
+		})
+	}
+
 	var err error
 	dc.Configuration.Storage, err = a.getStorageConfiguration(ctx, edgeDevice, deviceSet)
 	if err != nil {
@@ -307,7 +322,16 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 			Specification: string(podSpec),
 			Data:          data,
 			LogCollection: spec.LogCollection,
+			Profiles:      make([]*models.WorkloadProfile, 0, len(edgeworkload.Spec.Profiles)),
 		}
+
+		for _, p := range edgeworkload.Spec.Profiles {
+			workload.Profiles = append(workload.Profiles, &models.WorkloadProfile{
+				Name:       p.Name,
+				Conditions: p.Conditions,
+			})
+		}
+
 		authFile, err := a.getAuthFile(ctx, spec.ImageRegistries, edgeworkload.Namespace)
 		if err != nil {
 			msg := fmt.Sprintf("Auth file secret %s used by edgeworkload %s/%s is missing", spec.ImageRegistries.AuthFileSecret.Name, edgeworkload.Namespace, edgeworkload.Name)
