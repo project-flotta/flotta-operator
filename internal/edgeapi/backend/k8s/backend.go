@@ -177,9 +177,9 @@ func (b *backend) UpdateStatus(ctx context.Context, name, namespace string, hear
 	return b.heartbeatHandler.Process(ctx, name, namespace, heartbeat)
 }
 
-func (b *backend) GetPlaybookExecutions(ctx context.Context, deviceID, namespace string) (*models.PlaybookExecutionsResponse, error) {
+func (b *backend) GetPlaybookExecutions(ctx context.Context, deviceID, namespace string) ([]*models.PlaybookExecution, error) {
 	logger := b.logger.With("DeviceID", deviceID, "Namespace", namespace)
-	response := models.PlaybookExecutionsResponse{}
+	response := []*models.PlaybookExecution{}
 	edgeDevice, err := b.repository.GetEdgeDevice(ctx, deviceID, namespace)
 	if err != nil {
 		return nil, err
@@ -192,17 +192,10 @@ func (b *backend) GetPlaybookExecutions(ctx context.Context, deviceID, namespace
 				logger.Error(err, "cannot get playbook execution", "playbook execution name", labelValue, "namespace", namespace)
 				return nil, err
 			}
-			// structObj := models.AnsiblePlaybook{AnsiblePlaybookString: string(playbookExecution.Spec.Playbook.Content)}
-
-			// testArray := models.AnsiblePlaybook{string(playbookExecution.Spec.Playbook.Content)}
-			// arrayTest := []*models.AnsiblePlaybook{&testArray, &testArray}
-			// playbookResponseItem := models.PlaybookExecutionsResponse{
-			// 	&models.AnsiblePlaybook{string(playbookExecution.Spec.Playbook.Content)},
-			// }
 			response = append(response, &models.PlaybookExecution{AnsiblePlaybookString: string(playbookExecution.Spec.Playbook.Content)})
 		}
 	}
-	return &response, nil
+	return response, nil
 }
 
 func (b *backend) updateDeviceStatus(ctx context.Context, device *v1alpha1.EdgeDevice, updateFunc func(d *v1alpha1.EdgeDevice)) error {
