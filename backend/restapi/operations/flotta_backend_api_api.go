@@ -301,10 +301,10 @@ func (o *FlottaBackendAPIAPI) initHandlerCache() {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}
 	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/configuration"] = backend.NewGetDeviceConfiguration(o.context, o.BackendGetDeviceConfigurationHandler)
-	if o.handlers["POST"] == nil {
-		o.handlers["POST"] = make(map[string]http.Handler)
+	if o.handlers["GET"] == nil {
+		o.handlers["GET"] = make(map[string]http.Handler)
 	}
-	o.handlers["POST"]["/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions"] = backend.NewGetPlaybookExecutions(o.context, o.BackendGetPlaybookExecutionsHandler)
+	o.handlers["GET"]["/namespaces/{namespace}/devices/{device-id}/playbookexecutions"] = backend.NewGetPlaybookExecutions(o.context, o.BackendGetPlaybookExecutionsHandler)
 	if o.handlers["GET"] == nil {
 		o.handlers["GET"] = make(map[string]http.Handler)
 	}

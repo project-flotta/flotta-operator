@@ -68,7 +68,7 @@ type GetPlaybookExecutionsOK struct {
 }
 
 func (o *GetPlaybookExecutionsOK) Error() string {
-	return fmt.Sprintf("[POST /namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions][%d] getPlaybookExecutionsOK  %+v", 200, o.Payload)
+	return fmt.Sprintf("[GET /namespaces/{namespace}/devices/{device-id}/playbookexecutions][%d] getPlaybookExecutionsOK  %+v", 200, o.Payload)
 }
 func (o *GetPlaybookExecutionsOK) GetPayload() commonmodel.PlaybookExecutionsResponse {
 	return o.Payload
@@ -97,7 +97,7 @@ type GetPlaybookExecutionsUnauthorized struct {
 }
 
 func (o *GetPlaybookExecutionsUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions][%d] getPlaybookExecutionsUnauthorized ", 401)
+	return fmt.Sprintf("[GET /namespaces/{namespace}/devices/{device-id}/playbookexecutions][%d] getPlaybookExecutionsUnauthorized ", 401)
 }
 
 func (o *GetPlaybookExecutionsUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -118,7 +118,7 @@ type GetPlaybookExecutionsForbidden struct {
 }
 
 func (o *GetPlaybookExecutionsForbidden) Error() string {
-	return fmt.Sprintf("[POST /namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions][%d] getPlaybookExecutionsForbidden ", 403)
+	return fmt.Sprintf("[GET /namespaces/{namespace}/devices/{device-id}/playbookexecutions][%d] getPlaybookExecutionsForbidden ", 403)
 }
 
 func (o *GetPlaybookExecutionsForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -149,7 +149,7 @@ func (o *GetPlaybookExecutionsDefault) Code() int {
 }
 
 func (o *GetPlaybookExecutionsDefault) Error() string {
-	return fmt.Sprintf("[POST /namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions][%d] GetPlaybookExecutions default  %+v", o._statusCode, o.Payload)
+	return fmt.Sprintf("[GET /namespaces/{namespace}/devices/{device-id}/playbookexecutions][%d] GetPlaybookExecutions default  %+v", o._statusCode, o.Payload)
 }
 func (o *GetPlaybookExecutionsDefault) GetPayload() *models.Error {
 	return o.Payload

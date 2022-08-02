@@ -41,7 +41,7 @@ func (o *GetPlaybookExecutionsURL) SetBasePath(bp string) {
 func (o *GetPlaybookExecutionsURL) Build() (*url.URL, error) {
 	var _result url.URL
 
-	var _path = "/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions"
+	var _path = "/namespaces/{namespace}/devices/{device-id}/playbookexecutions"
 
 	deviceID := o.DeviceID
 	if deviceID != "" {

@@ -205,6 +205,57 @@ func init() {
         }
       }
     },
+    "/namespaces/{namespace}/devices/{device-id}/playbookexecutions": {
+      "get": {
+        "description": "Returns the playbook executions.",
+        "tags": [
+          "backend"
+        ],
+        "operationId": "GetPlaybookExecutions",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Namespace where the device resides",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Device ID",
+            "name": "device-id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "x-go-type": {
+                "import": {
+                  "alias": "commonmodel",
+                  "package": "github.com/project-flotta/flotta-operator/models"
+                },
+                "type": "PlaybookExecutionsResponse"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "default": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/devices/{device-id}/registration": {
       "get": {
         "description": "Returns a device registration status, which can be registered, unregistered or unknown.",
@@ -288,57 +339,6 @@ func init() {
         "responses": {
           "200": {
             "description": "Updated"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "default": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions": {
-      "post": {
-        "description": "Returns the playbook executions.",
-        "tags": [
-          "backend"
-        ],
-        "operationId": "GetPlaybookExecutions",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Namespace where the device resides",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Device ID",
-            "name": "device-id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "x-go-type": {
-                "import": {
-                  "alias": "commonmodel",
-                  "package": "github.com/project-flotta/flotta-operator/models"
-                },
-                "type": "PlaybookExecutionsResponse"
-              }
-            }
           },
           "401": {
             "description": "Unauthorized"
@@ -600,6 +600,57 @@ func init() {
         }
       }
     },
+    "/namespaces/{namespace}/devices/{device-id}/playbookexecutions": {
+      "get": {
+        "description": "Returns the playbook executions.",
+        "tags": [
+          "backend"
+        ],
+        "operationId": "GetPlaybookExecutions",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "Namespace where the device resides",
+            "name": "namespace",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "Device ID",
+            "name": "device-id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "x-go-type": {
+                "import": {
+                  "alias": "commonmodel",
+                  "package": "github.com/project-flotta/flotta-operator/models"
+                },
+                "type": "PlaybookExecutionsResponse"
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "default": {
+            "description": "Error",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
     "/namespaces/{namespace}/devices/{device-id}/registration": {
       "get": {
         "description": "Returns a device registration status, which can be registered, unregistered or unknown.",
@@ -683,57 +734,6 @@ func init() {
         "responses": {
           "200": {
             "description": "Updated"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "default": {
-            "description": "Error",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          }
-        }
-      }
-    },
-    "/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions": {
-      "post": {
-        "description": "Returns the playbook executions.",
-        "tags": [
-          "backend"
-        ],
-        "operationId": "GetPlaybookExecutions",
-        "parameters": [
-          {
-            "type": "string",
-            "description": "Namespace where the device resides",
-            "name": "namespace",
-            "in": "path",
-            "required": true
-          },
-          {
-            "type": "string",
-            "description": "Device ID",
-            "name": "device-id",
-            "in": "path",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "schema": {
-              "x-go-type": {
-                "import": {
-                  "alias": "commonmodel",
-                  "package": "github.com/project-flotta/flotta-operator/models"
-                },
-                "type": "PlaybookExecutionsResponse"
-              }
-            }
           },
           "401": {
             "description": "Unauthorized"

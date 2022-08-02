@@ -115,8 +115,8 @@ func (a *Client) GetPlaybookExecutions(ctx context.Context, params *GetPlaybookE
 
 	result, err := a.transport.Submit(&runtime.ClientOperation{
 		ID:                 "GetPlaybookExecutions",
-		Method:             "POST",
-		PathPattern:        "/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions",
+		Method:             "GET",
+		PathPattern:        "/namespaces/{namespace}/devices/{device-id}/playbookexecutions",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"https"},
