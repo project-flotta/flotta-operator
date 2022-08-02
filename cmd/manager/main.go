@@ -28,12 +28,14 @@ import (
 
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
 	"github.com/project-flotta/flotta-operator/internal/common/storage"
 	"github.com/project-flotta/flotta-operator/internal/operator/informers"
-	"github.com/project-flotta/flotta-operator/internal/operator/watchers"
+	watchers "github.com/project-flotta/flotta-operator/internal/operator/watchers"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -51,7 +53,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/controllers"
 	//+kubebuilder:scaffold:imports
@@ -95,6 +96,9 @@ var Config struct {
 
 	// Number of concurrent goroutines to create for handling EdgeWorkload reconcile
 	EdgeWorkloadConcurrency uint `envconfig:"EDGEWORKLOAD_CONCURRENCY" default:"5"`
+
+	// Number of concurrent goroutines to create for handling EdgeConfig reconcile
+	EdgeConfigConcurrency uint `envconfig:"EDGECONFIG_CONCURRENCY" default:"5"`
 
 	// MaxConcurrentReconciles is the maximum number of concurrent Reconciles which can be run
 	MaxConcurrentReconciles uint `envconfig:"MAX_CONCURRENT_RECONCILES" default:"3"`
@@ -222,10 +226,25 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeWorkload")
 		os.Exit(1)
 	}
+	edgeConfigRepository := edgeconfig.NewEdgeConfigRepository(mgr.GetClient())
+	playbookExecutionRepository := playbookexecution.NewPlaybookExecutionRepository(mgr.GetClient())
 
+	if err = (&controllers.EdgeConfigReconciler{
+		Client:                      mgr.GetClient(),
+		Scheme:                      mgr.GetScheme(),
+		EdgeConfigRepository:        edgeConfigRepository,
+		EdgeDeviceRepository:        edgeDeviceRepository,
+		PlaybookExecutionRepository: playbookExecutionRepository,
+		Concurrency:                 Config.EdgeConfigConcurrency,
+		ExecuteConcurrent:           controllers.ExecuteConcurrent,
+		MaxConcurrentReconciles:     int(Config.MaxConcurrentReconciles),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "EdgeConfig")
+		os.Exit(1)
+	}
 	// webhooks
 	if Config.EnableWebhooks {
-		if err = (&v1alpha1.EdgeWorkload{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&managementv1alpha1.EdgeWorkload{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "EdgeWorkload")
 			os.Exit(1)
 		}
