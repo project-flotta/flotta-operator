@@ -240,8 +240,8 @@ paths:
           description: Error
           schema:
             $ref: '#/definitions/error'
-  '/namespaces/{namespace}/playbookexecution/{device-id}/playbookexecutions':
-    post:
+  '/namespaces/{namespace}/devices/{device-id}/playbookexecutions':
+    get:
       description: Returns the playbook executions.
       operationId: GetPlaybookExecutions
       tags:
