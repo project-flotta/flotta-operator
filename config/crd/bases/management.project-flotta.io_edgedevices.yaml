@@ -186,6 +186,22 @@ spec:
                       web server
                     type: string
                 type: object
+              profiles:
+                items:
+                  properties:
+                    conditions:
+                      items:
+                        properties:
+                          expression:
+                            type: string
+                          name:
+                            type: string
+                        type: object
+                      type: array
+                    name:
+                      type: string
+                  type: object
+                type: array
               requestTime:
                 description: RequestTime is the time of device registration request
                 format: date-time

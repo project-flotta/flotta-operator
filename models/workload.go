@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -45,6 +46,9 @@ type Workload struct {
 	// Namespace of the workload
 	Namespace string `json:"namespace,omitempty"`
 
+	// profiles
+	Profiles []*WorkloadProfile `json:"profiles"`
+
 	// specification
 	Specification string `json:"specification,omitempty"`
 }
@@ -66,6 +70,10 @@ func (m *Workload) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateMetrics(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateProfiles(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -149,6 +157,32 @@ func (m *Workload) validateMetrics(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Workload) validateProfiles(formats strfmt.Registry) error {
+	if swag.IsZero(m.Profiles) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Profiles); i++ {
+		if swag.IsZero(m.Profiles[i]) { // not required
+			continue
+		}
+
+		if m.Profiles[i] != nil {
+			if err := m.Profiles[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("profiles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("profiles" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 // ContextValidate validate this workload based on the context it is used
 func (m *Workload) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -166,6 +200,10 @@ func (m *Workload) ContextValidate(ctx context.Context, formats strfmt.Registry)
 	}
 
 	if err := m.contextValidateMetrics(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateProfiles(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -232,6 +270,26 @@ func (m *Workload) contextValidateMetrics(ctx context.Context, formats strfmt.Re
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Workload) contextValidateProfiles(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Profiles); i++ {
+
+		if m.Profiles[i] != nil {
+			if err := m.Profiles[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("profiles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("profiles" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

@@ -33,6 +33,7 @@ type EdgeWorkloadSpec struct {
 	Data            *DataConfiguration             `json:"data,omitempty"`
 	ImageRegistries *ImageRegistriesConfiguration  `json:"imageRegistries,omitempty"`
 	Metrics         *ContainerMetricsConfiguration `json:"metrics,omitempty"`
+	Profiles        []*WorkloadProfile             `json:"profiles,omitempty"`
 
 	// LogCollection is the logCollection property to be used to collect logs
 	// from this endpoint. This key is what is defined on the edgedevice
@@ -94,6 +95,11 @@ type DataPath struct {
 
 type Pod struct {
 	Spec v1.PodSpec `json:"spec"`
+}
+
+type WorkloadProfile struct {
+	Name       string   `json:"name,omitempty"`
+	Conditions []string `json:"conditions,omitempty"`
 }
 
 type EdgeWorkloadType string
