@@ -106,7 +106,7 @@ func (r CRRepository) ListForWorkload(ctx context.Context, name string, namespac
 
 func (r CRRepository) ListForEdgeConfig(ctx context.Context, name string, namespace string) ([]v1alpha1.EdgeDevice, error) {
 	var edl v1alpha1.EdgeDeviceList
-	err := r.client.List(ctx, &edl, client.MatchingLabels{labels.EdgeConfigLabelPrefix + indexer.DeviceByConfigIndexKey: name}, client.InNamespace(namespace))
+	err := r.client.List(ctx, &edl, client.MatchingLabels{labels.ConfigLabelPrefix + indexer.DeviceByConfigIndexKey: name}, client.InNamespace(namespace))
 	if err != nil {
 		return nil, err
 	}

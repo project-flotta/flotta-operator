@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	DeviceNameLabel       = "devicename"
-	DoesNotExistLabel     = "doesnotexist"
-	WorkloadLabelPrefix   = "workload/"
-	SelectorLabelPrefix   = "selector/"
-	EdgeConfigLabelPrefix = "edgeconfig/"
+	DeviceNameLabel     = "devicename"
+	DoesNotExistLabel   = "doesnotexist"
+	WorkloadLabelPrefix = "workload/"
+	SelectorLabelPrefix = "selector/"
+	ConfigLabelPrefix   = "config/"
 )
 
 func WorkloadLabel(workloadName string) string {
@@ -29,5 +29,5 @@ func CreateSelectorLabel(label string) string {
 }
 
 func IsEdgeConfigLabel(label string) bool {
-	return strings.HasPrefix(label, EdgeConfigLabelPrefix)
+	return strings.HasPrefix(label, ConfigLabelPrefix)
 }

@@ -71,7 +71,7 @@ func CreateDeviceIndexKey(label string) string {
 
 // CreateDeviceConfigIndexKey creates a key for the device index which is basically the config name
 func CreateDeviceConfigIndexKey(label string) string {
-	return strings.TrimPrefix(label, flottalabels.EdgeConfigLabelPrefix)
+	return strings.TrimPrefix(label, flottalabels.ConfigLabelPrefix)
 }
 
 // CreateWorkloadIndexKey creates a key for the workload index
