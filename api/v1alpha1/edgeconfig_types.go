@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,6 +29,13 @@ import (
 type EdgeConfigSpec struct {
 	// Definition of the custom playbook workload to execute
 	EdgePlaybook *EdgePlaybookSpec `json:"edgePlaybook,omitempty"`
+
+	// IgnitionConfig is the config used by flotta config. By default only
+	// user/systemd and a subset of filesystem are in place(directories, links,
+	// files) The main reason to use in this way is because ignition is only
+	// valid for startup, but some functions(described before)can be used without
+	// issues
+	IgnitionConfig json.RawMessage `json:"IgnitionConfig,omitempty"`
 }
 
 // EdgeConfigStatus defines the observed state of EdgeConfig

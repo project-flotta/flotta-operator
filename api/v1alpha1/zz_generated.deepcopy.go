@@ -22,6 +22,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"encoding/json"
+
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -257,6 +259,11 @@ func (in *EdgeConfigSpec) DeepCopyInto(out *EdgeConfigSpec) {
 		in, out := &in.EdgePlaybook, &out.EdgePlaybook
 		*out = new(EdgePlaybookSpec)
 		(*in).DeepCopyInto(*out)
+	}
+	if in.IgnitionConfig != nil {
+		in, out := &in.IgnitionConfig, &out.IgnitionConfig
+		*out = make(json.RawMessage, len(*in))
+		copy(*out, *in)
 	}
 }
 

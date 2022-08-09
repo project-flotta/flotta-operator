@@ -36,6 +36,14 @@ spec:
           spec:
             description: EdgeConfigSpec defines the desired state of EdgeConfig
             properties:
+              IgnitionConfig:
+                description: IgnitionConfig is the config used by flotta config. By
+                  default only user/systemd and a subset of filesystem are in place(directories,
+                  links, files) The main reason to use in this way is because ignition
+                  is only valid for startup, but some functions(described before)can
+                  be used without issues
+                format: byte
+                type: string
               edgePlaybook:
                 description: Definition of the custom playbook workload to execute
                 properties:

@@ -8,6 +8,26 @@ metadata:
 webhooks:
 - admissionReviewVersions:
   - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-management-project-flotta-io-v1alpha1-EdgeConfig
+  failurePolicy: Fail
+  name: edgeconfig.management.project-flotta.io
+  rules:
+  - apiGroups:
+    - management.project-flotta.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - EdgeConfig
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
   - v1beta1
   clientConfig:
     service:
