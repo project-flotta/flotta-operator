@@ -18,7 +18,6 @@ package main
 
 import (
 	"context"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -296,7 +295,7 @@ func getOperatorNamespace() (operatorNamespace string, err error) {
 		return defaultOperatorNamespace, nil
 	}
 
-	nsBytes, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+	nsBytes, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 	if err != nil {
 		return "", err
 	}

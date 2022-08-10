@@ -3,7 +3,7 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"path/filepath"
@@ -145,7 +145,7 @@ func (e *edgeDeviceDocker) Exec(command string) (string, error) {
 	}
 	defer response.Close()
 
-	data, err := ioutil.ReadAll(response.Reader)
+	data, err := io.ReadAll(response.Reader)
 	if err != nil {
 		return "", err
 	}
