@@ -80,7 +80,7 @@ func (e *edgeDeviceDocker) GetId() string {
 }
 
 func (e *edgeDeviceDocker) WaitForWorkloadState(workloadName string, workloadPhase v1alpha1.EdgeWorkloadPhase) error {
-	return e.waitForDevice(func() bool {
+	err := e.waitForDevice(func() bool {
 		device, err := e.Get()
 		if device == nil || err != nil {
 			if device == nil {
@@ -105,6 +105,19 @@ func (e *edgeDeviceDocker) WaitForWorkloadState(workloadName string, workloadPha
 		ginkgo.GinkgoT().Logf("WaitForWorkloadState failed since workloadName didn't match any workload, status: %v\n", device.Status)
 		return false
 	})
+
+	if err != nil {
+		output, err := e.Exec("sudo -u flotta /usr/bin/podman pod ps")
+		ginkgo.GinkgoT().Logf("WaitForWorkloadState pod status=%s err=%v\n", output, err)
+
+		output, err = e.Exec("sudo -u flotta systemctl status --user")
+		ginkgo.GinkgoT().Logf("WaitForWorkloadState systemctl status=%s err=%v\n", output, err)
+
+		output, err = e.Exec("sudo -u flotta find /var/home/flotta/.config/systemd/")
+		ginkgo.GinkgoT().Logf("WaitForWorkloadState systemctl status=%s err=%v\n", output, err)
+	}
+
+	return err
 }
 
 func (e *edgeDeviceDocker) CopyCerts() error {
