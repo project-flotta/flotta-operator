@@ -13,7 +13,6 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/project-flotta/flotta-operator/internal/common/labels"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
@@ -277,42 +276,35 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 	case "ansible":
 		ns := h.getNamespace(ctx)
+		playbookExecutions, err := h.backend.GetPlaybookExecutions(ctx, deviceID, ns)
 
-		edgeDevice, err := h.edgeDeviceRepository.Read(ctx, deviceID, ns)
 		if err != nil {
-			if !errors.IsNotFound(err) {
-				h.metrics.IncEdgeDeviceFailedRegistration()
-				return operations.NewPostDataMessageForDeviceInternalServerError()
+			if errors.IsNotFound(err) {
+				return operations.NewGetDataMessageForDeviceNotFound()
 			}
-			return operations.NewPostDataMessageForDeviceNotFound()
+			return operations.NewGetDataMessageForDeviceInternalServerError()
 		}
-
-		for labelName, labelValue := range edgeDevice.ObjectMeta.Labels {
-			if labels.IsEdgeConfigLabel(labelName) { //FIXME: what if the are multiple config labels?
-
-				playbookExecution, err := h.playbookExecutionRepository.Read(ctx, labelValue, h.getNamespace(ctx))
-				if err != nil {
-					if errors.IsNotFound(err) {
-						return operations.NewGetDataMessageForDeviceNotFound()
-					}
-					return operations.NewGetDataMessageForDeviceInternalServerError()
-				}
-				if playbookExecution == nil {
-					return operations.NewGetDataMessageForDeviceInternalServerError()
-				}
-
-				message := models.Message{
-					Type:      models.MessageTypeData,
-					Metadata:  map[string]string{"ansible-playbook": "true"},
-					Directive: "ansible",
-					MessageID: uuid.New().String(),
-					Version:   1,
-					Sent:      strfmt.DateTime(time.Now()),
-					Content:   playbookExecution,
-				}
-				return operations.NewGetDataMessageForDeviceOK().WithPayload(&message)
+		if len(playbookExecutions) == 0 {
+			return operations.NewGetDataMessageForDeviceInternalServerError()
+		}
+		var message *models.Message
+		for _, pe := range playbookExecutions {
+			message = &models.Message{
+				Type:      models.MessageTypeData,
+				Metadata:  map[string]string{"ansible-playbook": "true"},
+				Directive: "ansible",
+				MessageID: uuid.New().String(),
+				Version:   1,
+				Sent:      strfmt.DateTime(time.Now()),
+				Content:   pe.AnsiblePlaybookString,
 			}
+			break // FIXME: only one playbook is supported
 		}
+		if message == nil {
+			return operations.NewPostDataMessageForDeviceOK()
+		}
+		return operations.NewGetDataMessageForDeviceOK().WithPayload(message)
+
 	default:
 		logger.With("message", msg).Info("received unknown message")
 		return operations.NewPostDataMessageForDeviceBadRequest()
