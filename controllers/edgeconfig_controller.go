@@ -132,23 +132,24 @@ func createPlaybookExecution(edgeConfig *managementv1alpha1.EdgeConfig) manageme
 
 func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context, edgeConfig *managementv1alpha1.EdgeConfig, edgeDevices []managementv1alpha1.EdgeDevice) error {
 	playbookExecutionBase := createPlaybookExecution(edgeConfig)
-	f := func(ctx context.Context, input []managementv1alpha1.EdgeDevice) []error {
+	f := func(ctx context.Context, devices []managementv1alpha1.EdgeDevice) []error {
 
 		var errs []error
-		for _, edgeDevice := range input {
+		// access the item in the iterable directly instead of using the iterator variable
+		// to fix implicit memory aliasing in for loop
+		for i := range devices {
 			select {
 			case <-ctx.Done():
 				errs = append(errs, fmt.Errorf("context canceled: %w", ctx.Err()))
 				return errs
 			default:
 			}
-			if !r.hasPlaybookExecution(edgeDevice, edgeConfig.Name) {
-				patch := client.MergeFrom(edgeDevice.DeepCopy())
+			if !r.hasPlaybookExecution(devices[i], edgeConfig.Name) {
 				playbookExecution := playbookExecutionBase.DeepCopy()
-				playbookExecution.Name = edgeDevice.Name + "-" + edgeConfig.Name
+				playbookExecution.Name = devices[i].Name + "-" + edgeConfig.Name
 
 				peStatus := managementv1alpha1.PlaybookExec{Name: playbookExecution.Name}
-				edgeDevice.Status.PlaybookExecutions = append(edgeDevice.Status.PlaybookExecutions, peStatus)
+				devices[i].Status.PlaybookExecutions = append(devices[i].Status.PlaybookExecutions, peStatus)
 				err := r.PlaybookExecutionRepository.Create(ctx, playbookExecution)
 				if err != nil {
 					if errors.IsAlreadyExists(err) {
@@ -157,14 +158,14 @@ func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context
 					errs = append(errs, err)
 					continue
 				}
-
-				err2 := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
-				if err2 != nil {
-					errs = append(errs, err2)
+				patch := client.MergeFrom(devices[i].DeepCopy())
+				err = r.EdgeDeviceRepository.PatchStatus(ctx, &devices[i], &patch)
+				if err != nil {
+					errs = append(errs, err)
 					continue
 				}
 			} else {
-				logger.Info("Edge Device has already a playbookExecution", "edgeDevice", edgeDevice, "edgeConfig", edgeConfig)
+				logger.Info("Edge Device has already a playbookExecution", "edgeDevice", devices[i], "edgeConfig", edgeConfig)
 			}
 		}
 
