@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
@@ -46,7 +46,7 @@ type EdgeConfigReconciler struct {
 	PlaybookExecutionRepository playbookexecution.Repository
 	Concurrency                 uint
 	MaxConcurrentReconciles     int
-	ExecuteConcurrent           func(context.Context, uint, ConcurrentFunc, []managementv1alpha1.EdgeDevice) []error
+	ExecuteConcurrent           func(context.Context, uint, ConcurrentFunc, []v1alpha1.EdgeDevice) []error
 }
 
 var logger = log.FromContext(context.TODO())
@@ -101,7 +101,7 @@ func (r *EdgeConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 func (r *EdgeConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		// Uncomment the following line adding a pointer to an instance of the controlled resource as an argument
-		For(&managementv1alpha1.EdgeConfig{}).
+		For(&v1alpha1.EdgeConfig{}).
 		WithEventFilter(predicate.Funcs{
 			CreateFunc: func(e event.CreateEvent) bool {
 				return true
@@ -111,8 +111,8 @@ func (r *EdgeConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func createPlaybookExecution(edgeConfig *managementv1alpha1.EdgeConfig) managementv1alpha1.PlaybookExecution {
-	var playbookExec managementv1alpha1.PlaybookExecution
+func createPlaybookExecution(edgeConfig *v1alpha1.EdgeConfig) v1alpha1.PlaybookExecution {
+	var playbookExec v1alpha1.PlaybookExecution
 	playbookExec.ObjectMeta.Name = edgeConfig.Name
 	playbookExec.ObjectMeta.OwnerReferences = []v1.OwnerReference{{
 		APIVersion: edgeConfig.APIVersion,
@@ -123,15 +123,15 @@ func createPlaybookExecution(edgeConfig *managementv1alpha1.EdgeConfig) manageme
 	playbookExec.ObjectMeta.Namespace = edgeConfig.Namespace
 	playbookExec.Spec.Playbook = edgeConfig.Spec.EdgePlaybook.Playbooks[0] //TODO Iterate over the playbooks
 	playbookExec.Spec.ExecutionAttempt = 0
-	playbookExecutionStatus := managementv1alpha1.PlaybookExecutionStatus{}
-	playbookExecutionStatus.Conditions = append(playbookExecutionStatus.Conditions, managementv1alpha1.PlaybookExecutionCondition{Type: managementv1alpha1.PlaybookExecutionDeploying, Status: v1.ConditionTrue})
+	playbookExecutionStatus := v1alpha1.PlaybookExecutionStatus{}
+	playbookExecutionStatus.Conditions = append(playbookExecutionStatus.Conditions, v1alpha1.PlaybookExecutionCondition{Type: v1alpha1.PlaybookExecutionDeploying, Status: v1.ConditionTrue})
 	playbookExec.Status = playbookExecutionStatus
 	return playbookExec
 }
 
-func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context, edgeConfig *managementv1alpha1.EdgeConfig, edgeDevices []managementv1alpha1.EdgeDevice) error {
+func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context, edgeConfig *v1alpha1.EdgeConfig, edgeDevices []v1alpha1.EdgeDevice) error {
 	playbookExecutionBase := createPlaybookExecution(edgeConfig)
-	f := func(ctx context.Context, devices []managementv1alpha1.EdgeDevice) []error {
+	f := func(ctx context.Context, devices []v1alpha1.EdgeDevice) []error {
 
 		var errs []error
 		// access the item in the iterable directly instead of using the iterator variable
@@ -149,17 +149,17 @@ func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context
 				playbookExecution := playbookExecutionBase.DeepCopy()
 				playbookExecution.Name = edgeDevice.Name + "-" + edgeConfig.Name
 				playbookExecution.Status =
-					managementv1alpha1.PlaybookExecutionStatus{
+					v1alpha1.PlaybookExecutionStatus{
 						Conditions: append(playbookExecution.Status.Conditions,
-							managementv1alpha1.PlaybookExecutionCondition{
-								Type:   managementv1alpha1.PlaybookExecutionDeploying,
+							v1alpha1.PlaybookExecutionCondition{
+								Type:   v1alpha1.PlaybookExecutionDeploying,
 								Status: v1.ConditionTrue,
 							},
 						),
 					}
 
 				peStatus :=
-					managementv1alpha1.PlaybookExec{Name: playbookExecution.Name,
+					v1alpha1.PlaybookExec{Name: playbookExecution.Name,
 						PlaybookExecutionStatus: playbookExecution.Status}
 				edgeDevice.Status.PlaybookExecutions = append(edgeDevice.Status.PlaybookExecutions, peStatus)
 
@@ -191,7 +191,7 @@ func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context
 	return nil
 }
 
-func (r *EdgeConfigReconciler) hasPlaybookExecution(edgeDevice managementv1alpha1.EdgeDevice, name string) bool {
+func (r *EdgeConfigReconciler) hasPlaybookExecution(edgeDevice v1alpha1.EdgeDevice, name string) bool {
 	for _, PlaybookExec := range edgeDevice.Status.PlaybookExecutions {
 		if PlaybookExec.Name == name {
 			return true
@@ -200,7 +200,7 @@ func (r *EdgeConfigReconciler) hasPlaybookExecution(edgeDevice managementv1alpha
 	return false
 }
 
-func (r *EdgeConfigReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+func (r *EdgeConfigReconciler) executeConcurrent(ctx context.Context, f ConcurrentFunc, edgeDevices []v1alpha1.EdgeDevice) []error {
 	var errs []error
 	if r.Concurrency == 1 {
 		errs = f(ctx, edgeDevices)
@@ -210,7 +210,7 @@ func (r *EdgeConfigReconciler) executeConcurrent(ctx context.Context, f Concurre
 	return errs
 }
 
-func ExecuteEdgeConfigConcurrent(ctx context.Context, concurrency uint, f ConcurrentFunc, edgeDevices []managementv1alpha1.EdgeDevice) []error {
+func ExecuteEdgeConfigConcurrent(ctx context.Context, concurrency uint, f ConcurrentFunc, edgeDevices []v1alpha1.EdgeDevice) []error {
 	if len(edgeDevices) == 0 || concurrency == 0 {
 		return nil
 	}
