@@ -59,7 +59,7 @@ var _ = Describe("e2e", func() {
 	})
 
 	Context("Sanity", func() {
-		It("Check services are running after installation", func() {
+		FIt("Check services are running after installation", func() {
 			// when
 			err := device.Register()
 			Expect(err).To(BeNil())
@@ -110,7 +110,7 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(ContainSubstring("Welcome to nginx!"))
 		})
 
-		It("Deploy then remove valid edgeworkload to registered device", func() {
+		FIt("Deploy then remove valid edgeworkload to registered device", func() {
 			// given
 			err := device.Register()
 			Expect(err).To(BeNil())
