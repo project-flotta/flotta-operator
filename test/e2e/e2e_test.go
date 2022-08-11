@@ -85,7 +85,7 @@ var _ = Describe("e2e", func() {
 			Expect(stdout).To(Equal("Linger=yes"))
 		})
 
-		It("Deploy valid edgeworkload to registered device", func() {
+		FIt("Deploy valid edgeworkload to registered device", func() {
 			// given
 			err := device.Register("dnf install ansible -y")
 			Expect(err).To(BeNil())
