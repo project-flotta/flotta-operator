@@ -143,31 +143,44 @@ func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context
 				return errs
 			default:
 			}
-			if !r.hasPlaybookExecution(devices[i], edgeConfig.Name) {
+			edgeDevice := devices[i]
+			if !r.hasPlaybookExecution(edgeDevice, edgeDevice.Name+"-"+edgeConfig.Name) {
+				patch := client.MergeFrom(edgeDevice.DeepCopy())
 				playbookExecution := playbookExecutionBase.DeepCopy()
-				playbookExecution.Name = devices[i].Name + "-" + edgeConfig.Name
-
-				peStatus := managementv1alpha1.PlaybookExec{Name: playbookExecution.Name}
-				devices[i].Status.PlaybookExecutions = append(devices[i].Status.PlaybookExecutions, peStatus)
-				err := r.PlaybookExecutionRepository.Create(ctx, playbookExecution)
-				if err != nil {
-					if errors.IsAlreadyExists(err) {
-						continue
+				playbookExecution.Name = edgeDevice.Name + "-" + edgeConfig.Name
+				playbookExecution.Status =
+					managementv1alpha1.PlaybookExecutionStatus{
+						Conditions: append(playbookExecution.Status.Conditions,
+							managementv1alpha1.PlaybookExecutionCondition{
+								Type:   managementv1alpha1.PlaybookExecutionDeploying,
+								Status: v1.ConditionTrue,
+							},
+						),
 					}
+
+				peStatus :=
+					managementv1alpha1.PlaybookExec{Name: playbookExecution.Name,
+						PlaybookExecutionStatus: playbookExecution.Status}
+				edgeDevice.Status.PlaybookExecutions = append(edgeDevice.Status.PlaybookExecutions, peStatus)
+
+				err := r.PlaybookExecutionRepository.Create(ctx, playbookExecution)
+				if err != nil && errors.IsAlreadyExists(err) {
 					errs = append(errs, err)
 					continue
 				}
-				patch := client.MergeFrom(devices[i].DeepCopy())
-				err = r.EdgeDeviceRepository.PatchStatus(ctx, &devices[i], &patch)
+
 				if err != nil {
 					errs = append(errs, err)
 					continue
 				}
-			} else {
-				logger.Info("Edge Device has already a playbookExecution", "edgeDevice", devices[i], "edgeConfig", edgeConfig)
+
+				err2 := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
+				if err2 != nil {
+					errs = append(errs, err2)
+					continue
+				}
 			}
 		}
-
 		return errs
 	}
 
