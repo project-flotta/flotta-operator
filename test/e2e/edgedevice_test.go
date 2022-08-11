@@ -178,6 +178,7 @@ func (e *edgeDeviceDocker) GetLogs(extraCommands ...string) (map[string]string, 
 		"sudo -u flotta systemctl status --user",
 		"journalctl",
 		"systemctl status --user nginx.service",
+		"sudo -u flotta journalctl --user -xe",
 	}
 	commands = append(commands, extraCommands...)
 
