@@ -35,7 +35,6 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/playbookexecution"
-	"github.com/project-flotta/flotta-operator/internal/common/utils"
 )
 
 // EdgeConfigReconciler reconciles a EdgeConfig object
@@ -77,14 +76,8 @@ func (r *EdgeConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	if edgeConfig.DeletionTimestamp == nil && !utils.HasFinalizer(&edgeConfig.ObjectMeta, YggdrasilDeviceReferenceFinalizer) {
-		EdgeConfigCopy := edgeConfig.DeepCopy()
-		EdgeConfigCopy.Finalizers = []string{YggdrasilDeviceReferenceFinalizer}
-		err := r.EdgeConfigRepository.Patch(ctx, edgeConfig, EdgeConfigCopy)
-		if err != nil {
-			return ctrl.Result{Requeue: true}, err
-		}
-		return ctrl.Result{Requeue: true}, nil
+	if edgeConfig.DeletionTimestamp != nil {
+		return ctrl.Result{}, nil
 	}
 
 	edgeDevices, err := r.EdgeDeviceRepository.ListForEdgeConfig(ctx, edgeConfig.Name, edgeConfig.Namespace)
@@ -121,6 +114,12 @@ func (r *EdgeConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func createPlaybookExecution(edgeConfig *managementv1alpha1.EdgeConfig) managementv1alpha1.PlaybookExecution {
 	var playbookExec managementv1alpha1.PlaybookExecution
 	playbookExec.ObjectMeta.Name = edgeConfig.Name
+	playbookExec.ObjectMeta.OwnerReferences = []v1.OwnerReference{{
+		APIVersion: edgeConfig.APIVersion,
+		Kind:       edgeConfig.Kind,
+		Name:       edgeConfig.Name,
+		UID:        edgeConfig.UID,
+	}}
 	playbookExec.ObjectMeta.Namespace = edgeConfig.Namespace
 	playbookExec.Spec.Playbook = edgeConfig.Spec.EdgePlaybook.Playbooks[0] //TODO Iterate over the playbooks
 	playbookExec.Spec.ExecutionAttempt = 0
