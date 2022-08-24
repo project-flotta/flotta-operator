@@ -191,9 +191,9 @@ func (b *backend) GetPlaybookExecutions(ctx context.Context, deviceID, namespace
 
 	for labelName, labelValue := range edgeDevice.Labels {
 		if labels.IsEdgeConfigLabel(labelName) {
-			playbookExecution, err := b.repository.GetPlaybookExecution(ctx, labelValue, namespace)
+			playbookExecution, err := b.repository.GetPlaybookExecution(ctx, fmt.Sprintf("%s-%s", deviceID, labelValue), namespace)
 			if err != nil {
-				logger.Error(err, "cannot get playbook execution", "playbook execution name", labelValue)
+				logger.Error(err, "cannot get playbook execution ", "playbook execution name ", labelValue)
 				return nil, err
 			}
 			response = append(response, &models.PlaybookExecution{AnsiblePlaybookString: string(playbookExecution.Spec.Playbook.Content)})
