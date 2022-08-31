@@ -217,6 +217,14 @@ func init() {
     }
   },
   "definitions": {
+    "ansible-manager-configuration": {
+      "type": "object",
+      "properties": {
+        "period_seconds": {
+          "type": "integer"
+        }
+      }
+    },
     "boot": {
       "type": "object",
       "properties": {
@@ -330,6 +338,9 @@ func init() {
     "device-configuration": {
       "type": "object",
       "properties": {
+        "ansible-manager": {
+          "$ref": "#/definitions/ansible-manager-configuration"
+        },
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
         },
@@ -1375,6 +1386,14 @@ func init() {
         }
       }
     },
+    "ansible-manager-configuration": {
+      "type": "object",
+      "properties": {
+        "period_seconds": {
+          "type": "integer"
+        }
+      }
+    },
     "boot": {
       "type": "object",
       "properties": {
@@ -1488,6 +1507,9 @@ func init() {
     "device-configuration": {
       "type": "object",
       "properties": {
+        "ansible-manager": {
+          "$ref": "#/definitions/ansible-manager-configuration"
+        },
         "heartbeat": {
           "$ref": "#/definitions/heartbeat-configuration"
         },
