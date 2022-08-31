@@ -20,6 +20,9 @@ import (
 // swagger:model device-configuration
 type DeviceConfiguration struct {
 
+	// ansible manager
+	AnsibleManager *AnsibleManagerConfiguration `json:"ansible-manager,omitempty"`
+
 	// heartbeat
 	Heartbeat *HeartbeatConfiguration `json:"heartbeat,omitempty"`
 
@@ -42,6 +45,10 @@ type DeviceConfiguration struct {
 // Validate validates this device configuration
 func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateAnsibleManager(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateHeartbeat(formats); err != nil {
 		res = append(res, err)
@@ -70,6 +77,25 @@ func (m *DeviceConfiguration) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *DeviceConfiguration) validateAnsibleManager(formats strfmt.Registry) error {
+	if swag.IsZero(m.AnsibleManager) { // not required
+		return nil
+	}
+
+	if m.AnsibleManager != nil {
+		if err := m.AnsibleManager.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("ansible-manager")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("ansible-manager")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -205,6 +231,10 @@ func (m *DeviceConfiguration) validateStorage(formats strfmt.Registry) error {
 func (m *DeviceConfiguration) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateAnsibleManager(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateHeartbeat(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -232,6 +262,22 @@ func (m *DeviceConfiguration) ContextValidate(ctx context.Context, formats strfm
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *DeviceConfiguration) contextValidateAnsibleManager(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.AnsibleManager != nil {
+		if err := m.AnsibleManager.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("ansible-manager")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("ansible-manager")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
