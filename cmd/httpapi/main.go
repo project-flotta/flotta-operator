@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
@@ -112,7 +111,7 @@ func main() {
 
 	metricsObj := metrics.New()
 
-	corev1Client, err := corev1client.NewForConfig(clientConfig)
+	corev1Client, err := v1.NewForConfig(clientConfig)
 	if err != nil {
 		panic(err)
 	}
