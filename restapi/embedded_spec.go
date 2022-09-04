@@ -1104,6 +1104,10 @@ func init() {
         "configmaps": {
           "$ref": "#/definitions/configmap-list"
         },
+        "cron": {
+          "description": "cron defintion",
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/data-configuration"
         },
@@ -1137,6 +1141,10 @@ func init() {
           "items": {
             "$ref": "#/definitions/workload-profile"
           }
+        },
+        "rootless": {
+          "description": "permission",
+          "type": "boolean"
         },
         "specification": {
           "type": "string"
@@ -2317,6 +2325,10 @@ func init() {
         "configmaps": {
           "$ref": "#/definitions/configmap-list"
         },
+        "cron": {
+          "description": "cron defintion",
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/data-configuration"
         },
@@ -2350,6 +2362,10 @@ func init() {
           "items": {
             "$ref": "#/definitions/workload-profile"
           }
+        },
+        "rootless": {
+          "description": "permission",
+          "type": "boolean"
         },
         "specification": {
           "type": "string"

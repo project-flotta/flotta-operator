@@ -25,6 +25,9 @@ type Workload struct {
 	// configmaps
 	Configmaps ConfigmapList `json:"configmaps,omitempty"`
 
+	// cron defintion
+	Cron string `json:"cron,omitempty"`
+
 	// data
 	Data *DataConfiguration `json:"data,omitempty"`
 
@@ -48,6 +51,9 @@ type Workload struct {
 
 	// profiles
 	Profiles []*WorkloadProfile `json:"profiles"`
+
+	// permission
+	Rootless bool `json:"rootless,omitempty"`
 
 	// specification
 	Specification string `json:"specification,omitempty"`

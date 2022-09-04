@@ -34,6 +34,8 @@ type EdgeWorkloadSpec struct {
 	ImageRegistries *ImageRegistriesConfiguration  `json:"imageRegistries,omitempty"`
 	Metrics         *ContainerMetricsConfiguration `json:"metrics,omitempty"`
 	Profiles        []*WorkloadProfile             `json:"profiles,omitempty"`
+	Cron            string                         `json:"cron,omitempty"`
+	Rootless        bool                           `json:"rootles,omitempty"`
 
 	// LogCollection is the logCollection property to be used to collect logs
 	// from this endpoint. This key is what is defined on the edgedevice

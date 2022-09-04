@@ -322,6 +322,8 @@ func (a *ConfigurationAssembler) toWorkloadList(ctx context.Context, logger *zap
 			Specification: string(podSpec),
 			Data:          data,
 			LogCollection: spec.LogCollection,
+			Cron:          spec.Cron,
+			Rootless:      spec.Rootless,
 			Profiles:      make([]*models.WorkloadProfile, 0, len(edgeworkload.Spec.Profiles)),
 		}
 

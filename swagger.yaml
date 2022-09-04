@@ -341,6 +341,12 @@ definitions:
           $ref: '#/definitions/workload-profile'
       specification:
         type: string
+      cron:
+        type: string
+        description: cron defintion
+      rootless:
+        type: boolean
+        description: permission
       data:
         $ref: '#/definitions/data-configuration'
       imageRegistries:
