@@ -285,13 +285,16 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 			return operations.NewGetDataMessageForDeviceInternalServerError()
 		}
 		if len(playbookExecutions) == 0 {
-			return operations.NewGetDataMessageForDeviceInternalServerError()
+			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 		var message *models.Message
 		for _, pe := range playbookExecutions {
 			message = &models.Message{
-				Type:      models.MessageTypeData,
-				Metadata:  map[string]string{"ansible-playbook": "true"},
+				Type: models.MessageTypeData,
+				Metadata: map[string]string{
+					"pe-name":          pe.Name,
+					"ansible-playbook": "true",
+				},
 				Directive: "ansible",
 				MessageID: uuid.New().String(),
 				Version:   1,
