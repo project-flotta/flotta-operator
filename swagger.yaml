@@ -789,6 +789,10 @@ definitions:
   playbook-execution:
     type: object
     properties:
+      name:
+        type: string
+        description: >-
+          Returns the ansible playbookexecution name.
       ansible-playbook-string:
         type: string
         description: >-

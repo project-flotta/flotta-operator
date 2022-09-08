@@ -138,6 +138,7 @@ func (h *happyHandler) GetPlaybookExecutions(_ context.Context, _ backend.GetPla
 	return backend.NewGetPlaybookExecutionsOK().
 		WithPayload([]*models2.PlaybookExecution{
 			{
+				Name:                  "test-playbbok-name",
 				AnsiblePlaybookString: "test-playbook",
 			},
 		})

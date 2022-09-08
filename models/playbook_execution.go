@@ -19,6 +19,9 @@ type PlaybookExecution struct {
 
 	// Returns the ansible playbook as a string.
 	AnsiblePlaybookString string `json:"ansible-playbook-string,omitempty"`
+
+	// Returns the ansible playbookexecution name.
+	Name string `json:"name,omitempty"`
 }
 
 // Validate validates this playbook execution
