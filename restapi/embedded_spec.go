@@ -2162,6 +2162,10 @@ func init() {
           "description": "Returns the ansible playbook as a string.",
           "type": "string"
         },
+        "name": {
+          "description": "Returns the ansible playbookexecution name.",
+          "type": "string"
+        },
         "last_data_upload": {
           "type": "string",
           "format": "date-time"
