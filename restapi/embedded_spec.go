@@ -952,7 +952,7 @@ func init() {
     "playbook-execution": {
       "type": "object",
       "properties": {
-        "ansible-playbook-string": {
+        "ansible_playbook_string": {
           "description": "Returns the ansible playbook as a string.",
           "type": "string"
         },
@@ -2158,7 +2158,7 @@ func init() {
     "playbook-execution": {
       "type": "object",
       "properties": {
-        "ansible-playbook-string": {
+        "ansible_playbook_string": {
           "description": "Returns the ansible playbook as a string.",
           "type": "string"
         },

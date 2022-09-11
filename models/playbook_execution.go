@@ -20,7 +20,7 @@ import (
 type PlaybookExecution struct {
 
 	// Returns the ansible playbook as a string.
-	AnsiblePlaybookString string `json:"ansible-playbook-string,omitempty"`
+	AnsiblePlaybookString string `json:"ansible_playbook_string,omitempty"`
 
 	// last data upload
 	// Format: date-time

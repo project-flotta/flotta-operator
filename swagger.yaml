@@ -816,7 +816,7 @@ definitions:
         type: string
         description: >-
           Returns the ansible playbookexecution name.
-      ansible-playbook-string:
+      ansible_playbook_string:
         type: string
         description: >-
           Returns the ansible playbook as a string.
