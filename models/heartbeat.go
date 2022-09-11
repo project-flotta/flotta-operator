@@ -27,6 +27,9 @@ type Heartbeat struct {
 	// hardware
 	Hardware *HardwareInfo `json:"hardware,omitempty"`
 
+	// playbook executions
+	PlaybookExecutions []*PlaybookExecutionStatus `json:"playbook-executions"`
+
 	// status
 	// Enum: [up degraded]
 	Status string `json:"status,omitempty"`
@@ -50,6 +53,10 @@ func (m *Heartbeat) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateHardware(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validatePlaybookExecutions(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -111,6 +118,32 @@ func (m *Heartbeat) validateHardware(formats strfmt.Registry) error {
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Heartbeat) validatePlaybookExecutions(formats strfmt.Registry) error {
+	if swag.IsZero(m.PlaybookExecutions) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.PlaybookExecutions); i++ {
+		if swag.IsZero(m.PlaybookExecutions[i]) { // not required
+			continue
+		}
+
+		if m.PlaybookExecutions[i] != nil {
+			if err := m.PlaybookExecutions[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("playbook-executions" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("playbook-executions" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -215,6 +248,10 @@ func (m *Heartbeat) ContextValidate(ctx context.Context, formats strfmt.Registry
 		res = append(res, err)
 	}
 
+	if err := m.contextValidatePlaybookExecutions(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateUpgrade(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -260,6 +297,26 @@ func (m *Heartbeat) contextValidateHardware(ctx context.Context, formats strfmt.
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Heartbeat) contextValidatePlaybookExecutions(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.PlaybookExecutions); i++ {
+
+		if m.PlaybookExecutions[i] != nil {
+			if err := m.PlaybookExecutions[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("playbook-executions" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("playbook-executions" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

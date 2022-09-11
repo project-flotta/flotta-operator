@@ -598,6 +598,12 @@ func init() {
         "hardware": {
           "$ref": "#/definitions/hardware-info"
         },
+        "playbook-executions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/playbook-execution-status"
+          }
+        },
         "status": {
           "type": "string",
           "enum": [
@@ -950,9 +956,35 @@ func init() {
           "description": "Returns the ansible playbook as a string.",
           "type": "string"
         },
+        "last_data_upload": {
+          "type": "string",
+          "format": "date-time"
+        },
         "name": {
           "description": "Returns the ansible playbookexecution name.",
           "type": "string"
+        }
+      }
+    },
+    "playbook-execution-status": {
+      "type": "object",
+      "properties": {
+        "last_data_upload": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Deploying",
+            "TargetVerification",
+            "Running",
+            "SuccessfullyCompleted",
+            "CompletedWithError"
+          ]
         }
       }
     },
@@ -1772,6 +1804,12 @@ func init() {
         "hardware": {
           "$ref": "#/definitions/hardware-info"
         },
+        "playbook-executions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/playbook-execution-status"
+          }
+        },
         "status": {
           "type": "string",
           "enum": [
@@ -2124,9 +2162,35 @@ func init() {
           "description": "Returns the ansible playbook as a string.",
           "type": "string"
         },
+        "last_data_upload": {
+          "type": "string",
+          "format": "date-time"
+        },
         "name": {
           "description": "Returns the ansible playbookexecution name.",
           "type": "string"
+        }
+      }
+    },
+    "playbook-execution-status": {
+      "type": "object",
+      "properties": {
+        "last_data_upload": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Deploying",
+            "TargetVerification",
+            "Running",
+            "SuccessfullyCompleted",
+            "CompletedWithError"
+          ]
         }
       }
     },
