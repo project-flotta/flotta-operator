@@ -148,15 +148,6 @@ func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context
 				patch := client.MergeFrom(edgeDevice.DeepCopy())
 				playbookExecution := playbookExecutionBase.DeepCopy()
 				playbookExecution.Name = edgeDevice.Name + "-" + edgeConfig.Name
-				playbookExecution.Status =
-					v1alpha1.PlaybookExecutionStatus{
-						Conditions: append(playbookExecution.Status.Conditions,
-							v1alpha1.PlaybookExecutionCondition{
-								Type:   v1alpha1.PlaybookExecutionDeploying,
-								Status: v1.ConditionTrue,
-							},
-						),
-					}
 
 				peStatus :=
 					v1alpha1.PlaybookExec{Name: playbookExecution.Name,
