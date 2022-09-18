@@ -780,6 +780,8 @@ definitions:
         type: string
       content:
         description: Content
+      metadata:
+        type: object
   message:
     type: object
     properties:
