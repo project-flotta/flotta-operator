@@ -287,7 +287,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if len(playbookExecutions) == 0 {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-		res := models.MessageResponse{
+
 		res := models.MessageResponse{
 			Directive: msg.Directive,
 			MessageID: msg.MessageID,
@@ -303,8 +303,8 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		res.Content = string(peBytes)
 		res.Metadata = map[string]string{
 			"message-id":                    uuid.New().String(),
-			"crc_dispatcher_correlation_id": "",
-			"return_url":                    "",
+			"crc_dispatcher_correlation_id": "fake-crc-id", //FIX ME
+			"return_url":                    "return_url",  //FIX ME
 		}
 
 		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
