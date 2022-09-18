@@ -287,27 +287,27 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 		if len(playbookExecutions) == 0 {
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
-		var message *models.Message
-		for _, pe := range playbookExecutions {
-			message = &models.Message{
-				Type: models.MessageTypeData,
-				Metadata: map[string]string{
-					"pe-name":          pe.Name,
-					"ansible-playbook": "true",
-				},
-				Directive: "ansible",
-				MessageID: uuid.New().String(),
-				Version:   1,
-				Sent:      strfmt.DateTime(time.Now()),
-				Content:   pe.AnsiblePlaybookString,
-			}
-			break // FIXME: only one playbook is supported
+		res := models.MessageResponse{
+		res := models.MessageResponse{
+			Directive: msg.Directive,
+			MessageID: msg.MessageID,
 		}
-		if message == nil {
+
+		if len(playbookExecutions) == 0 {
 			return operations.NewPostDataMessageForDeviceOK()
 		}
-		return operations.NewGetDataMessageForDeviceOK().WithPayload(message)
+		peBytes, err := json.Marshal(playbookExecutions)
+		if err != nil {
+			return operations.NewPostDataMessageForDeviceInternalServerError()
+		}
+		res.Content = string(peBytes)
+		res.Metadata = map[string]string{
+			"message-id":                    uuid.New().String(),
+			"crc_dispatcher_correlation_id": "",
+			"return_url":                    "",
+		}
 
+		return operations.NewPostDataMessageForDeviceOK().WithPayload(&res)
 	default:
 		logger.With("message", msg).Info("received unknown message")
 		return operations.NewPostDataMessageForDeviceBadRequest()

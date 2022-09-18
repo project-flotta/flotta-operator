@@ -816,6 +816,9 @@ func init() {
         },
         "message_id": {
           "type": "string"
+        },
+        "metadata": {
+          "type": "object"
         }
       }
     },
@@ -2022,6 +2025,9 @@ func init() {
         },
         "message_id": {
           "type": "string"
+        },
+        "metadata": {
+          "type": "object"
         }
       }
     },
@@ -2160,10 +2166,6 @@ func init() {
       "properties": {
         "ansible_playbook_string": {
           "description": "Returns the ansible playbook as a string.",
-          "type": "string"
-        },
-        "name": {
-          "description": "Returns the ansible playbookexecution name.",
           "type": "string"
         },
         "last_data_upload": {
