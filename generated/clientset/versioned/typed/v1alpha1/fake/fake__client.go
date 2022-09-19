@@ -43,6 +43,10 @@ func (c *FakeManagementV1alpha1) EdgeWorkloads(namespace string) v1alpha1.EdgeWo
 	return &FakeEdgeWorkloads{c, namespace}
 }
 
+func (c *FakeManagementV1alpha1) PlaybookExecutions(namespace string) v1alpha1.PlaybookExecutionInterface {
+	return &FakePlaybookExecutions{c, namespace}
+}
+
 // RESTClient returns a RESTClient that is used to communicate
 // with API server by this client implementation.
 func (c *FakeManagementV1alpha1) RESTClient() rest.Interface {

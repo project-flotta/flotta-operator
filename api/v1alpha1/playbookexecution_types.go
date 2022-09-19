@@ -62,6 +62,8 @@ const (
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+genclient
+//+k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PlaybookExecution is the Schema for the playbookexecutions API
 type PlaybookExecution struct {
