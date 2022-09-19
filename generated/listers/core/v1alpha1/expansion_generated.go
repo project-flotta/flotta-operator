@@ -48,3 +48,11 @@ type EdgeWorkloadListerExpansion interface{}
 // EdgeWorkloadNamespaceListerExpansion allows custom methods to be added to
 // EdgeWorkloadNamespaceLister.
 type EdgeWorkloadNamespaceListerExpansion interface{}
+
+// PlaybookExecutionListerExpansion allows custom methods to be added to
+// PlaybookExecutionLister.
+type PlaybookExecutionListerExpansion interface{}
+
+// PlaybookExecutionNamespaceListerExpansion allows custom methods to be added to
+// PlaybookExecutionNamespaceLister.
+type PlaybookExecutionNamespaceListerExpansion interface{}

@@ -31,6 +31,8 @@ type Interface interface {
 	EdgeDeviceSignedRequests() EdgeDeviceSignedRequestInformer
 	// EdgeWorkloads returns a EdgeWorkloadInformer.
 	EdgeWorkloads() EdgeWorkloadInformer
+	// PlaybookExecutions returns a PlaybookExecutionInformer.
+	PlaybookExecutions() PlaybookExecutionInformer
 }
 
 type version struct {
@@ -62,4 +64,9 @@ func (v *version) EdgeDeviceSignedRequests() EdgeDeviceSignedRequestInformer {
 // EdgeWorkloads returns a EdgeWorkloadInformer.
 func (v *version) EdgeWorkloads() EdgeWorkloadInformer {
 	return &edgeWorkloadInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
+}
+
+// PlaybookExecutions returns a PlaybookExecutionInformer.
+func (v *version) PlaybookExecutions() PlaybookExecutionInformer {
+	return &playbookExecutionInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
