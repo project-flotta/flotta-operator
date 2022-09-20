@@ -2,6 +2,7 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	"github.com/project-flotta/flotta-operator/internal/edgeapi/hardware"
@@ -21,8 +23,19 @@ type Updater struct {
 }
 
 func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDevice, heartbeat *models.Heartbeat) error {
+	logger := log.FromContext(ctx)
 	edgeDeviceCopy := edgeDevice.DeepCopy()
 	patch := client.MergeFrom(edgeDeviceCopy)
+
+	playbookCopies := map[string]*v1alpha1.PlaybookExecution{}
+	for _, heartbeatPlaybookExec := range heartbeat.PlaybookExecutions {
+		pe, err := u.repository.GetPlaybookExecution(ctx, heartbeatPlaybookExec.Name, edgeDevice.Namespace) //TODO: how to get playbook exec namespace?
+		if err != nil {
+			logger.Error(err, "cannot find playbook execution", "name", heartbeatPlaybookExec.Name)
+			continue
+		}
+		playbookCopies[heartbeatPlaybookExec.Name] = pe.DeepCopy()
+	}
 
 	edgeDevice.Status.LastSyncedResourceVersion = heartbeat.Version
 	edgeDevice.Status.Phase = heartbeat.Status
@@ -39,6 +52,31 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 	if !reflect.DeepEqual(edgeDevice.Status, edgeDeviceCopy.Status) {
 		return u.repository.PatchEdgeDeviceStatus(ctx, edgeDevice, &patch)
 	}
+
+	for _, heartbeatPlaybookExec := range heartbeat.PlaybookExecutions {
+		peNew, err := u.repository.GetPlaybookExecution(ctx, heartbeatPlaybookExec.Name, edgeDevice.Namespace) //TODO: how to get playbook exec namespace?
+		if err != nil {
+			logger.Error(err, "cannot find playbook execution", "name", heartbeatPlaybookExec.Name)
+			continue
+		}
+		logger.Info("CHECK condition for pe", "conditions", peNew)
+		if peNew.Status.Conditions == nil || len(peNew.Status.Conditions) == 0 {
+			logger.Error(fmt.Errorf("no condition available"), "failed!!")
+		}
+		if len(peNew.Status.Conditions) > 0 {
+			peNew.Status.Conditions[len(peNew.Status.Conditions)-1].Status = v1.ConditionFalse
+		}
+
+		now := v1.Now()
+		peNew.Status.Conditions = append(peNew.Status.Conditions, v1alpha1.PlaybookExecutionCondition{Status: v1.ConditionTrue, Type: v1alpha1.PlaybookExecutionConditionType(heartbeatPlaybookExec.Status), LastTransitionTime: &now})
+
+		err = u.repository.PatchPlaybookExecution(ctx, playbookCopies[heartbeatPlaybookExec.Name], peNew) //TODO: how to get playbook exec namespace?
+		if err != nil {
+			logger.Error(err, "cannot patch playbook execution", "name", heartbeatPlaybookExec.Name)
+			continue
+		}
+	}
+
 	return nil
 }
 

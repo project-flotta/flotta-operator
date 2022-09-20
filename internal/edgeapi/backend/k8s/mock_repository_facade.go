@@ -185,6 +185,20 @@ func (mr *MockRepositoryFacadeMockRecorder) PatchEdgeDeviceStatus(arg0, arg1, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchEdgeDeviceStatus", reflect.TypeOf((*MockRepositoryFacade)(nil).PatchEdgeDeviceStatus), arg0, arg1, arg2)
 }
 
+// PatchPlaybookExecution mocks base method.
+func (m *MockRepositoryFacade) PatchPlaybookExecution(arg0 context.Context, arg1, arg2 *v1alpha1.PlaybookExecution) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchPlaybookExecution", arg0, arg1, arg2)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PatchPlaybookExecution indicates an expected call of PatchPlaybookExecution.
+func (mr *MockRepositoryFacadeMockRecorder) PatchPlaybookExecution(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchPlaybookExecution", reflect.TypeOf((*MockRepositoryFacade)(nil).PatchPlaybookExecution), arg0, arg1, arg2)
+}
+
 // UpdateEdgeDeviceLabels mocks base method.
 func (m *MockRepositoryFacade) UpdateEdgeDeviceLabels(arg0 context.Context, arg1 *v1alpha1.EdgeDevice, arg2 map[string]string) error {
 	m.ctrl.T.Helper()
