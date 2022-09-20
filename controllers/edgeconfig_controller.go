@@ -111,26 +111,38 @@ func (r *EdgeConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func createPlaybookExecution(edgeConfig *v1alpha1.EdgeConfig) v1alpha1.PlaybookExecution {
-	var playbookExec v1alpha1.PlaybookExecution
-	playbookExec.ObjectMeta.Name = edgeConfig.Name
-	playbookExec.ObjectMeta.OwnerReferences = []v1.OwnerReference{{
-		APIVersion: edgeConfig.APIVersion,
-		Kind:       edgeConfig.Kind,
-		Name:       edgeConfig.Name,
-		UID:        edgeConfig.UID,
-	}}
-	playbookExec.ObjectMeta.Namespace = edgeConfig.Namespace
-	playbookExec.Spec.Playbook = edgeConfig.Spec.EdgePlaybook.Playbooks[0] //TODO Iterate over the playbooks
-	playbookExec.Spec.ExecutionAttempt = 0
-	playbookExecutionStatus := v1alpha1.PlaybookExecutionStatus{}
-	playbookExecutionStatus.Conditions = append(playbookExecutionStatus.Conditions, v1alpha1.PlaybookExecutionCondition{Type: v1alpha1.PlaybookExecutionDeploying, Status: v1.ConditionTrue})
-	playbookExec.Status = playbookExecutionStatus
-	return playbookExec
+func createPlaybookExecutions(edgeConfig *v1alpha1.EdgeConfig) []v1alpha1.PlaybookExecution {
+	playbookExecutions := []v1alpha1.PlaybookExecution{}
+	for _, peEdgeConfig := range edgeConfig.Spec.EdgePlaybook.Playbooks {
+		var playbookExec v1alpha1.PlaybookExecution
+		playbookExec.ObjectMeta.Name = edgeConfig.Name
+		playbookExec.ObjectMeta.OwnerReferences = []v1.OwnerReference{{
+			APIVersion: edgeConfig.APIVersion,
+			Kind:       edgeConfig.Kind,
+			Name:       edgeConfig.Name,
+			UID:        edgeConfig.UID,
+		}}
+		playbookExec.ObjectMeta.Namespace = edgeConfig.Namespace
+		playbookExec.Spec.Playbook = peEdgeConfig
+		playbookExec.Spec.ExecutionAttempt = 0
+		playbookExecutionStatus := v1alpha1.PlaybookExecutionStatus{
+			Conditions: []v1alpha1.PlaybookExecutionCondition{
+				{
+					Type:   v1alpha1.PlaybookExecutionDeploying,
+					Status: v1.ConditionTrue,
+				},
+			},
+		}
+
+		playbookExec.Status = playbookExecutionStatus
+		playbookExecutions = append(playbookExecutions, playbookExec)
+	}
+
+	return playbookExecutions
 }
 
 func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context, edgeConfig *v1alpha1.EdgeConfig, edgeDevices []v1alpha1.EdgeDevice) error {
-	playbookExecutionBase := createPlaybookExecution(edgeConfig)
+	playbookExecutionBases := createPlaybookExecutions(edgeConfig)
 	f := func(ctx context.Context, devices []v1alpha1.EdgeDevice) []error {
 
 		var errs []error
@@ -146,29 +158,31 @@ func (r *EdgeConfigReconciler) addPlaybookExecutionToDevices(ctx context.Context
 			edgeDevice := devices[i]
 			if !r.hasPlaybookExecution(edgeDevice, edgeDevice.Name+"-"+edgeConfig.Name) {
 				patch := client.MergeFrom(edgeDevice.DeepCopy())
-				playbookExecution := playbookExecutionBase.DeepCopy()
-				playbookExecution.Name = edgeDevice.Name + "-" + edgeConfig.Name
+				for _, playbookExecutionBases := range playbookExecutionBases {
+					playbookExecution := playbookExecutionBases.DeepCopy()
+					playbookExecution.Name = edgeDevice.Name + "-" + edgeConfig.Name
 
-				peStatus :=
-					v1alpha1.PlaybookExec{Name: playbookExecution.Name,
-						PlaybookExecutionStatus: playbookExecution.Status}
-				edgeDevice.Status.PlaybookExecutions = append(edgeDevice.Status.PlaybookExecutions, peStatus)
+					peStatus :=
+						v1alpha1.PlaybookExec{Name: playbookExecution.Name,
+							PlaybookExecutionStatus: playbookExecution.Status}
+					edgeDevice.Status.PlaybookExecutions = append(edgeDevice.Status.PlaybookExecutions, peStatus)
 
-				err := r.PlaybookExecutionRepository.Create(ctx, playbookExecution)
-				if err != nil && errors.IsAlreadyExists(err) {
-					errs = append(errs, err)
-					continue
-				}
+					err := r.PlaybookExecutionRepository.Create(ctx, playbookExecution)
+					if err != nil && errors.IsAlreadyExists(err) {
+						errs = append(errs, err)
+						continue
+					}
 
-				if err != nil {
-					errs = append(errs, err)
-					continue
-				}
+					if err != nil {
+						errs = append(errs, err)
+						continue
+					}
 
-				err2 := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
-				if err2 != nil {
-					errs = append(errs, err2)
-					continue
+					err2 := r.EdgeDeviceRepository.PatchStatus(ctx, &edgeDevice, &patch)
+					if err2 != nil {
+						errs = append(errs, err2)
+						continue
+					}
 				}
 			}
 		}
