@@ -31,8 +31,11 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 	}
 	deployments := updateDeploymentStatuses(edgeDevice.Status.Workloads, heartbeat.Workloads)
 	edgeDevice.Status.Workloads = deployments
-	edgeDevice.Status.UpgradeInformation = (*v1alpha1.UpgradeInformation)(heartbeat.Upgrade)
 
+	playbookExecutions := updatePlaybookExecutionStatuses(edgeDevice.Status.PlaybookExecutions, heartbeat.PlaybookExecutions)
+	edgeDevice.Status.PlaybookExecutions = playbookExecutions
+
+	edgeDevice.Status.UpgradeInformation = (*v1alpha1.UpgradeInformation)(heartbeat.Upgrade)
 	if !reflect.DeepEqual(edgeDevice.Status, edgeDeviceCopy.Status) {
 		return u.repository.PatchEdgeDeviceStatus(ctx, edgeDevice, &patch)
 	}
@@ -77,4 +80,26 @@ func updateDeploymentStatuses(oldWorkloads []v1alpha1.Workload, workloads []*mod
 		edgeWorkloads = append(edgeWorkloads, edgeWorkload)
 	}
 	return edgeWorkloads
+}
+
+func updatePlaybookExecutionStatuses(oldPlaybookExecution []v1alpha1.PlaybookExec, playbookExecutions []*models.PlaybookExecutionStatus) []v1alpha1.PlaybookExec {
+	playbookExecutionMap := make(map[string]v1alpha1.PlaybookExec)
+	for _, peStatus := range oldPlaybookExecution {
+		playbookExecutionMap[peStatus.Name] = peStatus
+	}
+	for _, status := range playbookExecutions {
+		if newPlayExec, ok := playbookExecutionMap[status.Name]; ok {
+			if string(newPlayExec.PlaybookExecutionStatus.Conditions[len(newPlayExec.PlaybookExecutionStatus.Conditions)-1].Type) != status.Status {
+				newPlayExec.PlaybookExecutionStatus.Conditions[len(newPlayExec.PlaybookExecutionStatus.Conditions)-1].Status = v1.ConditionFalse
+				now := v1.Now()
+				newPlayExec.PlaybookExecutionStatus.Conditions = append(newPlayExec.PlaybookExecutionStatus.Conditions, v1alpha1.PlaybookExecutionCondition{Status: v1.ConditionTrue, Type: v1alpha1.PlaybookExecutionConditionType(status.Status), LastTransitionTime: &now})
+			}
+			playbookExecutionMap[status.Name] = newPlayExec
+		}
+	}
+	var playbookExecs []v1alpha1.PlaybookExec //nolint
+	for _, pe := range playbookExecutionMap {
+		playbookExecs = append(playbookExecs, pe)
+	}
+	return playbookExecs
 }
