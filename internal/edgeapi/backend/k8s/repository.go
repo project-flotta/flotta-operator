@@ -21,6 +21,7 @@ type EdgeDeviceRepository interface {
 	UpdateEdgeDeviceLabels(ctx context.Context, device *v1alpha1.EdgeDevice, labels map[string]string) error
 	PatchEdgeDevice(ctx context.Context, old, new *v1alpha1.EdgeDevice) error
 	GetPlaybookExecution(ctx context.Context, name string, namespace string) (*v1alpha1.PlaybookExecution, error)
+	PatchPlaybookExecution(ctx context.Context, old, new *v1alpha1.PlaybookExecution) error
 }
 
 type EdgeDeviceSignedRequestRepository interface {
@@ -38,6 +39,7 @@ type EdgeDeviceSetRepository interface {
 
 type PlaybookExecutionRepository interface {
 	GetPlaybookExecution(ctx context.Context, name string, namespace string) (*v1alpha1.PlaybookExecution, error)
+	PatchPlaybookExecution(ctx context.Context, old, new *v1alpha1.PlaybookExecution) error
 }
 
 type CoreRepository interface {
@@ -114,6 +116,10 @@ func (b *repositoryFacade) GetEdgeDeviceSet(ctx context.Context, name string, na
 
 func (b *repositoryFacade) GetPlaybookExecution(ctx context.Context, name string, namespace string) (*v1alpha1.PlaybookExecution, error) {
 	return b.playbookExecutionRepository.Read(ctx, name, namespace)
+}
+
+func (b *repositoryFacade) PatchPlaybookExecution(ctx context.Context, old, new *v1alpha1.PlaybookExecution) error {
+	return b.playbookExecutionRepository.Patch(ctx, old, new)
 }
 
 func (b *repositoryFacade) GetSecret(ctx context.Context, name string, namespace string) (*v1.Secret, error) {
