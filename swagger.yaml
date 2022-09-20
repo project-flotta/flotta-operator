@@ -163,8 +163,6 @@ definitions:
           workloads status and restart those that failed
       secrets:
         $ref: '#/definitions/secret-list'
-      ansible_playbook:
-        type: string
   device-configuration:
     type: object
     properties:
