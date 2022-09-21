@@ -68,6 +68,11 @@ func (r *EdgeDeviceLabelsReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	err = r.updatePlaybookExecutions(ctx, edgeDevice)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, err
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -117,6 +122,32 @@ func (r *EdgeDeviceLabelsReconciler) updateWorkloads(ctx context.Context, device
 		if err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (r *EdgeDeviceLabelsReconciler) updatePlaybookExecutions(ctx context.Context, device *managementv1alpha1.EdgeDevice) error {
+	// create selector labels
+	deviceLabels := device.Labels
+	updateaEdgeConfigLabel := false
+	for label, labelValue := range deviceLabels {
+		if flottalabels.IsEdgeConfigLabel(label) {
+			for _, peStatus := range device.Status.PlaybookExecutions {
+				if peStatus.Name == device.Name+"-"+labelValue && len(peStatus.PlaybookExecutionStatus.Conditions) > 0 {
+					lastCondition := peStatus.PlaybookExecutionStatus.Conditions[len(peStatus.PlaybookExecutionStatus.Conditions)-1].Type
+					if lastCondition == managementv1alpha1.PlaybookExecutionSuccessfullyCompleted || lastCondition == managementv1alpha1.PlaybookExecutionCompletedWithError {
+						//remove label
+						delete(deviceLabels, label)
+						updateaEdgeConfigLabel = true
+					}
+				}
+			}
+		}
+	}
+
+	if updateaEdgeConfigLabel {
+		return r.EdgeDeviceRepository.UpdateLabels(ctx, device, deviceLabels)
 	}
 
 	return nil
