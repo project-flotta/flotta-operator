@@ -202,7 +202,7 @@ func (h *Handler) PostDataMessageForDevice(ctx context.Context, params yggdrasil
 				logger.Debug("Device not found")
 				return operations.NewPostDataMessageForDeviceNotFound()
 			}
-			logger.With("err", err).Error("Device not found")
+			logger.With("err", err).Error("cannot process heartbeat")
 			return operations.NewPostDataMessageForDeviceInternalServerError()
 		}
 		h.metrics.RecordEdgeDevicePresence(h.getNamespace(ctx), deviceID)
