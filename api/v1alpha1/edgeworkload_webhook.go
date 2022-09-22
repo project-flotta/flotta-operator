@@ -101,6 +101,14 @@ func (r *EdgeWorkload) validate() error {
 		} else {
 			containersNames[container.Name] = struct{}{}
 		}
+
+		if container.Ports != nil {
+			for _, port := range container.Ports {
+				if port.HostPort == 9100 {
+					return fmt.Errorf("HostPort 9100 is reserved for internal use on the device and cannot be set for user workloads")
+				}
+			}
+		}
 	}
 
 	for _, volume := range podSpec.Volumes {

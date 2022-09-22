@@ -205,5 +205,23 @@ var _ = Describe("EdgeWorkload Webhook", func() {
 			Expect(err).Should(MatchError("name collisions for containers within the same pod spec are not supported.\n" +
 				"container name: 'container' has been reused"))
 		})
+
+		It("set port 9100 for edge workload", func() {
+			// given
+			podSpec.InitContainers = append(edgeWorkload.Spec.Pod.Spec.Containers,
+				corev1.Container{
+					Ports: []corev1.ContainerPort{
+						{
+							HostPort: 9100,
+						},
+					},
+				})
+
+			// when
+			err := edgeWorkload.ValidateCreate()
+
+			// then
+			Expect(err).Should(MatchError("HostPort 9100 is reserved for internal use on the device and cannot be set for user workloads"))
+		})
 	})
 })
