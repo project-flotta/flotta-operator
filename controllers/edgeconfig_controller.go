@@ -49,8 +49,6 @@ type EdgeConfigReconciler struct {
 	ExecuteConcurrent           func(context.Context, uint, ConcurrentFunc, []v1alpha1.EdgeDevice) []error
 }
 
-var logger = log.FromContext(context.TODO())
-
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeconfigs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeconfigs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeconfigs/finalizers,verbs=update
