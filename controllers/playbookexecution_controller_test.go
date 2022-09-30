@@ -30,10 +30,8 @@ var _ = Describe("PlaybookExecution controller", func() {
 
 		playbookExecutionRepoMock *playbookexecution.MockRepository
 		edgeDeviceRepoMock        *edgedevice.MockRepository
-		// playbookExecRepoMock      *playbookexecution.MockRepository
-		k8sManager manager.Manager
-		// playbookExecutionName = "playbookexecution-test"
-		namespace = "test"
+		k8sManager                manager.Manager
+		namespace                 = "test"
 	)
 
 	BeforeEach(func() {
@@ -82,19 +80,6 @@ var _ = Describe("PlaybookExecution controller", func() {
 			}
 		})
 
-		// getPlaybookExecution := func(name string) *v1alpha1.PlaybookExecution {
-		// 	return &v1alpha1.PlaybookExecution{
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      name,
-		// 			Namespace: namespace,
-		// 		},
-		// 		Spec: v1alpha1.PlaybookExecutionSpec{
-		// 			Playbook: v1alpha1.Playbook{
-		// 				Content: []byte("test"),
-		// 			},
-		// 		},
-		// 	}
-		// }
 		It("PlaybookExecution does not exists on CRD", func() {
 			// given
 			returnErr := errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
@@ -123,61 +108,6 @@ var _ = Describe("PlaybookExecution controller", func() {
 			Expect(res).To(Equal(reconcile.Result{Requeue: false, RequeueAfter: 0}))
 		})
 	})
-
-	// Context("edgeDevice selection", func() {
-	// 	var (
-	// 		playbookExecutionData *v1alpha1.PlaybookExecution
-	// 		// device                *v1alpha1.EdgeDevice
-	// 		namespace = "default"
-	// 	)
-	// 	// getDevice := func(name string) *v1alpha1.EdgeDevice {
-	// 	// 	return &v1alpha1.EdgeDevice{
-	// 	// 		ObjectMeta: v1.ObjectMeta{
-	// 	// 			Name:      name,
-	// 	// 			Namespace: namespace,
-	// 	// 		},
-	// 	// 		Spec: v1alpha1.EdgeDeviceSpec{
-	// 	// 			RequestTime: &v1.Time{},
-	// 	// 			Heartbeat:   &v1alpha1.HeartbeatConfiguration{},
-	// 	// 		},
-	// 	// 		Status: v1alpha1.EdgeDeviceStatus{
-	// 	// 			PlaybookExecutions: []v1alpha1.PlaybookExecution{
-	// 	// 				{
-	// 	// 					ObjectMeta: v1.ObjectMeta{
-	// 	// 						Name:       playbookExecutionName,
-	// 	// 						Namespace:  namespace,
-	// 	// 						Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
-	// 	// 					},
-	// 	// 					Spec: v1alpha1.PlaybookExecutionSpec{
-	// 	// 						Playbook: v1alpha1.Playbook{
-	// 	// 							Content: []byte("test"),
-	// 	// 						},
-	// 	// 					},
-	// 	// 				},
-	// 	// 			},
-	// 	// 		},
-	// 	// 	}
-	// 	// }
-	// 	BeforeEach(func() {
-	// 		playbookExecutionData = &v1alpha1.PlaybookExecution{
-	// 			ObjectMeta: v1.ObjectMeta{
-	// 				Name:       playbookExecutionName,
-	// 				Namespace:  namespace,
-	// 				Finalizers: []string{controllers.YggdrasilDeviceReferenceFinalizer},
-	// 			},
-	// 			Spec: v1alpha1.PlaybookExecutionSpec{
-	// 				Playbook: v1alpha1.Playbook{
-	// 					Content: []byte("test"),
-	// 				},
-	// 			},
-	// 		}
-	// 		playbookExecutionRepoMock.EXPECT().Read(gomock.Any(), gomock.Any(), gomock.Any()).
-	// 			Return(playbookExecutionData, nil).Times(1)
-
-	// 		// device = getDevice("testdevice")
-	// 	})
-
-	// })
 })
 
 func getExpectedPlaybookExecution(ctx context.Context, objectKey client.ObjectKey) v1alpha1.PlaybookExecution {
