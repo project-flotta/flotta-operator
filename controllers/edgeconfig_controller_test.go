@@ -95,25 +95,6 @@ var _ = Describe("EdgeConfig controller", func() {
 			}
 		})
 
-		// edgePlaybookSpec := v1alpha1.EdgePlaybookSpec{
-		// 	Playbooks: []v1alpha1.Playbook{
-		// 		{
-		// 			Content: []byte("test"),
-		// 		},
-		// 	},
-		// }
-
-		// getEdgeConfig := func(name string) *v1alpha1.EdgeConfig {
-		// 	return &v1alpha1.EdgeConfig{
-		// 		ObjectMeta: v1.ObjectMeta{
-		// 			Name:      name,
-		// 			Namespace: namespace,
-		// 		},
-		// 		Spec: v1alpha1.EdgeConfigSpec{
-		// 			EdgePlaybook: &edgePlaybookSpec,
-		// 		},
-		// 	}
-		// }
 		It("EdgeConfig does not exists on CRD", func() {
 			// given
 			returnErr := errors.NewNotFound(schema.GroupResource{Group: "", Resource: "notfound"}, "notfound")
