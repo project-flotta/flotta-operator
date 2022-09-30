@@ -83,7 +83,13 @@ func (r *EdgeConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if !errors.IsNotFound(err) {
 			return ctrl.Result{Requeue: true}, err
 		}
+		return ctrl.Result{}, err
 	}
+
+	if len(edgeDevices) == 0 {
+		return ctrl.Result{}, err
+	}
+
 	err = r.addPlaybookExecutionToDevices(ctx, edgeConfig, edgeDevices)
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
