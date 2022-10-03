@@ -64,7 +64,12 @@ func (u *Updater) updateStatus(ctx context.Context, edgeDevice *v1alpha1.EdgeDev
 		}
 
 		now := v1.Now()
-		peNew.Status.Conditions = append(peNew.Status.Conditions, v1alpha1.PlaybookExecutionCondition{Status: v1.ConditionTrue, Type: v1alpha1.PlaybookExecutionConditionType(heartbeatPlaybookExec.Status), LastTransitionTime: &now})
+		peCondition := v1alpha1.PlaybookExecutionCondition{
+			Status:             v1.ConditionTrue,
+			Type:               v1alpha1.PlaybookExecutionConditionType(heartbeatPlaybookExec.Status),
+			LastTransitionTime: &now}
+
+		peNew.Status.Conditions = append(peNew.Status.Conditions, peCondition)
 		err = u.repository.PatchPlaybookExecution(ctx, playbookCopies[heartbeatPlaybookExec.Name], peNew) //TODO: how to get playbook exec namespace?
 		if err != nil {
 			multierror.Append(errors, fmt.Errorf("cannot patch playbook execution with name %s: %v", heartbeatPlaybookExec.Name, err))
