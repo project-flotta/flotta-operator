@@ -24,6 +24,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
@@ -54,6 +55,9 @@ type PlaybookExecutionReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.11.0/pkg/reconcile
 func (r *PlaybookExecutionReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling", "playbookExecution", req)
+
 	playbookExec, err := r.PlaybookExecutionRepository.Read(ctx, req.Name, req.Namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -78,7 +82,7 @@ func (r *PlaybookExecutionReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 		return ctrl.Result{Requeue: true}, err
 	}
-	logger.Info(">>> edgeDevice found", "edgeDevice", edgeDevice)
+	logger.Info("edgeDevice found", "edgeDevice", edgeDevice)
 	return ctrl.Result{}, nil
 }
 
