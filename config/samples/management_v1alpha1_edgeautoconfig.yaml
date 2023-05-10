@@ -1,0 +1,6 @@
+apiVersion: management.project-flotta.io/v1alpha1
+kind: EdgeAutoConfig
+metadata:
+  name: edgeautoconfig-sample
+spec:
+  # TODO(user): Add fields here

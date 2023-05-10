@@ -90,7 +90,7 @@ type EdgeDeviceSignedRequestStatus struct {
 // +kubebuilder:printcolumn:JSONPath=".spec.targetNamespace",description="Target Namespace to land",name="targetNamespace",type=string
 // +kubebuilder:printcolumn:JSONPath=".spec.approved",description="Approved",name="Approved",type=string
 // +kubebuilder:printcolumn:JSONPath=".status.phase",description="Status",name="Status",type=string
-//+genclient
+// +genclient
 type EdgeDeviceSignedRequest struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -99,7 +99,7 @@ type EdgeDeviceSignedRequest struct {
 	Status EdgeDeviceSignedRequestStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 // EdgeDeviceSignedRequestList contains a list of EdgeDeviceSignedRequest
 type EdgeDeviceSignedRequestList struct {
 	metav1.TypeMeta `json:",inline"`

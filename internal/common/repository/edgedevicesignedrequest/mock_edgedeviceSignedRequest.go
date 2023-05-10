@@ -9,9 +9,8 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	client "sigs.k8s.io/controller-runtime/pkg/client"
-
 	v1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 // MockRepository is a mock of Repository interface.

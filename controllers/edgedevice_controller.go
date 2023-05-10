@@ -74,7 +74,7 @@ type EdgeDeviceReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling", "edgeDevice", req)
+	logger.Info("Reconciling", "edgeDevicedd", req)
 
 	edgeDevice, err := r.EdgeDeviceRepository.Read(ctx, req.Name, req.Namespace)
 	if err != nil {
@@ -83,6 +83,8 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 		return ctrl.Result{Requeue: true}, err
 	}
+
+	logger.Info("ReconcilingErrNil", "edgeDevicedd", nil)
 
 	if edgeDevice.DeletionTimestamp != nil {
 		if err := r.removeRelatedEDSR(ctx, edgeDevice); err != nil {
@@ -106,6 +108,8 @@ func (r *EdgeDeviceReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		if err != nil {
 			return ctrl.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 		}
+
+		logger.Info("ReconcilingErrNil", "edgeDevicedd", "CREATED")
 	}
 	return ctrl.Result{}, nil
 }

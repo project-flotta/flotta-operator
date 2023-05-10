@@ -11,7 +11,6 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-
 	commonmodel "github.com/project-flotta/flotta-operator/models"
 )
 

@@ -9,7 +9,6 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-
 	v1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
 )
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeautoconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
 )
@@ -24,6 +25,7 @@ type EdgeDeviceSignedRequestReconciler struct {
 	Scheme                            *runtime.Scheme
 	EdgedeviceSignedRequestRepository edgedevicesignedrequest.Repository
 	EdgeDeviceRepository              edgedevice.Repository
+	EdgeAutoConfig                    edgeautoconfig.Repository
 	MaxConcurrentReconciles           int
 	AutoApproval                      bool
 }
@@ -33,7 +35,7 @@ type EdgeDeviceSignedRequestReconciler struct {
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevicesignedrequest,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevicesignedrequest/status,verbs=get;update;patch
 
-//Reconcile each edgedevicesignedrequest
+// Reconcile each edgedevicesignedrequest
 func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling", "edgedeviceSignedRequest", req)
@@ -111,6 +113,31 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{Requeue: true}, err
 	}
 
+	//New code
+	//Deploy workloads to device configured in autoconfig
+	//check if auto config is there
+	autocfg, err := r.EdgeAutoConfig.ReadNS(ctx, req.Namespace)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	AutoConfigConfigLabels := autocfg.Spec.EdgeDeviceProperties
+	DeviceLabels := map[string]string{
+		v1alpha1.EdgeDeviceSignedRequestLabelName: v1alpha1.EdgeDeviceSignedRequestLabelValue,
+	}
+
+	for _, label := range DeviceLabels {
+		if deviceLabelExistsInSlice(AutoConfigConfigLabels, label) {
+			EdgeAutoConfigEdgedevices := autocfg.Status.EdgeDevices
+			if !deviceExistsInSlice(EdgeAutoConfigEdgedevices, edsr.Name) {
+				logger.Info("PATH AUTO CONFIG CR")
+			}
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -156,6 +183,26 @@ func IsPending(edsr *v1alpha1.EdgeDeviceSignedRequest) bool {
 
 	for _, status := range edsr.Status.Conditions {
 		if status.Status == "True" && status.Type == v1alpha1.EdgeDeviceSignedRequestStatusPending {
+			return true
+		}
+	}
+	return false
+}
+
+// check if device label exists in array
+func deviceLabelExistsInSlice(arr []managementv1alpha1.EdgeDeviceProperties, val string) bool {
+	for _, item := range arr {
+		if item.Name == val {
+			return true
+		}
+	}
+	return false
+}
+
+// check if device exists in EdgeAutoConfig CR
+func deviceExistsInSlice(arr []managementv1alpha1.EdgeDevices, val string) bool {
+	for _, item := range arr {
+		if item.Name == val {
 			return true
 		}
 	}
