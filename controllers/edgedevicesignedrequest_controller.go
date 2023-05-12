@@ -124,16 +124,25 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 		return ctrl.Result{Requeue: true}, err
 	}
 
-	AutoConfigConfigLabels := autocfg.Spec.EdgeDeviceProperties
+	autocfgcpy := autocfg.DeepCopy()
+
+	AutoConfigConfigLabels := autocfgcpy.Spec.EdgeDeviceProperties
 	DeviceLabels := map[string]string{
 		v1alpha1.EdgeDeviceSignedRequestLabelName: v1alpha1.EdgeDeviceSignedRequestLabelValue,
 	}
 
 	for _, label := range DeviceLabels {
 		if deviceLabelExistsInSlice(AutoConfigConfigLabels, label) {
-			EdgeAutoConfigEdgedevices := autocfg.Status.EdgeDevices
+			EdgeAutoConfigEdgedevices := autocfgcpy.Status.EdgeDevices
 			if !deviceExistsInSlice(EdgeAutoConfigEdgedevices, edsr.Name) {
-				logger.Info("PATH AUTO CONFIG CR")
+				logger.Info("checking edgeautoconfig CR for the new edgedevice")
+				newDevice := managementv1alpha1.EdgeDevices{Name: edsr.Name}
+				autocfgcpy.Status.EdgeDevices = append(autocfgcpy.Status.EdgeDevices, newDevice)
+				err = r.EdgeAutoConfig.Patch(ctx, autocfg, autocfgcpy)
+				if err != nil {
+					logger.Error(err, "cannot patch edgeautoconfig status for the new edgedevice")
+					return ctrl.Result{Requeue: true}, err
+				}
 			}
 		}
 	}
@@ -189,7 +198,7 @@ func IsPending(edsr *v1alpha1.EdgeDeviceSignedRequest) bool {
 	return false
 }
 
-// check if device label exists in array
+// check if edsr device labels exists in array of preferred devices in CR
 func deviceLabelExistsInSlice(arr []managementv1alpha1.EdgeDeviceProperties, val string) bool {
 	for _, item := range arr {
 		if item.Name == val {
@@ -199,7 +208,7 @@ func deviceLabelExistsInSlice(arr []managementv1alpha1.EdgeDeviceProperties, val
 	return false
 }
 
-// check if device exists in EdgeAutoConfig CR
+// check if edsr.name or device id exists in EdgeAutoConfig CR
 func deviceExistsInSlice(arr []managementv1alpha1.EdgeDevices, val string) bool {
 	for _, item := range arr {
 		if item.Name == val {
