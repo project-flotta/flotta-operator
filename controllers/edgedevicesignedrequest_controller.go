@@ -136,7 +136,7 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 			EdgeAutoConfigEdgedevices := autocfgcpy.Status.EdgeDevices
 			if !deviceExistsInSlice(EdgeAutoConfigEdgedevices, edsr.Name) {
 				logger.Info("checking edgeautoconfig CR for the new edgedevice")
-				newDevice := managementv1alpha1.EdgeDevices{Name: edsr.Name}
+				newDevice := managementv1alpha1.EdgeDevices{Name: edsr.Name, EdgeDeviceState: managementv1alpha1.EdgeDeviceStatePending}
 				autocfgcpy.Status.EdgeDevices = append(autocfgcpy.Status.EdgeDevices, newDevice)
 				err = r.EdgeAutoConfig.Patch(ctx, autocfg, autocfgcpy)
 				if err != nil {

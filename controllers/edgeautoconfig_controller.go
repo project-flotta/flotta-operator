@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -62,6 +63,33 @@ func (r *EdgeAutoConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	_ = log.FromContext(ctx)
 
 	// TODO(user): your logic here
+	logger := log.FromContext(ctx)
+	logger.Info("Reconciling", "edgeautoconfig", req)
+
+	edgeautocfg, err := r.EdgeAutoConfigRepository.Read(ctx, req.Name, req.Namespace)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{Requeue: true}, err
+	}
+
+	if edgeautocfg.DeletionTimestamp != nil {
+		logger.Info("Reconciling", "edgeautoconfig delete")
+		// if err := r.removeRelatedEDSR(ctx, edgeDevice); err != nil {
+		// 	return ctrl.Result{Requeue: true}, err
+		// }
+		// return ctrl.Result{}, r.removeFinalizer(ctx, edgeDevice)
+	}
+
+	// if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice.Spec.Storage) {
+	// 	return ctrl.Result{}, nil
+	// }
+
+	edgeautocfgcpy := edgeautocfg.DeepCopy()
+	//get devices which do not have autoconfig workloads set
+	edgedevicesstatus := edgeautocfgcpy.Status.EdgeDevices
+	logger.Info("device status", edgedevicesstatus[0].Name)
 
 	return ctrl.Result{}, nil
 }

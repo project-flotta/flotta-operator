@@ -20,6 +20,13 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	EdgeDeviceStatePending EdgeDeviceState = "pending"
+	EdgeDeviceStateRunning EdgeDeviceState = "running"
+)
+
+type EdgeDeviceState string
+
 type EdgeDeviceProperties struct {
 	Name string `json:"name"`
 }
@@ -54,7 +61,8 @@ type EdgeAutoConfigStatus struct {
 }
 
 type EdgeDevices struct {
-	Name string `json:"name"`
+	Name            string          `json:"name"`
+	EdgeDeviceState EdgeDeviceState `json:"edgedevicestate"`
 }
 
 //+kubebuilder:object:root=true
