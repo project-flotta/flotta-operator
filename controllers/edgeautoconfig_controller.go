@@ -19,7 +19,9 @@ package controllers
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,9 +29,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
+	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+	mgmtv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
+
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeautoconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 )
 
 const (
@@ -42,6 +48,7 @@ type EdgeAutoConfigReconciler struct {
 	Scheme                   *runtime.Scheme
 	EdgeAutoConfigRepository edgeautoconfig.Repository
 	EdgeDeviceRepository     edgedevice.Repository
+	EdgeWorkloadRepository   edgeworkload.Repository
 	MaxConcurrentReconciles  int
 	AutoApproval             bool
 }
@@ -82,16 +89,71 @@ func (r *EdgeAutoConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		// return ctrl.Result{}, r.removeFinalizer(ctx, edgeDevice)
 	}
 
-	// if !r.ObcAutoCreate && !storage.ShouldCreateOBC(edgeDevice.Spec.Storage) {
-	// 	return ctrl.Result{}, nil
-	// }
-
 	edgeautocfgcpy := edgeautocfg.DeepCopy()
 	//get devices which do not have autoconfig workloads set
 	edgedevicesstatus := edgeautocfgcpy.Status.EdgeDevices
-	logger.Info("device status", edgedevicesstatus[0].Name)
+
+	for _, edgedevice := range edgedevicesstatus {
+		if edgedevice.EdgeDeviceState == managementv1alpha1.EdgeDeviceStatePending {
+
+			//loop through the set images and set to the device
+			err = r.createWorkload(ctx, edgeautocfg.Spec.EdgeDeviceWorkloads, edgeautocfg.Name, edgedevice.Name, req.Namespace)
+			if err != nil {
+				logger.Error(err, "Failed to create auto config workload for device: "+edgedevice.Name)
+				return ctrl.Result{}, nil
+			}
+
+			//update the autocofig cr status
+			edgedevice.EdgeDeviceState = managementv1alpha1.EdgeDeviceStateRunning
+			err = r.EdgeAutoConfigRepository.Patch(ctx, edgeautocfg, edgeautocfgcpy)
+			if err != nil {
+				logger.Error(err, "cannot patch edgeautoconfig status for the workloads")
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
+	}
 
 	return ctrl.Result{}, nil
+}
+
+// create workload
+func (r *EdgeAutoConfigReconciler) createWorkload(ctx context.Context, edgeWorkloads []mgmtv1alpha1.EdgeDeviceWorkloads, edgeAutoCfgName, deviceName, nameSpace string) error {
+
+	set_containers := []corev1.Container{}
+
+	for _, edgeWorkload := range edgeWorkloads {
+		for i := 0; i < len(edgeWorkload.Containers); i++ {
+			container_property := corev1.Container{
+				Name:  edgeWorkload.Containers[i].Name,
+				Image: edgeWorkload.Containers[i].Image,
+			}
+			set_containers = append(set_containers, container_property)
+		}
+	}
+
+	workload_create := &v1alpha1.EdgeWorkload{
+		TypeMeta: v1.TypeMeta{},
+		ObjectMeta: v1.ObjectMeta{
+			Name:      edgeAutoCfgName + deviceName,
+			Namespace: nameSpace,
+		},
+		Spec: v1alpha1.EdgeWorkloadSpec{
+			Device: deviceName,
+			Type:   "pod",
+			Pod: v1alpha1.Pod{
+				Spec: corev1.PodSpec{
+					Containers: set_containers,
+				},
+			},
+		},
+	}
+
+	err := r.EdgeWorkloadRepository.Create(ctx, workload_create)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
