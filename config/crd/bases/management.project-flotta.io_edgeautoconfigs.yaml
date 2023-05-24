@@ -39,33 +39,285 @@ spec:
               edgedeviceproperties:
                 description: Foo is an example field of EdgeAutoConfig. Edit edgeautoconfig_types.go
                   to remove/update
-                items:
-                  properties:
-                    name:
-                      type: string
-                  required:
-                  - name
-                  type: object
-                type: array
-              edgedeviceworkloads:
-                items:
-                  properties:
-                    containers:
-                      items:
+                properties:
+                  hardware:
+                    description: Hardware defines the hardware that devices has
+                    properties:
+                      boot:
+                        description: boot
                         properties:
-                          image:
+                          currentBootMode:
+                            description: current boot mode
                             type: string
-                          name:
+                          pxeInterface:
+                            description: pxe interface
                             type: string
-                        required:
-                        - image
-                        - name
                         type: object
-                      type: array
-                  required:
-                  - containers
-                  type: object
-                type: array
+                      cpu:
+                        description: cpu
+                        properties:
+                          architecture:
+                            description: architecture
+                            type: string
+                          count:
+                            description: count
+                            format: int64
+                            type: integer
+                          flags:
+                            description: flags
+                            items:
+                              type: string
+                            type: array
+                          frequency:
+                            description: frequency
+                            type: string
+                          modelName:
+                            description: model name
+                            type: string
+                        type: object
+                      disks:
+                        description: disks
+                        items:
+                          properties:
+                            bootable:
+                              description: bootable
+                              type: boolean
+                            byId:
+                              description: by-id is the World Wide Number of the device
+                                which guaranteed to be unique for every storage device
+                              type: string
+                            byPath:
+                              description: by-path is the shortest physical path to
+                                the device
+                              type: string
+                            driveType:
+                              description: drive type
+                              type: string
+                            hctl:
+                              description: hctl
+                              type: string
+                            id:
+                              description: Determine the disk's unique identifier
+                                which is the by-id field if it exists and fallback
+                                to the by-path field otherwise
+                              type: string
+                            ioPerf:
+                              description: io perf
+                              properties:
+                                syncDuration:
+                                  description: 99th percentile of fsync duration in
+                                    milliseconds
+                                  format: int64
+                                  type: integer
+                              type: object
+                            isInstallationMedia:
+                              description: Whether the disk appears to be an installation
+                                media or not
+                              type: boolean
+                            model:
+                              description: model
+                              type: string
+                            name:
+                              description: name
+                              type: string
+                            path:
+                              description: path
+                              type: string
+                            serial:
+                              description: serial
+                              type: string
+                            sizeBytes:
+                              description: size bytes
+                              format: int64
+                              type: integer
+                            smart:
+                              description: smart
+                              type: string
+                            vendor:
+                              description: vendor
+                              type: string
+                            wwn:
+                              description: wwn
+                              type: string
+                          type: object
+                        type: array
+                      gpus:
+                        description: gpus
+                        items:
+                          properties:
+                            address:
+                              description: Device address (for example "0000:00:02.0")
+                              type: string
+                            deviceId:
+                              description: ID of the device (for example "3ea0")
+                              type: string
+                            name:
+                              description: Product name of the device (for example
+                                "UHD Graphics 620 (Whiskey Lake)")
+                              type: string
+                            vendor:
+                              description: The name of the device vendor (for example
+                                "Intel Corporation")
+                              type: string
+                            vendorId:
+                              description: ID of the vendor (for example "8086")
+                              type: string
+                          type: object
+                        type: array
+                      hostDevices:
+                        description: list of devices present on the edgedevice
+                        items:
+                          properties:
+                            deviceType:
+                              description: Device type block or character
+                              type: string
+                            group:
+                              description: group id
+                              format: int32
+                              type: integer
+                            major:
+                              description: Major ID identifying the class of the device
+                              format: int32
+                              type: integer
+                            minor:
+                              description: Minor ID identifying the instance of the
+                                device in the class
+                              format: int32
+                              type: integer
+                            owner:
+                              description: owner id
+                              format: int32
+                              type: integer
+                            path:
+                              description: path of the device (i.e. /dev/loop)
+                              type: string
+                          type: object
+                        type: array
+                      hostname:
+                        description: hostname
+                        type: string
+                      interfaces:
+                        description: interfaces
+                        items:
+                          properties:
+                            biosdevname:
+                              description: biosdevname
+                              type: string
+                            clientId:
+                              description: client id
+                              type: string
+                            flags:
+                              description: flags
+                              items:
+                                type: string
+                              type: array
+                            hasCarrier:
+                              description: has carrier
+                              type: boolean
+                            ipv4Addresses:
+                              description: ipv4 addresses
+                              items:
+                                type: string
+                              type: array
+                            ipv6Addresses:
+                              description: ipv6 addresses
+                              items:
+                                type: string
+                              type: array
+                            macAddress:
+                              description: mac address
+                              type: string
+                            mtu:
+                              description: mtu
+                              format: int64
+                              type: integer
+                            name:
+                              description: name
+                              type: string
+                            product:
+                              description: product
+                              type: string
+                            speedMbps:
+                              description: speed mbps
+                              format: int64
+                              type: integer
+                            vendor:
+                              description: vendor
+                              type: string
+                          required:
+                          - flags
+                          type: object
+                        type: array
+                      memory:
+                        description: memory
+                        properties:
+                          physicalBytes:
+                            description: physical bytes
+                            format: int64
+                            type: integer
+                          usableBytes:
+                            description: usable bytes
+                            format: int64
+                            type: integer
+                        type: object
+                      mounts:
+                        description: list of all mounts found on edgedevice
+                        items:
+                          properties:
+                            device:
+                              description: Device path to be mounted
+                              type: string
+                            folder:
+                              description: Destination directory path
+                              type: string
+                            options:
+                              description: Mount options (i.e. rw, suid, dev)
+                              type: string
+                            type:
+                              description: 'Mount type: (i.e ext4)'
+                              type: string
+                          type: object
+                        type: array
+                      systemVendor:
+                        description: system vendor
+                        properties:
+                          manufacturer:
+                            description: manufacturer
+                            type: string
+                          productName:
+                            description: product name
+                            type: string
+                          serialNumber:
+                            description: serial number
+                            type: string
+                          virtual:
+                            description: Whether the machine appears to be a virtual
+                              machine or not
+                            type: boolean
+                        type: object
+                    type: object
+                  osmodelname:
+                    description: 'ModelName is the model name from the OS. The output
+                      of: cat /sys/firmware/devicetree/base/model'
+                    type: string
+                type: object
+              edgedeviceworkloads:
+                properties:
+                  containers:
+                    items:
+                      properties:
+                        image:
+                          type: string
+                        name:
+                          type: string
+                      required:
+                      - image
+                      - name
+                      type: object
+                    type: array
+                required:
+                - containers
+                type: object
             type: object
           status:
             description: EdgeAutoConfigStatus defines the observed state of EdgeAutoConfig
@@ -82,23 +334,6 @@ spec:
                       type: string
                   required:
                   - edgedevicestate
-                  - name
-                  type: object
-                type: array
-              workloads:
-                items:
-                  properties:
-                    lastDataUpload:
-                      format: date-time
-                      type: string
-                    lastTransitionTime:
-                      format: date-time
-                      type: string
-                    name:
-                      type: string
-                    phase:
-                      type: string
-                  required:
                   - name
                   type: object
                 type: array

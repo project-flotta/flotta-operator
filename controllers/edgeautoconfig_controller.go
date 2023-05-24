@@ -20,6 +20,7 @@ import (
 	"context"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -72,63 +73,63 @@ func (r *EdgeAutoConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling", "edgeautoconfig", req)
 
-	// edgeautocfg, err := r.EdgeAutoConfigRepository.Read(ctx, req.Name, req.Namespace)
-	// if err != nil {
-	// 	if errors.IsNotFound(err) {
-	// 		return ctrl.Result{}, nil
-	// 	}
-	// 	return ctrl.Result{Requeue: true}, err
-	// }
+	edgeautocfg, err := r.EdgeAutoConfigRepository.Read(ctx, req.Name, req.Namespace)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{Requeue: true}, err
+	}
 
-	// if edgeautocfg.DeletionTimestamp != nil {
-	// 	logger.Info("Reconciling", "edgeautoconfig delete")
-	// 	// if err := r.removeRelatedEDSR(ctx, edgeDevice); err != nil {
-	// 	// 	return ctrl.Result{Requeue: true}, err
-	// 	// }
-	// 	// return ctrl.Result{}, r.removeFinalizer(ctx, edgeDevice)
-	// }
+	if edgeautocfg.DeletionTimestamp != nil {
+		logger.Info("Reconciling", "edgeautoconfig delete")
+		// if err := r.removeRelatedEDSR(ctx, edgeDevice); err != nil {
+		// 	return ctrl.Result{Requeue: true}, err
+		// }
+		// return ctrl.Result{}, r.removeFinalizer(ctx, edgeDevice)
+	}
 
-	// edgeautocfgcpy := edgeautocfg.DeepCopy()
-	// //get devices which do not have autoconfig workloads set
-	// edgedevicesstatus := edgeautocfgcpy.Status.EdgeDevices
+	edgeautocfgcpy := edgeautocfg.DeepCopy()
+	//get devices which do not have autoconfig workloads set
+	edgedevicesstatus := edgeautocfgcpy.Status.EdgeDevices
 
-	// for _, edgedevice := range edgedevicesstatus {
-	// 	if edgedevice.EdgeDeviceState == managementv1alpha1.EdgeDeviceStatePending {
+	for _, edgedevice := range edgedevicesstatus {
+		if edgedevice.EdgeDeviceState == managementv1alpha1.EdgeDeviceStatePending {
 
-	// 		//loop through the set images and set to the device
-	// 		err = r.createWorkload(ctx, edgeautocfg.Spec.EdgeDeviceWorkloads, edgeautocfg.Name, edgedevice.Name, req.Namespace)
-	// 		if err != nil {
-	// 			logger.Error(err, "Failed to create auto config workload for device: "+edgedevice.Name)
-	// 			return ctrl.Result{}, nil
-	// 		}
+			//loop through the set images and set to the device
+			err = r.createWorkload(ctx, edgeautocfg.Spec.EdgeDeviceWorkloads, edgeautocfg.Name, edgedevice.Name, req.Namespace)
+			if err != nil {
+				logger.Error(err, "Failed to create auto config workload for device: "+edgedevice.Name)
+				return ctrl.Result{}, nil
+			}
 
-	// 		//update the autocofig cr status
-	// 		edgedevice.EdgeDeviceState = managementv1alpha1.EdgeDeviceStateRunning
-	// 		err = r.EdgeAutoConfigRepository.Patch(ctx, edgeautocfg, edgeautocfgcpy)
-	// 		if err != nil {
-	// 			logger.Error(err, "cannot patch edgeautoconfig status for the workloads")
-	// 			return ctrl.Result{Requeue: true}, err
-	// 		}
-	// 	}
-	// }
+			//update the autocofig cr status
+			edgedevice.EdgeDeviceState = managementv1alpha1.EdgeDeviceStateRunning
+			err = r.EdgeAutoConfigRepository.Patch(ctx, edgeautocfg, edgeautocfgcpy)
+			if err != nil {
+				logger.Error(err, "cannot patch edgeautoconfig status for the workloads")
+				return ctrl.Result{Requeue: true}, err
+			}
+		}
+	}
 
 	return ctrl.Result{}, nil
 }
 
 // create workload
-func (r *EdgeAutoConfigReconciler) createWorkload(ctx context.Context, edgeWorkloads []mgmtv1alpha1.EdgeDeviceWorkloads, edgeAutoCfgName, deviceName, nameSpace string) error {
+func (r *EdgeAutoConfigReconciler) createWorkload(ctx context.Context, edgeWorkloads *mgmtv1alpha1.EdgeDeviceWorkloads, edgeAutoCfgName, deviceName, nameSpace string) error {
 
 	set_containers := []corev1.Container{}
 
-	for _, edgeWorkload := range edgeWorkloads {
-		for i := 0; i < len(edgeWorkload.Containers); i++ {
-			container_property := corev1.Container{
-				Name:  edgeWorkload.Containers[i].Name,
-				Image: edgeWorkload.Containers[i].Image,
-			}
-			set_containers = append(set_containers, container_property)
+	// for _, edgeWorkload := range edgeWorkloads.Containers {
+	for i := 0; i < len(edgeWorkloads.Containers); i++ {
+		container_property := corev1.Container{
+			Name:  edgeWorkloads.Containers[i].Name,
+			Image: edgeWorkloads.Containers[i].Image,
 		}
+		set_containers = append(set_containers, container_property)
 	}
+	// }
 
 	workload_create := &v1alpha1.EdgeWorkload{
 		TypeMeta: v1.TypeMeta{},

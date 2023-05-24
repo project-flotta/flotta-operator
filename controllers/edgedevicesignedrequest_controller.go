@@ -120,39 +120,27 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 	//New code
 	//Deploy workloads to device configured in autoconfig
 	//check if auto config is there
-	autocfg, err := r.EdgeAutoConfigRepository.Read(ctx, edsr.Name, edsr.Spec.TargetNamespace)
-	logger.Error(err, " AUTOCONFIG ERROR")
+
+	edgeAutoCfgList, err := r.EdgeAutoConfigRepository.ListByNamespace(ctx, edsr.Spec.TargetNamespace)
 	if err != nil {
-		logger.Error(err, " AUTOCONFIG ERROR")
-		if errors.IsNotFound(err) {
+		logger.Error(err, " AUTOCONFIG LISTING ERROR ")
+		return ctrl.Result{}, nil
+	}
+
+	for i := range edgeAutoCfgList {
+
+		autocfgcpy := edgeAutoCfgList[i].DeepCopy()
+
+		edsrDeviceFeatures := edsr.Spec.Features
+		AutoConfigPreferredDevice := autocfgcpy.Spec.EdgeDeviceProperties
+
+		isMatchingDevice := r.compareDeviceFeaturesPreferred(edsrDeviceFeatures, AutoConfigPreferredDevice)
+		if isMatchingDevice {
+			logger.Info("deviceMatch", "Devices matches preferred AutoConfig ", AutoConfigPreferredDevice)
 			return ctrl.Result{}, nil
 		}
-		return ctrl.Result{Requeue: true}, err
+		logger.Info("deviceMatch", "No Device match", AutoConfigPreferredDevice)
 	}
-
-	autocfgcpy := autocfg.DeepCopy()
-
-	AutoConfigConfigLabels := autocfgcpy.Spec.EdgeDeviceProperties
-	DeviceLabels := map[string]string{
-		v1alpha1.EdgeDeviceSignedRequestLabelName: v1alpha1.EdgeDeviceSignedRequestLabelValue,
-	}
-
-	for _, label := range DeviceLabels {
-		if deviceLabelExistsInSlice(AutoConfigConfigLabels, label) {
-			EdgeAutoConfigEdgedevices := autocfgcpy.Status.EdgeDevices
-			if !deviceExistsInSlice(EdgeAutoConfigEdgedevices, edsr.Name) {
-				logger.Info("checking edgeautoconfig CR for the new edgedevice")
-				newDevice := managementv1alpha1.EdgeDevices{Name: edsr.Name, EdgeDeviceState: managementv1alpha1.EdgeDeviceStatePending}
-				autocfgcpy.Status.EdgeDevices = append(autocfgcpy.Status.EdgeDevices, newDevice)
-				err = r.EdgeAutoConfigRepository.Patch(ctx, autocfg, autocfgcpy)
-				if err != nil {
-					logger.Error(err, "cannot patch edgeautoconfig status for the new edgedevice")
-					return ctrl.Result{Requeue: true}, err
-				}
-			}
-		}
-	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -204,21 +192,33 @@ func IsPending(edsr *v1alpha1.EdgeDeviceSignedRequest) bool {
 	return false
 }
 
-// check if edsr device labels exists in array of preferred devices in CR
-func deviceLabelExistsInSlice(arr []managementv1alpha1.EdgeDeviceProperties, val string) bool {
-	for _, item := range arr {
-		if item.Name == val {
-			return true
-		}
-	}
-	return false
-}
-
-// check if edsr.name or device id exists in EdgeAutoConfig CR
-func deviceExistsInSlice(arr []managementv1alpha1.EdgeDevices, val string) bool {
-	for _, item := range arr {
-		if item.Name == val {
-			return true
+// check if the device features are similar to preferred device properties
+func (r *EdgeDeviceSignedRequestReconciler) compareDeviceFeaturesPreferred(registeringDeviceHWFeatures *v1alpha1.Features, prefferedDeviceHWFeatures *v1alpha1.EdgeDeviceProperties) bool {
+	if registeringDeviceHWFeatures != nil && prefferedDeviceHWFeatures.Hardware != nil {
+		if registeringDeviceHWFeatures.ModelName != "" && prefferedDeviceHWFeatures.OsModelName != "" {
+			if registeringDeviceHWFeatures.ModelName == prefferedDeviceHWFeatures.OsModelName {
+				return true
+			}
+		} else if registeringDeviceHWFeatures.Hardware.CPU.Architecture != "" && prefferedDeviceHWFeatures.Hardware.CPU.Architecture != "" {
+			if registeringDeviceHWFeatures.Hardware.CPU.Architecture == prefferedDeviceHWFeatures.Hardware.CPU.Architecture {
+				return true
+			}
+		} else if registeringDeviceHWFeatures.Hardware.CPU.ModelName != "" && prefferedDeviceHWFeatures.Hardware.CPU.ModelName != "" {
+			if registeringDeviceHWFeatures.Hardware.CPU.ModelName == prefferedDeviceHWFeatures.Hardware.CPU.ModelName {
+				return true
+			}
+		} else if registeringDeviceHWFeatures.Hardware.SystemVendor.Manufacturer != "" && prefferedDeviceHWFeatures.Hardware.SystemVendor.Manufacturer != "" {
+			if registeringDeviceHWFeatures.Hardware.SystemVendor.Manufacturer == prefferedDeviceHWFeatures.Hardware.SystemVendor.Manufacturer {
+				return true
+			}
+		} else if registeringDeviceHWFeatures.Hardware.SystemVendor.ProductName != "" && prefferedDeviceHWFeatures.Hardware.SystemVendor.ProductName != "" {
+			if registeringDeviceHWFeatures.Hardware.SystemVendor.ProductName == prefferedDeviceHWFeatures.Hardware.SystemVendor.ProductName {
+				return true
+			}
+		} else if registeringDeviceHWFeatures.Hardware.SystemVendor.SerialNumber != "" && prefferedDeviceHWFeatures.Hardware.SystemVendor.SerialNumber != "" {
+			if registeringDeviceHWFeatures.Hardware.SystemVendor.SerialNumber == prefferedDeviceHWFeatures.Hardware.SystemVendor.SerialNumber {
+				return true
+			}
 		}
 	}
 	return false

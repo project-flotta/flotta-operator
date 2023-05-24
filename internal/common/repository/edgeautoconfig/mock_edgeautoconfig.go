@@ -65,6 +65,21 @@ func (mr *MockRepositoryMockRecorder) Delete(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), arg0, arg1)
 }
 
+// ListByNamespace mocks base method.
+func (m *MockRepository) ListByNamespace(arg0 context.Context, arg1 string) ([]v1alpha1.EdgeAutoConfig, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListByNamespace", arg0, arg1)
+	ret0, _ := ret[0].([]v1alpha1.EdgeAutoConfig)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListByNamespace indicates an expected call of ListByNamespace.
+func (mr *MockRepositoryMockRecorder) ListByNamespace(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListByNamespace", reflect.TypeOf((*MockRepository)(nil).ListByNamespace), arg0, arg1)
+}
+
 // Patch mocks base method.
 func (m *MockRepository) Patch(arg0 context.Context, arg1, arg2 *v1alpha1.EdgeAutoConfig) error {
 	m.ctrl.T.Helper()

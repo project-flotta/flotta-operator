@@ -16,6 +16,7 @@ type Repository interface {
 	PatchStatus(ctx context.Context, EdgeAutoConfig *v1alpha1.EdgeAutoConfig, patch *client.Patch) error
 	Patch(ctx context.Context, old *v1alpha1.EdgeAutoConfig, new *v1alpha1.EdgeAutoConfig) error
 	Delete(ctx context.Context, obj *v1alpha1.EdgeAutoConfig) error
+	ListByNamespace(ctx context.Context, namespace string) ([]v1alpha1.EdgeAutoConfig, error)
 }
 
 type EdgeAutoConfigRepository struct {
@@ -53,4 +54,15 @@ func (r *EdgeAutoConfigRepository) ReadNS(ctx context.Context, namespace string)
 	deviceAutoConfig := &v1alpha1.EdgeAutoConfig{}
 	err := r.client.Get(ctx, client.ObjectKey{Namespace: namespace}, deviceAutoConfig)
 	return deviceAutoConfig, err
+}
+
+func (r *EdgeAutoConfigRepository) ListByNamespace(ctx context.Context, namespace string) ([]v1alpha1.EdgeAutoConfig, error) {
+	edgeautocfg := v1alpha1.EdgeAutoConfigList{}
+	err := r.client.List(ctx, &edgeautocfg,
+		client.InNamespace(namespace),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return edgeautocfg.Items, nil
 }

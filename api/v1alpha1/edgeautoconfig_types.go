@@ -28,7 +28,63 @@ const (
 type EdgeDeviceState string
 
 type EdgeDeviceProperties struct {
-	Name string `json:"name"`
+	// ModelName is the model name from the OS.
+	// The output of:
+	// cat /sys/firmware/devicetree/base/model
+	OsModelName string `json:"osmodelname,omitempty"`
+
+	// Hardware defines the hardware that devices has
+	Hardware *PrefHardware `json:"hardware,omitempty"`
+}
+
+type PrefHardware struct {
+
+	// boot
+	Boot *Boot `json:"boot,omitempty"`
+
+	// cpu
+	CPU *PrefCPU `json:"cpu,omitempty"`
+
+	// disks
+	Disks []*Disk `json:"disks,omitempty"`
+
+	// gpus
+	Gpus []*Gpu `json:"gpus,omitempty"`
+
+	// hostname
+	Hostname string `json:"hostname,omitempty"`
+
+	// interfaces
+	Interfaces []*Interface `json:"interfaces,omitempty"`
+
+	// memory
+	Memory *Memory `json:"memory,omitempty"`
+
+	// system vendor
+	SystemVendor *SystemVendor `json:"systemVendor,omitempty"`
+
+	// list of devices present on the edgedevice
+	HostDevices []*HostDevice `json:"hostDevices,omitempty"`
+
+	// list of all mounts found on edgedevice
+	Mounts []*Mount `json:"mounts,omitempty"`
+}
+type PrefCPU struct {
+
+	// architecture
+	Architecture string `json:"architecture,omitempty"`
+
+	// count
+	Count int64 `json:"count,omitempty"`
+
+	// flags
+	Flags []string `json:"flags,omitempty"`
+
+	// frequency
+	Frequency string `json:"frequency,omitempty"`
+
+	// model name
+	ModelName string `json:"modelName,omitempty"`
 }
 type EdgeDeviceWorkloads struct {
 	Containers []Containers `json:"containers"`
@@ -48,8 +104,8 @@ type EdgeAutoConfigSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of EdgeAutoConfig. Edit edgeautoconfig_types.go to remove/update
-	EdgeDeviceProperties []EdgeDeviceProperties `json:"edgedeviceproperties,omitempty"`
-	EdgeDeviceWorkloads  []EdgeDeviceWorkloads  `json:"edgedeviceworkloads,omitempty"`
+	EdgeDeviceProperties *EdgeDeviceProperties `json:"edgedeviceproperties,omitempty"`
+	EdgeDeviceWorkloads  *EdgeDeviceWorkloads  `json:"edgedeviceworkloads,omitempty"`
 }
 
 // EdgeAutoConfigStatus defines the observed state of EdgeAutoConfig
@@ -57,7 +113,6 @@ type EdgeAutoConfigStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	EdgeDevices []EdgeDevices `json:"edgedevices,omitempty"`
-	Workloads   []Workload    `json:"workloads,omitempty"` //I DONT THINK THIS IS NECESSARY
 }
 
 type EdgeDevices struct {
