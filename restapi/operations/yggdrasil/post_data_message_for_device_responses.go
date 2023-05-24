@@ -16,7 +16,8 @@ import (
 // PostDataMessageForDeviceOKCode is the HTTP code returned for type PostDataMessageForDeviceOK
 const PostDataMessageForDeviceOKCode int = 200
 
-/*PostDataMessageForDeviceOK Success
+/*
+PostDataMessageForDeviceOK Success
 
 swagger:response postDataMessageForDeviceOK
 */
@@ -60,7 +61,8 @@ func (o *PostDataMessageForDeviceOK) WriteResponse(rw http.ResponseWriter, produ
 // PostDataMessageForDeviceAlreadyReportedCode is the HTTP code returned for type PostDataMessageForDeviceAlreadyReported
 const PostDataMessageForDeviceAlreadyReportedCode int = 208
 
-/*PostDataMessageForDeviceAlreadyReported Already Reported
+/*
+PostDataMessageForDeviceAlreadyReported Already Reported
 
 swagger:response postDataMessageForDeviceAlreadyReported
 */
@@ -84,7 +86,8 @@ func (o *PostDataMessageForDeviceAlreadyReported) WriteResponse(rw http.Response
 // PostDataMessageForDeviceBadRequestCode is the HTTP code returned for type PostDataMessageForDeviceBadRequest
 const PostDataMessageForDeviceBadRequestCode int = 400
 
-/*PostDataMessageForDeviceBadRequest Error
+/*
+PostDataMessageForDeviceBadRequest Error
 
 swagger:response postDataMessageForDeviceBadRequest
 */
@@ -108,7 +111,8 @@ func (o *PostDataMessageForDeviceBadRequest) WriteResponse(rw http.ResponseWrite
 // PostDataMessageForDeviceUnauthorizedCode is the HTTP code returned for type PostDataMessageForDeviceUnauthorized
 const PostDataMessageForDeviceUnauthorizedCode int = 401
 
-/*PostDataMessageForDeviceUnauthorized Unauthorized
+/*
+PostDataMessageForDeviceUnauthorized Unauthorized
 
 swagger:response postDataMessageForDeviceUnauthorized
 */
@@ -132,7 +136,8 @@ func (o *PostDataMessageForDeviceUnauthorized) WriteResponse(rw http.ResponseWri
 // PostDataMessageForDeviceForbiddenCode is the HTTP code returned for type PostDataMessageForDeviceForbidden
 const PostDataMessageForDeviceForbiddenCode int = 403
 
-/*PostDataMessageForDeviceForbidden Forbidden
+/*
+PostDataMessageForDeviceForbidden Forbidden
 
 swagger:response postDataMessageForDeviceForbidden
 */
@@ -156,7 +161,8 @@ func (o *PostDataMessageForDeviceForbidden) WriteResponse(rw http.ResponseWriter
 // PostDataMessageForDeviceNotFoundCode is the HTTP code returned for type PostDataMessageForDeviceNotFound
 const PostDataMessageForDeviceNotFoundCode int = 404
 
-/*PostDataMessageForDeviceNotFound Error
+/*
+PostDataMessageForDeviceNotFound Error
 
 swagger:response postDataMessageForDeviceNotFound
 */
@@ -180,7 +186,8 @@ func (o *PostDataMessageForDeviceNotFound) WriteResponse(rw http.ResponseWriter,
 // PostDataMessageForDeviceInternalServerErrorCode is the HTTP code returned for type PostDataMessageForDeviceInternalServerError
 const PostDataMessageForDeviceInternalServerErrorCode int = 500
 
-/*PostDataMessageForDeviceInternalServerError Error
+/*
+PostDataMessageForDeviceInternalServerError Error
 
 swagger:response postDataMessageForDeviceInternalServerError
 */

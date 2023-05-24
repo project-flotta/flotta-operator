@@ -29,10 +29,10 @@ func NewPostDataMessageForDevice(ctx *middleware.Context, handler PostDataMessag
 	return &PostDataMessageForDevice{Context: ctx, Handler: handler}
 }
 
-/* PostDataMessageForDevice swagger:route POST /data/{device_id}/out yggdrasil postDataMessageForDevice
+/*
+	PostDataMessageForDevice swagger:route POST /data/{device_id}/out yggdrasil postDataMessageForDevice
 
 Post data message for device API
-
 */
 type PostDataMessageForDevice struct {
 	Context *middleware.Context

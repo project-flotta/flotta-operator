@@ -29,10 +29,10 @@ func NewEnrolDevice(ctx *middleware.Context, handler EnrolDeviceHandler) *EnrolD
 	return &EnrolDevice{Context: ctx, Handler: handler}
 }
 
-/* EnrolDevice swagger:route POST /namespaces/{namespace}/devices/{device-id}/enrolment backend enrolDevice
+/*
+	EnrolDevice swagger:route POST /namespaces/{namespace}/devices/{device-id}/enrolment backend enrolDevice
 
 Initiates the process of enrolling the device
-
 */
 type EnrolDevice struct {
 	Context *middleware.Context

@@ -16,7 +16,8 @@ import (
 // RegisterDeviceOKCode is the HTTP code returned for type RegisterDeviceOK
 const RegisterDeviceOKCode int = 200
 
-/*RegisterDeviceOK Updated
+/*
+RegisterDeviceOK Updated
 
 swagger:response registerDeviceOK
 */
@@ -40,7 +41,8 @@ func (o *RegisterDeviceOK) WriteResponse(rw http.ResponseWriter, producer runtim
 // RegisterDeviceUnauthorizedCode is the HTTP code returned for type RegisterDeviceUnauthorized
 const RegisterDeviceUnauthorizedCode int = 401
 
-/*RegisterDeviceUnauthorized Unauthorized
+/*
+RegisterDeviceUnauthorized Unauthorized
 
 swagger:response registerDeviceUnauthorized
 */
@@ -64,7 +66,8 @@ func (o *RegisterDeviceUnauthorized) WriteResponse(rw http.ResponseWriter, produ
 // RegisterDeviceForbiddenCode is the HTTP code returned for type RegisterDeviceForbidden
 const RegisterDeviceForbiddenCode int = 403
 
-/*RegisterDeviceForbidden Forbidden
+/*
+RegisterDeviceForbidden Forbidden
 
 swagger:response registerDeviceForbidden
 */
@@ -85,7 +88,8 @@ func (o *RegisterDeviceForbidden) WriteResponse(rw http.ResponseWriter, producer
 	rw.WriteHeader(403)
 }
 
-/*RegisterDeviceDefault Error
+/*
+RegisterDeviceDefault Error
 
 swagger:response registerDeviceDefault
 */

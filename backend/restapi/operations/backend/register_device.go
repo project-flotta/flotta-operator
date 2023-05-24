@@ -29,10 +29,10 @@ func NewRegisterDevice(ctx *middleware.Context, handler RegisterDeviceHandler) *
 	return &RegisterDevice{Context: ctx, Handler: handler}
 }
 
-/* RegisterDevice swagger:route PUT /namespaces/{namespace}/devices/{device-id}/registration backend registerDevice
+/*
+	RegisterDevice swagger:route PUT /namespaces/{namespace}/devices/{device-id}/registration backend registerDevice
 
 Registers the device by providing its hardware configuration
-
 */
 type RegisterDevice struct {
 	Context *middleware.Context

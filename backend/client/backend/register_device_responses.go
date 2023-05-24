@@ -58,7 +58,8 @@ func NewRegisterDeviceOK() *RegisterDeviceOK {
 	return &RegisterDeviceOK{}
 }
 
-/* RegisterDeviceOK describes a response with status code 200, with default header values.
+/*
+	RegisterDeviceOK describes a response with status code 200, with default header values.
 
 Updated
 */
@@ -79,7 +80,8 @@ func NewRegisterDeviceUnauthorized() *RegisterDeviceUnauthorized {
 	return &RegisterDeviceUnauthorized{}
 }
 
-/* RegisterDeviceUnauthorized describes a response with status code 401, with default header values.
+/*
+	RegisterDeviceUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -100,7 +102,8 @@ func NewRegisterDeviceForbidden() *RegisterDeviceForbidden {
 	return &RegisterDeviceForbidden{}
 }
 
-/* RegisterDeviceForbidden describes a response with status code 403, with default header values.
+/*
+	RegisterDeviceForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -123,7 +126,8 @@ func NewRegisterDeviceDefault(code int) *RegisterDeviceDefault {
 	}
 }
 
-/* RegisterDeviceDefault describes a response with status code -1, with default header values.
+/*
+	RegisterDeviceDefault describes a response with status code -1, with default header values.
 
 Error
 */

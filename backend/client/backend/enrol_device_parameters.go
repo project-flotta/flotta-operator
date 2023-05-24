@@ -54,10 +54,12 @@ func NewEnrolDeviceParamsWithHTTPClient(client *http.Client) *EnrolDeviceParams 
 	}
 }
 
-/* EnrolDeviceParams contains all the parameters to send to the API endpoint
-   for the enrol device operation.
+/*
+EnrolDeviceParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the enrol device operation.
+
+	Typically these are written to a http.Request.
 */
 type EnrolDeviceParams struct {
 

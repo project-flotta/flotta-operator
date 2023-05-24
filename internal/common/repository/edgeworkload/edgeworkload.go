@@ -27,6 +27,10 @@ func NewEdgeWorkloadRepository(client client.Client) *CRRepository {
 	return &CRRepository{client: client}
 }
 
+func (r *CRRepository) Create(ctx context.Context, edgeWorkload *v1alpha1.EdgeWorkload) error {
+	return r.client.Create(ctx, edgeWorkload)
+}
+
 func (r *CRRepository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeWorkload, error) {
 	edgeWorkload := v1alpha1.EdgeWorkload{}
 	err := r.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, &edgeWorkload)

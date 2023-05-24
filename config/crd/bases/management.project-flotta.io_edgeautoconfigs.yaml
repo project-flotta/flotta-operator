@@ -70,10 +70,22 @@ spec:
           status:
             description: EdgeAutoConfigStatus defines the observed state of EdgeAutoConfig
             properties:
-              workloads:
+              edgedevices:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
+                items:
+                  properties:
+                    edgedevicestate:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - edgedevicestate
+                  - name
+                  type: object
+                type: array
+              workloads:
                 items:
                   properties:
                     lastDataUpload:

@@ -58,7 +58,8 @@ func NewUpdateHeartBeatOK() *UpdateHeartBeatOK {
 	return &UpdateHeartBeatOK{}
 }
 
-/* UpdateHeartBeatOK describes a response with status code 200, with default header values.
+/*
+	UpdateHeartBeatOK describes a response with status code 200, with default header values.
 
 Success
 */
@@ -79,7 +80,8 @@ func NewUpdateHeartBeatUnauthorized() *UpdateHeartBeatUnauthorized {
 	return &UpdateHeartBeatUnauthorized{}
 }
 
-/* UpdateHeartBeatUnauthorized describes a response with status code 401, with default header values.
+/*
+	UpdateHeartBeatUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -100,7 +102,8 @@ func NewUpdateHeartBeatForbidden() *UpdateHeartBeatForbidden {
 	return &UpdateHeartBeatForbidden{}
 }
 
-/* UpdateHeartBeatForbidden describes a response with status code 403, with default header values.
+/*
+	UpdateHeartBeatForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -123,7 +126,8 @@ func NewUpdateHeartBeatDefault(code int) *UpdateHeartBeatDefault {
 	}
 }
 
-/* UpdateHeartBeatDefault describes a response with status code -1, with default header values.
+/*
+	UpdateHeartBeatDefault describes a response with status code -1, with default header values.
 
 Error
 */

@@ -52,10 +52,12 @@ func NewGetRegistrationStatusParamsWithHTTPClient(client *http.Client) *GetRegis
 	}
 }
 
-/* GetRegistrationStatusParams contains all the parameters to send to the API endpoint
-   for the get registration status operation.
+/*
+GetRegistrationStatusParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get registration status operation.
+
+	Typically these are written to a http.Request.
 */
 type GetRegistrationStatusParams struct {
 

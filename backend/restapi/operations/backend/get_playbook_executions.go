@@ -29,10 +29,10 @@ func NewGetPlaybookExecutions(ctx *middleware.Context, handler GetPlaybookExecut
 	return &GetPlaybookExecutions{Context: ctx, Handler: handler}
 }
 
-/* GetPlaybookExecutions swagger:route GET /namespaces/{namespace}/devices/{device-id}/playbookexecutions backend getPlaybookExecutions
+/*
+	GetPlaybookExecutions swagger:route GET /namespaces/{namespace}/devices/{device-id}/playbookexecutions backend getPlaybookExecutions
 
 Returns the playbook executions.
-
 */
 type GetPlaybookExecutions struct {
 	Context *middleware.Context

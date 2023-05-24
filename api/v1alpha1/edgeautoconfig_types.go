@@ -57,7 +57,7 @@ type EdgeAutoConfigStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	EdgeDevices []EdgeDevices `json:"edgedevices,omitempty"`
-	Workloads   []Workload    `json:"workloads,omitempty"`
+	Workloads   []Workload    `json:"workloads,omitempty"` //I DONT THINK THIS IS NECESSARY
 }
 
 type EdgeDevices struct {

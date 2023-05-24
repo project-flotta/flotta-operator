@@ -18,6 +18,7 @@ import (
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeautoconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeworkload"
 )
 
 type EdgeDeviceSignedRequestReconciler struct {
@@ -25,11 +26,14 @@ type EdgeDeviceSignedRequestReconciler struct {
 	Scheme                            *runtime.Scheme
 	EdgedeviceSignedRequestRepository edgedevicesignedrequest.Repository
 	EdgeDeviceRepository              edgedevice.Repository
-	EdgeAutoConfig                    edgeautoconfig.Repository
+	EdgeAutoConfigRepository          edgeautoconfig.Repository
+	EdgeWorkloadRepository            edgeworkload.Repository
 	MaxConcurrentReconciles           int
 	AutoApproval                      bool
 }
 
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeautoconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgeautoconfigs/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevices/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=management.project-flotta.io,resources=edgedevicesignedrequest,verbs=get;list;watch;create;update;patch;delete
@@ -116,8 +120,10 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 	//New code
 	//Deploy workloads to device configured in autoconfig
 	//check if auto config is there
-	autocfg, err := r.EdgeAutoConfig.ReadNS(ctx, req.Namespace)
+	autocfg, err := r.EdgeAutoConfigRepository.Read(ctx, edsr.Name, edsr.Spec.TargetNamespace)
+	logger.Error(err, " AUTOCONFIG ERROR")
 	if err != nil {
+		logger.Error(err, " AUTOCONFIG ERROR")
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
 		}
@@ -138,7 +144,7 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 				logger.Info("checking edgeautoconfig CR for the new edgedevice")
 				newDevice := managementv1alpha1.EdgeDevices{Name: edsr.Name, EdgeDeviceState: managementv1alpha1.EdgeDeviceStatePending}
 				autocfgcpy.Status.EdgeDevices = append(autocfgcpy.Status.EdgeDevices, newDevice)
-				err = r.EdgeAutoConfig.Patch(ctx, autocfg, autocfgcpy)
+				err = r.EdgeAutoConfigRepository.Patch(ctx, autocfg, autocfgcpy)
 				if err != nil {
 					logger.Error(err, "cannot patch edgeautoconfig status for the new edgedevice")
 					return ctrl.Result{Requeue: true}, err

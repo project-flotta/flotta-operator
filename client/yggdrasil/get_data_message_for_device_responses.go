@@ -63,7 +63,8 @@ func NewGetDataMessageForDeviceOK() *GetDataMessageForDeviceOK {
 	return &GetDataMessageForDeviceOK{}
 }
 
-/* GetDataMessageForDeviceOK describes a response with status code 200, with default header values.
+/*
+	GetDataMessageForDeviceOK describes a response with status code 200, with default header values.
 
 Success
 */
@@ -95,7 +96,8 @@ func NewGetDataMessageForDeviceUnauthorized() *GetDataMessageForDeviceUnauthoriz
 	return &GetDataMessageForDeviceUnauthorized{}
 }
 
-/* GetDataMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
+/*
+	GetDataMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -116,7 +118,8 @@ func NewGetDataMessageForDeviceForbidden() *GetDataMessageForDeviceForbidden {
 	return &GetDataMessageForDeviceForbidden{}
 }
 
-/* GetDataMessageForDeviceForbidden describes a response with status code 403, with default header values.
+/*
+	GetDataMessageForDeviceForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -137,7 +140,8 @@ func NewGetDataMessageForDeviceNotFound() *GetDataMessageForDeviceNotFound {
 	return &GetDataMessageForDeviceNotFound{}
 }
 
-/* GetDataMessageForDeviceNotFound describes a response with status code 404, with default header values.
+/*
+	GetDataMessageForDeviceNotFound describes a response with status code 404, with default header values.
 
 Error
 */
@@ -158,7 +162,8 @@ func NewGetDataMessageForDeviceInternalServerError() *GetDataMessageForDeviceInt
 	return &GetDataMessageForDeviceInternalServerError{}
 }
 
-/* GetDataMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
+/*
+	GetDataMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
 
 Error
 */

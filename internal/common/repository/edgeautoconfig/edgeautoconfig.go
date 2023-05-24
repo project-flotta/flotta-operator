@@ -8,7 +8,7 @@ import (
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 )
 
-//go:generate mockgen -package=EdgeAutoConfig -destination=mock_EdgeAutoConfig.go . Repository
+//go:generate mockgen -package=edgeautoconfig -destination=mock_edgeautoconfig.go . Repository
 type Repository interface {
 	Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeAutoConfig, error)
 	ReadNS(ctx context.Context, namespace string) (*v1alpha1.EdgeAutoConfig, error)
@@ -16,10 +16,6 @@ type Repository interface {
 	PatchStatus(ctx context.Context, EdgeAutoConfig *v1alpha1.EdgeAutoConfig, patch *client.Patch) error
 	Patch(ctx context.Context, old *v1alpha1.EdgeAutoConfig, new *v1alpha1.EdgeAutoConfig) error
 	Delete(ctx context.Context, obj *v1alpha1.EdgeAutoConfig) error
-}
-
-type CRRepository struct {
-	client client.Client
 }
 
 type EdgeAutoConfigRepository struct {
@@ -30,25 +26,31 @@ func NewEdgeAutoConfigRepository(client client.Client) *EdgeAutoConfigRepository
 	return &EdgeAutoConfigRepository{client: client}
 }
 
-func (esr *EdgeAutoConfigRepository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeAutoConfig, error) {
-	deviceSignedRequest := &v1alpha1.EdgeAutoConfig{}
-	err := esr.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deviceSignedRequest)
-	return deviceSignedRequest, err
+func (r *EdgeAutoConfigRepository) Read(ctx context.Context, name string, namespace string) (*v1alpha1.EdgeAutoConfig, error) {
+	deviceAutoConfig := &v1alpha1.EdgeAutoConfig{}
+	err := r.client.Get(ctx, client.ObjectKey{Namespace: namespace, Name: name}, deviceAutoConfig)
+	return deviceAutoConfig, err
 }
 
-func (esr *EdgeAutoConfigRepository) Create(ctx context.Context, EdgeAutoConfig *v1alpha1.EdgeAutoConfig) error {
-	return esr.client.Create(ctx, EdgeAutoConfig)
+func (r *EdgeAutoConfigRepository) Create(ctx context.Context, EdgeAutoConfig *v1alpha1.EdgeAutoConfig) error {
+	return r.client.Create(ctx, EdgeAutoConfig)
 }
 
-func (esr *EdgeAutoConfigRepository) PatchStatus(ctx context.Context, EdgeAutoConfig *v1alpha1.EdgeAutoConfig, patch *client.Patch) error {
-	return esr.client.Status().Patch(ctx, EdgeAutoConfig, *patch)
+func (r *EdgeAutoConfigRepository) PatchStatus(ctx context.Context, EdgeAutoConfig *v1alpha1.EdgeAutoConfig, patch *client.Patch) error {
+	return r.client.Status().Patch(ctx, EdgeAutoConfig, *patch)
 }
 
-func (esr *EdgeAutoConfigRepository) Patch(ctx context.Context, old *v1alpha1.EdgeAutoConfig, new *v1alpha1.EdgeAutoConfig) error {
+func (r *EdgeAutoConfigRepository) Patch(ctx context.Context, old *v1alpha1.EdgeAutoConfig, new *v1alpha1.EdgeAutoConfig) error {
 	patch := client.MergeFrom(old)
-	return esr.client.Patch(ctx, new, patch)
+	return r.client.Patch(ctx, new, patch)
 }
 
-func (esr *EdgeAutoConfigRepository) Delete(ctx context.Context, obj *v1alpha1.EdgeAutoConfig) error {
-	return esr.client.Delete(ctx, obj)
+func (r *EdgeAutoConfigRepository) Delete(ctx context.Context, obj *v1alpha1.EdgeAutoConfig) error {
+	return r.client.Delete(ctx, obj)
+}
+
+func (r *EdgeAutoConfigRepository) ReadNS(ctx context.Context, namespace string) (*v1alpha1.EdgeAutoConfig, error) {
+	deviceAutoConfig := &v1alpha1.EdgeAutoConfig{}
+	err := r.client.Get(ctx, client.ObjectKey{Namespace: namespace}, deviceAutoConfig)
+	return deviceAutoConfig, err
 }

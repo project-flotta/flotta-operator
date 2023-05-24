@@ -63,7 +63,8 @@ func NewGetControlMessageForDeviceOK() *GetControlMessageForDeviceOK {
 	return &GetControlMessageForDeviceOK{}
 }
 
-/* GetControlMessageForDeviceOK describes a response with status code 200, with default header values.
+/*
+	GetControlMessageForDeviceOK describes a response with status code 200, with default header values.
 
 Success
 */
@@ -95,7 +96,8 @@ func NewGetControlMessageForDeviceUnauthorized() *GetControlMessageForDeviceUnau
 	return &GetControlMessageForDeviceUnauthorized{}
 }
 
-/* GetControlMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
+/*
+	GetControlMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -116,7 +118,8 @@ func NewGetControlMessageForDeviceForbidden() *GetControlMessageForDeviceForbidd
 	return &GetControlMessageForDeviceForbidden{}
 }
 
-/* GetControlMessageForDeviceForbidden describes a response with status code 403, with default header values.
+/*
+	GetControlMessageForDeviceForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -137,7 +140,8 @@ func NewGetControlMessageForDeviceNotFound() *GetControlMessageForDeviceNotFound
 	return &GetControlMessageForDeviceNotFound{}
 }
 
-/* GetControlMessageForDeviceNotFound describes a response with status code 404, with default header values.
+/*
+	GetControlMessageForDeviceNotFound describes a response with status code 404, with default header values.
 
 Error
 */
@@ -158,7 +162,8 @@ func NewGetControlMessageForDeviceInternalServerError() *GetControlMessageForDev
 	return &GetControlMessageForDeviceInternalServerError{}
 }
 
-/* GetControlMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
+/*
+	GetControlMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
 
 Error
 */

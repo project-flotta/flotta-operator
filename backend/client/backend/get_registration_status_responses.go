@@ -58,7 +58,8 @@ func NewGetRegistrationStatusOK() *GetRegistrationStatusOK {
 	return &GetRegistrationStatusOK{}
 }
 
-/* GetRegistrationStatusOK describes a response with status code 200, with default header values.
+/*
+	GetRegistrationStatusOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -90,7 +91,8 @@ func NewGetRegistrationStatusUnauthorized() *GetRegistrationStatusUnauthorized {
 	return &GetRegistrationStatusUnauthorized{}
 }
 
-/* GetRegistrationStatusUnauthorized describes a response with status code 401, with default header values.
+/*
+	GetRegistrationStatusUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -111,7 +113,8 @@ func NewGetRegistrationStatusForbidden() *GetRegistrationStatusForbidden {
 	return &GetRegistrationStatusForbidden{}
 }
 
-/* GetRegistrationStatusForbidden describes a response with status code 403, with default header values.
+/*
+	GetRegistrationStatusForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -134,7 +137,8 @@ func NewGetRegistrationStatusDefault(code int) *GetRegistrationStatusDefault {
 	}
 }
 
-/* GetRegistrationStatusDefault describes a response with status code -1, with default header values.
+/*
+	GetRegistrationStatusDefault describes a response with status code -1, with default header values.
 
 Error
 */

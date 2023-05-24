@@ -60,7 +60,8 @@ func NewPostControlMessageForDeviceOK() *PostControlMessageForDeviceOK {
 	return &PostControlMessageForDeviceOK{}
 }
 
-/* PostControlMessageForDeviceOK describes a response with status code 200, with default header values.
+/*
+	PostControlMessageForDeviceOK describes a response with status code 200, with default header values.
 
 Success
 */
@@ -81,7 +82,8 @@ func NewPostControlMessageForDeviceUnauthorized() *PostControlMessageForDeviceUn
 	return &PostControlMessageForDeviceUnauthorized{}
 }
 
-/* PostControlMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
+/*
+	PostControlMessageForDeviceUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -102,7 +104,8 @@ func NewPostControlMessageForDeviceForbidden() *PostControlMessageForDeviceForbi
 	return &PostControlMessageForDeviceForbidden{}
 }
 
-/* PostControlMessageForDeviceForbidden describes a response with status code 403, with default header values.
+/*
+	PostControlMessageForDeviceForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -123,7 +126,8 @@ func NewPostControlMessageForDeviceNotFound() *PostControlMessageForDeviceNotFou
 	return &PostControlMessageForDeviceNotFound{}
 }
 
-/* PostControlMessageForDeviceNotFound describes a response with status code 404, with default header values.
+/*
+	PostControlMessageForDeviceNotFound describes a response with status code 404, with default header values.
 
 Error
 */
@@ -144,7 +148,8 @@ func NewPostControlMessageForDeviceInternalServerError() *PostControlMessageForD
 	return &PostControlMessageForDeviceInternalServerError{}
 }
 
-/* PostControlMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
+/*
+	PostControlMessageForDeviceInternalServerError describes a response with status code 500, with default header values.
 
 Error
 */

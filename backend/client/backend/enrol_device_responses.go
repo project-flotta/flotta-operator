@@ -64,7 +64,8 @@ func NewEnrolDeviceOK() *EnrolDeviceOK {
 	return &EnrolDeviceOK{}
 }
 
-/* EnrolDeviceOK describes a response with status code 200, with default header values.
+/*
+	EnrolDeviceOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -85,7 +86,8 @@ func NewEnrolDeviceCreated() *EnrolDeviceCreated {
 	return &EnrolDeviceCreated{}
 }
 
-/* EnrolDeviceCreated describes a response with status code 201, with default header values.
+/*
+	EnrolDeviceCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -106,7 +108,8 @@ func NewEnrolDeviceUnauthorized() *EnrolDeviceUnauthorized {
 	return &EnrolDeviceUnauthorized{}
 }
 
-/* EnrolDeviceUnauthorized describes a response with status code 401, with default header values.
+/*
+	EnrolDeviceUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -127,7 +130,8 @@ func NewEnrolDeviceForbidden() *EnrolDeviceForbidden {
 	return &EnrolDeviceForbidden{}
 }
 
-/* EnrolDeviceForbidden describes a response with status code 403, with default header values.
+/*
+	EnrolDeviceForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -150,7 +154,8 @@ func NewEnrolDeviceDefault(code int) *EnrolDeviceDefault {
 	}
 }
 
-/* EnrolDeviceDefault describes a response with status code -1, with default header values.
+/*
+	EnrolDeviceDefault describes a response with status code -1, with default header values.
 
 Error
 */

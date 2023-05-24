@@ -14,7 +14,8 @@ import (
 // PostControlMessageForDeviceOKCode is the HTTP code returned for type PostControlMessageForDeviceOK
 const PostControlMessageForDeviceOKCode int = 200
 
-/*PostControlMessageForDeviceOK Success
+/*
+PostControlMessageForDeviceOK Success
 
 swagger:response postControlMessageForDeviceOK
 */
@@ -38,7 +39,8 @@ func (o *PostControlMessageForDeviceOK) WriteResponse(rw http.ResponseWriter, pr
 // PostControlMessageForDeviceUnauthorizedCode is the HTTP code returned for type PostControlMessageForDeviceUnauthorized
 const PostControlMessageForDeviceUnauthorizedCode int = 401
 
-/*PostControlMessageForDeviceUnauthorized Unauthorized
+/*
+PostControlMessageForDeviceUnauthorized Unauthorized
 
 swagger:response postControlMessageForDeviceUnauthorized
 */
@@ -62,7 +64,8 @@ func (o *PostControlMessageForDeviceUnauthorized) WriteResponse(rw http.Response
 // PostControlMessageForDeviceForbiddenCode is the HTTP code returned for type PostControlMessageForDeviceForbidden
 const PostControlMessageForDeviceForbiddenCode int = 403
 
-/*PostControlMessageForDeviceForbidden Forbidden
+/*
+PostControlMessageForDeviceForbidden Forbidden
 
 swagger:response postControlMessageForDeviceForbidden
 */
@@ -86,7 +89,8 @@ func (o *PostControlMessageForDeviceForbidden) WriteResponse(rw http.ResponseWri
 // PostControlMessageForDeviceNotFoundCode is the HTTP code returned for type PostControlMessageForDeviceNotFound
 const PostControlMessageForDeviceNotFoundCode int = 404
 
-/*PostControlMessageForDeviceNotFound Error
+/*
+PostControlMessageForDeviceNotFound Error
 
 swagger:response postControlMessageForDeviceNotFound
 */
@@ -110,7 +114,8 @@ func (o *PostControlMessageForDeviceNotFound) WriteResponse(rw http.ResponseWrit
 // PostControlMessageForDeviceInternalServerErrorCode is the HTTP code returned for type PostControlMessageForDeviceInternalServerError
 const PostControlMessageForDeviceInternalServerErrorCode int = 500
 
-/*PostControlMessageForDeviceInternalServerError Error
+/*
+PostControlMessageForDeviceInternalServerError Error
 
 swagger:response postControlMessageForDeviceInternalServerError
 */

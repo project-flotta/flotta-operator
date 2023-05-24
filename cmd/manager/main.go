@@ -28,6 +28,7 @@ import (
 
 	"github.com/project-flotta/flotta-operator/internal/common/indexer"
 	"github.com/project-flotta/flotta-operator/internal/common/metrics"
+	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeautoconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgeconfig"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevice"
 	"github.com/project-flotta/flotta-operator/internal/common/repository/edgedevicesignedrequest"
@@ -177,6 +178,7 @@ func main() {
 	edgeDeviceSignedRequestRepository := edgedevicesignedrequest.NewEdgedeviceSignedRequestRepository(mgr.GetClient())
 	edgeDeviceRepository := edgedevice.NewEdgeDeviceRepository(mgr.GetClient())
 	edgeWorkloadRepository := edgeworkload.NewEdgeWorkloadRepository(mgr.GetClient())
+	edgeAutoConfigRepository := edgeautoconfig.NewEdgeAutoConfigRepository(mgr.GetClient())
 	claimer := storage.NewClaimer(mgr.GetClient())
 	metricsObj := metrics.New()
 
@@ -185,6 +187,8 @@ func main() {
 		Scheme:                            mgr.GetScheme(),
 		EdgedeviceSignedRequestRepository: edgeDeviceSignedRequestRepository,
 		EdgeDeviceRepository:              edgeDeviceRepository,
+		EdgeAutoConfigRepository:          edgeAutoConfigRepository,
+		EdgeWorkloadRepository:            edgeWorkloadRepository,
 		MaxConcurrentReconciles:           int(Config.MaxConcurrentReconciles),
 		AutoApproval:                      Config.AutoApproval,
 	}).SetupWithManager(mgr); err != nil {
@@ -205,6 +209,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeDevice")
 		os.Exit(1)
 	}
+
 	if err = (&controllers.EdgeDeviceLabelsReconciler{
 		EdgeDeviceRepository:    edgeDeviceRepository,
 		EdgeWorkloadRepository:  edgeWorkloadRepository,
@@ -226,6 +231,21 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "EdgeWorkload")
 		os.Exit(1)
 	}
+
+	if err = (&controllers.EdgeAutoConfigReconciler{
+		Client:                            mgr.GetClient(),
+		Scheme:                            mgr.GetScheme(),
+		EdgeAutoConfigRepository:          edgeAutoConfigRepository,
+		EdgeDeviceSignedRequestRepository: edgeDeviceSignedRequestRepository,
+		EdgeDeviceRepository:              edgeDeviceRepository,
+		EdgeWorkloadRepository:            edgeWorkloadRepository,
+
+		MaxConcurrentReconciles: int(Config.MaxConcurrentReconciles),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "EdgeAutoConfig")
+		os.Exit(1)
+	}
+
 	edgeConfigRepository := edgeconfig.NewEdgeConfigRepository(mgr.GetClient())
 	playbookExecutionRepository := playbookexecution.NewPlaybookExecutionRepository(mgr.GetClient())
 
@@ -251,14 +271,6 @@ func main() {
 	}
 
 	//+kubebuilder:scaffold:builder
-
-	if err = (&controllers.EdgeAutoConfigReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "EdgeAutoConfig")
-		os.Exit(1)
-	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
