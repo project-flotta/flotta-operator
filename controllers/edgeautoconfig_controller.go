@@ -27,7 +27,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/project-flotta/flotta-operator/api/v1alpha1"
 	managementv1alpha1 "github.com/project-flotta/flotta-operator/api/v1alpha1"
@@ -71,11 +70,12 @@ func (r *EdgeAutoConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	// TODO(user): your logic here
 	logger := log.FromContext(ctx)
-	logger.Info("Reconciling", "edgeautoconfig", req)
+	logger.Info("Reconciling", "error EDGEAUTOCONFIG HERE", req)
 
 	edgeautocfg, err := r.EdgeAutoConfigRepository.Read(ctx, req.Name, req.Namespace)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			logger.Error(err, "Reconciling", "edgeautoconfig Read 404")
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{Requeue: true}, err
@@ -91,9 +91,10 @@ func (r *EdgeAutoConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	edgeautocfgcpy := edgeautocfg.DeepCopy()
 	//get devices which do not have autoconfig workloads set
-	edgedevicesstatus := edgeautocfgcpy.Status.EdgeDevices
+	edgedevices := edgeautocfgcpy.Status.EdgeDevices
+	logger.Info("Reconciling", "error EDGEAUTOCONFIG HERE 11222", req)
 
-	for _, edgedevice := range edgedevicesstatus {
+	for _, edgedevice := range edgedevices {
 		if edgedevice.EdgeDeviceState == managementv1alpha1.EdgeDeviceStatePending {
 
 			//loop through the set images and set to the device
@@ -112,6 +113,7 @@ func (r *EdgeAutoConfigReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			}
 		}
 	}
+	logger.Info("Reconciling", "error EDGEAUTOCONFIG HERE LAST LAST", req)
 
 	return ctrl.Result{}, nil
 }
@@ -160,7 +162,7 @@ func (r *EdgeAutoConfigReconciler) createWorkload(ctx context.Context, edgeWorkl
 func (r *EdgeAutoConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&managementv1alpha1.EdgeAutoConfig{}).
-		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		// WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: r.MaxConcurrentReconciles}).
 		Complete(r)
 }

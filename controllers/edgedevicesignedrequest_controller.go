@@ -139,10 +139,11 @@ func (r *EdgeDeviceSignedRequestReconciler) Reconcile(ctx context.Context, req c
 			logger.Info("deviceMatch", "Devices matches preferred AutoConfig ", AutoConfigPreferredDevice)
 			//update the autoconfig CR with the new device being registered
 			deviceName := edsr.Name
-			if err := r.patchAutoConfigStatus(ctx, autocfgcpy, deviceName, v1alpha1.EdgeDeviceStatePending); err != nil {
+			if err := r.patchEdgeAutoConfigStatus(ctx, autocfgcpy, deviceName, v1alpha1.EdgeDeviceStatePending); err != nil {
 				logger.Error(err, "cannot patch status to EDGEAUTOCONFIG ", autocfgcpy.Name)
 				return ctrl.Result{Requeue: true}, err
 			}
+			logger.Info("AutoConfig", "AutoConfig Status Patched with new device", AutoConfigPreferredDevice)
 
 			return ctrl.Result{}, nil
 		}
@@ -232,7 +233,7 @@ func (r *EdgeDeviceSignedRequestReconciler) compareDeviceFeaturesPreferred(regis
 }
 
 // patch AutoConfig
-func (r *EdgeDeviceSignedRequestReconciler) patchAutoConfigStatus(ctx context.Context, autocfg *v1alpha1.EdgeAutoConfig, edgeDeviceName string, edgeDeviceState v1alpha1.EdgeDeviceState) error {
+func (r *EdgeDeviceSignedRequestReconciler) patchEdgeAutoConfigStatus(ctx context.Context, autocfg *v1alpha1.EdgeAutoConfig, edgeDeviceName string, edgeDeviceState v1alpha1.EdgeDeviceState) error {
 	patch := client.MergeFrom(autocfg.DeepCopy())
 
 	new_device := v1alpha1.EdgeDevices{
