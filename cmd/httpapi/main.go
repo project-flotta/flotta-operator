@@ -60,6 +60,7 @@ func init() {
 }
 
 func main() {
+	fmt.Println("LODINFNF")
 	err := envconfig.Process("", &Config)
 	if err != nil {
 		panic(err.Error())
@@ -128,7 +129,7 @@ func main() {
 		Logger:                 logger,
 		Client:                 c,
 		EventRecorder:          eventRecorder,
-		TLSConfig:              tlsConfig,
+		// TLSConfig:              tlsConfig,
 	}
 	backend, _ := backendFactory.Create(Config)
 

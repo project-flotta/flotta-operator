@@ -9,8 +9,8 @@ RELEASE_REPO ?= project-flotta/flotta-operator
 SKIP_TEST_IMAGE_PULL ?= false
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
-HTTP_IMG ?= edge-api:latest
+IMG ?= controller
+HTTP_IMG ?= edge-api
 
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"

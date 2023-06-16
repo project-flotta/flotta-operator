@@ -17,7 +17,8 @@ import (
 // GetPlaybookExecutionsOKCode is the HTTP code returned for type GetPlaybookExecutionsOK
 const GetPlaybookExecutionsOKCode int = 200
 
-/*GetPlaybookExecutionsOK OK
+/*
+GetPlaybookExecutionsOK OK
 
 swagger:response getPlaybookExecutionsOK
 */
@@ -59,7 +60,8 @@ func (o *GetPlaybookExecutionsOK) WriteResponse(rw http.ResponseWriter, producer
 // GetPlaybookExecutionsUnauthorizedCode is the HTTP code returned for type GetPlaybookExecutionsUnauthorized
 const GetPlaybookExecutionsUnauthorizedCode int = 401
 
-/*GetPlaybookExecutionsUnauthorized Unauthorized
+/*
+GetPlaybookExecutionsUnauthorized Unauthorized
 
 swagger:response getPlaybookExecutionsUnauthorized
 */
@@ -83,7 +85,8 @@ func (o *GetPlaybookExecutionsUnauthorized) WriteResponse(rw http.ResponseWriter
 // GetPlaybookExecutionsForbiddenCode is the HTTP code returned for type GetPlaybookExecutionsForbidden
 const GetPlaybookExecutionsForbiddenCode int = 403
 
-/*GetPlaybookExecutionsForbidden Forbidden
+/*
+GetPlaybookExecutionsForbidden Forbidden
 
 swagger:response getPlaybookExecutionsForbidden
 */
@@ -104,7 +107,8 @@ func (o *GetPlaybookExecutionsForbidden) WriteResponse(rw http.ResponseWriter, p
 	rw.WriteHeader(403)
 }
 
-/*GetPlaybookExecutionsDefault Error
+/*
+GetPlaybookExecutionsDefault Error
 
 swagger:response getPlaybookExecutionsDefault
 */

@@ -16,7 +16,8 @@ import (
 // UpdateHeartBeatOKCode is the HTTP code returned for type UpdateHeartBeatOK
 const UpdateHeartBeatOKCode int = 200
 
-/*UpdateHeartBeatOK Success
+/*
+UpdateHeartBeatOK Success
 
 swagger:response updateHeartBeatOK
 */
@@ -40,7 +41,8 @@ func (o *UpdateHeartBeatOK) WriteResponse(rw http.ResponseWriter, producer runti
 // UpdateHeartBeatUnauthorizedCode is the HTTP code returned for type UpdateHeartBeatUnauthorized
 const UpdateHeartBeatUnauthorizedCode int = 401
 
-/*UpdateHeartBeatUnauthorized Unauthorized
+/*
+UpdateHeartBeatUnauthorized Unauthorized
 
 swagger:response updateHeartBeatUnauthorized
 */
@@ -64,7 +66,8 @@ func (o *UpdateHeartBeatUnauthorized) WriteResponse(rw http.ResponseWriter, prod
 // UpdateHeartBeatForbiddenCode is the HTTP code returned for type UpdateHeartBeatForbidden
 const UpdateHeartBeatForbiddenCode int = 403
 
-/*UpdateHeartBeatForbidden Forbidden
+/*
+UpdateHeartBeatForbidden Forbidden
 
 swagger:response updateHeartBeatForbidden
 */
@@ -85,7 +88,8 @@ func (o *UpdateHeartBeatForbidden) WriteResponse(rw http.ResponseWriter, produce
 	rw.WriteHeader(403)
 }
 
-/*UpdateHeartBeatDefault Error
+/*
+UpdateHeartBeatDefault Error
 
 swagger:response updateHeartBeatDefault
 */

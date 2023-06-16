@@ -29,10 +29,10 @@ func NewUpdateHeartBeat(ctx *middleware.Context, handler UpdateHeartBeatHandler)
 	return &UpdateHeartBeat{Context: ctx, Handler: handler}
 }
 
-/* UpdateHeartBeat swagger:route PUT /namespaces/{namespace}/devices/{device-id}/heartbeat backend updateHeartBeat
+/*
+	UpdateHeartBeat swagger:route PUT /namespaces/{namespace}/devices/{device-id}/heartbeat backend updateHeartBeat
 
 Updates the heartbeat information of the device.
-
 */
 type UpdateHeartBeat struct {
 	Context *middleware.Context

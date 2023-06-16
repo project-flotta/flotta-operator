@@ -36,6 +36,20 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// Create mocks base method.
+func (m *MockRepository) Create(arg0 context.Context, arg1 *v1alpha1.EdgeWorkload) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Create", arg0, arg1)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Create indicates an expected call of Create.
+func (mr *MockRepositoryMockRecorder) Create(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockRepository)(nil).Create), arg0, arg1)
+}
+
 // ListByLabel mocks base method.
 func (m *MockRepository) ListByLabel(arg0 context.Context, arg1, arg2, arg3 string) ([]v1alpha1.EdgeWorkload, error) {
 	m.ctrl.T.Helper()

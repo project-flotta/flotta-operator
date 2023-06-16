@@ -29,10 +29,10 @@ func NewGetDeviceConfiguration(ctx *middleware.Context, handler GetDeviceConfigu
 	return &GetDeviceConfiguration{Context: ctx, Handler: handler}
 }
 
-/* GetDeviceConfiguration swagger:route GET /namespaces/{namespace}/devices/{device-id}/configuration backend getDeviceConfiguration
+/*
+	GetDeviceConfiguration swagger:route GET /namespaces/{namespace}/devices/{device-id}/configuration backend getDeviceConfiguration
 
 Returns the device configuration
-
 */
 type GetDeviceConfiguration struct {
 	Context *middleware.Context

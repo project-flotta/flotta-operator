@@ -52,10 +52,12 @@ func NewGetPlaybookExecutionsParamsWithHTTPClient(client *http.Client) *GetPlayb
 	}
 }
 
-/* GetPlaybookExecutionsParams contains all the parameters to send to the API endpoint
-   for the get playbook executions operation.
+/*
+GetPlaybookExecutionsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get playbook executions operation.
+
+	Typically these are written to a http.Request.
 */
 type GetPlaybookExecutionsParams struct {
 

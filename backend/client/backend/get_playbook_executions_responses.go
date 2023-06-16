@@ -59,7 +59,8 @@ func NewGetPlaybookExecutionsOK() *GetPlaybookExecutionsOK {
 	return &GetPlaybookExecutionsOK{}
 }
 
-/* GetPlaybookExecutionsOK describes a response with status code 200, with default header values.
+/*
+	GetPlaybookExecutionsOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -89,7 +90,8 @@ func NewGetPlaybookExecutionsUnauthorized() *GetPlaybookExecutionsUnauthorized {
 	return &GetPlaybookExecutionsUnauthorized{}
 }
 
-/* GetPlaybookExecutionsUnauthorized describes a response with status code 401, with default header values.
+/*
+	GetPlaybookExecutionsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -110,7 +112,8 @@ func NewGetPlaybookExecutionsForbidden() *GetPlaybookExecutionsForbidden {
 	return &GetPlaybookExecutionsForbidden{}
 }
 
-/* GetPlaybookExecutionsForbidden describes a response with status code 403, with default header values.
+/*
+	GetPlaybookExecutionsForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -133,7 +136,8 @@ func NewGetPlaybookExecutionsDefault(code int) *GetPlaybookExecutionsDefault {
 	}
 }
 
-/* GetPlaybookExecutionsDefault describes a response with status code -1, with default header values.
+/*
+	GetPlaybookExecutionsDefault describes a response with status code -1, with default header values.
 
 Error
 */

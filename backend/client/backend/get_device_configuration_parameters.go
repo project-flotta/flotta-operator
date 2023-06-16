@@ -52,10 +52,12 @@ func NewGetDeviceConfigurationParamsWithHTTPClient(client *http.Client) *GetDevi
 	}
 }
 
-/* GetDeviceConfigurationParams contains all the parameters to send to the API endpoint
-   for the get device configuration operation.
+/*
+GetDeviceConfigurationParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get device configuration operation.
+
+	Typically these are written to a http.Request.
 */
 type GetDeviceConfigurationParams struct {
 

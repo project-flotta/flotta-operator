@@ -29,10 +29,10 @@ func NewGetRegistrationStatus(ctx *middleware.Context, handler GetRegistrationSt
 	return &GetRegistrationStatus{Context: ctx, Handler: handler}
 }
 
-/* GetRegistrationStatus swagger:route GET /namespaces/{namespace}/devices/{device-id}/registration backend getRegistrationStatus
+/*
+	GetRegistrationStatus swagger:route GET /namespaces/{namespace}/devices/{device-id}/registration backend getRegistrationStatus
 
 Returns a device registration status, which can be registered, unregistered or unknown.
-
 */
 type GetRegistrationStatus struct {
 	Context *middleware.Context

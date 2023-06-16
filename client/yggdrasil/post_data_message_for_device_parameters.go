@@ -54,10 +54,12 @@ func NewPostDataMessageForDeviceParamsWithHTTPClient(client *http.Client) *PostD
 	}
 }
 
-/* PostDataMessageForDeviceParams contains all the parameters to send to the API endpoint
-   for the post data message for device operation.
+/*
+PostDataMessageForDeviceParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the post data message for device operation.
+
+	Typically these are written to a http.Request.
 */
 type PostDataMessageForDeviceParams struct {
 

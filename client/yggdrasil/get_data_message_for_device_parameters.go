@@ -52,10 +52,12 @@ func NewGetDataMessageForDeviceParamsWithHTTPClient(client *http.Client) *GetDat
 	}
 }
 
-/* GetDataMessageForDeviceParams contains all the parameters to send to the API endpoint
-   for the get data message for device operation.
+/*
+GetDataMessageForDeviceParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get data message for device operation.
+
+	Typically these are written to a http.Request.
 */
 type GetDataMessageForDeviceParams struct {
 

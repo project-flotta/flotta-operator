@@ -29,10 +29,10 @@ func NewGetControlMessageForDevice(ctx *middleware.Context, handler GetControlMe
 	return &GetControlMessageForDevice{Context: ctx, Handler: handler}
 }
 
-/* GetControlMessageForDevice swagger:route GET /control/{device_id}/in yggdrasil getControlMessageForDevice
+/*
+	GetControlMessageForDevice swagger:route GET /control/{device_id}/in yggdrasil getControlMessageForDevice
 
 Get control message for device API
-
 */
 type GetControlMessageForDevice struct {
 	Context *middleware.Context

@@ -16,7 +16,8 @@ import (
 // EnrolDeviceOKCode is the HTTP code returned for type EnrolDeviceOK
 const EnrolDeviceOKCode int = 200
 
-/*EnrolDeviceOK OK
+/*
+EnrolDeviceOK OK
 
 swagger:response enrolDeviceOK
 */
@@ -40,7 +41,8 @@ func (o *EnrolDeviceOK) WriteResponse(rw http.ResponseWriter, producer runtime.P
 // EnrolDeviceCreatedCode is the HTTP code returned for type EnrolDeviceCreated
 const EnrolDeviceCreatedCode int = 201
 
-/*EnrolDeviceCreated Created
+/*
+EnrolDeviceCreated Created
 
 swagger:response enrolDeviceCreated
 */
@@ -64,7 +66,8 @@ func (o *EnrolDeviceCreated) WriteResponse(rw http.ResponseWriter, producer runt
 // EnrolDeviceUnauthorizedCode is the HTTP code returned for type EnrolDeviceUnauthorized
 const EnrolDeviceUnauthorizedCode int = 401
 
-/*EnrolDeviceUnauthorized Unauthorized
+/*
+EnrolDeviceUnauthorized Unauthorized
 
 swagger:response enrolDeviceUnauthorized
 */
@@ -88,7 +91,8 @@ func (o *EnrolDeviceUnauthorized) WriteResponse(rw http.ResponseWriter, producer
 // EnrolDeviceForbiddenCode is the HTTP code returned for type EnrolDeviceForbidden
 const EnrolDeviceForbiddenCode int = 403
 
-/*EnrolDeviceForbidden Forbidden
+/*
+EnrolDeviceForbidden Forbidden
 
 swagger:response enrolDeviceForbidden
 */
@@ -109,7 +113,8 @@ func (o *EnrolDeviceForbidden) WriteResponse(rw http.ResponseWriter, producer ru
 	rw.WriteHeader(403)
 }
 
-/*EnrolDeviceDefault Error
+/*
+EnrolDeviceDefault Error
 
 swagger:response enrolDeviceDefault
 */

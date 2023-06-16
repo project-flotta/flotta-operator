@@ -16,7 +16,8 @@ import (
 // GetRegistrationStatusOKCode is the HTTP code returned for type GetRegistrationStatusOK
 const GetRegistrationStatusOKCode int = 200
 
-/*GetRegistrationStatusOK OK
+/*
+GetRegistrationStatusOK OK
 
 swagger:response getRegistrationStatusOK
 */
@@ -60,7 +61,8 @@ func (o *GetRegistrationStatusOK) WriteResponse(rw http.ResponseWriter, producer
 // GetRegistrationStatusUnauthorizedCode is the HTTP code returned for type GetRegistrationStatusUnauthorized
 const GetRegistrationStatusUnauthorizedCode int = 401
 
-/*GetRegistrationStatusUnauthorized Unauthorized
+/*
+GetRegistrationStatusUnauthorized Unauthorized
 
 swagger:response getRegistrationStatusUnauthorized
 */
@@ -84,7 +86,8 @@ func (o *GetRegistrationStatusUnauthorized) WriteResponse(rw http.ResponseWriter
 // GetRegistrationStatusForbiddenCode is the HTTP code returned for type GetRegistrationStatusForbidden
 const GetRegistrationStatusForbiddenCode int = 403
 
-/*GetRegistrationStatusForbidden Forbidden
+/*
+GetRegistrationStatusForbidden Forbidden
 
 swagger:response getRegistrationStatusForbidden
 */
@@ -105,7 +108,8 @@ func (o *GetRegistrationStatusForbidden) WriteResponse(rw http.ResponseWriter, p
 	rw.WriteHeader(403)
 }
 
-/*GetRegistrationStatusDefault Error
+/*
+GetRegistrationStatusDefault Error
 
 swagger:response getRegistrationStatusDefault
 */

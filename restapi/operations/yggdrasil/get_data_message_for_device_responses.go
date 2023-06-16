@@ -16,7 +16,8 @@ import (
 // GetDataMessageForDeviceOKCode is the HTTP code returned for type GetDataMessageForDeviceOK
 const GetDataMessageForDeviceOKCode int = 200
 
-/*GetDataMessageForDeviceOK Success
+/*
+GetDataMessageForDeviceOK Success
 
 swagger:response getDataMessageForDeviceOK
 */
@@ -60,7 +61,8 @@ func (o *GetDataMessageForDeviceOK) WriteResponse(rw http.ResponseWriter, produc
 // GetDataMessageForDeviceUnauthorizedCode is the HTTP code returned for type GetDataMessageForDeviceUnauthorized
 const GetDataMessageForDeviceUnauthorizedCode int = 401
 
-/*GetDataMessageForDeviceUnauthorized Unauthorized
+/*
+GetDataMessageForDeviceUnauthorized Unauthorized
 
 swagger:response getDataMessageForDeviceUnauthorized
 */
@@ -84,7 +86,8 @@ func (o *GetDataMessageForDeviceUnauthorized) WriteResponse(rw http.ResponseWrit
 // GetDataMessageForDeviceForbiddenCode is the HTTP code returned for type GetDataMessageForDeviceForbidden
 const GetDataMessageForDeviceForbiddenCode int = 403
 
-/*GetDataMessageForDeviceForbidden Forbidden
+/*
+GetDataMessageForDeviceForbidden Forbidden
 
 swagger:response getDataMessageForDeviceForbidden
 */
@@ -108,7 +111,8 @@ func (o *GetDataMessageForDeviceForbidden) WriteResponse(rw http.ResponseWriter,
 // GetDataMessageForDeviceNotFoundCode is the HTTP code returned for type GetDataMessageForDeviceNotFound
 const GetDataMessageForDeviceNotFoundCode int = 404
 
-/*GetDataMessageForDeviceNotFound Error
+/*
+GetDataMessageForDeviceNotFound Error
 
 swagger:response getDataMessageForDeviceNotFound
 */
@@ -132,7 +136,8 @@ func (o *GetDataMessageForDeviceNotFound) WriteResponse(rw http.ResponseWriter, 
 // GetDataMessageForDeviceInternalServerErrorCode is the HTTP code returned for type GetDataMessageForDeviceInternalServerError
 const GetDataMessageForDeviceInternalServerErrorCode int = 500
 
-/*GetDataMessageForDeviceInternalServerError Error
+/*
+GetDataMessageForDeviceInternalServerError Error
 
 swagger:response getDataMessageForDeviceInternalServerError
 */

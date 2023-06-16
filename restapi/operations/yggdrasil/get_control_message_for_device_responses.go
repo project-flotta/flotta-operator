@@ -16,7 +16,8 @@ import (
 // GetControlMessageForDeviceOKCode is the HTTP code returned for type GetControlMessageForDeviceOK
 const GetControlMessageForDeviceOKCode int = 200
 
-/*GetControlMessageForDeviceOK Success
+/*
+GetControlMessageForDeviceOK Success
 
 swagger:response getControlMessageForDeviceOK
 */
@@ -60,7 +61,8 @@ func (o *GetControlMessageForDeviceOK) WriteResponse(rw http.ResponseWriter, pro
 // GetControlMessageForDeviceUnauthorizedCode is the HTTP code returned for type GetControlMessageForDeviceUnauthorized
 const GetControlMessageForDeviceUnauthorizedCode int = 401
 
-/*GetControlMessageForDeviceUnauthorized Unauthorized
+/*
+GetControlMessageForDeviceUnauthorized Unauthorized
 
 swagger:response getControlMessageForDeviceUnauthorized
 */
@@ -84,7 +86,8 @@ func (o *GetControlMessageForDeviceUnauthorized) WriteResponse(rw http.ResponseW
 // GetControlMessageForDeviceForbiddenCode is the HTTP code returned for type GetControlMessageForDeviceForbidden
 const GetControlMessageForDeviceForbiddenCode int = 403
 
-/*GetControlMessageForDeviceForbidden Forbidden
+/*
+GetControlMessageForDeviceForbidden Forbidden
 
 swagger:response getControlMessageForDeviceForbidden
 */
@@ -108,7 +111,8 @@ func (o *GetControlMessageForDeviceForbidden) WriteResponse(rw http.ResponseWrit
 // GetControlMessageForDeviceNotFoundCode is the HTTP code returned for type GetControlMessageForDeviceNotFound
 const GetControlMessageForDeviceNotFoundCode int = 404
 
-/*GetControlMessageForDeviceNotFound Error
+/*
+GetControlMessageForDeviceNotFound Error
 
 swagger:response getControlMessageForDeviceNotFound
 */
@@ -132,7 +136,8 @@ func (o *GetControlMessageForDeviceNotFound) WriteResponse(rw http.ResponseWrite
 // GetControlMessageForDeviceInternalServerErrorCode is the HTTP code returned for type GetControlMessageForDeviceInternalServerError
 const GetControlMessageForDeviceInternalServerErrorCode int = 500
 
-/*GetControlMessageForDeviceInternalServerError Error
+/*
+GetControlMessageForDeviceInternalServerError Error
 
 swagger:response getControlMessageForDeviceInternalServerError
 */

@@ -58,7 +58,8 @@ func NewGetDeviceConfigurationOK() *GetDeviceConfigurationOK {
 	return &GetDeviceConfigurationOK{}
 }
 
-/* GetDeviceConfigurationOK describes a response with status code 200, with default header values.
+/*
+	GetDeviceConfigurationOK describes a response with status code 200, with default header values.
 
 Success
 */
@@ -90,7 +91,8 @@ func NewGetDeviceConfigurationUnauthorized() *GetDeviceConfigurationUnauthorized
 	return &GetDeviceConfigurationUnauthorized{}
 }
 
-/* GetDeviceConfigurationUnauthorized describes a response with status code 401, with default header values.
+/*
+	GetDeviceConfigurationUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -111,7 +113,8 @@ func NewGetDeviceConfigurationForbidden() *GetDeviceConfigurationForbidden {
 	return &GetDeviceConfigurationForbidden{}
 }
 
-/* GetDeviceConfigurationForbidden describes a response with status code 403, with default header values.
+/*
+	GetDeviceConfigurationForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -134,7 +137,8 @@ func NewGetDeviceConfigurationDefault(code int) *GetDeviceConfigurationDefault {
 	}
 }
 
-/* GetDeviceConfigurationDefault describes a response with status code -1, with default header values.
+/*
+	GetDeviceConfigurationDefault describes a response with status code -1, with default header values.
 
 Error
 */

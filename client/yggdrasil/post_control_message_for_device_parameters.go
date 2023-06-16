@@ -54,10 +54,12 @@ func NewPostControlMessageForDeviceParamsWithHTTPClient(client *http.Client) *Po
 	}
 }
 
-/* PostControlMessageForDeviceParams contains all the parameters to send to the API endpoint
-   for the post control message for device operation.
+/*
+PostControlMessageForDeviceParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the post control message for device operation.
+
+	Typically these are written to a http.Request.
 */
 type PostControlMessageForDeviceParams struct {
 

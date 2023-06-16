@@ -52,10 +52,12 @@ func NewGetControlMessageForDeviceParamsWithHTTPClient(client *http.Client) *Get
 	}
 }
 
-/* GetControlMessageForDeviceParams contains all the parameters to send to the API endpoint
-   for the get control message for device operation.
+/*
+GetControlMessageForDeviceParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get control message for device operation.
+
+	Typically these are written to a http.Request.
 */
 type GetControlMessageForDeviceParams struct {
 

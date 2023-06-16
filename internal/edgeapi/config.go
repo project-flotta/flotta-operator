@@ -12,7 +12,7 @@ type Config struct {
 	Domain string `envconfig:"DOMAIN" default:"project-flotta.io"`
 
 	// If TLS server certificates should work on 127.0.0.1
-	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"true"`
+	TLSLocalhostEnabled bool `envconfig:"TLS_LOCALHOST_ENABLED" default:"false"`
 
 	// The address the metric endpoint binds to.
 	MetricsAddr string `envconfig:"METRICS_ADDR" default:":8080"`

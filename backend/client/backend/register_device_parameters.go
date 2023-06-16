@@ -54,10 +54,12 @@ func NewRegisterDeviceParamsWithHTTPClient(client *http.Client) *RegisterDeviceP
 	}
 }
 
-/* RegisterDeviceParams contains all the parameters to send to the API endpoint
-   for the register device operation.
+/*
+RegisterDeviceParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the register device operation.
+
+	Typically these are written to a http.Request.
 */
 type RegisterDeviceParams struct {
 
